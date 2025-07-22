@@ -59,7 +59,7 @@ import java.util.Arrays;
  * @author wolfgang.hoschek@cern.ch
  * @version 1.0, 09/24/99
  */
-final class PrimeFinder {
+final public class PrimeFinder {
     /**
      * The largest prime this class can generate; currently equal to
      * Integer.MAX_VALUE.
@@ -224,7 +224,7 @@ final class PrimeFinder {
     /**
      * Tests correctness.
      */
-    protected static void statistics(int from, int to, PrintWriter pw) {
+    public static void statistics(int from, int to, PrintWriter pw) {
         // check that primes contain no accidental errors
         for (int i = 0; i < primeCapacities.length - 1; i++) {
             if (primeCapacities[i] >= primeCapacities[i + 1]) {
