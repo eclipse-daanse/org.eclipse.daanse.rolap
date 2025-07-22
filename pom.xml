@@ -31,7 +31,7 @@
   </properties>
 
   <modules>
-    <!--module>core</module-->
+    <module>core</module>
  </modules>
 
   <dependencies>
