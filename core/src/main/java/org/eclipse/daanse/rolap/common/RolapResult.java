@@ -138,8 +138,6 @@ public class RolapResult extends ResultBase {
   private final CellReader aggregatingReader;
   private Modulos modulos = null;
   private final int maxEvalDepth;
-  private int solveOrder;
-
   private final Map<Integer, Boolean> positionsHighCardinality = new HashMap<>();
   private final Map<Integer, TupleCursor> positionsIterators = new HashMap<>();
   private final Map<Integer, Integer> positionsIndexes = new HashMap<>();
@@ -156,7 +154,7 @@ public class RolapResult extends ResultBase {
   public RolapResult( final Execution execution, boolean execute ) {
     super( execution, null );
     this.maxEvalDepth = query.getConnection().getContext().getConfigValue(ConfigConstants.MAX_EVAL_DEPTH, ConfigConstants.MAX_EVAL_DEPTH_DEFAULT_VALUE, Integer.class);
-    this.solveOrder = execution
+    int solveOrder = execution
         .getMondrianStatement().getMondrianConnection()
         .getContext().getConfigValue(ConfigConstants.COMPOUND_SLICER_MEMBER_SOLVE_ORDER, ConfigConstants.COMPOUND_SLICER_MEMBER_SOLVE_ORDER_DEFAULT_VALUE, Integer.class);
     this.point = CellKey.Generator.newCellKey( axes.length );
