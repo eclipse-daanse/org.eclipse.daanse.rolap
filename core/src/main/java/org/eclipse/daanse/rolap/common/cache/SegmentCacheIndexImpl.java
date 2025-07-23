@@ -196,7 +196,7 @@ public class SegmentCacheIndexImpl implements SegmentCacheIndex {
         if (LOGGER.isTraceEnabled()) {
             final StringBuilder sb =
                 new StringBuilder(
-                    new StringBuffer(SEGMENT_CACHE_INDEX_IMPL)
+                    new StringBuilder(SEGMENT_CACHE_INDEX_IMPL)
                         .append(System.identityHashCode(this))
                         .append(").locate:MATCH").toString());
             for (SegmentHeader header : list) {

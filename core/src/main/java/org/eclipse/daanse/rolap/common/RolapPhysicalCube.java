@@ -403,7 +403,7 @@ public class RolapPhysicalCube extends RolapCube implements PhysicalCube {
             if (propName.equals(StandardProperty.MEMBER_ORDINAL.getName()) && propExpr instanceof String expr
                     && expr.startsWith("\"") && expr.endsWith("\"")) {
                 try {
-                    ordinal = Integer.valueOf(expr.substring(1, expr.length() - 1));
+                    ordinal = Integer.parseInt(expr.substring(1, expr.length() - 1));
                 } catch (NumberFormatException e) {
                     e.printStackTrace();
 //                    discard(e);

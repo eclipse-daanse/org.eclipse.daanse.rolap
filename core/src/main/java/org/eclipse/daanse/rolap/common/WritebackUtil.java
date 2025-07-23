@@ -334,7 +334,7 @@ public class WritebackUtil {
                     break;
                 case EQUAL_INCREMENT:
                     sum = data.entrySet().stream().mapToDouble(en -> ((Double) en.getValue())).sum();
-                    Double offset = value - sum;
+                    double offset = value - sum;
                     for (Map.Entry<Member, Object> entry : data.entrySet()) {
                         dMinus.put(entry.getKey(), (-1) * (Double) entry.getValue());
                         d.put(entry.getKey(), (Double) entry.getValue() + offset / size);

@@ -206,7 +206,7 @@ public class Aggregation {
         // Failure to sort them will give out wrong results (uses the wrong
         // column) if we have more than one column in the grouping set.
         Collections.sort(segments,
-                (o1, o2) -> Integer.valueOf(o1.measure.getBitPosition()).compareTo(o2.measure.getBitPosition()));
+                (o1, o2) -> Integer.compare(o1.measure.getBitPosition(), o2.measure.getBitPosition()));
         return segments;
     }
 
