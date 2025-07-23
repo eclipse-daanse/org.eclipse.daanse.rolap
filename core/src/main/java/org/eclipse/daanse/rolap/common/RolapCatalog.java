@@ -1009,15 +1009,7 @@ public class RolapCatalog implements Catalog {
 					throw Util.newInternal(new StringBuilder("member reader class ").append(clazz)
 							.append(" does not implement ").append(MemberSource.class).toString());
 				}
-			} catch (ClassNotFoundException e) {
-				e2 = e;
-			} catch (NoSuchMethodException e) {
-				e2 = e;
-			} catch (InstantiationException e) {
-				e2 = e;
-			} catch (IllegalAccessException e) {
-				e2 = e;
-			} catch (InvocationTargetException e) {
+			} catch (ClassNotFoundException | NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
 				e2 = e;
 			}
 			throw Util.newInternal(e2, "while instantiating member reader '" + memberReaderClass);

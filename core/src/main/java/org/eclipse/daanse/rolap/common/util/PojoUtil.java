@@ -113,37 +113,35 @@ public class PojoUtil {
     public static QueryMappingImpl copy(
         QueryMapping relation)
     {
-        if (relation instanceof TableQueryMapping table) {
-        	SqlStatementMappingImpl sqlMappingImpl = getSql(table.getSqlWhereExpression());
-        	List<AggregationExcludeMappingImpl> aggregationExcludes = getAggregationExcludes(table.getAggregationExcludes());
+        return switch (relation) {
+        case TableQueryMapping table -> {
+            SqlStatementMappingImpl sqlMappingImpl = getSql(table.getSqlWhereExpression());
+            List<AggregationExcludeMappingImpl> aggregationExcludes = getAggregationExcludes(table.getAggregationExcludes());
             List<TableQueryOptimizationHintMappingImpl> optimizationHints = getOptimizationHints(table.getOptimizationHints());
             List<AggregationTableMappingImpl> aggregationTables = getAggregationTables(table.getAggregationTables());
-
-            return TableQueryMappingImpl.builder()
-            		.withAlias(table.getAlias())
-            		.withTable(getPhysicalTable(table.getTable()))
-            		.withSqlWhereExpression(sqlMappingImpl)
-            		.withAggregationExcludes(aggregationExcludes)
-            		.withOptimizationHints(optimizationHints)
-            		.withAggregationTables(aggregationTables)
-            		.build();
-
-        } else if (relation instanceof InlineTableQueryMapping table) {
-            return InlineTableQueryMappingImpl.builder()
-            		.withAlias(table.getAlias())
-            		.withTable(getInlineTable(table.getTable()))
-            		.build();
-
-        } else if (relation instanceof JoinQueryMapping join) {
+            yield TableQueryMappingImpl.builder()
+                        		.withAlias(table.getAlias())
+                        		.withTable(getPhysicalTable(table.getTable()))
+                        		.withSqlWhereExpression(sqlMappingImpl)
+                        		.withAggregationExcludes(aggregationExcludes)
+                        		.withOptimizationHints(optimizationHints)
+                        		.withAggregationTables(aggregationTables)
+                        		.build();
+        }
+        case InlineTableQueryMapping table -> InlineTableQueryMappingImpl.builder()
+                    		.withAlias(table.getAlias())
+                    		.withTable(getInlineTable(table.getTable()))
+                    		.build();
+        case JoinQueryMapping join -> {
             QueryMappingImpl left = copy(left(join));
             QueryMappingImpl right = copy(right(join));
-            return JoinQueryMappingImpl.builder()
-            		.withLeft(JoinedQueryElementMappingImpl.builder().withAlias(getLeftAlias(join)).withKey((PhysicalColumnMappingImpl) getColumn(join.getLeft().getKey())).withQuery(left).build())
-            		.withRight(JoinedQueryElementMappingImpl.builder().withAlias(getRightAlias(join)).withKey((PhysicalColumnMappingImpl) getColumn(join.getRight().getKey())).withQuery(right).build())
-            		.build();
-        } else {
-            throw Util.newInternal(BAD_RELATION_TYPE + relation);
+            yield JoinQueryMappingImpl.builder()
+                        		.withLeft(JoinedQueryElementMappingImpl.builder().withAlias(getLeftAlias(join)).withKey((PhysicalColumnMappingImpl) getColumn(join.getLeft().getKey())).withQuery(left).build())
+                        		.withRight(JoinedQueryElementMappingImpl.builder().withAlias(getRightAlias(join)).withKey((PhysicalColumnMappingImpl) getColumn(join.getRight().getKey())).withQuery(right).build())
+                        		.build();
         }
+        case null, default -> throw Util.newInternal(BAD_RELATION_TYPE + relation);
+        };
     }
 
 	public static InlineTableMappingImpl getInlineTable(InlineTableMapping table) {

@@ -1080,11 +1080,10 @@ public class RolapHierarchy extends HierarchyBase {
             final RollupPolicy rollupPolicy =
                 hierarchyAccess.getRollupPolicy();
             final NumericType returnType = NumericType.INSTANCE;
-            switch (rollupPolicy) {
-            case FULL:
-                return new SmartRestrictedMemberReader(
-                    getMemberReader(), role);
-            case PARTIAL:
+            return switch (rollupPolicy) {
+            case FULL -> new SmartRestrictedMemberReader(
+                                getMemberReader(), role);
+            case PARTIAL -> {
                 Type memberType1 =
                     new org.eclipse.daanse.olap.api.type.MemberType(
                         getDimension(),
@@ -1113,7 +1112,6 @@ public class RolapHierarchy extends HierarchyBase {
                     };
                 final Calc partialCalc =
                     new LimitedRollupAggregateCalc(returnType, tupleListCalc);
-
                 final Expression partialExp =
                     new ResolvedFunCallImpl(
                         new AbstractFunctionDefinition(functionMetaData) {
@@ -1132,10 +1130,10 @@ public class RolapHierarchy extends HierarchyBase {
                         },
                         new Expression[0],
                         returnType);
-                return new LimitedRollupSubstitutingMemberReader(
-                    getMemberReader(), role, hierarchyAccess, partialExp);
-
-            case HIDDEN:
+                yield new LimitedRollupSubstitutingMemberReader(
+                                    getMemberReader(), role, hierarchyAccess, partialExp);
+            }
+            case HIDDEN -> {
                 Expression hiddenExp =
                     new ResolvedFunCallImpl(
                         new AbstractFunctionDefinition(functionMetaData) {
@@ -1153,11 +1151,11 @@ public class RolapHierarchy extends HierarchyBase {
                         },
                         new Expression[0],
                         returnType);
-                return new LimitedRollupSubstitutingMemberReader(
-                    getMemberReader(), role, hierarchyAccess, hiddenExp);
-            default:
-                throw Util.unexpected(rollupPolicy);
+                yield new LimitedRollupSubstitutingMemberReader(
+                                    getMemberReader(), role, hierarchyAccess, hiddenExp);
             }
+            default -> throw Util.unexpected(rollupPolicy);
+            };
         default:
             throw Util.badValue(access);
         }

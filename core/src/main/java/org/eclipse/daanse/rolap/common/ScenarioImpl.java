@@ -326,8 +326,8 @@ public class ScenarioImpl implements Scenario {
         final Query query = connection.parseQuery(mdx);
         final Result result = connection.execute(query);
         final Object o = result.getCell(new int[0]).getValue();
-        return o instanceof Number
-            ? ((Number) o).doubleValue()
+        return o instanceof Number n
+            ? n.doubleValue()
             : 0d;
     }
 
@@ -550,8 +550,8 @@ public class ScenarioImpl implements Scenario {
                 evaluator.setContext(defaultMember);
                 final Object o = evaluator.evaluateCurrent();
                 double d =
-                    o instanceof Number
-                        ? ((Number) o).doubleValue()
+                    o instanceof Number n
+                        ? n.doubleValue()
                         : 0d;
 
                 // Look for writeback cells which are equal to, ancestors of,

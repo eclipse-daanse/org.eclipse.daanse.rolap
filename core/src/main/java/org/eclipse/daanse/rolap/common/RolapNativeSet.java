@@ -214,17 +214,14 @@ public abstract class RolapNativeSet extends RolapNative {
 
     @Override
 	public Object execute( ResultStyle desiredResultStyle ) {
-      switch ( desiredResultStyle ) {
-        case ITERABLE:
-          return executeList(
-              new SqlTupleReader( constraint ) );
-        case MUTABLE_LIST, LIST:
-          return executeList( new SqlTupleReader( constraint ) );
-        default:
-          throw ResultStyleException.generate(
-            ResultStyle.ITERABLE_MUTABLELIST_LIST,
-            Collections.singletonList( desiredResultStyle ) );
-      }
+      return switch (desiredResultStyle) {
+      case ITERABLE -> executeList(
+                  new SqlTupleReader( constraint ) );
+      case MUTABLE_LIST, LIST -> executeList( new SqlTupleReader( constraint ) );
+      default -> throw ResultStyleException.generate(
+          ResultStyle.ITERABLE_MUTABLELIST_LIST,
+          Collections.singletonList( desiredResultStyle ) );
+      };
     }
 
     protected TupleList executeList( final SqlTupleReader tr ) {
@@ -383,33 +380,19 @@ public abstract class RolapNativeSet extends RolapNative {
 
     private java.util.function.Predicate<Member> memberInaccessiblePredicate() {
       if ( constraint.getEvaluator() != null ) {
-        return new java.util.function.Predicate<Member>() {
-          @Override
-		public boolean test( Member member ) {
+        return member -> {
             Role role =
               constraint
                 .getEvaluator().getCatalogReader().getRole();
             return member.isHidden() || !role.canAccess( member );
-          }
-        };
+          };
       }
-      return new java.util.function.Predicate<Member>() {
-        @Override
-		public boolean test( Member member ) {
-          return member.isHidden();
-        }
-      };
+      return Member::isHidden;
     }
 
 	private java.util.function.Predicate<List<Member>> tupleAccessiblePredicate(
 			final java.util.function.Predicate<Member> memberInaccessible) {
-		return new java.util.function.Predicate<List<Member>>() {
-
-			@Override
-			public boolean test(List<Member> memberList) {
-				return memberList.stream().noneMatch(memberInaccessible);
-			}
-		};
+		return memberList -> memberList.stream().noneMatch(memberInaccessible);
 	}
 
     private void addLevel( TupleReader tr, CrossJoinArg arg ) {

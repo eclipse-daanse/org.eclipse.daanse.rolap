@@ -418,75 +418,66 @@ public class SqlStatement implements ISqlStatement {
   @SuppressWarnings( "squid:S3776" )
   private Accessor createAccessor( int column, BestFitColumnType type ) {
     final int columnPlusOne = column + 1;
-    switch ( type ) {
-      case OBJECT:
-        return new Accessor() {
-          @Override
-    public Object get() throws SQLException {
-            return resultSet.getObject( columnPlusOne );
-          }
-        };
-      case STRING:
-        return new Accessor() {
-          @Override
-    public Object get() throws SQLException {
-            return resultSet.getString( columnPlusOne );
-          }
-        };
-      case INT:
-        return new Accessor() {
-          @Override
-    public Object get() throws SQLException {
-            final int val = resultSet.getInt( columnPlusOne );
-            if ( val == 0 && resultSet.wasNull() ) {
-              return null;
-            }
-            return val;
-          }
-        };
-      case LONG:
-        return new Accessor() {
-          @Override
-    public Object get() throws SQLException {
-            final long val = resultSet.getLong( columnPlusOne );
-            if ( val == 0 && resultSet.wasNull() ) {
-              return null;
-            }
-            return val;
-          }
-        };
-      case DOUBLE:
-        return new Accessor() {
-          @Override
-    public Object get() throws SQLException {
-            final double val = resultSet.getDouble( columnPlusOne );
-            if ( val == 0 && resultSet.wasNull() ) {
-              return null;
-            }
-            return val;
-          }
-        };
-      case DECIMAL:
-        // this type is only present to work around a defect in the Snowflake jdbc driver.
-        // there is currently no plan to support the DECIMAL/BigDecimal type internally
-        return new Accessor() {
-          @Override
-    public Object get() throws SQLException {
-            final BigDecimal decimal = resultSet.getBigDecimal( columnPlusOne );
-            if ( decimal == null && resultSet.wasNull() ) {
-              return null;
-            }
-            final double val = resultSet.getBigDecimal( columnPlusOne ).doubleValue();
-            if ( val == Double.NEGATIVE_INFINITY || val == Double.POSITIVE_INFINITY ) {
-              throw new SQLDataException(
-                  MessageFormat.format(javaDoubleOverflow, resultSet.getMetaData().getColumnName( columnPlusOne ) ));
-            }
-            return val;
-          }
-        };
-      default:
-        throw Util.unexpected( type );
-    }
+    return switch (type) {
+    case OBJECT -> new Accessor() {
+              @Override
+        public Object get() throws SQLException {
+                return resultSet.getObject( columnPlusOne );
+              }
+            };
+    case STRING -> new Accessor() {
+              @Override
+        public Object get() throws SQLException {
+                return resultSet.getString( columnPlusOne );
+              }
+            };
+    case INT -> new Accessor() {
+              @Override
+        public Object get() throws SQLException {
+                final int val = resultSet.getInt( columnPlusOne );
+                if ( val == 0 && resultSet.wasNull() ) {
+                  return null;
+                }
+                return val;
+              }
+            };
+    case LONG -> new Accessor() {
+              @Override
+        public Object get() throws SQLException {
+                final long val = resultSet.getLong( columnPlusOne );
+                if ( val == 0 && resultSet.wasNull() ) {
+                  return null;
+                }
+                return val;
+              }
+            };
+    case DOUBLE -> new Accessor() {
+              @Override
+        public Object get() throws SQLException {
+                final double val = resultSet.getDouble( columnPlusOne );
+                if ( val == 0 && resultSet.wasNull() ) {
+                  return null;
+                }
+                return val;
+              }
+            };
+    case DECIMAL -> /* this type is only present to work around a defect in the Snowflake jdbc driver. */ /* there is currently no plan to support the DECIMAL/BigDecimal type internally */ new Accessor() {
+              @Override
+        public Object get() throws SQLException {
+                final BigDecimal decimal = resultSet.getBigDecimal( columnPlusOne );
+                if ( decimal == null && resultSet.wasNull() ) {
+                  return null;
+                }
+                final double val = resultSet.getBigDecimal( columnPlusOne ).doubleValue();
+                if ( val == Double.NEGATIVE_INFINITY || val == Double.POSITIVE_INFINITY ) {
+                  throw new SQLDataException(
+                      MessageFormat.format(javaDoubleOverflow, resultSet.getMetaData().getColumnName( columnPlusOne ) ));
+                }
+                return val;
+              }
+            };
+    default -> throw Util.unexpected( type );
+    };
   }
 
   public List<BestFitColumnType> guessTypes() throws SQLException {
@@ -569,25 +560,20 @@ public class SqlStatement implements ISqlStatement {
     DECIMAL;
 
     public Object get( ResultSet resultSet, int column ) throws SQLException {
-      switch ( this ) {
-        case OBJECT:
-          return resultSet.getObject( column + 1 );
-        case STRING:
-          return resultSet.getString( column + 1 );
-        case INT:
-          return resultSet.getInt( column + 1 );
-        case LONG:
-          return resultSet.getLong( column + 1 );
-        case DOUBLE:
-          return resultSet.getDouble( column + 1 );
-        case DECIMAL:
-          // this lacks the range checking done in the createAccessor method above, but nothing seems
+      return switch (this) {
+      case OBJECT -> resultSet.getObject( column + 1 );
+      case STRING -> resultSet.getString( column + 1 );
+      case INT -> resultSet.getInt( column + 1 );
+      case LONG -> resultSet.getLong( column + 1 );
+      case DOUBLE -> resultSet.getDouble( column + 1 );
+      case DECIMAL -> {
+        // this lacks the range checking done in the createAccessor method above, but nothing seems
           // to call this method anyway.
           BigDecimal decimal = resultSet.getBigDecimal( column + 1 );
-          return decimal == null ? null : decimal.doubleValue();
-        default:
-          throw Util.unexpected( this );
+        yield decimal == null ? null : decimal.doubleValue();
       }
+      default -> throw Util.unexpected( this );
+      };
     }
   }
 

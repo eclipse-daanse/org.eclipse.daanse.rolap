@@ -70,7 +70,7 @@ public class RolapNativeTopCount extends RolapNativeSet {
             super(args, evaluator, true);
             this.orderByExpr = orderByExpr;
             this.ascending = ascending;
-            this.topCount = Integer.valueOf(count);
+            this.topCount = count;
         }
 
         /**

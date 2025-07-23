@@ -57,18 +57,13 @@ import org.eclipse.daanse.olap.api.result.Axis;
 public interface Modulos {
     public class Generator {
         public static Modulos create(Axis[] axes) {
-            switch (axes.length) {
-            case 0:
-                return new Modulos.Zero(axes);
-            case 1:
-                return new Modulos.One(axes);
-            case 2:
-                return new Modulos.Two(axes);
-            case 3:
-                return new Modulos.Three(axes);
-            default:
-                return new Modulos.Many(axes);
-            }
+            return switch (axes.length) {
+            case 0 -> new Modulos.Zero(axes);
+            case 1 -> new Modulos.One(axes);
+            case 2 -> new Modulos.Two(axes);
+            case 3 -> new Modulos.Three(axes);
+            default -> new Modulos.Many(axes);
+            };
         }
         // Used for testing only
         public static Modulos createMany(Axis[] axes) {

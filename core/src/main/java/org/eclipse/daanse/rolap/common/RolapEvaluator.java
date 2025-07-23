@@ -821,16 +821,11 @@ public final Object evaluateCurrent() {
         break;
 
       default:
-        switch ( root.solveOrderMode ) {
-          case ABSOLUTE:
-            maxSolveMember = getAbsoluteMaxSolveOrder();
-            break;
-          case SCOPED:
-            maxSolveMember = getScopedMaxSolveOrder();
-            break;
-          default:
-            throw Util.unexpected( root.solveOrderMode );
-        }
+        maxSolveMember = switch (root.solveOrderMode) {
+        case ABSOLUTE -> getAbsoluteMaxSolveOrder();
+        case SCOPED -> getScopedMaxSolveOrder();
+        default -> throw Util.unexpected( root.solveOrderMode );
+        };
     }
     final int savepoint = savepoint();
     maxSolveMember.setContextIn( this );

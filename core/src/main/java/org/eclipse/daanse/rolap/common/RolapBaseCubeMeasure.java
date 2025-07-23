@@ -199,9 +199,7 @@ public class RolapBaseCubeMeasure
         Object datatype = getPropertyValue(StandardProperty.DATATYPE.getName());
         try {
             return Datatype.fromValue((String) datatype);
-        } catch (ClassCastException e) {
-            return Datatype.VARCHAR;
-        } catch (IllegalArgumentException e) {
+        } catch (ClassCastException | IllegalArgumentException e) {
             return Datatype.VARCHAR;
         }
     }

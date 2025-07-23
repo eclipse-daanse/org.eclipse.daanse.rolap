@@ -16,6 +16,7 @@ package org.eclipse.daanse.rolap.common.util;
 import java.util.Objects;
 
 import org.eclipse.daanse.olap.api.SqlExpression;
+import org.eclipse.daanse.olap.api.SqlStatement;
 import org.eclipse.daanse.rolap.common.RolapColumn;
 import org.eclipse.daanse.rolap.common.RolapSqlExpression;
 import org.eclipse.daanse.rolap.common.sql.SqlQuery;
@@ -28,8 +29,8 @@ public class ExpressionUtil {
         }
         if (expression != null) {
             int h = 17;
-            for (int i = 0; i < expression.getSqls().size(); i++) {
-                h = 37 * h + SQLUtil.hashCode(expression.getSqls().get(i));
+            for (SqlStatement element : expression.getSqls()) {
+                h = 37 * h + SQLUtil.hashCode(element);
             }
             return h;
         }
@@ -62,9 +63,9 @@ public class ExpressionUtil {
     }
 
     public static String genericExpression(SqlExpression expression) {
-            for (int i = 0; i < expression.getSqls().size(); i++) {
-                if (expression.getSqls().get(i).getDialects().stream().anyMatch(d ->  "generic".equals(d))) {
-                    return expression.getSqls().get(i).getSql();
+            for (SqlStatement element : expression.getSqls()) {
+                if (element.getDialects().stream().anyMatch(d ->  "generic".equals(d))) {
+                    return element.getSql();
                 }
             }
             return expression.getSqls().get(0).getSql();

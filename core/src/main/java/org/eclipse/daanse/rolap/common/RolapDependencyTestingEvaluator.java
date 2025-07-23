@@ -192,10 +192,8 @@ public class RolapDependencyTestingEvaluator extends RolapEvaluator {
         if (o2 == null) {
             return false;
         }
-        if (o1 instanceof Object[]) {
-            if (o2 instanceof Object[]) {
-                Object[] a1 = (Object[]) o1;
-                Object[] a2 = (Object[]) o2;
+        if (o1 instanceof Object[] a1) {
+            if (o2 instanceof Object[] a2) {
                 if (a1.length == a2.length) {
                     for (int i = 0; i < a1.length; i++) {
                         if (!equals(a1[i], a2[i])) {
@@ -239,7 +237,8 @@ public class RolapDependencyTestingEvaluator extends RolapEvaluator {
     }
 
     private void toString(Object o, PrintWriter pw) {
-        if (o instanceof Object[] a) {
+        switch (o) {
+        case Object[] a -> {
             pw.print("{");
             for (int i = 0; i < a.length; i++) {
                 Object o1 = a[i];
@@ -249,12 +248,10 @@ public class RolapDependencyTestingEvaluator extends RolapEvaluator {
                 toString(o1, pw);
             }
             pw.print("}");
-        } else if (o instanceof List list) {
-            toString(list.toArray(), pw);
-        } else if (o instanceof Member member) {
-            pw.print(member.getUniqueName());
-        } else {
-            pw.print(o);
+        }
+        case List list -> toString(list.toArray(), pw);
+        case Member member -> pw.print(member.getUniqueName());
+        case null, default -> pw.print(o);
         }
     }
 

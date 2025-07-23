@@ -163,16 +163,13 @@ class SqlMemberSource
                     columnList,
                     datatypeList,
                     keyValues));
-        switch (list.size()) {
-        case 0:
-            return null;
-        case 1:
-            return list.get(0);
-        default:
-            throw Util.newError(
-                new StringBuilder("More than one member in level ").append(level).append(" with key ")
-                .append(keyValues).toString());
-        }
+        return switch (list.size()) {
+        case 0 -> null;
+        case 1 -> list.get(0);
+        default -> throw Util.newError(
+            new StringBuilder("More than one member in level ").append(level).append(" with key ")
+            .append(keyValues).toString());
+        };
     }
 
     @Override

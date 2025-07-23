@@ -865,13 +865,10 @@ public class RolapLevel extends LevelBase {
         // Is this the special case of raggedness that native evaluation
         // is able to handle?
         if (getDepth() == getHierarchy().getLevels().size() - 1) {
-            switch (getHideMemberCondition()) {
-            case Never:
-            case IfBlankName:
-                return false;
-            default:
-                return true;
-            }
+            return switch (getHideMemberCondition()) {
+            case Never, IfBlankName -> false;
+            default -> true;
+            };
         }
         // Handle the general case in the traditional way.
         return getHierarchy().isRagged();

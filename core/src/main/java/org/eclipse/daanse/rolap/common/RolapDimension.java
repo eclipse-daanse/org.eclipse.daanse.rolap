@@ -263,11 +263,10 @@ public class RolapDimension extends DimensionBase {
       if (this == o) {
         return true;
       }
-    if (!(o instanceof RolapDimension)) {
+    if (!(o instanceof RolapDimension that)) {
         return false;
     }
       if (isMeasuresDimension()) {
-        RolapDimension that = (RolapDimension) o;
         return this == that;
       }
       return super.equals(o);

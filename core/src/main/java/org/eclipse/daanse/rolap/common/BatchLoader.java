@@ -1299,10 +1299,8 @@ public class BatchLoader {
             if (set1.size() != set2.size()) {
                 return set1.size() - set2.size();
             }
-            Iterator<T> iter1 = set1.iterator();
             Iterator<T> iter2 = set2.iterator();
-            while (iter1.hasNext()) {
-                T v1 = iter1.next();
+            for (T v1 : set1) {
                 T v2 = iter2.next();
                 int c = Util.compareKey(v1, v2);
                 if (c != 0) {

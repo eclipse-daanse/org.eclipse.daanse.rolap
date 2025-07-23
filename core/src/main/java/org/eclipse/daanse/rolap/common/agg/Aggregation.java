@@ -205,15 +205,8 @@ public class Aggregation {
         // See: mondrian.rolap.BatchLoader.Batch.add(CellRequest request).
         // Failure to sort them will give out wrong results (uses the wrong
         // column) if we have more than one column in the grouping set.
-        Collections.sort(
-            segments, new Comparator<Segment>() {
-                @Override
-				public int compare(Segment o1, Segment o2) {
-                    return Integer.valueOf(
-                        o1.measure.getBitPosition())
-                            .compareTo(o2.measure.getBitPosition());
-                }
-            });
+        Collections.sort(segments,
+                (o1, o2) -> Integer.valueOf(o1.measure.getBitPosition()).compareTo(o2.measure.getBitPosition()));
         return segments;
     }
 

@@ -47,17 +47,14 @@ public class PercentileAggregator implements Aggregator {
 
     @Override
     public StringBuilder getExpression(CharSequence operand) {
-        StringBuilder buf = new StringBuilder(64);
-        switch (percentileType) {
-            case PercentileType.DISC:
-                return dialect.generatePercentileDisc(this.percentile, !this.rolapOrderedColumn.isAscend(), 
-                        this.rolapOrderedColumn.getColumn().getTable(), this.rolapOrderedColumn.getColumn().getName());
-            case PercentileType.CONT:
-                return dialect.generatePercentileCont(this.percentile, !this.rolapOrderedColumn.isAscend(), 
-                        this.rolapOrderedColumn.getColumn().getTable(), this.rolapOrderedColumn.getColumn().getName());
-        }
-        return buf;
+        boolean desc = !this.rolapOrderedColumn.isAscend();
+        String table = this.rolapOrderedColumn.getColumn().getTable();
+        String name = this.rolapOrderedColumn.getColumn().getName();
 
+        return switch (percentileType) {
+        case PercentileType.DISC -> dialect.generatePercentileDisc(this.percentile, desc, table, name);
+        case PercentileType.CONT -> dialect.generatePercentileCont(this.percentile, desc, table, name);
+        };
     }
 
     @Override

@@ -196,8 +196,8 @@ public class WritebackUtil {
         String[] ss = memberUniqueName.split("].\\[");
         List<String> res = new ArrayList<>();
         if (ss.length > 0) {
-            for (int i = 0; i < ss.length; i++) {
-                res.add(ss[i].replace("[", "").replace("]", "").replace("(", "").replace(")", ""));
+            for (String element : ss) {
+                res.add(element.replace("[", "").replace("]", "").replace("(", "").replace(")", ""));
             }
         }
         return res;

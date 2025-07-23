@@ -43,7 +43,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Predicate;
 
 import org.eclipse.daanse.jdbc.db.dialect.api.Datatype;
 import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
@@ -752,8 +751,6 @@ public class SqlConstraintUtils {
     Expression exp = fun.getArg( 0 );
     TupleIterable tupleIterable = evaluator.getSetEvaluator( exp, true ).evaluateTupleIterable();
 
-    Iterator<List<Member>> tupleIterator = tupleIterable.iterator();
-
     TupleList tupleList = TupleCollections.materialize( tupleIterable, false );
 
     boolean disjointSlicerTuple = false;
@@ -766,8 +763,8 @@ public class SqlConstraintUtils {
         expandedSet.addTupleList( tupleList );
       }
     } else {
-      while ( tupleIterator.hasNext() ) {
-        expandedSet.addMembers( tupleIterator.next() );
+      for (List<Member> element : tupleIterable) {
+        expandedSet.addMembers( element );
       }
     }
   }
@@ -879,12 +876,7 @@ public class SqlConstraintUtils {
   }
 
   static List<Member> removeCalculatedMembers( List<Member> members ) {
-    return new FilteredIterableList<>( members, new Predicate<Member>() {
-      @Override
-	public boolean test( final Member m ) {
-        return !m.isCalculated() || m.isParentChildPhysicalMember();
-      }
-    } );
+    return new FilteredIterableList<>( members, m -> !m.isCalculated() || m.isParentChildPhysicalMember() );
   }
 
   public static boolean containsCalculatedMember( List<Member> members ) {
@@ -1794,9 +1786,8 @@ public class SqlConstraintUtils {
       }
 
       boolean containsNullKey = false;
-      Iterator<RolapMember> it = c.iterator();
-      while ( it.hasNext() ) {
-        m = it.next();
+      for (RolapMember element : c) {
+        m = element;
         if ( m.getKey() == Util.sqlNullValue ) {
           containsNullKey = true;
         }

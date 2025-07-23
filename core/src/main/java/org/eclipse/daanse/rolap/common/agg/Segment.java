@@ -286,19 +286,12 @@ public String toString() {
     if ( sparse ) {
       return new SparseSegmentDataset();
     } else {
-      switch ( type ) {
-        case OBJECT:
-        case LONG:
-        case STRING:
-          return new DenseObjectSegmentDataset( axes, size );
-        case INT:
-          return new DenseIntSegmentDataset( axes, size );
-        case DOUBLE:
-        case DECIMAL:
-          return new DenseDoubleSegmentDataset( axes, size );
-        default:
-          throw Util.unexpected( type );
-      }
+      return switch (type) {
+      case OBJECT, LONG, STRING -> new DenseObjectSegmentDataset( axes, size );
+      case INT -> new DenseIntSegmentDataset( axes, size );
+      case DOUBLE, DECIMAL -> new DenseDoubleSegmentDataset( axes, size );
+      default -> throw Util.unexpected( type );
+      };
     }
   }
 

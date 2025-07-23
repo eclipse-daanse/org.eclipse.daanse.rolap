@@ -140,7 +140,7 @@ public abstract class ListPredicate implements StarPredicate {
                     childrenHashMap =
                         new HashMap<>();
                     for (StarPredicate thisChild : getChildren()) {
-                        Integer key = Integer.valueOf(thisChild.hashCode());
+                        Integer key = thisChild.hashCode();
                         List<StarPredicate> predList = childrenHashMap.get(key);
                         if (predList == null) {
                             predList = new ArrayList<>();

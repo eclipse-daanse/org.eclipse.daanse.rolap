@@ -284,14 +284,11 @@ public class MemberTuplePredicate implements StarPredicate {
          * @return less strict version of this operator
          */
         public RelOp desctrict() {
-            switch (this) {
-            case GT:
-                return RelOp.GE;
-            case LT:
-                return RelOp.LE;
-            default:
-                return this;
-            }
+            return switch (this) {
+            case GT -> RelOp.GE;
+            case LT -> RelOp.LE;
+            default -> this;
+            };
         }
     }
 

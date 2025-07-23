@@ -36,13 +36,10 @@ public class MinAggregator extends AbstractAggregator {
 
     @Override
     public boolean supportsFastAggregates(DataTypeJdbc dataType) {
-        switch (dataType) {
-        case INTEGER:
-        case NUMERIC:
-            return true;
-        default:
-            return false;
-        }
+        return switch (dataType) {
+        case INTEGER, NUMERIC -> true;
+        default -> false;
+        };
     };
 
     @Override

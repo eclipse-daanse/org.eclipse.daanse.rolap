@@ -52,17 +52,11 @@ public class BitAggAggregator implements Aggregator {
 
     @Override
     public StringBuilder getExpression(CharSequence operand) {
-        StringBuilder buf = new StringBuilder(64);
-        switch (bitAggType) {
-            case BitAggregationType.AND:
-                return and(operand);
-            case BitAggregationType.OR:
-                return or(operand);
-            case BitAggregationType.XOR:
-                return xor(operand);
-        }
-        return buf;
-
+        return switch (bitAggType) {
+        case BitAggregationType.AND -> and(operand);
+        case BitAggregationType.OR -> or(operand);
+        case BitAggregationType.XOR -> xor(operand);
+        };
     }
 
     private StringBuilder and(CharSequence operand) {

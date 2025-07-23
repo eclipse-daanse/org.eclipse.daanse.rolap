@@ -33,30 +33,33 @@ public class RelationUtil {
     }
 
     public static RelationalQueryMapping find(QueryMapping relationOrJoin, String tableName) {
-        if (relationOrJoin instanceof InlineTableQueryMapping inlineTable) {
+        switch (relationOrJoin) {
+        case InlineTableQueryMapping inlineTable -> {
             return tableName.equals(inlineTable.getAlias()) ? (RelationalQueryMapping) relationOrJoin : null;
         }
-        if (relationOrJoin instanceof TableQueryMapping table) {
+        case TableQueryMapping table -> {
             if (tableName.equals(table.getTable().getName())) {
                 return (RelationalQueryMapping) relationOrJoin;
             } else {
                     return null; //old version of code had wrong condition with equals
             }
         }
-        if (relationOrJoin instanceof SqlSelectQueryMapping view) {
+        case SqlSelectQueryMapping view -> {
             if (tableName.equals(view.getAlias())) {
                 return (RelationalQueryMapping) relationOrJoin;
             } else {
                 return null;
             }
         }
-        if (relationOrJoin instanceof JoinQueryMapping join) {
+        case JoinQueryMapping join -> {
             QueryMapping relation = find(left(join), tableName);
             if (relation == null) {
                 relation = find(right(join), tableName);
             }
             return (RelationalQueryMapping) relation;
-
+        }
+        case null, default -> {
+        }
         }
 
         throw new RolapRuntimeException("Rlation: find error");
