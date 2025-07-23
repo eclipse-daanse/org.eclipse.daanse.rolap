@@ -27,7 +27,7 @@ public abstract class AbstractAggregator implements Aggregator {
 
     protected AbstractAggregator(String name, boolean distinct) {
         this.name = name;
-        this.description = null;
+        description = null;
         this.distinct = distinct;
     }
 

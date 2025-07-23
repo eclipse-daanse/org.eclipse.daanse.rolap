@@ -60,10 +60,10 @@ public class ListAggAggregator implements Aggregator {
     @Override
     public StringBuilder getExpression(CharSequence operand) {
         List<OrderedColumn> columnsList = List.of();
-        if (this.columns != null) {
-            columnsList = this.columns.stream().map(c -> new OrderedColumn(c.getColumn().getName(), c.getColumn().getTable(), c.isAscend())).toList();
+        if (columns != null) {
+            columnsList = columns.stream().map(c -> new OrderedColumn(c.getColumn().getName(), c.getColumn().getTable(), c.isAscend())).toList();
         }
-        return this.dialect.generateListAgg(operand, distinct, separator, coalesce, onOverflowTruncate, columnsList);
+        return dialect.generateListAgg(operand, distinct, separator, coalesce, onOverflowTruncate, columnsList);
     }
 
     @Override
@@ -90,7 +90,7 @@ public class ListAggAggregator implements Aggregator {
 
     @Override
     public boolean isDistinct() {
-        return this.distinct;
+        return distinct;
     }
 
     @Override

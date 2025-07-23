@@ -137,11 +137,7 @@ public abstract class AbstractQuerySpec implements QuerySpec {
                 sqlQuery.addWhere(where);
             }
 
-            if (countOnly) {
-                continue;
-            }
-
-            if (!isPartOfSelect(column)) {
+            if (countOnly || !isPartOfSelect(column)) {
                 continue;
             }
 

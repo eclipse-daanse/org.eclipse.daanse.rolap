@@ -64,7 +64,7 @@ public class MaxAggregator extends AbstractAggregator {
 
           return maxDouble == Double.NEGATIVE_INFINITY ? null : maxDouble;
         default:
-          throw new OlapRuntimeException( new StringBuilder("Aggregator ").append(this.name)
+          throw new OlapRuntimeException( new StringBuilder("Aggregator ").append(name)
               .append(" does not support datatype").append(datatype.getValue()).toString() );
       }
     }

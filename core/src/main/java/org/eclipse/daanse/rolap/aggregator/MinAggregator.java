@@ -63,7 +63,7 @@ public class MinAggregator extends AbstractAggregator {
             }
             return minDouble == Double.MAX_VALUE ? null : minDouble;
         default:
-            throw new OlapRuntimeException(new StringBuilder("Aggregator ").append(this.name)
+            throw new OlapRuntimeException(new StringBuilder("Aggregator ").append(name)
                     .append(" does not support datatype").append(datatype.getValue()).toString());
         }
     }

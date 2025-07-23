@@ -72,7 +72,7 @@ public class SumAggregator extends AbstractAggregator {
             }
             return sumDouble == Double.MIN_VALUE ? null : sumDouble;
         default:
-            throw new OlapRuntimeException(new StringBuilder("Aggregator ").append(this.name)
+            throw new OlapRuntimeException(new StringBuilder("Aggregator ").append(name)
                     .append(" does not support datatype").append(datatype.getValue()).toString());
         }
     }

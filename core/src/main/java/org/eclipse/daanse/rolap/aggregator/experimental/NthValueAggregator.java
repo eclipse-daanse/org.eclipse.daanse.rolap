@@ -48,10 +48,10 @@ public class NthValueAggregator implements Aggregator {
     @Override
     public StringBuilder getExpression(CharSequence operand) {
         List<OrderedColumn> columnsList = List.of();
-        if (this.rolapOrderedColumnList != null) {
-            columnsList = this.rolapOrderedColumnList.stream().map(c -> new OrderedColumn(c.getColumn().getName(), c.getColumn().getTable(), c.isAscend())).toList();
+        if (rolapOrderedColumnList != null) {
+            columnsList = rolapOrderedColumnList.stream().map(c -> new OrderedColumn(c.getColumn().getName(), c.getColumn().getTable(), c.isAscend())).toList();
         }
-        return dialect.generateNthValueAgg(operand, this.ignoreNulls, n,
+        return dialect.generateNthValueAgg(operand, ignoreNulls, n,
             columnsList);
     }
 

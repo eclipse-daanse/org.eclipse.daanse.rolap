@@ -148,16 +148,17 @@ public class AggRule extends Base {
                 msgRecorder.reportError(msg);
                 return false;
             }
-        } else if (isOk(baseRef)) {
-            String msg = "Both base " +
-                base.getName() +
-                " and baseref " +
-                baseRef.getName() +
-                " are ok";
-            msgRecorder.reportError(msg);
-            return false;
         } else {
-            base.validate(rules, msgRecorder);
+            if (isOk(baseRef)) {
+                String msg = "Both base " +
+                    base.getName() +
+                    " and baseref " +
+                    baseRef.getName() +
+                    " are ok";
+                msgRecorder.reportError(msg);
+            } else {
+                base.validate(rules, msgRecorder);
+            }
             return false;
         }
     }

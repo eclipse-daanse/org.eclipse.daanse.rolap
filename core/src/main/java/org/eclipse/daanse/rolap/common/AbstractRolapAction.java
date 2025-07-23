@@ -41,16 +41,16 @@ public abstract class AbstractRolapAction implements OlapAction {
 
 	@Override
 	public String getName() {
-		return this.name;
+		return name;
 	}
 
 	@Override
 	public String getCaption() {
-		return this.caption;
+		return caption;
 	}
 
 	@Override
 	public String getDescription() {
-		return this.description;
+		return description;
 	}
 }
