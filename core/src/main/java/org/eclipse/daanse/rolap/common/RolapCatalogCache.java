@@ -36,13 +36,12 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.eclipse.daanse.olap.api.CatalogCache;
 import org.eclipse.daanse.olap.api.ConnectionProps;
+import org.eclipse.daanse.olap.util.ByteString;
 import org.eclipse.daanse.rolap.api.RolapContext;
 import org.eclipse.daanse.rolap.mapping.api.model.CatalogMapping;
 import org.eclipse.daanse.rolap.util.reference.expiring.ExpiringReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import org.eclipse.daanse.olap.util.ByteString;
 
 public class RolapCatalogCache implements CatalogCache {
 

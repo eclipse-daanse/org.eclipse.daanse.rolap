@@ -64,6 +64,13 @@ import org.eclipse.daanse.olap.api.monitor.event.ExecutionEventCommon;
 import org.eclipse.daanse.olap.api.monitor.event.MdxStatementEventCommon;
 import org.eclipse.daanse.olap.api.monitor.event.ServertEventCommon;
 import org.eclipse.daanse.olap.common.Util;
+import  org.eclipse.daanse.olap.server.ExecutionImpl;
+import  org.eclipse.daanse.olap.server.LocusImpl;
+import org.eclipse.daanse.olap.spi.SegmentBody;
+import org.eclipse.daanse.olap.spi.SegmentCache;
+import org.eclipse.daanse.olap.spi.SegmentColumn;
+import org.eclipse.daanse.olap.spi.SegmentHeader;
+import  org.eclipse.daanse.olap.util.Pair;
 import org.eclipse.daanse.rolap.api.RolapContext;
 import org.eclipse.daanse.rolap.common.CacheControlImpl;
 import org.eclipse.daanse.rolap.common.CacheKey;
@@ -78,13 +85,6 @@ import org.eclipse.daanse.rolap.common.cache.SegmentCacheIndexImpl;
 import org.eclipse.daanse.rolap.util.BlockingHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import  org.eclipse.daanse.olap.server.ExecutionImpl;
-import  org.eclipse.daanse.olap.server.LocusImpl;
-import org.eclipse.daanse.olap.spi.SegmentBody;
-import org.eclipse.daanse.olap.spi.SegmentCache;
-import org.eclipse.daanse.olap.spi.SegmentColumn;
-import org.eclipse.daanse.olap.spi.SegmentHeader;
-import  org.eclipse.daanse.olap.util.Pair;
 
 @SuppressWarnings( { "JavaDoc", "squid:S1192", "squid:S4274" } )
 // suppressing warnings for asserts, duplicated string constants

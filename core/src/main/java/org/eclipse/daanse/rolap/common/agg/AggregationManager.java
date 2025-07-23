@@ -45,8 +45,10 @@ import org.eclipse.daanse.olap.api.IAggregationManager;
 import org.eclipse.daanse.olap.api.ISegmentCacheManager;
 import org.eclipse.daanse.olap.api.element.OlapElement;
 import org.eclipse.daanse.olap.common.Util;
-import org.eclipse.daanse.rolap.api.RolapContext;
 import org.eclipse.daanse.olap.key.BitKey;
+import  org.eclipse.daanse.olap.server.LocusImpl;
+import  org.eclipse.daanse.olap.util.Pair;
+import org.eclipse.daanse.rolap.api.RolapContext;
 import org.eclipse.daanse.rolap.common.CacheControlImpl;
 import org.eclipse.daanse.rolap.common.GroupingSetsCollector;
 import org.eclipse.daanse.rolap.common.RolapAggregationManager;
@@ -57,8 +59,6 @@ import org.eclipse.daanse.rolap.common.StarPredicate;
 import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import  org.eclipse.daanse.olap.server.LocusImpl;
-import  org.eclipse.daanse.olap.util.Pair;
 
 /**
  * RolapAggregationManager manages all {@link Aggregation}s

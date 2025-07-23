@@ -34,15 +34,10 @@ import org.eclipse.daanse.olap.api.CacheCommand;
 import org.eclipse.daanse.olap.api.ConfigConstants;
 import org.eclipse.daanse.olap.api.ISegmentCacheManager;
 import org.eclipse.daanse.olap.api.Locus;
-import org.eclipse.daanse.olap.key.BitKey;
 import org.eclipse.daanse.olap.common.Util;
-import org.eclipse.daanse.rolap.common.BatchLoader.Batch;
-import org.eclipse.daanse.rolap.common.BatchLoader.BatchComparator;
-import org.eclipse.daanse.rolap.common.BatchLoader.CompositeBatch;
-import org.eclipse.daanse.rolap.common.BatchLoader.CompositeBatchComparator;
-import org.eclipse.daanse.rolap.common.BatchLoader.LoadBatchResponse;
-import org.eclipse.daanse.rolap.common.BatchLoader.RollupInfo;
-import org.eclipse.daanse.rolap.common.BatchLoader.ValueColumnConstraintComparator;
+import org.eclipse.daanse.olap.key.BitKey;
+import org.eclipse.daanse.olap.spi.SegmentBody;
+import org.eclipse.daanse.olap.spi.SegmentHeader;
 import org.eclipse.daanse.rolap.common.agg.AggregationKey;
 import org.eclipse.daanse.rolap.common.agg.AggregationManager;
 import org.eclipse.daanse.rolap.common.agg.CellRequest;
@@ -51,19 +46,16 @@ import org.eclipse.daanse.rolap.common.agg.LiteralStarPredicate;
 import org.eclipse.daanse.rolap.common.agg.Segment;
 import org.eclipse.daanse.rolap.common.agg.SegmentBuilder;
 import org.eclipse.daanse.rolap.common.agg.SegmentCacheManager;
+import org.eclipse.daanse.rolap.common.agg.SegmentCacheManager.SegmentCacheIndexRegistry;
 import org.eclipse.daanse.rolap.common.agg.SegmentLoader;
 import org.eclipse.daanse.rolap.common.agg.SegmentWithData;
 import org.eclipse.daanse.rolap.common.agg.ValueColumnPredicate;
-import org.eclipse.daanse.rolap.common.agg.SegmentCacheManager.SegmentCacheIndexRegistry;
 import org.eclipse.daanse.rolap.common.aggmatcher.AggGen;
 import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;
 import org.eclipse.daanse.rolap.common.cache.SegmentCacheIndex;
 import org.eclipse.daanse.rolap.common.cache.SegmentCacheIndexImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import org.eclipse.daanse.olap.spi.SegmentBody;
-import org.eclipse.daanse.olap.spi.SegmentHeader;
 
 /**
  * Context for processing a request to the cache manager for segments matching a

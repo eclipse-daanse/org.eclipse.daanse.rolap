@@ -68,10 +68,12 @@ import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
 import org.eclipse.daanse.olap.common.AbstractProperty;
-import org.eclipse.daanse.olap.key.BitKey;
 import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.core.AbstractBasicContext;
+import org.eclipse.daanse.olap.key.BitKey;
+import  org.eclipse.daanse.olap.server.LocusImpl;
+import org.eclipse.daanse.olap.util.Bug;
 import org.eclipse.daanse.rolap.common.agg.Aggregation;
 import org.eclipse.daanse.rolap.common.agg.AggregationKey;
 import org.eclipse.daanse.rolap.common.agg.AggregationManager;
@@ -105,9 +107,6 @@ import org.slf4j.LoggerFactory;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-
-import  org.eclipse.daanse.olap.server.LocusImpl;
-import org.eclipse.daanse.olap.util.Bug;
 
 /**
  * A RolapStar is a star schema. It is the means to read cell

@@ -40,11 +40,11 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
+import org.eclipse.daanse.olap.api.CatalogReader;
+import org.eclipse.daanse.olap.api.ConfigConstants;
 import org.eclipse.daanse.olap.api.Evaluator;
 import org.eclipse.daanse.olap.api.ExpCacheDescriptor;
 import org.eclipse.daanse.olap.api.QueryTiming;
-import org.eclipse.daanse.olap.api.CatalogReader;
-import org.eclipse.daanse.olap.api.ConfigConstants;
 import org.eclipse.daanse.olap.api.Statement;
 import org.eclipse.daanse.olap.api.calc.Calc;
 import org.eclipse.daanse.olap.api.calc.compiler.ParameterSlot;
@@ -62,10 +62,9 @@ import org.eclipse.daanse.olap.common.StandardProperty;
 import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.fun.FunUtil;
+import  org.eclipse.daanse.olap.util.Format;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import  org.eclipse.daanse.olap.util.Format;
 
 /**
  * RolapEvaluator evaluates expressions in a dimensional environment.

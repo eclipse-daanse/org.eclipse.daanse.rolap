@@ -32,13 +32,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.daanse.jdbc.db.dialect.api.BestFitColumnType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import  org.eclipse.daanse.olap.util.Pair;
 import org.eclipse.daanse.rolap.common.RolapStar;
 import org.eclipse.daanse.rolap.common.StarColumnPredicate;
 import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;
 import org.eclipse.daanse.rolap.common.sql.SqlQuery;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * An AggStar's version of the {@link QuerySpec}.

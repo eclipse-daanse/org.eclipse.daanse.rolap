@@ -38,9 +38,9 @@ import org.eclipse.daanse.olap.api.element.OlapElement;
 import org.eclipse.daanse.olap.common.Util;
 import  org.eclipse.daanse.olap.util.Pair;
 import org.eclipse.daanse.rolap.common.RolapStar;
+import org.eclipse.daanse.rolap.common.RolapStar.Column;
 import org.eclipse.daanse.rolap.common.StarColumnPredicate;
 import org.eclipse.daanse.rolap.common.StarPredicate;
-import org.eclipse.daanse.rolap.common.RolapStar.Column;
 import org.eclipse.daanse.rolap.common.sql.SqlQuery;
 
 /**

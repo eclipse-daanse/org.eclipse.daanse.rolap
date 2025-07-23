@@ -48,21 +48,20 @@ import java.util.concurrent.Future;
 import org.eclipse.daanse.olap.api.Execution;
 import org.eclipse.daanse.olap.common.QueryCanceledException;
 import org.eclipse.daanse.olap.common.Util;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import org.eclipse.daanse.olap.key.BitKey;
 import org.eclipse.daanse.olap.spi.SegmentBody;
 import org.eclipse.daanse.olap.spi.SegmentColumn;
 import org.eclipse.daanse.olap.spi.SegmentHeader;
 import org.eclipse.daanse.olap.util.ByteString;
 import org.eclipse.daanse.olap.util.CartesianProductList;
 import  org.eclipse.daanse.olap.util.Pair;
-import org.eclipse.daanse.olap.key.BitKey;
 import org.eclipse.daanse.rolap.common.RolapUtil;
 import org.eclipse.daanse.rolap.common.agg.CellRequest;
 import org.eclipse.daanse.rolap.common.agg.SegmentBuilder;
 import org.eclipse.daanse.rolap.util.PartiallyOrderedSet;
 import org.eclipse.daanse.rolap.util.SlotFuture;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**

@@ -21,7 +21,6 @@ import org.eclipse.daanse.olap.api.Evaluator;
 import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.olap.api.calc.Calc;
 import org.eclipse.daanse.olap.api.calc.todo.TupleList;
-import org.eclipse.daanse.rolap.common.RolapColumn;
 import org.eclipse.daanse.rolap.common.RolapOrderedColumn;
 
 public class ListAggAggregator implements Aggregator {

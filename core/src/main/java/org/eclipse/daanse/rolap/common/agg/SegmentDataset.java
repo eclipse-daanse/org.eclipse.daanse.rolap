@@ -34,10 +34,9 @@ import java.util.Map;
 import java.util.SortedSet;
 
 import org.eclipse.daanse.jdbc.db.dialect.api.BestFitColumnType;
-
+import org.eclipse.daanse.olap.key.CellKey;
 import org.eclipse.daanse.olap.spi.SegmentBody;
 import  org.eclipse.daanse.olap.util.Pair;
-import org.eclipse.daanse.olap.key.CellKey;
 
 /**
  * A SegmentDataset holds the values in a segment.

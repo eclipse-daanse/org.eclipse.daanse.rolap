@@ -28,6 +28,10 @@
 
 package org.eclipse.daanse.rolap.common;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.eclipse.daanse.olap.api.element.Catalog;
 import org.eclipse.daanse.olap.api.element.Cube;
 import org.eclipse.daanse.olap.api.element.Dimension;
 import org.eclipse.daanse.olap.api.element.DimensionType;
@@ -36,11 +40,6 @@ import org.eclipse.daanse.olap.api.element.Level;
 import org.eclipse.daanse.olap.api.element.MetaData;
 import org.eclipse.daanse.olap.common.DimensionBase;
 import org.eclipse.daanse.olap.common.Util;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import org.eclipse.daanse.olap.api.element.Catalog;
 import org.eclipse.daanse.olap.element.OlapMetaData;
 import org.eclipse.daanse.olap.exceptions.NonTimeLevelInTimeHierarchyException;
 import org.eclipse.daanse.olap.exceptions.TimeLevelInNonTimeHierarchyException;

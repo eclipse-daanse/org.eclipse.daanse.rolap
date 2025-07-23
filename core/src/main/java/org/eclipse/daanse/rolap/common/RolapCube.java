@@ -90,7 +90,6 @@ import org.eclipse.daanse.olap.api.query.component.MemberProperty;
 import org.eclipse.daanse.olap.api.query.component.Query;
 import org.eclipse.daanse.olap.api.query.component.ResolvedFunCall;
 import org.eclipse.daanse.olap.api.result.AllocationPolicy;
-import org.eclipse.daanse.olap.key.BitKey;
 import org.eclipse.daanse.olap.common.CubeBase;
 import org.eclipse.daanse.olap.common.RoleImpl;
 import org.eclipse.daanse.olap.common.SetBase;
@@ -101,11 +100,13 @@ import org.eclipse.daanse.olap.exceptions.CalcMemberNotUniqueException;
 import org.eclipse.daanse.olap.function.core.FunctionMetaDataR;
 import org.eclipse.daanse.olap.function.core.FunctionParameterR;
 import org.eclipse.daanse.olap.function.def.AbstractFunctionDefinition;
+import org.eclipse.daanse.olap.key.BitKey;
 import org.eclipse.daanse.olap.query.component.FormulaImpl;
 import org.eclipse.daanse.olap.query.component.IdImpl;
 import org.eclipse.daanse.olap.query.component.QueryAxisImpl;
 import org.eclipse.daanse.olap.query.component.QueryImpl;
 import org.eclipse.daanse.olap.query.component.ResolvedFunCallImpl;
+import  org.eclipse.daanse.olap.server.LocusImpl;
 import org.eclipse.daanse.rolap.common.aggmatcher.ExplicitRules;
 import org.eclipse.daanse.rolap.common.cache.SoftSmartCache;
 import org.eclipse.daanse.rolap.common.util.DimensionUtil;
@@ -138,7 +139,6 @@ import org.eclipse.daanse.rolap.mapping.pojo.SqlStatementMappingImpl;
 import org.eclipse.daanse.rolap.mapping.pojo.SqlViewMappingImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import  org.eclipse.daanse.olap.server.LocusImpl;
 
 /**
  * RolapCube implements {@link Cube} for a ROLAP database.

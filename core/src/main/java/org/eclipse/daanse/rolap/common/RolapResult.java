@@ -89,7 +89,6 @@ import org.eclipse.daanse.olap.calc.base.type.tuplebase.DelegatingTupleList;
 import org.eclipse.daanse.olap.calc.base.type.tuplebase.ListTupleList;
 import org.eclipse.daanse.olap.calc.base.type.tuplebase.TupleCollections;
 import org.eclipse.daanse.olap.calc.base.value.CurrentValueUnknownCalc;
-import org.eclipse.daanse.olap.key.CellKey;
 import org.eclipse.daanse.olap.common.ExpCacheDescriptorImpl;
 import org.eclipse.daanse.olap.common.MemberBase;
 import org.eclipse.daanse.olap.common.ResourceLimitExceededException;
@@ -105,8 +104,12 @@ import org.eclipse.daanse.olap.function.core.FunctionMetaDataR;
 import org.eclipse.daanse.olap.function.core.FunctionParameterR;
 import org.eclipse.daanse.olap.function.def.aggregate.AbstractAggregateFunDef;
 import org.eclipse.daanse.olap.function.def.aggregate.AggregateCalc;
+import org.eclipse.daanse.olap.key.CellKey;
 import org.eclipse.daanse.olap.query.component.MdxVisitorImpl;
 import org.eclipse.daanse.olap.query.component.ResolvedFunCallImpl;
+import  org.eclipse.daanse.olap.server.LocusImpl;
+import  org.eclipse.daanse.olap.util.CancellationChecker;
+import  org.eclipse.daanse.olap.util.Format;
 import org.eclipse.daanse.olap.util.type.TypeWrapperExp;
 import org.eclipse.daanse.rolap.aggregator.DistinctCountAggregator;
 import org.eclipse.daanse.rolap.common.agg.AggregationManager;
@@ -114,9 +117,6 @@ import org.eclipse.daanse.rolap.function.def.visualtotals.VisualTotalMember;
 import org.eclipse.daanse.rolap.util.ObjectPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import  org.eclipse.daanse.olap.server.LocusImpl;
-import  org.eclipse.daanse.olap.util.CancellationChecker;
-import  org.eclipse.daanse.olap.util.Format;
 
 /**
  * A RolapResult is the result of running a query.

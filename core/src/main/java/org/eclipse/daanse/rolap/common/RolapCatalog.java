@@ -94,6 +94,7 @@ import org.eclipse.daanse.olap.exceptions.RoleUnionGrantsException;
 import org.eclipse.daanse.olap.exceptions.UnknownRoleException;
 import org.eclipse.daanse.olap.query.component.FormulaImpl;
 import org.eclipse.daanse.olap.query.component.IdImpl;
+import org.eclipse.daanse.olap.util.ByteString;
 import org.eclipse.daanse.rolap.api.RolapContext;
 import org.eclipse.daanse.rolap.common.aggmatcher.AggTableManager;
 import org.eclipse.daanse.rolap.element.RolapMetaData;
@@ -121,8 +122,6 @@ import org.eclipse.daanse.rolap.mapping.api.model.VirtualCubeMapping;
 import org.eclipse.daanse.rolap.util.ClassResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import org.eclipse.daanse.olap.util.ByteString;
 
 /**
  * A RolapCatalog is a collection of {@link RolapCube}s and shared

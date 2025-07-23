@@ -38,11 +38,10 @@ import java.util.List;
 import org.eclipse.daanse.jdbc.db.dialect.api.BestFitColumnType;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.key.BitKey;
+import org.eclipse.daanse.olap.spi.SegmentHeader;
 import org.eclipse.daanse.rolap.common.RolapStar;
 import org.eclipse.daanse.rolap.common.StarColumnPredicate;
 import org.eclipse.daanse.rolap.common.StarPredicate;
-
-import org.eclipse.daanse.olap.spi.SegmentHeader;
 
 /**
  * A Segment is a collection of cell values parameterized by a measure, and a set of (column, value) pairs.

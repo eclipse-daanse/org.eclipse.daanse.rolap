@@ -62,14 +62,12 @@ import org.eclipse.daanse.olap.calc.base.type.tuplebase.ArrayTupleList;
 import org.eclipse.daanse.olap.calc.base.type.tuplebase.ListTupleList;
 import org.eclipse.daanse.olap.calc.base.type.tuplebase.TupleCollections;
 import org.eclipse.daanse.olap.calc.base.type.tuplebase.UnaryTupleList;
-import org.eclipse.daanse.olap.key.BitKey;
 import org.eclipse.daanse.olap.common.ExecuteDurationUtil;
 import org.eclipse.daanse.olap.common.ResourceLimitExceededException;
 import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.function.def.crossjoin.CrossJoinFunDef;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.eclipse.daanse.olap.key.BitKey;
 import  org.eclipse.daanse.olap.server.ExecutionImpl;
 import  org.eclipse.daanse.olap.server.LocusImpl;
 import  org.eclipse.daanse.olap.util.CancellationChecker;
@@ -84,6 +82,8 @@ import org.eclipse.daanse.rolap.common.sql.MemberListCrossJoinArg;
 import org.eclipse.daanse.rolap.common.sql.SqlQuery;
 import org.eclipse.daanse.rolap.common.sql.TupleConstraint;
 import org.eclipse.daanse.rolap.common.util.ExpressionUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Reads the members of a single level (level.members) or of multiple levels (crossjoin).

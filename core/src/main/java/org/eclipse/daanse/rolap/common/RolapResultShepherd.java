@@ -46,7 +46,6 @@ import org.eclipse.daanse.olap.common.QueryCanceledException;
 import org.eclipse.daanse.olap.common.QueryTimeoutException;
 import org.eclipse.daanse.olap.common.ResourceLimitExceededException;
 import org.eclipse.daanse.olap.common.Util;
-
 import  org.eclipse.daanse.olap.util.Pair;
 
 /**

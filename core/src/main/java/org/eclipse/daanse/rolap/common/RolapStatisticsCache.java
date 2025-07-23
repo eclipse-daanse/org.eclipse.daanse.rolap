@@ -36,12 +36,12 @@ import javax.sql.DataSource;
 import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.olap.api.SqlExpression;
 import org.eclipse.daanse.olap.common.ExecuteDurationUtil;
+import  org.eclipse.daanse.olap.server.ExecutionImpl;
 import org.eclipse.daanse.rolap.common.sql.SqlQuery;
 import org.eclipse.daanse.rolap.mapping.api.model.RelationalQueryMapping;
 import org.eclipse.daanse.rolap.mapping.api.model.TableMapping;
 import org.eclipse.daanse.rolap.mapping.api.model.TableQueryMapping;
 import org.eclipse.daanse.rolap.sql.SqlStatisticsProviderNew;
-import  org.eclipse.daanse.olap.server.ExecutionImpl;
 
 
 /**

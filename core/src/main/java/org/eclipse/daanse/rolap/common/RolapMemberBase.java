@@ -50,13 +50,12 @@ import org.eclipse.daanse.olap.common.StandardProperty;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.element.OlapMetaData;
 import org.eclipse.daanse.olap.function.def.aggregate.AggregateFunDef;
-import org.eclipse.daanse.rolap.function.def.visualtotals.VisualTotalMember;
 import org.eclipse.daanse.olap.query.component.ResolvedFunCallImpl;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import  org.eclipse.daanse.olap.server.LocusImpl;
 import  org.eclipse.daanse.olap.util.Bug;
+import org.eclipse.daanse.rolap.function.def.visualtotals.VisualTotalMember;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Basic implementation of a member in a {@link RolapHierarchy}.

@@ -34,9 +34,9 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.SortedSet;
 
+import org.eclipse.daanse.olap.key.CellKey;
 import org.eclipse.daanse.olap.spi.SegmentBody;
 import  org.eclipse.daanse.olap.util.Pair;
-import org.eclipse.daanse.olap.key.CellKey;
 
 /**
  * Abstract implementation of a SegmentBody.

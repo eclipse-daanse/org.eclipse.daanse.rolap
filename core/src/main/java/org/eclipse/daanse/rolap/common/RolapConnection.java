@@ -38,7 +38,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import javax.sql.DataSource;
@@ -81,6 +80,8 @@ import org.eclipse.daanse.olap.core.AbstractBasicContext;
 import org.eclipse.daanse.olap.exceptions.FailedToParseQueryException;
 import org.eclipse.daanse.olap.query.component.QueryImpl;
 import org.eclipse.daanse.olap.query.component.TransactionCommandImpl;
+import  org.eclipse.daanse.olap.server.ExecutionImpl;
+import  org.eclipse.daanse.olap.server.LocusImpl;
 import org.eclipse.daanse.rolap.api.RolapContext;
 import org.eclipse.daanse.rolap.mapping.api.model.CatalogMapping;
 import org.eclipse.daanse.rolap.util.FauxMemoryMonitor;
@@ -88,9 +89,6 @@ import org.eclipse.daanse.rolap.util.MemoryMonitor;
 import org.eclipse.daanse.rolap.util.NotificationMemoryMonitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import  org.eclipse.daanse.olap.server.ExecutionImpl;
-import  org.eclipse.daanse.olap.server.LocusImpl;
 
 public class RolapConnection extends ConnectionBase {
   private static final Logger LOGGER =

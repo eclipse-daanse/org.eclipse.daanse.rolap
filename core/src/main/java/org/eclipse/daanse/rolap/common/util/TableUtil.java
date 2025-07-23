@@ -15,6 +15,7 @@ package org.eclipse.daanse.rolap.common.util;
 
 import java.util.Map;
 import java.util.stream.Collectors;
+
 import org.eclipse.daanse.rolap.mapping.api.model.TableQueryMapping;
 import org.eclipse.daanse.rolap.mapping.api.model.TableQueryOptimizationHintMapping;
 

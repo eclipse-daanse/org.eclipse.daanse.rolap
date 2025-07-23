@@ -78,7 +78,6 @@ import  org.eclipse.daanse.olap.server.ExecutionImpl;
 import  org.eclipse.daanse.olap.server.LocusImpl;
 import org.eclipse.daanse.olap.spi.SegmentColumn;
 import org.eclipse.daanse.olap.util.ArraySortedSet;
-import org.eclipse.daanse.rolap.common.agg.SegmentCacheManager;
 import org.eclipse.daanse.rolap.common.sql.MemberChildrenConstraint;
 
 /**

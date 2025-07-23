@@ -78,13 +78,13 @@ import org.eclipse.daanse.olap.function.def.aggregate.AggregateFunDef;
 import org.eclipse.daanse.olap.function.def.set.SetFunDef;
 import org.eclipse.daanse.olap.query.component.MdxVisitorImpl;
 import org.eclipse.daanse.olap.query.component.ResolvedFunCallImpl;
-import org.slf4j.Logger;
 import  org.eclipse.daanse.olap.server.ExecutionImpl;
 import  org.eclipse.daanse.olap.server.LocusImpl;
 import org.eclipse.daanse.rolap.common.agg.AndPredicate;
 import org.eclipse.daanse.rolap.common.agg.DrillThroughCellRequest;
 import org.eclipse.daanse.rolap.common.agg.MemberColumnPredicate;
 import org.eclipse.daanse.rolap.common.agg.OrPredicate;
+import org.slf4j.Logger;
 
 /**
  * RolapCell implements {@link org.eclipse.daanse.olap.api.result.Cell} within a

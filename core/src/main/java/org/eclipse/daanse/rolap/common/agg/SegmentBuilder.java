@@ -47,16 +47,13 @@ import org.eclipse.daanse.olap.api.ConfigConstants;
 import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.impl.UnmodifiableArrayList;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import org.eclipse.daanse.olap.key.BitKey;
+import org.eclipse.daanse.olap.key.CellKey;
 import org.eclipse.daanse.olap.spi.SegmentBody;
 import org.eclipse.daanse.olap.spi.SegmentColumn;
 import org.eclipse.daanse.olap.spi.SegmentHeader;
 import  org.eclipse.daanse.olap.util.ArraySortedSet;
 import  org.eclipse.daanse.olap.util.Pair;
-import org.eclipse.daanse.olap.key.BitKey;
-import org.eclipse.daanse.olap.key.CellKey;
 import org.eclipse.daanse.rolap.common.EnumConvertor;
 import org.eclipse.daanse.rolap.common.RolapCatalog;
 import org.eclipse.daanse.rolap.common.RolapStar;
@@ -65,6 +62,8 @@ import org.eclipse.daanse.rolap.common.StarColumnPredicate;
 import org.eclipse.daanse.rolap.common.StarPredicate;
 import org.eclipse.daanse.rolap.common.agg.Segment.ExcludedRegion;
 import org.eclipse.daanse.rolap.common.sql.SqlQuery;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Helper class that contains methods to convert between

@@ -55,12 +55,10 @@ import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.element.Property;
 import org.eclipse.daanse.olap.api.monitor.event.SqlStatementEvent;
 import org.eclipse.daanse.olap.api.query.component.Expression;
-import org.eclipse.daanse.olap.key.BitKey;
 import org.eclipse.daanse.olap.common.ResourceLimitExceededException;
 import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.olap.common.Util;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.eclipse.daanse.olap.key.BitKey;
 import  org.eclipse.daanse.olap.server.LocusImpl;
 import  org.eclipse.daanse.olap.util.CancellationChecker;
 import  org.eclipse.daanse.olap.util.Pair;
@@ -72,6 +70,8 @@ import org.eclipse.daanse.rolap.common.sql.MemberChildrenConstraint;
 import org.eclipse.daanse.rolap.common.sql.MemberKeyConstraint;
 import org.eclipse.daanse.rolap.common.sql.SqlQuery;
 import org.eclipse.daanse.rolap.common.sql.TupleConstraint;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A SqlMemberSource reads members from a SQL database.

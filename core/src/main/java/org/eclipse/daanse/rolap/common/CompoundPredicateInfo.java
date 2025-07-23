@@ -37,17 +37,17 @@ import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.query.component.Expression;
 import org.eclipse.daanse.olap.api.type.SetType;
 import org.eclipse.daanse.olap.api.type.Type;
-import org.eclipse.daanse.olap.key.BitKey;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.exceptions.UnsupportedCalculatedMemberException;
+import org.eclipse.daanse.olap.key.BitKey;
+import org.eclipse.daanse.olap.query.component.ResolvedFunCallImpl;
+import  org.eclipse.daanse.olap.util.Pair;
 import org.eclipse.daanse.rolap.common.agg.AndPredicate;
 import org.eclipse.daanse.rolap.common.agg.ListColumnPredicate;
 import org.eclipse.daanse.rolap.common.agg.OrPredicate;
 import org.eclipse.daanse.rolap.common.agg.ValueColumnPredicate;
 import org.eclipse.daanse.rolap.common.sql.SqlQuery;
 import org.eclipse.daanse.rolap.function.def.visualtotals.VisualTotalMember;
-import org.eclipse.daanse.olap.query.component.ResolvedFunCallImpl;
-import  org.eclipse.daanse.olap.util.Pair;
 
 /**
  * Constructs a Pair with BitKey and StarPredicate based on an tuple list and measure, along with the string representation of

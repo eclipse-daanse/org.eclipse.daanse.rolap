@@ -22,7 +22,6 @@ import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.olap.api.calc.Calc;
 import org.eclipse.daanse.olap.api.calc.todo.TupleList;
 import org.eclipse.daanse.rolap.common.RolapOrderedColumn;
-import org.eclipse.daanse.rolap.mapping.api.model.enums.PercentileType;
 
 public class NthValueAggregator implements Aggregator {
 

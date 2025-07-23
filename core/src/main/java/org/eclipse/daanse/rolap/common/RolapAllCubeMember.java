@@ -27,7 +27,6 @@
 
 package org.eclipse.daanse.rolap.common;
 
-import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.olap.common.Util;
 
 /**

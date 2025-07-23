@@ -35,10 +35,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.eclipse.daanse.olap.api.Context;
-import org.eclipse.daanse.olap.api.NativeEvaluator;
 import org.eclipse.daanse.olap.api.CatalogReader;
 import org.eclipse.daanse.olap.api.ConfigConstants;
+import org.eclipse.daanse.olap.api.Context;
+import org.eclipse.daanse.olap.api.NativeEvaluator;
 import org.eclipse.daanse.olap.api.access.AccessHierarchy;
 import org.eclipse.daanse.olap.api.access.Role;
 import org.eclipse.daanse.olap.api.calc.ResultStyle;

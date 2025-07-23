@@ -53,23 +53,23 @@ import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
 import org.eclipse.daanse.olap.common.ExecuteDurationUtil;
 import org.eclipse.daanse.olap.common.Util;
-import org.eclipse.daanse.rolap.aggregator.countbased.AbstractFactCountBasedAggregator;
 import org.eclipse.daanse.olap.key.BitKey;
+import  org.eclipse.daanse.olap.server.ExecutionImpl;
+import  org.eclipse.daanse.olap.server.LocusImpl;
+import org.eclipse.daanse.rolap.aggregator.countbased.AbstractFactCountBasedAggregator;
 import org.eclipse.daanse.rolap.common.RolapColumn;
 import org.eclipse.daanse.rolap.common.RolapLevel;
 import org.eclipse.daanse.rolap.common.RolapSqlExpression;
 import org.eclipse.daanse.rolap.common.RolapStar;
 import org.eclipse.daanse.rolap.common.RolapUtil;
 import org.eclipse.daanse.rolap.common.SqlStatement;
-import org.eclipse.daanse.rolap.common.aggmatcher.JdbcSchema.UsageType;
 import org.eclipse.daanse.rolap.common.aggmatcher.JdbcSchema.Table.Column.Usage;
+import org.eclipse.daanse.rolap.common.aggmatcher.JdbcSchema.UsageType;
 import org.eclipse.daanse.rolap.common.sql.SqlQuery;
 import org.eclipse.daanse.rolap.common.util.ExpressionUtil;
 import org.eclipse.daanse.rolap.mapping.api.model.RelationalQueryMapping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import  org.eclipse.daanse.olap.server.ExecutionImpl;
-import  org.eclipse.daanse.olap.server.LocusImpl;
 
 /**
  * Aggregate table version of a RolapStar for a fact table.

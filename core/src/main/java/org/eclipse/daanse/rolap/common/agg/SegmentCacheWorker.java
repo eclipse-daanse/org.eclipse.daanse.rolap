@@ -36,14 +36,13 @@ import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
 import org.eclipse.daanse.olap.exceptions.SegmentCacheFailedToInstanciateException;
 import org.eclipse.daanse.olap.exceptions.SegmentCacheFailedToLoadSegmentException;
 import org.eclipse.daanse.olap.exceptions.SegmentCacheFailedToSaveSegmentException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import org.eclipse.daanse.olap.spi.SegmentBody;
 import org.eclipse.daanse.olap.spi.SegmentCache;
 import org.eclipse.daanse.olap.spi.SegmentHeader;
 import org.eclipse.daanse.rolap.util.ClassResolver;
 import org.eclipse.daanse.rolap.util.ServiceDiscovery;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Utility class to interact with the {@link SegmentCache}.

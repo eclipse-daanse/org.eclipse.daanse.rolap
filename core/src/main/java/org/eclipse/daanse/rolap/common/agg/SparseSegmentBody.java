@@ -30,8 +30,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
 
-import  org.eclipse.daanse.olap.util.Pair;
 import org.eclipse.daanse.olap.key.CellKey;
+import  org.eclipse.daanse.olap.util.Pair;
 
 /**
  * Implementation of a segment body which stores the data of a
