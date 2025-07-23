@@ -1775,7 +1775,7 @@ public class CacheControlImpl implements CacheControl {
     /**
      * Command that changes one or more properties of a member.
      */
-    private class ChangeMemberPropsCommand
+    private static class ChangeMemberPropsCommand
         extends MemberSetVisitorImpl
         implements MemberEditCommandPlus
     {
