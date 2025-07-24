@@ -37,6 +37,9 @@ import org.eclipse.daanse.rolap.common.sql.CrossJoinArg;
 import org.eclipse.daanse.rolap.common.sql.MemberChildrenConstraint;
 import org.eclipse.daanse.rolap.common.sql.SqlQuery;
 import org.eclipse.daanse.rolap.common.sql.TupleConstraint;
+import org.eclipse.daanse.rolap.element.RolapCube;
+import org.eclipse.daanse.rolap.element.RolapLevel;
+import org.eclipse.daanse.rolap.element.RolapMember;
 
 /**
  * Constraint which excludes the members in the list received in constructor.

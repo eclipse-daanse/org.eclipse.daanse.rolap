@@ -42,6 +42,11 @@ import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
 import org.eclipse.daanse.olap.common.RoleImpl;
 import org.eclipse.daanse.rolap.common.sql.MemberChildrenConstraint;
 import org.eclipse.daanse.rolap.common.sql.TupleConstraint;
+import org.eclipse.daanse.rolap.element.DelegatingRolapMember;
+import org.eclipse.daanse.rolap.element.MultiCardinalityDefaultMember;
+import org.eclipse.daanse.rolap.element.RolapHierarchy;
+import org.eclipse.daanse.rolap.element.RolapLevel;
+import org.eclipse.daanse.rolap.element.RolapMember;
 
 
 /**
@@ -322,19 +327,7 @@ public class RestrictedMemberReader extends DelegatingMemberReader {
         return new MultiCardinalityDefaultMember(rootMembers.get(0));
     }
 
-    /**
-     * This is a special subclass of {@link DelegatingRolapMember}.
-     * It is needed because {@link Evaluator} doesn't support multi cardinality
-     * default members. RolapHierarchy.LimitedRollupSubstitutingMemberReader
-     * .substitute() looks for this class and substitutes the
-     * FIXME: If/when we refactor evaluator to support
-     * multi cardinality default members, we can remove this.
-     */
-    public static class MultiCardinalityDefaultMember extends DelegatingRolapMember {
-        protected MultiCardinalityDefaultMember(RolapMember member) {
-            super(member);
-        }
-    }
+    
 
     @Override
 	public RolapMember getMemberParent(RolapMember member) {

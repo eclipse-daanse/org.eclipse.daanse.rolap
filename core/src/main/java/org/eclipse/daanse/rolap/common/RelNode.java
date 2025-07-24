@@ -46,7 +46,7 @@ public class RelNode {
     private String alias;
     private RelationalQueryMapping table;
 
-    RelNode(String alias, int depth) {
+    public RelNode(String alias, int depth) {
         this.alias = alias;
         this.depth = depth;
     }

@@ -82,6 +82,19 @@ import org.eclipse.daanse.rolap.common.sql.MemberListCrossJoinArg;
 import org.eclipse.daanse.rolap.common.sql.SqlQuery;
 import org.eclipse.daanse.rolap.common.sql.TupleConstraint;
 import org.eclipse.daanse.rolap.common.util.ExpressionUtil;
+import org.eclipse.daanse.rolap.element.RolapBaseCubeMeasure;
+import org.eclipse.daanse.rolap.element.RolapCube;
+import org.eclipse.daanse.rolap.element.RolapCubeHierarchy;
+import org.eclipse.daanse.rolap.element.RolapCubeLevel;
+import org.eclipse.daanse.rolap.element.RolapHierarchy;
+import org.eclipse.daanse.rolap.element.RolapLevel;
+import org.eclipse.daanse.rolap.element.RolapMember;
+import org.eclipse.daanse.rolap.element.RolapMemberBase;
+import org.eclipse.daanse.rolap.element.RolapParentChildMember;
+import org.eclipse.daanse.rolap.element.RolapPhysicalCube;
+import org.eclipse.daanse.rolap.element.RolapProperty;
+import org.eclipse.daanse.rolap.element.RolapStoredMeasure;
+import org.eclipse.daanse.rolap.element.RolapVirtualCube;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -114,7 +127,7 @@ import org.slf4j.LoggerFactory;
  * then we can not store the parent/child pairs in the MemberCache and
  * {@link TupleConstraint#getMemberChildrenConstraint(RolapMember)}
  * must return null. Also
- * {@link TupleConstraint#addConstraint(org.eclipse.daanse.rolap.common.sql.SqlQuery, org.eclipse.daanse.rolap.common.RolapCube, org.eclipse.daanse.rolap.common.aggmatcher.AggStar)}
+ * {@link TupleConstraint#addConstraint(org.eclipse.daanse.rolap.common.sql.SqlQuery, org.eclipse.daanse.rolap.element.RolapCube, org.eclipse.daanse.rolap.common.aggmatcher.AggStar)}
  * is required to join the fact table for the levels table.
  *
  *
@@ -267,7 +280,7 @@ public class SqlTupleReader implements TupleReader {
                   .findMember( value );
             }
             if ( member == null ) {
-              if (parentMember  == null || !(parentMember instanceof SqlMemberSource.RolapParentChildMember) || !parentMember.getKey().equals(value)) {
+              if (parentMember  == null || !(parentMember instanceof RolapParentChildMember) || !parentMember.getKey().equals(value)) {
                 if (parentMember  == null || !parentMember.getLevel().equals(childLevel) || !parentMember.getKey().equals(value)) {
                     member = memberBuilder.makeMember(
                             parentMember, childLevel, value, captionValue,

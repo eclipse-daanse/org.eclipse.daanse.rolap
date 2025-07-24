@@ -34,6 +34,7 @@ import org.eclipse.daanse.olap.api.query.component.Expression;
 import org.eclipse.daanse.olap.api.type.Type;
 import org.eclipse.daanse.olap.calc.base.nested.AbstractProfilingNestedUnknownCalc;
 import org.eclipse.daanse.olap.exceptions.ParameterIsNotModifiableException;
+import org.eclipse.daanse.rolap.element.RolapCatalog;
 
 /**
  * Parameter that is defined in a schema.
@@ -52,7 +53,7 @@ public class RolapCatalogParameter implements Parameter, CompilableParameter {
     private boolean assigned;
     private Object cachedDefaultValue;
 
-    RolapCatalogParameter(
+    public RolapCatalogParameter(
         RolapCatalog catalog,
         String name,
         String defaultExpString,

@@ -33,6 +33,8 @@ import java.util.List;
 
 import org.eclipse.daanse.rolap.common.sql.MemberChildrenConstraint;
 import org.eclipse.daanse.rolap.common.sql.TupleConstraint;
+import org.eclipse.daanse.rolap.element.RolapLevel;
+import org.eclipse.daanse.rolap.element.RolapMember;
 
 /**
  * A MemberCache can retrieve members based upon their parent and

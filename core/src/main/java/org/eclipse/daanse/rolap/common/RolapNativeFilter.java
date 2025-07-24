@@ -47,6 +47,10 @@ import org.eclipse.daanse.rolap.common.TupleReader.MemberBuilder;
 import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;
 import org.eclipse.daanse.rolap.common.sql.CrossJoinArg;
 import org.eclipse.daanse.rolap.common.sql.SqlQuery;
+import org.eclipse.daanse.rolap.element.RolapCatalog;
+import org.eclipse.daanse.rolap.element.RolapCube;
+import org.eclipse.daanse.rolap.element.RolapHierarchy;
+import org.eclipse.daanse.rolap.element.RolapLevel;
 
 /**
  * Computes a Filter(set, condition) in SQL.

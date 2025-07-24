@@ -51,6 +51,12 @@ import org.eclipse.daanse.olap.query.component.HierarchyExpressionImpl;
 import org.eclipse.daanse.olap.query.component.ResolvedFunCallImpl;
 import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;
 import org.eclipse.daanse.rolap.common.sql.SqlQuery;
+import org.eclipse.daanse.rolap.element.RolapCalculatedMember;
+import org.eclipse.daanse.rolap.element.RolapCubeDimension;
+import org.eclipse.daanse.rolap.element.RolapCubeHierarchy;
+import org.eclipse.daanse.rolap.element.RolapCubeLevel;
+import org.eclipse.daanse.rolap.element.RolapLevel;
+import org.eclipse.daanse.rolap.element.RolapStoredMeasure;
 
 /**
  * Creates SQL from parse tree nodes. Currently it creates the SQL that
@@ -336,14 +342,14 @@ public class RolapNativeSql {
                 //  - caption requested: caption->name->key
                 //  - name requested: name->key
                 SqlExpression expression = useCaption
-                ? rolapLevel.captionExp == null
-                        ? rolapLevel.nameExp == null
-                            ? rolapLevel.keyExp
-                            : rolapLevel.nameExp
-                        : rolapLevel.captionExp
-                    : rolapLevel.nameExp == null
-                        ? rolapLevel.keyExp
-                        : rolapLevel.nameExp;
+                ? rolapLevel.getCaptionExp() == null
+                        ? rolapLevel.getNameExp() == null
+                            ? rolapLevel.getKeyExp()
+                            : rolapLevel.getNameExp()
+                        : rolapLevel.getCaptionExp()
+                    : rolapLevel.getNameExp() == null
+                        ? rolapLevel.getKeyExp()
+                        : rolapLevel.getNameExp();
                  // If an aggregation table is used, it might be more efficient
                  // to use only the aggregate table and not the hierarchy table.
                  // Try to lookup the column bit key. If that fails, we will
@@ -353,7 +359,7 @@ public class RolapNativeSql {
                 String sourceExp;
                 if (aggStar != null
                     && rolapLevel instanceof RolapCubeLevel
-                    && expression == rolapLevel.keyExp)
+                    && expression == rolapLevel.getKeyExp())
                 {
                     int bitPos =
                         ((RolapCubeLevel)rolapLevel).getStarKeyColumn()

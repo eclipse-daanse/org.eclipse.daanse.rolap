@@ -29,11 +29,11 @@ import org.eclipse.daanse.jdbc.db.dialect.api.Datatype;
 import org.eclipse.daanse.olap.api.Evaluator;
 import org.eclipse.daanse.olap.api.SqlExpression;
 import  org.eclipse.daanse.olap.util.Pair;
-import org.eclipse.daanse.rolap.common.RolapCube;
-import org.eclipse.daanse.rolap.common.RolapLevel;
-import org.eclipse.daanse.rolap.common.RolapMember;
 import org.eclipse.daanse.rolap.common.SqlConstraintUtils;
 import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;
+import org.eclipse.daanse.rolap.element.RolapCube;
+import org.eclipse.daanse.rolap.element.RolapLevel;
+import org.eclipse.daanse.rolap.element.RolapMember;
 
 /**
  * Restricts the SQL result set to members where particular columns have

@@ -54,6 +54,9 @@ import org.eclipse.daanse.rolap.common.aggmatcher.AggGen;
 import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;
 import org.eclipse.daanse.rolap.common.cache.SegmentCacheIndex;
 import org.eclipse.daanse.rolap.common.cache.SegmentCacheIndexImpl;
+import org.eclipse.daanse.rolap.element.RolapCatalog;
+import org.eclipse.daanse.rolap.element.RolapCube;
+import org.eclipse.daanse.rolap.element.RolapVirtualCube;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1167,7 +1170,7 @@ public class BatchLoader {
          * @return Whether batches have the same closure columns
          */
         boolean haveSameClosureColumns(Batch other) {
-            final BitKey cubeClosureColumnBitKey = cube.closureColumnBitKey;
+            final BitKey cubeClosureColumnBitKey = cube.getClosureColumnBitKey();
             if (cubeClosureColumnBitKey == null) {
                 // Virtual cubes have a null bitkey. For now, punt; should do
                 // better.
@@ -1180,7 +1183,7 @@ public class BatchLoader {
                 other.batchKey.getConstrainedColumnsBitKey()
                     .and(cubeClosureColumnBitKey);
             return closureColumns.equals(otherClosureColumns);
-        }
+        } 
 
         /**
          * @param rollup Out parameter

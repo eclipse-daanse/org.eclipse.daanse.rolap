@@ -59,7 +59,14 @@ import org.eclipse.daanse.olap.exceptions.MdxCantFindMemberException;
 import org.eclipse.daanse.olap.fun.FunUtil;
 import org.eclipse.daanse.olap.key.BitKey;
 import  org.eclipse.daanse.olap.server.LocusImpl;
-import org.eclipse.daanse.rolap.common.RolapHierarchy.LimitedRollupMember;
+import org.eclipse.daanse.rolap.element.RolapCube;
+import org.eclipse.daanse.rolap.element.RolapCubeLevel;
+import org.eclipse.daanse.rolap.element.RolapCubeMember;
+import org.eclipse.daanse.rolap.element.RolapHierarchy;
+import org.eclipse.daanse.rolap.element.RolapLevel;
+import org.eclipse.daanse.rolap.element.RolapMember;
+import org.eclipse.daanse.rolap.element.RolapProperty;
+import org.eclipse.daanse.rolap.element.RolapHierarchy.LimitedRollupMember;
 import org.eclipse.daanse.rolap.mapping.api.model.InlineTableQueryMapping;
 import org.eclipse.daanse.rolap.mapping.api.model.RelationalQueryMapping;
 import org.eclipse.daanse.rolap.mapping.api.model.RowMapping;
@@ -544,7 +551,7 @@ public class RolapUtil {
                             .getLowestMembersForAccess(
                                 evaluator,
                                 limitedRollupMember
-                                    .hierarchyAccess,
+                                    .getHierarchyAccess(),
                                 FunUtil.getNonEmptyMemberChildrenWithDetails(
                                     evaluator,
                                     curMember));

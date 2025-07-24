@@ -47,6 +47,11 @@ import org.eclipse.daanse.rolap.common.agg.ListColumnPredicate;
 import org.eclipse.daanse.rolap.common.agg.OrPredicate;
 import org.eclipse.daanse.rolap.common.agg.ValueColumnPredicate;
 import org.eclipse.daanse.rolap.common.sql.SqlQuery;
+import org.eclipse.daanse.rolap.element.RolapCube;
+import org.eclipse.daanse.rolap.element.RolapCubeLevel;
+import org.eclipse.daanse.rolap.element.RolapCubeMember;
+import org.eclipse.daanse.rolap.element.RolapMeasure;
+import org.eclipse.daanse.rolap.element.RolapStoredMeasure;
 import org.eclipse.daanse.rolap.function.def.visualtotals.VisualTotalMember;
 
 /**

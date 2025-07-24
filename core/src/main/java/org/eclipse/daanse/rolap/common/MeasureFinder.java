@@ -23,6 +23,15 @@ import org.eclipse.daanse.olap.api.query.component.MemberExpression;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.element.OlapMetaData;
 import org.eclipse.daanse.olap.query.component.MdxVisitorImpl;
+import org.eclipse.daanse.rolap.element.RolapBaseCubeMeasure;
+import org.eclipse.daanse.rolap.element.RolapCalculatedMember;
+import org.eclipse.daanse.rolap.element.RolapCatalog;
+import org.eclipse.daanse.rolap.element.RolapCube;
+import org.eclipse.daanse.rolap.element.RolapLevel;
+import org.eclipse.daanse.rolap.element.RolapMember;
+import org.eclipse.daanse.rolap.element.RolapPhysicalCube;
+import org.eclipse.daanse.rolap.element.RolapVirtualCube;
+import org.eclipse.daanse.rolap.element.RolapVirtualCubeMeasure;
 import org.eclipse.daanse.rolap.mapping.api.model.CalculatedMemberMapping;
 import org.eclipse.daanse.rolap.mapping.api.model.NamedSetMapping;
 

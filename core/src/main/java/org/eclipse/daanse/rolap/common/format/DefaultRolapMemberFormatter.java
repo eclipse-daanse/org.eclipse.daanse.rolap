@@ -27,7 +27,7 @@ package org.eclipse.daanse.rolap.common.format;
 
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.formatter.MemberFormatter;
-import org.eclipse.daanse.rolap.common.RolapMemberBase;
+import org.eclipse.daanse.rolap.element.RolapMemberBase;
 
 /**
  * Default implementation of SPI {@link MemberFormatter}.
@@ -56,7 +56,7 @@ public class DefaultRolapMemberFormatter implements MemberFormatter {
      *   because it would end up with a stack overflow.
      *
      *   So, now this fromatter set by default
-     *   in {@link org.eclipse.daanse.rolap.common.RolapLevel} only,
+     *   in {@link org.eclipse.daanse.rolap.element.RolapLevel} only,
      *   and IS only used for RolapMemberBase.
      * 
      */

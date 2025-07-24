@@ -38,10 +38,10 @@ import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.rolap.api.RolapContext;
-import org.eclipse.daanse.rolap.common.RolapCatalog;
-import org.eclipse.daanse.rolap.common.RolapCube;
 import org.eclipse.daanse.rolap.common.RolapStar;
 import org.eclipse.daanse.rolap.common.util.PojoUtil;
+import org.eclipse.daanse.rolap.element.RolapCatalog;
+import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.mapping.api.model.ColumnMapping;
 import org.eclipse.daanse.rolap.mapping.api.model.DatabaseSchemaMapping;
 import org.eclipse.daanse.rolap.mapping.api.model.QueryMapping;
@@ -63,7 +63,7 @@ import org.slf4j.LoggerFactory;
  * Manages aggregate tables.
  *
  * It is used as follows:
- * A {@link org.eclipse.daanse.rolap.common.RolapCatalog} creates an {@link AggTableManager},
+ * A {@link org.eclipse.daanse.rolap.element.RolapCatalog} creates an {@link AggTableManager},
  *     and stores it in a member variable to ensure that it is not
  *     garbage-collected.
  * The org.eclipse.daanse.rolap.common.RolapCatalog calls #initialize(ConnectionProps),

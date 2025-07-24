@@ -57,7 +57,7 @@ import org.slf4j.LoggerFactory;
  * a resource in the jar file (but can be a url).
  *
  * It is a singleton since it is used to recognize tables independent of
- * database connection (each {@link org.eclipse.daanse.rolap.common.RolapCatalog} uses the same
+ * database connection (each {@link org.eclipse.daanse.rolap.element.RolapCatalog} uses the same
  * instance).
  *
  * @author Richard M. Emberson

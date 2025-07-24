@@ -79,6 +79,13 @@ import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.query.component.NullLiteralImpl;
 import org.eclipse.daanse.rolap.common.sql.MemberChildrenConstraint;
 import org.eclipse.daanse.rolap.common.sql.TupleConstraint;
+import org.eclipse.daanse.rolap.element.RolapCatalog;
+import org.eclipse.daanse.rolap.element.RolapCubeHierarchy;
+import org.eclipse.daanse.rolap.element.RolapDatabaseSchema;
+import org.eclipse.daanse.rolap.element.RolapDatabaseTable;
+import org.eclipse.daanse.rolap.element.RolapHierarchy;
+import org.eclipse.daanse.rolap.element.RolapLevel;
+import org.eclipse.daanse.rolap.element.RolapMember;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -110,7 +117,7 @@ public class RolapCatalogReader
      * @param role Role for access control, must not be null
      * @param catalog Schema
      */
-    RolapCatalogReader(Context<?> context, Role role, RolapCatalog catalog) {
+    public RolapCatalogReader(Context<?> context, Role role, RolapCatalog catalog) {
         assert role != null : "precondition: role != null";
         assert catalog != null;
         assert context != null;

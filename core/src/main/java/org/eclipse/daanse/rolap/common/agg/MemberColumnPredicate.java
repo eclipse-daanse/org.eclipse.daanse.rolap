@@ -27,9 +27,9 @@ package org.eclipse.daanse.rolap.common.agg;
 
 import java.util.List;
 
-import org.eclipse.daanse.rolap.common.RolapMember;
 import org.eclipse.daanse.rolap.common.RolapStar;
 import org.eclipse.daanse.rolap.common.StarColumnPredicate;
+import org.eclipse.daanse.rolap.element.RolapMember;
 
 /**
  * Column constraint defined by a member.

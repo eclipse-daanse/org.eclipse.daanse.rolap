@@ -42,6 +42,10 @@ import org.eclipse.daanse.olap.api.element.Hierarchy;
 import org.eclipse.daanse.olap.api.element.Level;
 import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
 import org.eclipse.daanse.olap.common.Util;
+import org.eclipse.daanse.rolap.element.RolapCube;
+import org.eclipse.daanse.rolap.element.RolapCubeHierarchy;
+import org.eclipse.daanse.rolap.element.RolapHierarchy;
+import org.eclipse.daanse.rolap.element.RolapLevel;
 import org.eclipse.daanse.rolap.mapping.api.model.ColumnMapping;
 import org.eclipse.daanse.rolap.mapping.api.model.DimensionConnectorMapping;
 import org.eclipse.daanse.rolap.mapping.api.model.DimensionMapping;
@@ -160,7 +164,7 @@ public class HierarchyUsage {
      * @param hierarchy Hierarchy
      * @param cubeDim XML definition of a dimension which belongs to a cube
      */
-    HierarchyUsage(
+    public HierarchyUsage(
         RolapCube cube,
         RolapHierarchy hierarchy,
         DimensionConnectorMapping cubeDim)

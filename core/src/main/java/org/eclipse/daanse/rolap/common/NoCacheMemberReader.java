@@ -43,6 +43,9 @@ import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.rolap.common.TupleReader.MemberBuilder;
 import org.eclipse.daanse.rolap.common.sql.MemberChildrenConstraint;
 import org.eclipse.daanse.rolap.common.sql.TupleConstraint;
+import org.eclipse.daanse.rolap.element.RolapHierarchy;
+import org.eclipse.daanse.rolap.element.RolapLevel;
+import org.eclipse.daanse.rolap.element.RolapMember;
 import org.eclipse.daanse.rolap.util.ConcatenableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,7 +67,7 @@ public class NoCacheMemberReader implements MemberReader, MemberCache {
     private final MemberReader source;
 
 
-    NoCacheMemberReader(MemberReader source) {
+    public NoCacheMemberReader(MemberReader source) {
         this.source = source;
         if (!source.setCache(this)) {
             throw Util.newInternal(

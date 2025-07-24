@@ -61,6 +61,12 @@ import org.eclipse.daanse.rolap.common.sql.MemberChildrenConstraint;
 import org.eclipse.daanse.rolap.common.sql.MemberListCrossJoinArg;
 import org.eclipse.daanse.rolap.common.sql.SqlQuery;
 import org.eclipse.daanse.rolap.common.sql.TupleConstraint;
+import org.eclipse.daanse.rolap.element.MultiCardinalityDefaultMember;
+import org.eclipse.daanse.rolap.element.RolapCube;
+import org.eclipse.daanse.rolap.element.RolapHierarchy;
+import org.eclipse.daanse.rolap.element.RolapLevel;
+import org.eclipse.daanse.rolap.element.RolapMember;
+import org.eclipse.daanse.rolap.element.RolapStoredMeasure;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -497,7 +503,7 @@ public abstract class RolapNativeSet extends RolapNative {
    * @param storedMeasure Stored measure
    * @see RolapAggregationManager#makeRequest(RolapEvaluator)
    */
-  protected void overrideContext(
+  public void overrideContext(
     RolapEvaluator evaluator,
     CrossJoinArg[] cargs,
     RolapStoredMeasure storedMeasure ) {
@@ -520,8 +526,7 @@ public abstract class RolapNativeSet extends RolapNative {
           // If there is no All member on a role restricted hierarchy,
           // use a restricted member based on the set of accessible
           // root members.
-          contextMember = new RestrictedMemberReader
-            .MultiCardinalityDefaultMember(
+          contextMember = new MultiCardinalityDefaultMember(
             hierarchy.getMemberReader()
               .getRootMembers().get( 0 ) );
         }

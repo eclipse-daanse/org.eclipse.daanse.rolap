@@ -37,6 +37,7 @@ import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.ISegmentCacheManager;
 import org.eclipse.daanse.olap.core.AbstractBasicContext;
 import org.eclipse.daanse.rolap.common.agg.SegmentCacheManager;
+import org.eclipse.daanse.rolap.element.RolapCatalog;
 import org.eclipse.daanse.rolap.mapping.api.model.RelationalQueryMapping;
 
 /**

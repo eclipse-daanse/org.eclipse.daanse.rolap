@@ -43,6 +43,10 @@ import org.eclipse.daanse.olap.function.def.nonemptycrossjoin.NonEmptyCrossJoinF
 import org.eclipse.daanse.rolap.common.sql.CrossJoinArg;
 import org.eclipse.daanse.rolap.common.sql.MemberListCrossJoinArg;
 import org.eclipse.daanse.rolap.common.sql.TupleConstraint;
+import org.eclipse.daanse.rolap.element.RolapCube;
+import org.eclipse.daanse.rolap.element.RolapLevel;
+import org.eclipse.daanse.rolap.element.RolapMember;
+import org.eclipse.daanse.rolap.element.RolapVirtualCube;
 
 /**
  * Creates a {@link org.eclipse.daanse.olap.api.NativeEvaluator} that evaluates NON EMPTY

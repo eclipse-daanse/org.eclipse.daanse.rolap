@@ -39,6 +39,9 @@ import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.query.component.Query;
 import org.eclipse.daanse.olap.api.result.AllocationPolicy;
 import org.eclipse.daanse.olap.api.result.Result;
+import org.eclipse.daanse.rolap.element.RolapBaseCubeMeasure;
+import org.eclipse.daanse.rolap.element.RolapCube;
+import org.eclipse.daanse.rolap.element.RolapCubeMember;
 
 public class WritebackUtil {
     public static void commit(RolapCube cube, Connection con, List<Map<String, Map.Entry<Datatype, Object>>> sessionValues, String userId) {

@@ -39,6 +39,10 @@ import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.rolap.common.TupleReader.MemberBuilder;
 import org.eclipse.daanse.rolap.common.sql.MemberChildrenConstraint;
 import org.eclipse.daanse.rolap.common.sql.TupleConstraint;
+import org.eclipse.daanse.rolap.element.RolapHierarchy;
+import org.eclipse.daanse.rolap.element.RolapLevel;
+import org.eclipse.daanse.rolap.element.RolapMember;
+import org.eclipse.daanse.rolap.element.RolapMemberBase;
 
 /**
  * CacheMemberReader implements {@link MemberReader} by reading
@@ -50,13 +54,13 @@ import org.eclipse.daanse.rolap.common.sql.TupleConstraint;
  * @author jhyde
  * @since 21 December, 2001
  */
-class CacheMemberReader implements MemberReader, MemberCache {
+public class CacheMemberReader implements MemberReader, MemberCache {
     private final MemberSource source;
     private final List<RolapMember> members;
     /** Maps a {@link MemberKey} to a {@link RolapMember}. */
     private final Map<Object, RolapMember> mapKeyToMember;
 
-    CacheMemberReader(MemberSource source) {
+    public CacheMemberReader(MemberSource source) {
         this.source = source;
         if (false) {
             // we don't want the reader to write back to our cache

@@ -49,6 +49,16 @@ import org.eclipse.daanse.rolap.common.agg.MemberColumnPredicate;
 import org.eclipse.daanse.rolap.common.agg.OrPredicate;
 import org.eclipse.daanse.rolap.common.agg.RangeColumnPredicate;
 import org.eclipse.daanse.rolap.common.agg.ValueColumnPredicate;
+import org.eclipse.daanse.rolap.element.RolapBaseCubeMeasure;
+import org.eclipse.daanse.rolap.element.RolapCube;
+import org.eclipse.daanse.rolap.element.RolapCubeDimension;
+import org.eclipse.daanse.rolap.element.RolapCubeHierarchy;
+import org.eclipse.daanse.rolap.element.RolapCubeLevel;
+import org.eclipse.daanse.rolap.element.RolapCubeMember;
+import org.eclipse.daanse.rolap.element.RolapHierarchy;
+import org.eclipse.daanse.rolap.element.RolapMember;
+import org.eclipse.daanse.rolap.element.RolapProperty;
+import org.eclipse.daanse.rolap.element.RolapStoredMeasure;
 import org.eclipse.daanse.rolap.function.def.visualtotals.VisualTotalMember;
 
 
@@ -199,7 +209,7 @@ public abstract class RolapAggregationManager {
     private static boolean isClosureFor(OlapElement olapElement) {
         return olapElement.getHierarchy() instanceof RolapCubeHierarchy
             && ((RolapCubeHierarchy)olapElement.getHierarchy())
-            .getRolapHierarchy().closureFor != null;
+            .getRolapHierarchy().getClosureFor() != null;
     }
 
     /**
@@ -365,7 +375,7 @@ public abstract class RolapAggregationManager {
             }
             for (int i = 1; i < members.length; i++) {
                 final RolapCubeMember member = (RolapCubeMember) members[i];
-                if (member.getHierarchy().getRolapHierarchy().closureFor
+                if (member.getHierarchy().getRolapHierarchy().getClosureFor()
                     != null)
                 {
                     continue;

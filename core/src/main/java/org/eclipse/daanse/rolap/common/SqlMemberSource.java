@@ -54,7 +54,6 @@ import org.eclipse.daanse.olap.api.element.Level;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.element.Property;
 import org.eclipse.daanse.olap.api.monitor.event.SqlStatementEvent;
-import org.eclipse.daanse.olap.api.query.component.Expression;
 import org.eclipse.daanse.olap.common.ResourceLimitExceededException;
 import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.olap.common.Util;
@@ -70,6 +69,16 @@ import org.eclipse.daanse.rolap.common.sql.MemberChildrenConstraint;
 import org.eclipse.daanse.rolap.common.sql.MemberKeyConstraint;
 import org.eclipse.daanse.rolap.common.sql.SqlQuery;
 import org.eclipse.daanse.rolap.common.sql.TupleConstraint;
+import org.eclipse.daanse.rolap.element.RolapBaseCubeMeasure;
+import org.eclipse.daanse.rolap.element.RolapCube;
+import org.eclipse.daanse.rolap.element.RolapCubeHierarchy;
+import org.eclipse.daanse.rolap.element.RolapCubeLevel;
+import org.eclipse.daanse.rolap.element.RolapHierarchy;
+import org.eclipse.daanse.rolap.element.RolapLevel;
+import org.eclipse.daanse.rolap.element.RolapMember;
+import org.eclipse.daanse.rolap.element.RolapMemberBase;
+import org.eclipse.daanse.rolap.element.RolapParentChildMemberNoClosure;
+import org.eclipse.daanse.rolap.element.RolapProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,7 +90,7 @@ import org.slf4j.LoggerFactory;
  * @author jhyde
  * @since 21 December, 2001
  */
-class SqlMemberSource
+public class SqlMemberSource
     implements MemberReader, MemberBuilder
 {
     private static final Logger LOGGER =
@@ -95,7 +104,7 @@ class SqlMemberSource
     private boolean assignOrderKeys;
     private Optional<Map<Object, Object>> oValuePool;
 
-    SqlMemberSource(RolapHierarchy hierarchy) {
+    public SqlMemberSource(RolapHierarchy hierarchy) {
         this.hierarchy = hierarchy;
         this.context =
             hierarchy.getRolapCatalog().getCatalogReaderWithDefaultRole().getContext();
@@ -150,7 +159,7 @@ class SqlMemberSource
         List<SqlExpression> columnList =
             new ArrayList<>();
         for (RolapLevel x = level;; x = (RolapLevel) x.getParentLevel()) {
-            columnList.add(x.keyExp);
+            columnList.add(x.getKeyExp());
             datatypeList.add(x.getDatatype());
             if (x.isUnique()) {
                 break;
@@ -1525,90 +1534,8 @@ RME is this right
 
     // ~ -- Inner classes ------------------------------------------------------
 
-    /**
-     * Member of a parent-child dimension which has a closure table.
-     *
-     * When looking up cells, this member will automatically be converted
-     * to a corresponding member of the auxiliary dimension which maps onto
-     * the closure table.
-     */
-    static class RolapParentChildMember extends RolapMemberBase {
-        private final RolapMember dataMember;
-        private int depth = 0;
 
-        public RolapParentChildMember(
-            RolapMember parentMember,
-            RolapLevel childLevel,
-            Object value,
-            RolapMember dataMember)
-        {
-            super(parentMember, childLevel, value);
-            this.dataMember = dataMember;
-            this.depth = (parentMember != null)
-                ? parentMember.getDepth() + 1
-                : 0;
-        }
 
-        @Override
-		public Member getDataMember() {
-            return dataMember;
-        }
-
-        /**
-         * @return the members's depth
-         * @see org.eclipse.daanse.olap.api.element.Member#getDepth()
-         */
-        @Override
-		public int getDepth() {
-            return depth;
-        }
-
-        @Override
-		public int getOrdinal() {
-            return dataMember.getOrdinal();
-        }
-    }
-
-    /**
-     * Member of a parent-child dimension which has no closure table.
-     *
-     * This member is calculated. When you ask for its value, it returns
-     * an expression which aggregates the values of its child members.
-     * This calculation is very inefficient, and we can only support
-     * aggregatable measures ("count distinct" is non-aggregatable).
-     * Unfortunately it's the best we can do without a closure table.
-     */
-    private static class RolapParentChildMemberNoClosure
-        extends RolapParentChildMember
-    {
-
-        public RolapParentChildMemberNoClosure(
-            RolapMember parentMember,
-            RolapLevel childLevel, Object value, RolapMember dataMember)
-        {
-            super(parentMember, childLevel, value, dataMember);
-        }
-
-        @Override
-		protected boolean computeCalculated(final MemberType memberType) {
-            return true;
-        }
-
-        @Override
-        public boolean isCalculated() {
-            return false;
-        }
-
-        @Override
-		public Expression getExpression() {
-            return super.getHierarchy().getAggregateChildrenExpression();
-        }
-
-        @Override
-        public boolean isParentChildPhysicalMember() {
-            return true;
-        }
-    }
 
 
 }

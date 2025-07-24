@@ -90,7 +90,6 @@ import org.eclipse.daanse.olap.calc.base.type.tuplebase.ListTupleList;
 import org.eclipse.daanse.olap.calc.base.type.tuplebase.TupleCollections;
 import org.eclipse.daanse.olap.calc.base.value.CurrentValueUnknownCalc;
 import org.eclipse.daanse.olap.common.ExpCacheDescriptorImpl;
-import org.eclipse.daanse.olap.common.MemberBase;
 import org.eclipse.daanse.olap.common.ResourceLimitExceededException;
 import org.eclipse.daanse.olap.common.ResultBase;
 import org.eclipse.daanse.olap.common.ResultLimitExceededException;
@@ -110,9 +109,15 @@ import org.eclipse.daanse.olap.query.component.ResolvedFunCallImpl;
 import  org.eclipse.daanse.olap.server.LocusImpl;
 import  org.eclipse.daanse.olap.util.CancellationChecker;
 import  org.eclipse.daanse.olap.util.Format;
-import org.eclipse.daanse.olap.util.type.TypeWrapperExp;
 import org.eclipse.daanse.rolap.aggregator.DistinctCountAggregator;
 import org.eclipse.daanse.rolap.common.agg.AggregationManager;
+import org.eclipse.daanse.rolap.element.CompoundSlicerRolapMember;
+import org.eclipse.daanse.rolap.element.RolapBaseCubeMeasure;
+import org.eclipse.daanse.rolap.element.RolapCube;
+import org.eclipse.daanse.rolap.element.RolapCubeMember;
+import org.eclipse.daanse.rolap.element.RolapHierarchy;
+import org.eclipse.daanse.rolap.element.RolapMeasure;
+import org.eclipse.daanse.rolap.element.RolapMember;
 import org.eclipse.daanse.rolap.function.def.visualtotals.VisualTotalMember;
 import org.eclipse.daanse.rolap.util.ObjectPool;
 import org.slf4j.Logger;
@@ -385,11 +390,11 @@ public class RolapResult extends ResultBase {
           Member member = cursor.member(0);
           //must be not isLeaf()
           if(member.getLevel().getDepth() < lastLevel.getDepth()) {
-            if(member instanceof org.eclipse.daanse.rolap.common.RolapHierarchy.LimitedRollupMember limitedRollupMember){
+            if(member instanceof org.eclipse.daanse.rolap.element.RolapHierarchy.LimitedRollupMember limitedRollupMember){
               //it could happen if there is Roles
               member = limitedRollupMember.getSourceMember();
             }
-            member = new org.eclipse.daanse.rolap.common.RolapHierarchy.LimitedRollupMember(
+            member = new org.eclipse.daanse.rolap.element.RolapHierarchy.LimitedRollupMember(
                     (RolapCubeMember)member,
                     partialExp,
                     hierarchyAccess
@@ -1800,7 +1805,7 @@ public Cell getCell( int[] pos ) {
    * {@link FormatValueFormatter}, which takes the {@link Locale} object.
    *
    */
-  interface ValueFormatter {
+  public interface ValueFormatter {
     /**
      * Formats a value according to a format string.
      *
@@ -1826,7 +1831,7 @@ public Cell getCell( int[] pos ) {
   /**
    * A CellFormatterValueFormatter uses a user-defined {@link CellFormatter} to format values.
    */
-  static class CellFormatterValueFormatter implements ValueFormatter {
+  public static class CellFormatterValueFormatter implements ValueFormatter {
     final CellFormatter cf;
 
     /**
@@ -1835,7 +1840,7 @@ public Cell getCell( int[] pos ) {
      * @param cf
      *          Cell formatter
      */
-    CellFormatterValueFormatter( CellFormatter cf ) {
+    public CellFormatterValueFormatter( CellFormatter cf ) {
       this.cf = cf;
     }
 
@@ -2257,80 +2262,4 @@ public Cell getCell( int[] pos ) {
     return list;
   }
 
-  /**
-   * Member which holds the AggregateCalc used when evaluating a compound slicer. This is used to better handle some
-   * cases where calculated members elsewhere in the query can override the context of the slicer members. See
-   * MONDRIAN-1226.
-   */
-  public class CompoundSlicerRolapMember extends DelegatingRolapMember implements RolapMeasure {
-    private final Calc calc;
-    private final ValueFormatter valueFormatter;
-    private final TupleList tupleList;
-    private final int solveOrder;
-
-    public CompoundSlicerRolapMember( RolapMember placeholderMember, Calc calc, ValueFormatter formatter,
-        TupleList tupleList, int solveOrder ) {
-      super( placeholderMember );
-      this.calc = calc;
-      valueFormatter = formatter;
-      this.tupleList = tupleList;
-      this.solveOrder = solveOrder;
-    }
-
-    @Override
-    public boolean isEvaluated() {
-      return true;
-    }
-
-    @Override
-    public Expression getExpression() {
-      return new TypeWrapperExp( calc.getType() );
-    }
-
-    @Override
-    public Calc getCompiledExpression( RolapEvaluatorRoot root ) {
-      return calc;
-    }
-
-    /**
-     * CompoundSlicerRolapMember is always wrapped inside a CacheCalc.  To maximize the benefit
-     * of the CacheCalc and the expression cache, the solve order of the CompoundSlicerRolapMember
-     * should be lower than all other calculations.
-     *
-     */
-    @Override
-    public int getSolveOrder() {
-      return solveOrder;
-    }
-
-    @Override
-    public boolean isOnSameHierarchyChain( Member otherMember ) {
-      return isOnSameHierarchyChainInternal( (MemberBase) otherMember );
-    }
-
-    @Override
-    public boolean isOnSameHierarchyChainInternal( MemberBase member2 ) {
-      // Stores the index of the corresponding member in each tuple
-      int index = -1;
-      for ( List<org.eclipse.daanse.olap.api.element.Member> subList : tupleList ) {
-        if ( index == -1 ) {
-          if (!subList.isEmpty() && member2.getHierarchy().equals( subList.get( 0 ).getHierarchy() ) ) {
-                  index = 0;
-          }
-          if ( index == -1 ) {
-            return false; // member2's hierarchy not present in tuple
-          }
-        }
-        if ( member2.isOnSameHierarchyChainInternal( (MemberBase) subList.get( index ) ) ) {
-          return true;
-        }
-      }
-      return false;
-    }
-
-    @Override
-	public ValueFormatter getFormatter() {
-      return valueFormatter;
-    }
-  }
 }

@@ -36,8 +36,9 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.eclipse.daanse.olap.api.access.AccessMember;
 import org.eclipse.daanse.olap.api.access.Role;
 import org.eclipse.daanse.olap.api.element.Member;
-import org.eclipse.daanse.rolap.common.RolapHierarchy.LimitedRollupMember;
 import org.eclipse.daanse.rolap.common.sql.MemberChildrenConstraint;
+import org.eclipse.daanse.rolap.element.RolapMember;
+import org.eclipse.daanse.rolap.element.RolapHierarchy.LimitedRollupMember;
 
 /**
  * A {@link SmartRestrictedMemberReader} is a subclass of
@@ -52,9 +53,9 @@ import org.eclipse.daanse.rolap.common.sql.MemberChildrenConstraint;
  * then figure out all of the children on which to constraint
  * the SQL query.
  */
-class SmartRestrictedMemberReader extends RestrictedMemberReader {
+public class SmartRestrictedMemberReader extends RestrictedMemberReader {
 
-    SmartRestrictedMemberReader(
+    public SmartRestrictedMemberReader(
         final MemberReader memberReader,
         final Role role)
     {

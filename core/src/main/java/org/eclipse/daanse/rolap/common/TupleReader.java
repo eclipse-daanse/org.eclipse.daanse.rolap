@@ -31,6 +31,8 @@ import java.util.List;
 
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.calc.todo.TupleList;
+import org.eclipse.daanse.rolap.element.RolapLevel;
+import org.eclipse.daanse.rolap.element.RolapMember;
 
 /**
  * Describes the public methods of {@link org.eclipse.daanse.rolap.common.SqlTupleReader}.

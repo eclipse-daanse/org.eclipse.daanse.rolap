@@ -59,6 +59,7 @@ import org.eclipse.daanse.rolap.common.agg.SegmentCacheManager.SegmentCacheIndex
 import org.eclipse.daanse.rolap.common.agg.SegmentWithData;
 import org.eclipse.daanse.rolap.common.cache.SegmentCacheIndex;
 import org.eclipse.daanse.rolap.common.cache.SegmentCacheIndexImpl;
+import org.eclipse.daanse.rolap.element.RolapCube;
 
 /**
  * A FastBatchingCellReader doesn't really Read cells: when asked

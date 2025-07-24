@@ -44,10 +44,10 @@ import org.eclipse.daanse.olap.api.element.Level;
 import org.eclipse.daanse.olap.common.Util;
 import  org.eclipse.daanse.olap.util.Pair;
 import org.eclipse.daanse.rolap.common.HierarchyUsage;
-import org.eclipse.daanse.rolap.common.RolapCube;
-import org.eclipse.daanse.rolap.common.RolapLevel;
 import org.eclipse.daanse.rolap.common.RolapStar;
 import org.eclipse.daanse.rolap.common.aggmatcher.JdbcSchema.Table.Column;
+import org.eclipse.daanse.rolap.element.RolapCube;
+import org.eclipse.daanse.rolap.element.RolapLevel;
 import org.eclipse.daanse.rolap.mapping.api.model.ColumnMapping;
 import org.eclipse.daanse.rolap.recorder.MessageRecorder;
 

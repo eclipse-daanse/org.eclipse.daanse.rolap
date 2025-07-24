@@ -15,6 +15,8 @@ package org.eclipse.daanse.rolap.common;
 
 import java.util.Comparator;
 
+import org.eclipse.daanse.rolap.element.RolapCube;
+
 public class RolapCubeComparator implements Comparator<RolapCube>
 {
     @Override

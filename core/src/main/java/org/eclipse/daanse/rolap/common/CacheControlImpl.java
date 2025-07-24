@@ -79,6 +79,14 @@ import  org.eclipse.daanse.olap.server.LocusImpl;
 import org.eclipse.daanse.olap.spi.SegmentColumn;
 import org.eclipse.daanse.olap.util.ArraySortedSet;
 import org.eclipse.daanse.rolap.common.sql.MemberChildrenConstraint;
+import org.eclipse.daanse.rolap.element.RolapCube;
+import org.eclipse.daanse.rolap.element.RolapCubeLevel;
+import org.eclipse.daanse.rolap.element.RolapCubeMember;
+import org.eclipse.daanse.rolap.element.RolapHierarchy;
+import org.eclipse.daanse.rolap.element.RolapLevel;
+import org.eclipse.daanse.rolap.element.RolapMember;
+import org.eclipse.daanse.rolap.element.RolapMemberBase;
+import org.eclipse.daanse.rolap.element.RolapStoredMeasure;
 
 /**
  * Implementation of {@link CacheControl} API.

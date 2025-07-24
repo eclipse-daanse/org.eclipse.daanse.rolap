@@ -83,6 +83,8 @@ import org.eclipse.daanse.olap.query.component.TransactionCommandImpl;
 import  org.eclipse.daanse.olap.server.ExecutionImpl;
 import  org.eclipse.daanse.olap.server.LocusImpl;
 import org.eclipse.daanse.rolap.api.RolapContext;
+import org.eclipse.daanse.rolap.element.RolapCatalog;
+import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.mapping.api.model.CatalogMapping;
 import org.eclipse.daanse.rolap.util.FauxMemoryMonitor;
 import org.eclipse.daanse.rolap.util.MemoryMonitor;
@@ -116,20 +118,19 @@ public class RolapConnection extends ConnectionBase {
   /**
    * Creates a RolapConnection.
    *
-   * Only {@link RolapCatalogCache#get} calls this with
+   * Only RolapCatalogCache calls this with
    * schema != null (to create a schema's internal connection).
    * Other uses retrieve a schema from the cache based upon
    * the Catalog property.
    *
-   * @param server      Server instance this connection belongs to
-   * @param connectInfo Connection properties; keywords are described in
-   *                    {@link RolapConnectionProperties}.
+   * @param context      context
+   * 
    * @param catalog      Schema for the connection. Must be null unless this is to
    *                    be an internal connection.
-   * @param context  If not null an external DataSource to be used
-   *                    by Mondrian
+   * @param rolapConnectionProps  ConnectionProps
+   * 
    */
-	RolapConnection(RolapContext context, RolapCatalog catalog, ConnectionProps rolapConnectionProps) {
+	public RolapConnection(RolapContext context, RolapCatalog catalog, ConnectionProps rolapConnectionProps) {
     super();
 
     this.context = context;

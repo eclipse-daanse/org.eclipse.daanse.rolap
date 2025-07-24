@@ -57,9 +57,9 @@ import org.eclipse.daanse.rolap.aggregator.countbased.AbstractFactCountBasedAggr
 import org.eclipse.daanse.rolap.aggregator.countbased.AvgFromAvgAggregator;
 import org.eclipse.daanse.rolap.aggregator.countbased.AvgFromSumAggregator;
 import org.eclipse.daanse.rolap.aggregator.countbased.SumFromAvgAggregator;
-import org.eclipse.daanse.rolap.common.RolapCube;
-import org.eclipse.daanse.rolap.common.RolapLevel;
 import org.eclipse.daanse.rolap.common.RolapStar;
+import org.eclipse.daanse.rolap.element.RolapCube;
+import org.eclipse.daanse.rolap.element.RolapLevel;
 import org.eclipse.daanse.rolap.mapping.api.model.AggregationColumnNameMapping;
 import org.eclipse.daanse.rolap.mapping.api.model.AggregationExcludeMapping;
 import org.eclipse.daanse.rolap.mapping.api.model.AggregationForeignKeyMapping;

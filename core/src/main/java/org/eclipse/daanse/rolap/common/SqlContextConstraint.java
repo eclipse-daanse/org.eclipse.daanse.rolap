@@ -43,12 +43,19 @@ import org.eclipse.daanse.olap.api.query.component.MemberExpression;
 import org.eclipse.daanse.olap.api.query.component.Query;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.query.component.ResolvedFunCallImpl;
-import org.eclipse.daanse.rolap.common.RestrictedMemberReader.MultiCardinalityDefaultMember;
-import org.eclipse.daanse.rolap.common.RolapHierarchy.LimitedRollupMember;
+import org.eclipse.daanse.rolap.element.MultiCardinalityDefaultMember;
 import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;
 import org.eclipse.daanse.rolap.common.sql.MemberChildrenConstraint;
 import org.eclipse.daanse.rolap.common.sql.SqlQuery;
 import org.eclipse.daanse.rolap.common.sql.TupleConstraint;
+import org.eclipse.daanse.rolap.element.RolapCalculatedMember;
+import org.eclipse.daanse.rolap.element.RolapCube;
+import org.eclipse.daanse.rolap.element.RolapCubeLevel;
+import org.eclipse.daanse.rolap.element.RolapLevel;
+import org.eclipse.daanse.rolap.element.RolapMember;
+import org.eclipse.daanse.rolap.element.RolapStoredMeasure;
+import org.eclipse.daanse.rolap.element.RolapVirtualCube;
+import org.eclipse.daanse.rolap.element.RolapHierarchy.LimitedRollupMember;
 
 /**
  * limits the result of a Member SQL query to the current evaluation context.
@@ -236,8 +243,8 @@ public class SqlContextConstraint
     * @param strict defines the behaviour if the evaluator context
     * contains calculated members. If true, an exception is thrown,
     * otherwise calculated members are silently ignored. The
-    * methods {@link org.eclipse.daanse.rolap.common.sql.MemberChildrenConstraint#addMemberConstraint(org.eclipse.daanse.rolap.common.sql.SqlQuery, org.eclipse.daanse.rolap.common.RolapCube, org.eclipse.daanse.rolap.common.aggmatcher.AggStar, RolapMember)} and
-    * {@link org.eclipse.daanse.rolap.common.sql.MemberChildrenConstraint#addMemberConstraint(org.eclipse.daanse.rolap.common.sql.SqlQuery, org.eclipse.daanse.rolap.common.RolapCube, org.eclipse.daanse.rolap.common.aggmatcher.AggStar, java.util.List)} will
+    * methods {@link org.eclipse.daanse.rolap.common.sql.MemberChildrenConstraint#addMemberConstraint(org.eclipse.daanse.rolap.common.sql.SqlQuery, org.eclipse.daanse.rolap.element.RolapCube, org.eclipse.daanse.rolap.common.aggmatcher.AggStar, RolapMember)} and
+    * {@link org.eclipse.daanse.rolap.common.sql.MemberChildrenConstraint#addMemberConstraint(org.eclipse.daanse.rolap.common.sql.SqlQuery, org.eclipse.daanse.rolap.element.RolapCube, org.eclipse.daanse.rolap.common.aggmatcher.AggStar, java.util.List)} will
     * never accept a calculated member as parent.
     */
     SqlContextConstraint(RolapEvaluator evaluator, boolean strict) {

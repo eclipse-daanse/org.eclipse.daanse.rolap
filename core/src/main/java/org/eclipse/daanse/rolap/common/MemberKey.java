@@ -31,6 +31,9 @@ package org.eclipse.daanse.rolap.common;
 
 import java.util.Objects;
 
+import org.eclipse.daanse.rolap.element.RolapLevel;
+import org.eclipse.daanse.rolap.element.RolapMember;
+
 /**
  * MemberKey todo:
  *

@@ -31,14 +31,14 @@ import java.util.List;
 
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.key.BitKey;
-import org.eclipse.daanse.rolap.common.RolapCube;
-import org.eclipse.daanse.rolap.common.RolapCubeLevel;
-import org.eclipse.daanse.rolap.common.RolapCubeMember;
-import org.eclipse.daanse.rolap.common.RolapLevel;
-import org.eclipse.daanse.rolap.common.RolapMember;
 import org.eclipse.daanse.rolap.common.RolapStar;
 import org.eclipse.daanse.rolap.common.StarPredicate;
 import org.eclipse.daanse.rolap.common.sql.SqlQuery;
+import org.eclipse.daanse.rolap.element.RolapCube;
+import org.eclipse.daanse.rolap.element.RolapCubeLevel;
+import org.eclipse.daanse.rolap.element.RolapCubeMember;
+import org.eclipse.daanse.rolap.element.RolapLevel;
+import org.eclipse.daanse.rolap.element.RolapMember;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

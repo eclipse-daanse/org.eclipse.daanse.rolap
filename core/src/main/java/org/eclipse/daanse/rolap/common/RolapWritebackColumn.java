@@ -27,6 +27,7 @@
 package org.eclipse.daanse.rolap.common;
 
 import org.eclipse.daanse.olap.api.element.DatabaseColumn;
+import org.eclipse.daanse.rolap.element.RolapDatabaseColumn;
 import org.eclipse.daanse.rolap.mapping.api.model.ColumnMapping;
 
 public abstract class RolapWritebackColumn{

@@ -36,6 +36,9 @@ import org.eclipse.daanse.olap.api.access.AccessMember;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.rolap.common.sql.MemberChildrenConstraint;
 import org.eclipse.daanse.rolap.common.sql.TupleConstraint;
+import org.eclipse.daanse.rolap.element.RolapHierarchy;
+import org.eclipse.daanse.rolap.element.RolapLevel;
+import org.eclipse.daanse.rolap.element.RolapMember;
 
 /**
  * Implementation of {@link MemberReader} which replaces given members
@@ -56,7 +59,7 @@ public abstract class SubstitutingMemberReader extends DelegatingMemberReader {
      *
      * @param memberReader Parent member reader
      */
-    SubstitutingMemberReader(MemberReader memberReader) {
+    protected SubstitutingMemberReader(MemberReader memberReader) {
         super(memberReader);
     }
 
@@ -227,10 +230,10 @@ public abstract class SubstitutingMemberReader extends DelegatingMemberReader {
      * List which writes through to an underlying list, substituting members
      * as they are written and desubstituting as they are read.
      */
-    class SubstitutingMemberList extends AbstractList<RolapMember> {
+    public class SubstitutingMemberList extends AbstractList<RolapMember> {
         private final List<RolapMember> list;
 
-        SubstitutingMemberList(List<RolapMember> list) {
+        public SubstitutingMemberList(List<RolapMember> list) {
             this.list = list;
         }
 

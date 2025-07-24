@@ -67,8 +67,8 @@ import org.eclipse.daanse.olap.function.def.aggregate.AggregateFunDef;
 import org.eclipse.daanse.olap.function.def.parentheses.ParenthesesFunDef;
 import org.eclipse.daanse.olap.key.BitKey;
 import org.eclipse.daanse.olap.query.component.ResolvedFunCallImpl;
-import org.eclipse.daanse.rolap.common.RestrictedMemberReader.MultiCardinalityDefaultMember;
-import org.eclipse.daanse.rolap.common.RolapHierarchy.LimitedRollupMember;
+import org.eclipse.daanse.rolap.element.CompoundSlicerRolapMember;
+import org.eclipse.daanse.rolap.element.MultiCardinalityDefaultMember;
 import org.eclipse.daanse.rolap.common.RolapStar.Column;
 import org.eclipse.daanse.rolap.common.RolapStar.Table;
 import org.eclipse.daanse.rolap.common.agg.AndPredicate;
@@ -80,6 +80,14 @@ import org.eclipse.daanse.rolap.common.agg.OrPredicate;
 import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;
 import org.eclipse.daanse.rolap.common.sql.CrossJoinArg;
 import org.eclipse.daanse.rolap.common.sql.SqlQuery;
+import org.eclipse.daanse.rolap.element.RolapCube;
+import org.eclipse.daanse.rolap.element.RolapCubeLevel;
+import org.eclipse.daanse.rolap.element.RolapHierarchy;
+import org.eclipse.daanse.rolap.element.RolapLevel;
+import org.eclipse.daanse.rolap.element.RolapMember;
+import org.eclipse.daanse.rolap.element.RolapMemberBase;
+import org.eclipse.daanse.rolap.element.RolapStoredMeasure;
+import org.eclipse.daanse.rolap.element.RolapHierarchy.LimitedRollupMember;
 import org.eclipse.daanse.rolap.util.FilteredIterableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -655,7 +663,7 @@ public class SqlConstraintUtils {
       TupleConstraintStruct expandedSet ) {
     if ( member.isCalculated() && isSupportedCalculatedMember( member ) ) {
       expandExpressions( member, null, evaluator, expandedSet );
-    } else if ( member instanceof RolapResult.CompoundSlicerRolapMember ) {
+    } else if ( member instanceof CompoundSlicerRolapMember ) {
       if ( !disjointSlicerTuples ) {
         expandedSet.addMember( replaceCompoundSlicerPlaceholder( member, (RolapEvaluator) evaluator ) );
       }
@@ -804,7 +812,7 @@ public class SqlConstraintUtils {
       for ( Member member : members ) {
         Hierarchy hierarchy = member.getHierarchy();
         if ( !mapOfSlicerMembers.containsKey( hierarchy ) || mapOfSlicerMembers.get( hierarchy ).size() < 2
-            || member instanceof RolapResult.CompoundSlicerRolapMember ) {
+            || member instanceof CompoundSlicerRolapMember ) {
           listOfMembers.add( member );
         } else {
           listOfMembers.addAll( mapOfSlicerMembers.get( hierarchy ) );
@@ -1222,7 +1230,7 @@ public class SqlConstraintUtils {
         }
         ++levelCount;
 
-        condition2.append( constrainLevel( level, sqlQuery, baseCube, aggStar, getColumnValue( level.nameExp != null
+        condition2.append( constrainLevel( level, sqlQuery, baseCube, aggStar, getColumnValue( level.getNameExp() != null
             ? gp.getName() : gp.getKey(), sqlQuery.getDialect(), level.getDatatype() ), false ) );
         if ( gp.getLevel() == fromLevel ) {
           // SQL is completely generated for this parent

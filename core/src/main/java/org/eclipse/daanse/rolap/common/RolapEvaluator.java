@@ -63,6 +63,16 @@ import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.fun.FunUtil;
 import  org.eclipse.daanse.olap.util.Format;
+import org.eclipse.daanse.rolap.element.CompoundSlicerRolapMember;
+import org.eclipse.daanse.rolap.element.RolapCube;
+import org.eclipse.daanse.rolap.element.RolapCubeLevel;
+import org.eclipse.daanse.rolap.element.RolapHierarchy;
+import org.eclipse.daanse.rolap.element.RolapLevel;
+import org.eclipse.daanse.rolap.element.RolapMeasure;
+import org.eclipse.daanse.rolap.element.RolapMember;
+import org.eclipse.daanse.rolap.element.RolapMemberBase;
+import org.eclipse.daanse.rolap.element.RolapStoredMeasure;
+import org.eclipse.daanse.rolap.element.RolapVirtualCube;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -121,7 +131,8 @@ public class RolapEvaluator implements Evaluator {
   private Member expandingMember;
   private boolean firstExpanding;
   private boolean nonEmpty;
-  protected final RolapEvaluatorRoot root;
+  public final RolapEvaluatorRoot root;
+
   private int iterationLength;
   private boolean evalAxes;
 
@@ -314,6 +325,9 @@ public boolean nativeEnabled() {
     return nativeEnabled;
   }
 
+public RolapEvaluatorRoot getRoot() {
+	return root;
+}
   @Override
 public boolean currentIsEmpty() {
     // If a cell evaluates to null, it is always deemed empty.
@@ -595,9 +609,9 @@ public final int hashCode() {
       Hierarchy h = slicerTuples.get( 0 ).get( i ).getHierarchy();
       // check to see if the current member is overridden
       // and not expanding.
-      if ( !( getContext( h ) instanceof RolapResult.CompoundSlicerRolapMember ) && ( getExpanding() != null
+      if ( !( getContext( h ) instanceof CompoundSlicerRolapMember ) && ( getExpanding() != null
           && ( !getExpanding().getHierarchy().equals( h )
-              || !( getExpanding() instanceof RolapResult.CompoundSlicerRolapMember ) ) ) ) {
+              || !( getExpanding() instanceof CompoundSlicerRolapMember ) ) ) ) {
         toRemove++;
         removeMember[i] = true;
       }
@@ -842,7 +856,7 @@ public final Object evaluateCurrent() {
     return o;
   }
 
-  void setExpanding( Member member ) {
+  public void setExpanding( Member member ) {
     assert member != null;
     ensureCommandCapacity( commandCount + 3 );
     commands[commandCount++] = this.expandingMember;
@@ -871,7 +885,7 @@ public final Object evaluateCurrent() {
    *
    * @return Calculated member currently being expanded
    */
-  Member getExpanding() {
+  public Member getExpanding() {
     return expandingMember;
   }
 
@@ -1177,7 +1191,7 @@ public final Object getParameterValue( ParameterSlot slot ) {
     return root.getParameterValue( slot );
   }
 
-  final void addCalculation( RolapCalculation calculation, boolean reversible ) {
+  final public void addCalculation( RolapCalculation calculation, boolean reversible ) {
     assert calculation != null;
     calculations[calculationCount++] = calculation;
 

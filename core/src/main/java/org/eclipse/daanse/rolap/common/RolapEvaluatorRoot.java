@@ -46,6 +46,9 @@ import org.eclipse.daanse.olap.api.query.component.Expression;
 import org.eclipse.daanse.olap.api.query.component.Query;
 import org.eclipse.daanse.olap.common.SolveOrderMode;
 import org.eclipse.daanse.olap.common.Util;
+import org.eclipse.daanse.rolap.element.RolapCube;
+import org.eclipse.daanse.rolap.element.RolapMember;
+import org.eclipse.daanse.rolap.element.RolapMemberBase;
 
 /**
  * Context at the root of a tree of evaluators.
@@ -74,7 +77,7 @@ public class RolapEvaluatorRoot {
    * Default members of each hierarchy, from the schema reader's perspective. Finding the default member is moderately
    * expensive, but happens very often.
    */
-  final RolapMember[] defaultMembers;
+  public final RolapMember[] defaultMembers;
   final int[] nonAllPositions;
   int nonAllPositionCount;
 
@@ -162,7 +165,7 @@ public RolapEvaluatorRoot( Statement statement ) {
    *          Preferred result style; if null, use query's default result style; ignored if expression is scalar
    * @return compiled expression
    */
-  final Calc getCompiled( Expression exp, boolean scalar, ResultStyle resultStyle ) {
+  public final Calc getCompiled( Expression exp, boolean scalar, ResultStyle resultStyle ) {
     CompiledExpKey key = new CompiledExpKey( exp, scalar, resultStyle );
     Calc calc = compiledExps.get( key );
     if ( calc == null ) {

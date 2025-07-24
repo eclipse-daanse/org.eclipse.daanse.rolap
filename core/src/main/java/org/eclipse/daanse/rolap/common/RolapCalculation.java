@@ -42,7 +42,7 @@ import org.eclipse.daanse.olap.api.calc.Calc;
  * @author jhyde
  * @since May 15, 2009
  */
-interface RolapCalculation {
+public interface RolapCalculation {
     /**
      * Pushes this calculated member or tuple onto the stack of evaluation
      * contexts, and sets the context to the default member of the hierarchy.

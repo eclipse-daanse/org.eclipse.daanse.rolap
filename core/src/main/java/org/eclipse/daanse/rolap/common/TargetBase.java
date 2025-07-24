@@ -31,6 +31,8 @@ import java.util.RandomAccess;
 
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.rolap.common.sql.TupleConstraint;
+import org.eclipse.daanse.rolap.element.RolapLevel;
+import org.eclipse.daanse.rolap.element.RolapMember;
 
 /**
  * Base helper class for the SQL tuple readers

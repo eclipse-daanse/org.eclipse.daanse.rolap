@@ -32,6 +32,8 @@ import java.util.List;
 import org.eclipse.daanse.olap.api.NameSegment;
 import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;
 import org.eclipse.daanse.rolap.common.sql.SqlQuery;
+import org.eclipse.daanse.rolap.element.RolapCube;
+import org.eclipse.daanse.rolap.element.RolapLevel;
 
 /**
  * Constraint which optimizes the search for a child by name. This is used

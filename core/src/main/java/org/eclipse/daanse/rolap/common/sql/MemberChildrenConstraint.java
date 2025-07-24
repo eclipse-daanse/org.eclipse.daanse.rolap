@@ -28,10 +28,10 @@ package org.eclipse.daanse.rolap.common.sql;
 
 import java.util.List;
 
-import org.eclipse.daanse.rolap.common.RolapCube;
-import org.eclipse.daanse.rolap.common.RolapLevel;
-import org.eclipse.daanse.rolap.common.RolapMember;
 import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;
+import org.eclipse.daanse.rolap.element.RolapCube;
+import org.eclipse.daanse.rolap.element.RolapLevel;
+import org.eclipse.daanse.rolap.element.RolapMember;
 
 /**
  * Restricts the SQL result of a MembersChildren query in SqlMemberSource.

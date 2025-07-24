@@ -29,6 +29,8 @@ import java.util.List;
 
 import org.eclipse.daanse.olap.api.calc.Calc;
 import org.eclipse.daanse.olap.common.Util;
+import org.eclipse.daanse.rolap.element.RolapHierarchy;
+import org.eclipse.daanse.rolap.element.RolapMember;
 
 /**
  * Implementation of {@link org.eclipse.daanse.rolap.common.RolapCalculation}

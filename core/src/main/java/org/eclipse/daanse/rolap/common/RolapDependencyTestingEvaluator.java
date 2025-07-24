@@ -50,6 +50,7 @@ import org.eclipse.daanse.olap.calc.base.nested.AbstractProfilingNestedTupleList
 import org.eclipse.daanse.olap.calc.base.nested.AbstractProfilingNestedUnknownCalc;
 import org.eclipse.daanse.olap.calc.base.type.tuplebase.TupleCollections;
 import org.eclipse.daanse.olap.common.Util;
+import org.eclipse.daanse.rolap.element.RolapCube;
 
 /**
  * Evaluator which checks dependencies of expressions.

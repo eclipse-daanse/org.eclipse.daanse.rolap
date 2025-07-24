@@ -84,6 +84,13 @@ import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;
 import org.eclipse.daanse.rolap.common.sql.SqlQuery;
 import org.eclipse.daanse.rolap.common.util.PojoUtil;
 import org.eclipse.daanse.rolap.common.util.RelationUtil;
+import org.eclipse.daanse.rolap.element.RolapBaseCubeMeasure;
+import org.eclipse.daanse.rolap.element.RolapCatalog;
+import org.eclipse.daanse.rolap.element.RolapCube;
+import org.eclipse.daanse.rolap.element.RolapCubeLevel;
+import org.eclipse.daanse.rolap.element.RolapLevel;
+import org.eclipse.daanse.rolap.element.RolapProperty;
+import org.eclipse.daanse.rolap.element.RolapStoredMeasure;
 import org.eclipse.daanse.rolap.mapping.api.model.InlineTableQueryMapping;
 import org.eclipse.daanse.rolap.mapping.api.model.JoinQueryMapping;
 import org.eclipse.daanse.rolap.mapping.api.model.QueryMapping;
@@ -611,7 +618,7 @@ public class RolapStar {
      *
      * @param cacheAggregations Whether to cache database aggregation
      */
-    void setCacheAggregations(boolean cacheAggregations) {
+    public void setCacheAggregations(boolean cacheAggregations) {
         // this can only change from true to false
         this.cacheAggregations = cacheAggregations;
         clearCachedAggregations(false);
@@ -622,7 +629,7 @@ public class RolapStar {
      *
      * @see #setCacheAggregations(boolean)
      */
-    boolean isCacheAggregations() {
+    public boolean isCacheAggregations() {
         return this.cacheAggregations;
     }
 
@@ -637,7 +644,7 @@ public class RolapStar {
      * @param forced If true, clears cached aggregations regardless of any other
      *   settings.  If false, clears only cache from the current thread
      */
-    void clearCachedAggregations(boolean forced) {
+    public void clearCachedAggregations(boolean forced) {
         if (forced || !cacheAggregations || isCacheDisabled()) {
             if (LOGGER.isDebugEnabled()) {
                 StringBuilder buf = new StringBuilder(100);
@@ -1497,7 +1504,7 @@ public class RolapStar {
             }
         }
 
-        synchronized void makeMeasure(RolapBaseCubeMeasure measure) {
+        public synchronized void makeMeasure(RolapBaseCubeMeasure measure) {
             // Remove assertion to allow cube to be recreated
             RolapStar.Measure starMeasure = new RolapStar.Measure(
                 measure.getName(),
@@ -1534,7 +1541,7 @@ public class RolapStar {
          * @param level Level
          * @param parentColumn Parent column
          */
-        synchronized Column makeColumns(
+        public synchronized Column makeColumns(
             RolapCube cube,
             RolapCubeLevel level,
             Column parentColumn,
@@ -1752,7 +1759,7 @@ public class RolapStar {
          * table names to RolapStar.Table mapping associated with the
          * input cube.
          */
-        synchronized Table addJoin(
+        public synchronized Table addJoin(
             RolapCube cube,
             QueryMapping relationOrJoin,
             RolapStar.Condition joinCondition)
@@ -2062,7 +2069,7 @@ public class RolapStar {
         // set in Table constructor
         Table table;
 
-        Condition(
+        public Condition(
                 SqlExpression left,
                 SqlExpression right)
         {

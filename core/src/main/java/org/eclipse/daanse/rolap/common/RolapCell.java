@@ -84,6 +84,14 @@ import org.eclipse.daanse.rolap.common.agg.AndPredicate;
 import org.eclipse.daanse.rolap.common.agg.DrillThroughCellRequest;
 import org.eclipse.daanse.rolap.common.agg.MemberColumnPredicate;
 import org.eclipse.daanse.rolap.common.agg.OrPredicate;
+import org.eclipse.daanse.rolap.element.RolapCube;
+import org.eclipse.daanse.rolap.element.RolapCubeMember;
+import org.eclipse.daanse.rolap.element.RolapHierarchy;
+import org.eclipse.daanse.rolap.element.RolapMember;
+import org.eclipse.daanse.rolap.element.RolapPhysicalCube;
+import org.eclipse.daanse.rolap.element.RolapStoredMeasure;
+import org.eclipse.daanse.rolap.element.RolapVirtualCube;
+import org.eclipse.daanse.rolap.element.RolapVirtualCubeMeasure;
 import org.slf4j.Logger;
 
 /**
