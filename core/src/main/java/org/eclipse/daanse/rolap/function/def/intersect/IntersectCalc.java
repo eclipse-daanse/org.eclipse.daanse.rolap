@@ -25,7 +25,7 @@ import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.type.Type;
 import org.eclipse.daanse.olap.calc.base.type.tuplebase.AbstractProfilingNestedTupleListCalc;
 import org.eclipse.daanse.olap.calc.base.type.tuplebase.TupleCollections;
-import org.eclipse.daanse.rolap.function.def.visualtotals.VisualTotalMember;
+import org.eclipse.daanse.rolap.element.VisualTotalMember;
 
 public class IntersectCalc extends AbstractProfilingNestedTupleListCalc {
 

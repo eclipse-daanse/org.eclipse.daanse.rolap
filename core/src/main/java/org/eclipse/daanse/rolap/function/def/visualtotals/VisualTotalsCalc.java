@@ -31,6 +31,7 @@ import org.eclipse.daanse.olap.calc.base.type.tuplebase.AbstractProfilingNestedT
 import org.eclipse.daanse.olap.calc.base.type.tuplebase.UnaryTupleList;
 import org.eclipse.daanse.olap.query.component.MemberExpressionImpl;
 import org.eclipse.daanse.olap.query.component.UnresolvedFunCallImpl;
+import org.eclipse.daanse.rolap.element.VisualTotalMember;
 
 public class VisualTotalsCalc extends AbstractProfilingNestedTupleListCalc {
     private final TupleListCalc tupleListCalc;
@@ -103,7 +104,7 @@ public class VisualTotalsCalc extends AbstractProfilingNestedTupleListCalc {
             }
             if (descendant instanceof VisualTotalMember visualTotalMember) {
                 childMemberList.add(visualTotalMember);
-                i = lastChildIndex(visualTotalMember.member, i, list);
+                i = lastChildIndex(visualTotalMember.getMember(), i, list);
                 continue;
             }
             childMemberList.add(descendant);

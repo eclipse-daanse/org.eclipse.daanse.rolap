@@ -39,7 +39,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.eclipse.daanse.olap.api.Context;
-import org.eclipse.daanse.olap.api.DrillThroughColumn;
+import org.eclipse.daanse.olap.api.element.DrillThroughColumn;
 import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.olap.api.element.Dimension;
 import org.eclipse.daanse.olap.api.element.Hierarchy;

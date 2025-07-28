@@ -28,8 +28,8 @@ package org.eclipse.daanse.rolap.element;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.daanse.olap.api.DrillThroughAction;
-import org.eclipse.daanse.olap.api.DrillThroughColumn;
+import org.eclipse.daanse.olap.api.element.DrillThroughAction;
+import org.eclipse.daanse.olap.api.element.DrillThroughColumn;
 import org.eclipse.daanse.olap.api.element.OlapElement;
 import org.eclipse.daanse.rolap.common.AbstractRolapAction;
 

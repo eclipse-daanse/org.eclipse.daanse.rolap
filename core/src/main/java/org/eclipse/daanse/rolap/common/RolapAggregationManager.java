@@ -59,7 +59,7 @@ import org.eclipse.daanse.rolap.element.RolapHierarchy;
 import org.eclipse.daanse.rolap.element.RolapMember;
 import org.eclipse.daanse.rolap.element.RolapProperty;
 import org.eclipse.daanse.rolap.element.RolapStoredMeasure;
-import org.eclipse.daanse.rolap.function.def.visualtotals.VisualTotalMember;
+import org.eclipse.daanse.rolap.element.VisualTotalMember;
 
 
 /**

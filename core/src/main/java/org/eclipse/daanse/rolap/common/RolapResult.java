@@ -118,7 +118,7 @@ import org.eclipse.daanse.rolap.element.RolapCubeMember;
 import org.eclipse.daanse.rolap.element.RolapHierarchy;
 import org.eclipse.daanse.rolap.element.RolapMeasure;
 import org.eclipse.daanse.rolap.element.RolapMember;
-import org.eclipse.daanse.rolap.function.def.visualtotals.VisualTotalMember;
+import org.eclipse.daanse.rolap.element.VisualTotalMember;
 import org.eclipse.daanse.rolap.util.ObjectPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

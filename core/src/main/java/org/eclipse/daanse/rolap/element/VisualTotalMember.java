@@ -11,7 +11,7 @@
  *   SmartCity Jena - initial
  *   Stefan Bischof (bipolis.org) - initial
  */
-package org.eclipse.daanse.rolap.function.def.visualtotals;
+package org.eclipse.daanse.rolap.element;
 
 import java.util.List;
 
@@ -26,7 +26,6 @@ import org.eclipse.daanse.olap.common.StandardProperty;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.query.component.MemberExpressionImpl;
 import org.eclipse.daanse.olap.query.component.UnresolvedFunCallImpl;
-import org.eclipse.daanse.rolap.element.RolapMemberBase;
 
 /**
  * Calculated member for VisualTotals function.
@@ -43,7 +42,7 @@ public class VisualTotalMember  extends RolapMemberBase {
     private Expression exp;
 
 
-    VisualTotalMember(
+    public VisualTotalMember(
         Member member,
         String name,
         String caption,

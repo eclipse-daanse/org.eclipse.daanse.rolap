@@ -52,7 +52,7 @@ import org.eclipse.daanse.rolap.element.RolapCubeLevel;
 import org.eclipse.daanse.rolap.element.RolapCubeMember;
 import org.eclipse.daanse.rolap.element.RolapMeasure;
 import org.eclipse.daanse.rolap.element.RolapStoredMeasure;
-import org.eclipse.daanse.rolap.function.def.visualtotals.VisualTotalMember;
+import org.eclipse.daanse.rolap.element.VisualTotalMember;
 
 /**
  * Constructs a Pair with BitKey and StarPredicate based on an tuple list and measure, along with the string representation of

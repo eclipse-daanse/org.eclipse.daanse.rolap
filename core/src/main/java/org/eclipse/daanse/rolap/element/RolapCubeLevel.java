@@ -27,17 +27,15 @@
 
 package org.eclipse.daanse.rolap.element;
 
-import org.eclipse.daanse.olap.api.CubeLevel;
 import org.eclipse.daanse.olap.api.SqlExpression;
+import org.eclipse.daanse.olap.api.element.CubeLevel;
 import org.eclipse.daanse.olap.api.element.LevelType;
 import org.eclipse.daanse.olap.api.formatter.MemberFormatter;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.rolap.common.RolapCacheRegion;
-import org.eclipse.daanse.rolap.common.RolapColumn;
 import org.eclipse.daanse.rolap.common.RolapRuntimeException;
 import org.eclipse.daanse.rolap.common.RolapStar;
 import org.eclipse.daanse.rolap.common.StarColumnPredicate;
-import org.eclipse.daanse.rolap.common.RolapStar.Column;
 import org.eclipse.daanse.rolap.common.agg.CellRequest;
 import org.eclipse.daanse.rolap.common.agg.MemberColumnPredicate;
 import org.eclipse.daanse.rolap.common.agg.MemberTuplePredicate;

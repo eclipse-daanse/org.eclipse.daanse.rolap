@@ -54,12 +54,10 @@ import org.eclipse.daanse.olap.query.component.ResolvedFunCallImpl;
 import  org.eclipse.daanse.olap.server.LocusImpl;
 import  org.eclipse.daanse.olap.util.Bug;
 import org.eclipse.daanse.rolap.common.HierarchyUsage;
-import org.eclipse.daanse.rolap.element.RolapAllCubeMember;
 import org.eclipse.daanse.rolap.common.RolapEvaluator;
 import org.eclipse.daanse.rolap.common.RolapEvaluatorRoot;
 import org.eclipse.daanse.rolap.common.RolapUtil;
 import org.eclipse.daanse.rolap.common.ScenarioImpl;
-import org.eclipse.daanse.rolap.function.def.visualtotals.VisualTotalMember;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

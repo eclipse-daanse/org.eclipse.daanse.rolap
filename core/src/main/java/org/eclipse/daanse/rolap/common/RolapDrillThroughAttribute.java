@@ -26,7 +26,7 @@
 
 package org.eclipse.daanse.rolap.common;
 
-import org.eclipse.daanse.olap.api.DrillThroughColumn;
+import org.eclipse.daanse.olap.api.element.DrillThroughColumn;
 import org.eclipse.daanse.olap.api.element.Dimension;
 import org.eclipse.daanse.olap.api.element.Hierarchy;
 import org.eclipse.daanse.olap.api.element.Level;
