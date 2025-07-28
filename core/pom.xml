@@ -44,6 +44,11 @@
 			<groupId>org.eclipse.daanse</groupId>
 			<artifactId>org.eclipse.daanse.olap.spi</artifactId>
 			<version>${revision}</version>
-		</dependency>		
+		</dependency>
+		<dependency>
+			<groupId>org.eclipse.daanse</groupId>
+			<artifactId>org.eclipse.daanse.olap.format</artifactId>
+			<version>${revision}</version>
+		</dependency>				
 	</dependencies>
 </project>

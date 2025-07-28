@@ -207,6 +207,7 @@ public class RolapMemberBase
      * Actually, acts like MemberBase#getCaption(),
      * but using not formatted object values.
      */
+    @Override
     public Object getCaptionValue() {
         if (captionValue != null) {
             return captionValue;

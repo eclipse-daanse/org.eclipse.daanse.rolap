@@ -63,8 +63,8 @@ import org.eclipse.daanse.rolap.common.RolapWritebackAttribute;
 import org.eclipse.daanse.rolap.common.RolapWritebackColumn;
 import org.eclipse.daanse.rolap.common.RolapWritebackMeasure;
 import org.eclipse.daanse.rolap.common.RolapWritebackTable;
-import org.eclipse.daanse.rolap.common.format.FormatterCreateContext;
-import org.eclipse.daanse.rolap.common.format.FormatterFactory;
+import org.eclipse.daanse.olap.format.FormatterCreateContext;
+import org.eclipse.daanse.olap.format.FormatterFactory;
 import org.eclipse.daanse.rolap.mapping.api.model.ActionMapping;
 import org.eclipse.daanse.rolap.mapping.api.model.CatalogMapping;
 import org.eclipse.daanse.rolap.mapping.api.model.ColumnMapping;
@@ -381,7 +381,7 @@ public class RolapPhysicalCube extends RolapCube implements PhysicalCube {
                 RolapMetaData.createMetaData(measureMapping.getAnnotations()));
 
         FormatterCreateContext formatterContext = new FormatterCreateContext.Builder(measure.getUniqueName())
-                .formatterDef(measureMapping.getCellFormatter()).formatterAttr(measureMapping.getFormatter()).build();
+                .formatterDef(measureMapping.getCellFormatter() != null ? measureMapping.getCellFormatter().getRef() : null ).formatterAttr(measureMapping.getFormatter()).build();
         CellFormatter cellFormatter = FormatterFactory.instance().createCellFormatter(formatterContext);
         if (cellFormatter != null) {
             measure.setFormatter(cellFormatter);

@@ -60,8 +60,8 @@ import org.eclipse.daanse.olap.query.component.IdImpl;
 import org.eclipse.daanse.rolap.common.RolapColumn;
 import org.eclipse.daanse.rolap.common.RolapSqlExpression;
 import org.eclipse.daanse.rolap.common.RolapUtil;
-import org.eclipse.daanse.rolap.common.format.FormatterCreateContext;
-import org.eclipse.daanse.rolap.common.format.FormatterFactory;
+import org.eclipse.daanse.olap.format.FormatterCreateContext;
+import org.eclipse.daanse.olap.format.FormatterFactory;
 import org.eclipse.daanse.rolap.common.util.ExpressionUtil;
 import org.eclipse.daanse.rolap.common.util.LevelUtil;
 import org.eclipse.daanse.rolap.common.util.RelationUtil;
@@ -489,7 +489,7 @@ public class RolapLevel extends LevelBase {
 
         FormatterCreateContext memberFormatterContext =
             new FormatterCreateContext.Builder(getUniqueName())
-                .formatterDef(mappingLevel.getMemberFormatter())
+                .formatterDef(mappingLevel.getMemberFormatter() != null ? mappingLevel.getMemberFormatter().getRef() : null)
                 .formatterAttr(null)
                 .build();
         memberFormatter =
@@ -571,7 +571,7 @@ public class RolapLevel extends LevelBase {
 
             FormatterCreateContext formatterContext =
                     new FormatterCreateContext.Builder(xmlProperty.getName())
-                        .formatterDef(xmlProperty.getFormatter())
+                        //.formatterDef(xmlProperty.getFormatter() != null ? xmlProperty.getFormatter().getRef() : null)
                         .formatterAttr(xmlProperty.getFormatter() != null ? xmlProperty.getFormatter().getRef() : null)
                         .build();
             MemberPropertyFormatter formatter =
