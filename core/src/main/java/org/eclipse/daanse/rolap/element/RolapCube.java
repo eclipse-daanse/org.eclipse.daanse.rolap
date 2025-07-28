@@ -91,7 +91,7 @@ import org.eclipse.daanse.olap.api.query.component.Query;
 import org.eclipse.daanse.olap.api.query.component.ResolvedFunCall;
 import org.eclipse.daanse.olap.api.result.AllocationPolicy;
 import org.eclipse.daanse.olap.common.CubeBase;
-import org.eclipse.daanse.olap.common.RoleImpl;
+import org.eclipse.daanse.olap.access.RoleImpl;
 import org.eclipse.daanse.olap.common.SetBase;
 import org.eclipse.daanse.olap.common.StandardProperty;
 import org.eclipse.daanse.olap.common.Util;

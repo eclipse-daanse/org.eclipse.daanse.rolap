@@ -74,7 +74,7 @@ import org.eclipse.daanse.olap.common.QueryTimeoutException;
 import org.eclipse.daanse.olap.common.ResourceLimitExceededException;
 import org.eclipse.daanse.olap.common.ResultBase;
 import org.eclipse.daanse.olap.common.ResultLimitExceededException;
-import org.eclipse.daanse.olap.common.RoleImpl;
+import org.eclipse.daanse.olap.access.RoleImpl;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.core.AbstractBasicContext;
 import org.eclipse.daanse.olap.exceptions.FailedToParseQueryException;

@@ -383,7 +383,7 @@ public class RolapResult extends ResultBase {
           // Iterable
           cursor = iterable.tupleCursor();
         }
-        HierarchyAccess hierarchyAccess = org.eclipse.daanse.olap.common.RoleImpl.createAllAccess(hierarchy);
+        HierarchyAccess hierarchyAccess = org.eclipse.daanse.olap.access.RoleImpl.createAllAccess(hierarchy);
         int currentIteration = 0;
         while ( cursor.forward() ) {
           CancellationChecker.checkCancelOrTimeout( currentIteration++, execution );
