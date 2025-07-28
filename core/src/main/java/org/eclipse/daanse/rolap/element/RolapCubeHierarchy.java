@@ -184,12 +184,12 @@ public class RolapCubeHierarchy extends RolapHierarchy {
         // re-alias names if necessary
         if (!cubeIsVirtual && !usingCubeFact) {
             // join expressions are columns only
-            assert (usage.getJoinExp() instanceof org.eclipse.daanse.rolap.common.RolapColumn column);
+            assert (usage.getJoinExp() instanceof org.eclipse.daanse.rolap.element.RolapColumn column);
             currentRelation =
                 this.cubeDimension.getCube().getStar().getUniqueRelation(
                     rolapHierarchy.getRelation(),
                     usage.getForeignKey().getName(),
-                    ((org.eclipse.daanse.rolap.common.RolapColumn)usage.getJoinExp()).getName(),
+                    ((org.eclipse.daanse.rolap.element.RolapColumn)usage.getJoinExp()).getName(),
                     RelationUtil.getAlias(usage.getJoinTable()));
         } else {
             currentRelation = rolapHierarchy.getRelation();

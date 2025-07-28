@@ -13,6 +13,8 @@
  */
 package org.eclipse.daanse.rolap.common;
 
+import org.eclipse.daanse.rolap.element.RolapColumn;
+
 public class RolapOrderedColumn extends RolapSqlExpression {
 
     private RolapColumn column;

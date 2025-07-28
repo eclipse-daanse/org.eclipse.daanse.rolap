@@ -1460,7 +1460,7 @@ public TupleList readTuples(
         final SqlExpression propExp =
           targetExp.get( property.getExp() );
         final String propSql;
-        if ( propExp instanceof org.eclipse.daanse.rolap.common.RolapColumn column) {
+        if ( propExp instanceof org.eclipse.daanse.rolap.element.RolapColumn column) {
           // When dealing with a column, we must use the same table
           // alias as the one used by the level. We also assume that
           // the property lives in the same table as the level.

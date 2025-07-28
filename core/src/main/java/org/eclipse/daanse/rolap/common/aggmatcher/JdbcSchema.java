@@ -302,7 +302,7 @@ public class JdbcSchema {
                     RolapSqlExpression ordinalExp = null;
                     if (ordinalColumn != null) {
                         ordinalExp =
-                            new org.eclipse.daanse.rolap.common.RolapColumn(
+                            new org.eclipse.daanse.rolap.element.RolapColumn(
                                 getTable().getName(), ordinalColumn.getName());
                     }
                     return ordinalExp;
@@ -312,7 +312,7 @@ public class JdbcSchema {
                     RolapSqlExpression captionExp = null;
                     if (captionColumn != null) {
                         captionExp =
-                            new org.eclipse.daanse.rolap.common.RolapColumn(
+                            new org.eclipse.daanse.rolap.element.RolapColumn(
                                 getTable().getName(), captionColumn.getName());
                     }
                     return captionExp;
@@ -329,7 +329,7 @@ public class JdbcSchema {
                     {
                         map.put(
                             entry.getKey(),
-                            new org.eclipse.daanse.rolap.common.RolapColumn(
+                            new org.eclipse.daanse.rolap.element.RolapColumn(
                                 getTable().getName(),
                                 entry.getValue().getName()));
                     }
@@ -404,7 +404,7 @@ public class JdbcSchema {
              */
             private boolean isNullable;
 
-            public final org.eclipse.daanse.rolap.common.RolapColumn column;
+            public final org.eclipse.daanse.rolap.element.RolapColumn column;
 
             private final List<JdbcSchema.Table.Column.Usage> usages;
 
@@ -417,7 +417,7 @@ public class JdbcSchema {
             public Column(final String name) {
                 this.name = name;
                 this.column =
-                    new org.eclipse.daanse.rolap.common.RolapColumn(
+                    new org.eclipse.daanse.rolap.element.RolapColumn(
                         JdbcSchema.Table.this.getName(),
                         name);
                 this.usages = new ArrayList<>();

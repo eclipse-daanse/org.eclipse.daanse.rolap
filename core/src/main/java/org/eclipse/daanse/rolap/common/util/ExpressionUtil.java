@@ -17,14 +17,14 @@ import java.util.Objects;
 
 import org.eclipse.daanse.olap.api.SqlExpression;
 import org.eclipse.daanse.olap.api.SqlStatement;
-import org.eclipse.daanse.rolap.common.RolapColumn;
 import org.eclipse.daanse.rolap.common.RolapSqlExpression;
 import org.eclipse.daanse.rolap.common.sql.SqlQuery;
+import org.eclipse.daanse.rolap.element.RolapColumn;
 
 public class ExpressionUtil {
 
     public static int hashCode(RolapSqlExpression expression) {
-        if (expression instanceof org.eclipse.daanse.rolap.common.RolapColumn column) {
+        if (expression instanceof org.eclipse.daanse.rolap.element.RolapColumn column) {
             return column.getName().hashCode() ^ (column.getTable()==null ? 0 : column.getTable().hashCode());
         }
         if (expression != null) {
@@ -38,8 +38,8 @@ public class ExpressionUtil {
     }
 
     public static boolean equals(RolapSqlExpression expression, Object obj) {
-        if (expression instanceof org.eclipse.daanse.rolap.common.RolapColumn col) {
-            if (!(obj instanceof org.eclipse.daanse.rolap.common.RolapColumn that)) {
+        if (expression instanceof org.eclipse.daanse.rolap.element.RolapColumn col) {
+            if (!(obj instanceof org.eclipse.daanse.rolap.element.RolapColumn that)) {
                 return false;
             }
             return col.getName().equals(that.getName()) &&

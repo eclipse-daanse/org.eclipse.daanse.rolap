@@ -57,7 +57,6 @@ import org.eclipse.daanse.olap.key.BitKey;
 import  org.eclipse.daanse.olap.server.ExecutionImpl;
 import  org.eclipse.daanse.olap.server.LocusImpl;
 import org.eclipse.daanse.rolap.aggregator.countbased.AbstractFactCountBasedAggregator;
-import org.eclipse.daanse.rolap.common.RolapColumn;
 import org.eclipse.daanse.rolap.common.RolapSqlExpression;
 import org.eclipse.daanse.rolap.common.RolapStar;
 import org.eclipse.daanse.rolap.common.RolapUtil;
@@ -66,6 +65,7 @@ import org.eclipse.daanse.rolap.common.aggmatcher.JdbcSchema.Table.Column.Usage;
 import org.eclipse.daanse.rolap.common.aggmatcher.JdbcSchema.UsageType;
 import org.eclipse.daanse.rolap.common.sql.SqlQuery;
 import org.eclipse.daanse.rolap.common.util.ExpressionUtil;
+import org.eclipse.daanse.rolap.element.RolapColumn;
 import org.eclipse.daanse.rolap.element.RolapLevel;
 import org.eclipse.daanse.rolap.mapping.api.model.RelationalQueryMapping;
 import org.slf4j.Logger;
@@ -193,7 +193,7 @@ public class AggStar {
     private static void setLevelBits(
         final BitKey bitKey,
         Table aggTable,
-        org.eclipse.daanse.rolap.common.RolapColumn column,
+        org.eclipse.daanse.rolap.element.RolapColumn column,
         RolapStar.Table table)
     {
         final Set<RolapStar.Column> columns = new HashSet<>();
@@ -212,7 +212,7 @@ public class AggStar {
     private static void collectLevels(
         List<Table.Level> levelList,
         Table table,
-        org.eclipse.daanse.rolap.common.RolapColumn joinColumn)
+        org.eclipse.daanse.rolap.element.RolapColumn joinColumn)
     {
         if (joinColumn == null) {
             levelList.addAll(table.levels);
@@ -515,7 +515,7 @@ public class AggStar {
                 final SqlExpression left,
                 final SqlExpression right)
             {
-                if (!(left instanceof org.eclipse.daanse.rolap.common.RolapColumn)) {
+                if (!(left instanceof org.eclipse.daanse.rolap.element.RolapColumn)) {
                     JOIN_CONDITION_LOGGER.debug("JoinCondition.left NOT Column: {}",
                         left.getClass().getName());
                 }
@@ -582,7 +582,7 @@ public class AggStar {
 
                 pw.print(subprefix);
                 pw.print("left=");
-                if (left instanceof org.eclipse.daanse.rolap.common.RolapColumn c) {
+                if (left instanceof org.eclipse.daanse.rolap.element.RolapColumn c) {
                     org.eclipse.daanse.rolap.common.RolapStar.Column col =
                         getTable().getAggStar().getStar().getFactTable()
                         .lookupColumn(c.getName());
@@ -696,9 +696,9 @@ public class AggStar {
                     exprString = ExpressionUtil.getExpression(getExpression(), query);
                 } else {
                     SqlExpression expressionInner = getExpression();
-                    assert expressionInner instanceof org.eclipse.daanse.rolap.common.RolapColumn;
-                    org.eclipse.daanse.rolap.common.RolapColumn columnExpr =
-                        (org.eclipse.daanse.rolap.common.RolapColumn)expressionInner;
+                    assert expressionInner instanceof org.eclipse.daanse.rolap.element.RolapColumn;
+                    org.eclipse.daanse.rolap.element.RolapColumn columnExpr =
+                        (org.eclipse.daanse.rolap.element.RolapColumn)expressionInner;
                     String prefixedName = usagePrefix
                         + columnExpr.getName();
                     String tableName = getTableAlias(columnExpr);
@@ -963,16 +963,16 @@ public class AggStar {
                 rright = usage.level.getKeyExp();
             }
 
-            org.eclipse.daanse.rolap.common.RolapColumn left = null;
+            org.eclipse.daanse.rolap.element.RolapColumn left = null;
             if (usage != null
                 && usage.rightJoinConditionColumnName != null)
             {
-                left = new org.eclipse.daanse.rolap.common.RolapColumn(
+                left = new org.eclipse.daanse.rolap.element.RolapColumn(
                     getName(),
                     usage.rightJoinConditionColumnName);
             } else {
-                if (rleft instanceof org.eclipse.daanse.rolap.common.RolapColumn lcolumn) {
-                	left = new org.eclipse.daanse.rolap.common.RolapColumn(getName(), lcolumn.getName());
+                if (rleft instanceof org.eclipse.daanse.rolap.element.RolapColumn lcolumn) {
+                	left = new org.eclipse.daanse.rolap.element.RolapColumn(getName(), lcolumn.getName());
                 } else {
                     throw Util.newInternal("not implemented: rleft=" + rleft);
 /*
@@ -1312,7 +1312,7 @@ public class AggStar {
                 }
 
                 RolapSqlExpression expression =
-                    new org.eclipse.daanse.rolap.common.RolapColumn(getName(), name);
+                    new org.eclipse.daanse.rolap.element.RolapColumn(getName(), name);
                 Datatype datatype = column.getDatatype();
                 RolapStar.Column rColumn = usage.rColumn;
                 if (rColumn == null) {
@@ -1346,7 +1346,7 @@ public class AggStar {
             {
                 expression = factCountColumn.getExpression();
             } else {
-                expression = new org.eclipse.daanse.rolap.common.RolapColumn(getName(), name);
+                expression = new org.eclipse.daanse.rolap.element.RolapColumn(getName(), name);
             }
 
             SqlExpression argument;
@@ -1385,7 +1385,7 @@ public class AggStar {
             }
 
             RolapSqlExpression expression =
-                new org.eclipse.daanse.rolap.common.RolapColumn(getName(), name);
+                new org.eclipse.daanse.rolap.element.RolapColumn(getName(), name);
             Datatype datatype = usage.getColumn().getDatatype();
             int bitPosition = -1;
 
@@ -1411,7 +1411,7 @@ public class AggStar {
             }
 
             RolapSqlExpression expression =
-                    new org.eclipse.daanse.rolap.common.RolapColumn(getName(), name);
+                    new org.eclipse.daanse.rolap.element.RolapColumn(getName(), name);
             Datatype datatype = usage.getColumn().getDatatype();
             int bitPosition = -1;
 
@@ -1431,7 +1431,7 @@ public class AggStar {
         private void loadLevel(final JdbcSchema.Table.Column.Usage usage) {
             String name = usage.getSymbolicName();
             RolapSqlExpression expression =
-                new org.eclipse.daanse.rolap.common.RolapColumn(getName(), usage.levelColumnName);
+                new org.eclipse.daanse.rolap.element.RolapColumn(getName(), usage.levelColumnName);
 
             int bitPosition = usage.rColumn.getBitPosition();
             Level level =
@@ -1464,7 +1464,7 @@ public class AggStar {
                         new String[] {
                             getTableAlias(parentLevel.getKeyExp())},
                         new String[] {
-                            parentLevel.getKeyExp() instanceof org.eclipse.daanse.rolap.common.RolapColumn c ?
+                            parentLevel.getKeyExp() instanceof org.eclipse.daanse.rolap.element.RolapColumn c ?
                                 c.getName() : null});
                     final int bitPos = bk.nextSetBit(0);
                     if (bitPos == -1) {
@@ -1491,7 +1491,7 @@ public class AggStar {
                     levelColumnsToJoin.put(
                         bitPos,
                         new Column(
-                            ((org.eclipse.daanse.rolap.common.RolapColumn)parentLevel.getKeyExp())
+                            ((org.eclipse.daanse.rolap.element.RolapColumn)parentLevel.getKeyExp())
                                 .getName(),
                             parentLevel.getKeyExp(),
                             AggStar.this.star.getColumn(bitPos).getDatatype(),

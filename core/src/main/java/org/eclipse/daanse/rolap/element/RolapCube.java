@@ -1463,8 +1463,8 @@ public abstract class RolapCube extends CubeBase {
                     // parameters:
                     //   fact table,
                     //   fact table foreign key,
-                    org.eclipse.daanse.rolap.common.RolapColumn column =
-                        new org.eclipse.daanse.rolap.common.RolapColumn(
+                    org.eclipse.daanse.rolap.element.RolapColumn column =
+                        new org.eclipse.daanse.rolap.element.RolapColumn(
                             table.getAlias(),
                             hierarchyUsage.getForeignKey().getName());
                     // parameters:

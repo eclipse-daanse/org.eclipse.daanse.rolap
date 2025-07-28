@@ -444,7 +444,7 @@ public class HierarchyUsage {
                     hierarchy,
                     hierarchy.getHierarchyMapping().getPrimaryKey().getTable());
             this.joinExp =
-                new org.eclipse.daanse.rolap.common.RolapColumn(
+                new org.eclipse.daanse.rolap.element.RolapColumn(
                     getAlias(this.joinTable),
                     hierarchy.getHierarchyMapping().getPrimaryKey().getName());
         } else {

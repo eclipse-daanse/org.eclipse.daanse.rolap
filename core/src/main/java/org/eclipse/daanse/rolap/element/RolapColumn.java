@@ -26,10 +26,13 @@
  *   SmartCity Jena - initial
  */
 
-package org.eclipse.daanse.rolap.common;
+package org.eclipse.daanse.rolap.element;
 
 import java.util.List;
 import java.util.Objects;
+
+import org.eclipse.daanse.rolap.common.RolapSqlExpression;
+import org.eclipse.daanse.rolap.common.RolapSqlStatement;
 
 public class RolapColumn extends RolapSqlExpression {
 

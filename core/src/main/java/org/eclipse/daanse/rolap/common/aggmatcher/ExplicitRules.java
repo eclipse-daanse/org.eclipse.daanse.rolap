@@ -1433,8 +1433,8 @@ public class ExplicitRules {
                         columnsToObjects.put(aggFKName.getName(), baseFKName);
                     }
 
-                    org.eclipse.daanse.rolap.common.RolapColumn c =
-                        new org.eclipse.daanse.rolap.common.RolapColumn(tableName, baseFKName.getName());
+                    org.eclipse.daanse.rolap.element.RolapColumn c =
+                        new org.eclipse.daanse.rolap.element.RolapColumn(tableName, baseFKName.getName());
                     if (factTable.findTableWithLeftCondition(c) == null) {
                         msgRecorder.reportError(
                             MessageFormat.format(unknownLeftJoinCondition,

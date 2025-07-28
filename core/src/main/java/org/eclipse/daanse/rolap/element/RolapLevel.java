@@ -51,17 +51,16 @@ import org.eclipse.daanse.olap.api.element.OlapElement;
 import org.eclipse.daanse.olap.api.element.Property;
 import org.eclipse.daanse.olap.api.formatter.MemberPropertyFormatter;
 import org.eclipse.daanse.olap.common.AbstractProperty;
-import org.eclipse.daanse.olap.common.LevelBase;
+import org.eclipse.daanse.olap.element.LevelBase;
 import org.eclipse.daanse.olap.common.StandardProperty;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.exceptions.NonTimeLevelInTimeHierarchyException;
 import org.eclipse.daanse.olap.exceptions.TimeLevelInNonTimeHierarchyException;
-import org.eclipse.daanse.olap.query.component.IdImpl;
-import org.eclipse.daanse.rolap.common.RolapColumn;
-import org.eclipse.daanse.rolap.common.RolapSqlExpression;
-import org.eclipse.daanse.rolap.common.RolapUtil;
 import org.eclipse.daanse.olap.format.FormatterCreateContext;
 import org.eclipse.daanse.olap.format.FormatterFactory;
+import org.eclipse.daanse.olap.query.component.IdImpl;
+import org.eclipse.daanse.rolap.common.RolapSqlExpression;
+import org.eclipse.daanse.rolap.common.RolapUtil;
 import org.eclipse.daanse.rolap.common.util.ExpressionUtil;
 import org.eclipse.daanse.rolap.common.util.LevelUtil;
 import org.eclipse.daanse.rolap.common.util.RelationUtil;
@@ -235,7 +234,7 @@ public class RolapLevel extends LevelBase {
             "hideMemberCondition != null");
         Util.assertPrecondition(levelType != null, "levelType != null");
 
-        if (keyExp instanceof org.eclipse.daanse.rolap.common.RolapColumn column) {
+        if (keyExp instanceof org.eclipse.daanse.rolap.element.RolapColumn column) {
             checkColumn(column);
         }
         this.metaData = metaData;
@@ -282,7 +281,7 @@ public class RolapLevel extends LevelBase {
         //    "parentExp != null || nullParentValue == null");
         this.xmlClosure = mappingClosure;
         for (RolapProperty property : properties) {
-            if (property.getExp() instanceof org.eclipse.daanse.rolap.common.RolapColumn column) {
+            if (property.getExp() instanceof org.eclipse.daanse.rolap.element.RolapColumn column) {
                 checkColumn(column);
             }
         }
@@ -621,7 +620,7 @@ public class RolapLevel extends LevelBase {
         }
     }
 
-    private void checkColumn(org.eclipse.daanse.rolap.common.RolapColumn nameColumn) {
+    private void checkColumn(org.eclipse.daanse.rolap.element.RolapColumn nameColumn) {
         final RolapHierarchy rolapHierarchy = (RolapHierarchy) hierarchy;
         if (nameColumn.getTable() == null) {
             final RelationalQueryMapping table = rolapHierarchy.getUniqueTable();

@@ -30,7 +30,7 @@ import org.eclipse.daanse.rolap.aggregator.experimental.ListAggAggregator;
 import org.eclipse.daanse.rolap.aggregator.experimental.NoneAggregator;
 import org.eclipse.daanse.rolap.aggregator.experimental.NthValueAggregator;
 import org.eclipse.daanse.rolap.aggregator.experimental.PercentileAggregator;
-import org.eclipse.daanse.rolap.common.RolapColumn;
+import org.eclipse.daanse.rolap.element.RolapColumn;
 import org.eclipse.daanse.rolap.common.RolapOrderedColumn;
 import org.eclipse.daanse.rolap.mapping.api.model.AvgMeasureMapping;
 import org.eclipse.daanse.rolap.mapping.api.model.BitAggMeasureMapping;

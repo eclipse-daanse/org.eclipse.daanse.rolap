@@ -278,9 +278,8 @@ public class RolapStar {
     public void remove() {
         localBars.remove();
     }
-
     public static String generateExprString(SqlExpression expression, SqlQuery query) {
-        if(expression instanceof org.eclipse.daanse.rolap.common.RolapColumn col) {
+        if(expression instanceof org.eclipse.daanse.rolap.element.RolapColumn col) {
             return query.getDialect().quoteIdentifier(col.getTable(),
             		col.getName());
         }
@@ -784,7 +783,7 @@ public class RolapStar {
     public static void collectColumns(
         Collection<Column> columnList,
         Table table,
-        org.eclipse.daanse.rolap.common.RolapColumn joinColumn)
+        org.eclipse.daanse.rolap.element.RolapColumn joinColumn)
     {
         if (joinColumn == null) {
             columnList.addAll(table.columnList);
@@ -1392,7 +1391,7 @@ public class RolapStar {
         public Column[] lookupColumns(String columnName) {
             List<Column> l = new ArrayList<>();
             for (Column column : getColumns()) {
-                if (column.getExpression() instanceof org.eclipse.daanse.rolap.common.RolapColumn columnExpr) {
+                if (column.getExpression() instanceof org.eclipse.daanse.rolap.element.RolapColumn columnExpr) {
                     if (columnExpr.getName().equals(columnName)) {
                         l.add(column);
                     }
@@ -1406,7 +1405,7 @@ public class RolapStar {
 
         public Column lookupColumn(String columnName) {
             for (Column column : getColumns()) {
-                if (column.getExpression() instanceof org.eclipse.daanse.rolap.common.RolapColumn columnExpr) {
+                if (column.getExpression() instanceof org.eclipse.daanse.rolap.element.RolapColumn columnExpr) {
                     if (columnExpr.getName().equals(columnName)) {
                         return column;
                     }
@@ -1638,7 +1637,7 @@ public class RolapStar {
             String usagePrefix)
         {
             Table table = this;
-            if (expr instanceof org.eclipse.daanse.rolap.common.RolapColumn column) {
+            if (expr instanceof org.eclipse.daanse.rolap.element.RolapColumn column) {
                 String tableName = column.getTable();
                 table = findAncestor(tableName);
                 if (table == null) {
@@ -1701,7 +1700,7 @@ public class RolapStar {
             String usagePrefix)
         {
             Table table = this;
-            if (expr instanceof org.eclipse.daanse.rolap.common.RolapColumn column) {
+            if (expr instanceof org.eclipse.daanse.rolap.element.RolapColumn column) {
                 String tableName = column.getTable();
                 table = findAncestor(tableName);
                 if (table == null) {
@@ -1812,8 +1811,8 @@ public class RolapStar {
                     }
                 }
                 joinCondition = new RolapStar.Condition(
-                    new org.eclipse.daanse.rolap.common.RolapColumn(leftAlias, join.getLeft().getKey() != null ? join.getLeft().getKey().getName() : null),
-                    new org.eclipse.daanse.rolap.common.RolapColumn(rightAlias, join.getRight().getKey() != null ? join.getRight().getKey().getName() : null));
+                    new org.eclipse.daanse.rolap.element.RolapColumn(leftAlias, join.getLeft().getKey() != null ? join.getLeft().getKey().getName() : null),
+                    new org.eclipse.daanse.rolap.element.RolapColumn(rightAlias, join.getRight().getKey() != null ? join.getRight().getKey().getName() : null));
                 return leftTable.addJoin(
                     cube, right(join), joinCondition);
 
@@ -1932,7 +1931,7 @@ public class RolapStar {
         {
             for (Table child : getChildren()) {
                 Condition condition = child.joinCondition;
-                if (condition != null && condition.left instanceof org.eclipse.daanse.rolap.common.RolapColumn mcolumn && mcolumn.getName().equals(columnName)) {
+                if (condition != null && condition.left instanceof org.eclipse.daanse.rolap.element.RolapColumn mcolumn && mcolumn.getName().equals(columnName)) {
                     return child;
                 }
             }
@@ -1949,7 +1948,7 @@ public class RolapStar {
         {
             for (Table child : getChildren()) {
                 Condition condition = child.joinCondition;
-                if (condition != null && condition.left instanceof org.eclipse.daanse.rolap.common.RolapColumn mcolumn && mcolumn.equals(left)) {
+                if (condition != null && condition.left instanceof org.eclipse.daanse.rolap.element.RolapColumn mcolumn && mcolumn.equals(left)) {
                     return child;
                 }
             }
@@ -2076,7 +2075,7 @@ public class RolapStar {
             assert left != null;
             assert right != null;
 
-            if (!(left instanceof org.eclipse.daanse.rolap.common.RolapColumn)) {
+            if (!(left instanceof org.eclipse.daanse.rolap.element.RolapColumn)) {
                 // TODO: Will this ever print?? if not then left should be
                 // of type Column.
                 LOGGER.debug("Condition.left NOT Column: {}", left.getClass().getName());
@@ -2135,7 +2134,7 @@ public class RolapStar {
             pw.print(subprefix);
             pw.print("left=");
             // print the foreign key bit position if we can figure it out
-            if (left instanceof org.eclipse.daanse.rolap.common.RolapColumn c) {
+            if (left instanceof org.eclipse.daanse.rolap.element.RolapColumn c) {
                 Column col = table.star.getFactTable().lookupColumn(c.getName());
                 if (col != null) {
                     pw.print(" (");
@@ -2183,8 +2182,8 @@ public class RolapStar {
             if (newAlias.equals(oldAlias)) {
                 return expression;
             }
-            if (expression instanceof org.eclipse.daanse.rolap.common.RolapColumn column) {
-                return new org.eclipse.daanse.rolap.common.RolapColumn(visit(column.getTable()), column.getName());
+            if (expression instanceof org.eclipse.daanse.rolap.element.RolapColumn column) {
+                return new org.eclipse.daanse.rolap.element.RolapColumn(visit(column.getTable()), column.getName());
             } else {
                 throw Util.newInternal("need to implement " + expression);
             }

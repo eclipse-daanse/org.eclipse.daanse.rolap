@@ -53,11 +53,11 @@ import org.eclipse.daanse.rolap.aggregator.countbased.AvgFromAvgAggregator;
 import org.eclipse.daanse.rolap.aggregator.countbased.AvgFromSumAggregator;
 import org.eclipse.daanse.rolap.aggregator.countbased.SumFromAvgAggregator;
 import org.eclipse.daanse.rolap.common.HierarchyUsage;
-import org.eclipse.daanse.rolap.common.RolapColumn;
 import org.eclipse.daanse.rolap.common.RolapStar;
 import org.eclipse.daanse.rolap.common.Utils;
 import org.eclipse.daanse.rolap.common.sql.SqlQuery;
 import org.eclipse.daanse.rolap.element.RolapCatalog;
+import org.eclipse.daanse.rolap.element.RolapColumn;
 import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.element.RolapLevel;
 import org.eclipse.daanse.rolap.element.RolapVirtualCube;
@@ -716,7 +716,7 @@ public abstract class Recognizer {
                 aggUsage.setSymbolicName(symbolicName);
 
                 String tableAlias;
-                if (aggUsage.joinExp instanceof org.eclipse.daanse.rolap.common.RolapColumn mcolumn) {
+                if (aggUsage.joinExp instanceof org.eclipse.daanse.rolap.element.RolapColumn mcolumn) {
                     tableAlias = mcolumn.getTable();
                 } else {
                     tableAlias = getAlias(aggUsage.relation);
@@ -1012,8 +1012,8 @@ public abstract class Recognizer {
         String factCountColumnName = getFactCountColumnName(aggUsage);
 
         // we want the fact count expression
-        org.eclipse.daanse.rolap.common.RolapColumn column =
-            new org.eclipse.daanse.rolap.common.RolapColumn(tableName, factCountColumnName);
+        org.eclipse.daanse.rolap.element.RolapColumn column =
+            new org.eclipse.daanse.rolap.element.RolapColumn(tableName, factCountColumnName);
         SqlQuery sqlQuery = star.getSqlQuery();
         return getExpression(column, sqlQuery);
     }

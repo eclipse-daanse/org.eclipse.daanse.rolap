@@ -155,7 +155,7 @@ public class RolapStatisticsCache {
             return approxCardinality;
         }
         if (relation instanceof TableQueryMapping table
-            && expression instanceof org.eclipse.daanse.rolap.common.RolapColumn column)
+            && expression instanceof org.eclipse.daanse.rolap.element.RolapColumn column)
         {
             return getColumnCardinality(
                 null,
