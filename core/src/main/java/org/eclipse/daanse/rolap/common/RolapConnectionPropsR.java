@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
-import org.eclipse.daanse.olap.api.ConnectionProps;
+import org.eclipse.daanse.olap.api.connection.ConnectionProps;
 
 public record RolapConnectionPropsR(List<String> roles, boolean useSchemaPool, Locale locale, Duration pinSchemaTimeout,
 		 Optional<String> aggregateScanSchema, Optional<String> aggregateScanCatalog)

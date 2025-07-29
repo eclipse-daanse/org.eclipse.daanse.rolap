@@ -35,7 +35,7 @@ import java.util.Optional;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.eclipse.daanse.olap.api.CatalogCache;
-import org.eclipse.daanse.olap.api.ConnectionProps;
+import org.eclipse.daanse.olap.api.connection.ConnectionProps;
 import org.eclipse.daanse.olap.util.ByteString;
 import org.eclipse.daanse.rolap.api.RolapContext;
 import org.eclipse.daanse.rolap.element.RolapCatalog;
