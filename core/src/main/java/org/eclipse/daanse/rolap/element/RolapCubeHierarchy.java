@@ -438,7 +438,6 @@ public class RolapCubeHierarchy extends RolapHierarchy {
     @Override
 	public final RolapCubeMember getDefaultMember() {
         if (currentDefaultMember == null) {
-            reader.getRootMembers();
             currentDefaultMember =
                 bootstrapLookup(
                     (RolapMember) rolapHierarchy.getDefaultMember());
