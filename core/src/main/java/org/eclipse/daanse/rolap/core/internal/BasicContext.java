@@ -11,7 +11,7 @@
 *   SmartCity Jena - initial
 *   Stefan Bischof (bipolis.org) - initial
 */
-package org.eclipse.daanse.rolap.core;
+package org.eclipse.daanse.rolap.core.internal;
 
 import java.sql.Connection;
 import java.util.ArrayList;
@@ -39,6 +39,7 @@ import org.eclipse.daanse.olap.api.function.FunctionService;
 import org.eclipse.daanse.olap.common.ExecuteDurationUtil;
 import org.eclipse.daanse.olap.core.LoggingEventBus;
 import org.eclipse.daanse.olap.server.ExecutionImpl;
+import org.eclipse.daanse.rolap.core.api.Constants;
 import org.eclipse.daanse.rolap.api.RolapContext;
 import org.eclipse.daanse.rolap.common.AbstractRolapContext;
 import org.eclipse.daanse.rolap.common.RolapCatalogCache;
@@ -70,30 +71,20 @@ import org.slf4j.LoggerFactory;
 @Component(service = Context.class, scope = ServiceScope.SINGLETON)
 public class BasicContext extends AbstractRolapContext implements RolapContext {
 
-    public static final String PID = "org.eclipse.daanse.rolap.core.BasicContext";
-
-    public static final String REF_NAME_DIALECT_FACTORY = "dialectFactory";
-    public static final String REF_NAME_DATA_SOURCE = "dataSource";
-    public static final String REF_NAME_CATALOG_MAPPING_SUPPLIER = "catalogMappingSuppier";
-    public static final String REF_NAME_ROLAP_CONTEXT_MAPPING_SUPPLIER = "rolapContextMappingSuppliers";
-    public static final String REF_NAME_MDX_PARSER_PROVIDER = "mdxParserProvider";
-    public static final String REF_NAME_EXPRESSION_COMPILER_FACTORY = "expressionCompilerFactory";
-    public static final String REF_NAME_CUSTOM_AGGREGATOR = "customAggregator";
-
     private static final String ERR_MSG_DIALECT_INIT = "Could not activate context. Error on initialisation of Dialect";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BasicContext.class);
 
-    @Reference(name = REF_NAME_DATA_SOURCE, target = UnresolvableNamespace.UNRESOLVABLE_FILTER)
+    @Reference(name = Constants.BASIC_CONTEXT_REF_NAME_DATA_SOURCE, target = UnresolvableNamespace.UNRESOLVABLE_FILTER)
     private DataSource dataSource = null;
 
-    @Reference(name = REF_NAME_DIALECT_FACTORY)
+    @Reference(name = Constants.BASIC_CONTEXT_REF_NAME_DIALECT_FACTORY)
     private DialectFactory dialectFactory = null;
 
-    @Reference(name = REF_NAME_CATALOG_MAPPING_SUPPLIER, target = UnresolvableNamespace.UNRESOLVABLE_FILTER, cardinality = ReferenceCardinality.MANDATORY)
+    @Reference(name = Constants.BASIC_CONTEXT_REF_NAME_CATALOG_MAPPING_SUPPLIER, target = UnresolvableNamespace.UNRESOLVABLE_FILTER, cardinality = ReferenceCardinality.MANDATORY)
     private CatalogMappingSupplier catalogMappingSupplier;
 
-    @Reference(name = REF_NAME_EXPRESSION_COMPILER_FACTORY, target = UnresolvableNamespace.UNRESOLVABLE_FILTER)
+    @Reference(name = Constants.BASIC_CONTEXT_REF_NAME_EXPRESSION_COMPILER_FACTORY, target = UnresolvableNamespace.UNRESOLVABLE_FILTER)
     private ExpressionCompilerFactory expressionCompilerFactory = null;
 
     @Reference
@@ -108,7 +99,7 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
 
     private Semaphore queryLimitSemaphore;
 
-    @Reference(name = REF_NAME_MDX_PARSER_PROVIDER, target = UnresolvableNamespace.UNRESOLVABLE_FILTER)
+    @Reference(name = Constants.BASIC_CONTEXT_REF_NAME_MDX_PARSER_PROVIDER, target = UnresolvableNamespace.UNRESOLVABLE_FILTER)
     private MdxParserProvider mdxParserProvider;
 
     private List<CustomAggregatorFactory> customAggregators = new ArrayList<CustomAggregatorFactory>();
@@ -119,7 +110,7 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
         activate1();
     }
 
-    @Reference(name = REF_NAME_CUSTOM_AGGREGATOR, cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC)
+    @Reference(name = Constants.BASIC_CONTEXT_REF_NAME_CUSTOM_AGGREGATOR, cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC)
     public void bindCustomAgregators(CustomAggregatorFactory aggregator) {
         customAggregators.add(aggregator);
     }
@@ -133,7 +124,8 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
         this.eventBus = new LoggingEventBus();
 
         schemaCache = new RolapCatalogCache(this);
-        queryLimitSemaphore = new Semaphore(getConfigValue(ConfigConstants.QUERY_LIMIT, ConfigConstants.QUERY_LIMIT_DEFAULT_VALUE ,Integer.class));
+        queryLimitSemaphore = new Semaphore(
+                getConfigValue(ConfigConstants.QUERY_LIMIT, ConfigConstants.QUERY_LIMIT_DEFAULT_VALUE, Integer.class));
 
         try (Connection connection = dataSource.getConnection()) {
             dialect = dialectFactory.createDialect(connection);
@@ -142,9 +134,14 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
             LOGGER.error(ERR_MSG_DIALECT_INIT, e);
         }
 
-        shepherd = new RolapResultShepherd(getConfigValue(ConfigConstants.ROLAP_CONNECTION_SHEPHERD_THREAD_POLLING_INTERVAL, ConfigConstants.ROLAP_CONNECTION_SHEPHERD_THREAD_POLLING_INTERVAL_DEFAULT_VALUE, Long.class),
-                getConfigValue(ConfigConstants.ROLAP_CONNECTION_SHEPHERD_THREAD_POLLING_INTERVAL_UNIT, ConfigConstants.ROLAP_CONNECTION_SHEPHERD_THREAD_POLLING_INTERVAL_UNIT_DEFAULT_VALUE, TimeUnit.class),
-                getConfigValue(ConfigConstants.ROLAP_CONNECTION_SHEPHERD_NB_THREADS, ConfigConstants.ROLAP_CONNECTION_SHEPHERD_NB_THREADS_DEFAULT_VALUE, Integer.class));
+        shepherd = new RolapResultShepherd(
+                getConfigValue(ConfigConstants.ROLAP_CONNECTION_SHEPHERD_THREAD_POLLING_INTERVAL,
+                        ConfigConstants.ROLAP_CONNECTION_SHEPHERD_THREAD_POLLING_INTERVAL_DEFAULT_VALUE, Long.class),
+                getConfigValue(ConfigConstants.ROLAP_CONNECTION_SHEPHERD_THREAD_POLLING_INTERVAL_UNIT,
+                        ConfigConstants.ROLAP_CONNECTION_SHEPHERD_THREAD_POLLING_INTERVAL_UNIT_DEFAULT_VALUE,
+                        TimeUnit.class),
+                getConfigValue(ConfigConstants.ROLAP_CONNECTION_SHEPHERD_NB_THREADS,
+                        ConfigConstants.ROLAP_CONNECTION_SHEPHERD_NB_THREADS_DEFAULT_VALUE, Integer.class));
         aggMgr = new AggregationManager(this);
 
         if (LOGGER.isDebugEnabled()) {
@@ -243,7 +240,6 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
         return Optional.ofNullable(sqlGuardFactory);
     }
 
-
     @Override
     public AggregationFactory getAggragationFactory() {
         return this.aggregationFactory;
@@ -270,19 +266,15 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
 
     @Override
     public ExpressionCompiler createProfilingCompiler(ExpressionCompiler compiler) {
-        return new RolapProfilingEvaluator.ProfilingEvaluatorCompiler(
-            compiler);
+        return new RolapProfilingEvaluator.ProfilingEvaluatorCompiler(compiler);
     }
 
     /**
-     * Creates a compiler which will generate programs which will test
-     * whether the dependencies declared via
-     * mondrian.calc.Calc#dependsOn(MappingHierarchy) are accurate.
+     * Creates a compiler which will generate programs which will test whether the dependencies declared
+     * via mondrian.calc.Calc#dependsOn(MappingHierarchy) are accurate.
      */
     @Override
-    public ExpressionCompiler createDependencyTestingCompiler(
-        ExpressionCompiler compiler)
-    {
+    public ExpressionCompiler createDependencyTestingCompiler(ExpressionCompiler compiler) {
         return new RolapDependencyTestingEvaluator.DteCompiler(compiler);
     }
 

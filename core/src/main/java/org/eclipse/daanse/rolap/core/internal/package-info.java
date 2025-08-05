@@ -11,6 +11,7 @@
 *   SmartCity Jena - initial
 *   Stefan Bischof (bipolis.org) - initial
 */
+//TODO: RM EXPORT
 @org.osgi.annotation.bundle.Export
 @org.osgi.annotation.versioning.Version("0.0.1")
-package org.eclipse.daanse.rolap.api;
+package org.eclipse.daanse.rolap.core.internal;
