@@ -13,6 +13,20 @@
 */
 package org.eclipse.daanse.rolap.core.internal;
 
+import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_PID;
+import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_REF_NAME_CATALOG_MAPPING_SUPPLIER;
+import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_REF_NAME_CUSTOM_AGGREGATOR;
+import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_REF_NAME_DATA_SOURCE;
+import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_REF_NAME_DIALECT_FACTORY;
+import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_REF_NAME_EXPRESSION_COMPILER_FACTORY;
+import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_REF_NAME_MDX_PARSER_PROVIDER;
+import static org.osgi.namespace.unresolvable.UnresolvableNamespace.UNRESOLVABLE_FILTER;
+import static org.osgi.service.component.annotations.ReferenceCardinality.MANDATORY;
+import static org.osgi.service.component.annotations.ReferenceCardinality.MULTIPLE;
+import static org.osgi.service.component.annotations.ReferenceCardinality.OPTIONAL;
+import static org.osgi.service.component.annotations.ReferencePolicy.DYNAMIC;
+import static org.osgi.service.component.annotations.ServiceScope.SINGLETON;
+
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,18 +42,17 @@ import org.eclipse.daanse.jdbc.db.dialect.api.DialectFactory;
 import org.eclipse.daanse.mdx.parser.api.MdxParserProvider;
 import org.eclipse.daanse.olap.api.AggregationFactory;
 import org.eclipse.daanse.olap.api.ConfigConstants;
-import org.eclipse.daanse.olap.api.connection.ConnectionProps;
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.Evaluator;
 import org.eclipse.daanse.olap.api.Statement;
 import org.eclipse.daanse.olap.api.aggregator.CustomAggregatorFactory;
 import org.eclipse.daanse.olap.api.calc.compiler.ExpressionCompiler;
 import org.eclipse.daanse.olap.api.calc.compiler.ExpressionCompilerFactory;
+import org.eclipse.daanse.olap.api.connection.ConnectionProps;
 import org.eclipse.daanse.olap.api.function.FunctionService;
 import org.eclipse.daanse.olap.common.ExecuteDurationUtil;
 import org.eclipse.daanse.olap.core.LoggingEventBus;
 import org.eclipse.daanse.olap.server.ExecutionImpl;
-import org.eclipse.daanse.rolap.core.api.Constants;
 import org.eclipse.daanse.rolap.api.RolapContext;
 import org.eclipse.daanse.rolap.common.AbstractRolapContext;
 import org.eclipse.daanse.rolap.common.RolapCatalogCache;
@@ -57,40 +70,38 @@ import org.eclipse.daanse.rolap.mapping.api.CatalogMappingSupplier;
 import org.eclipse.daanse.rolap.mapping.api.model.AccessRoleMapping;
 import org.eclipse.daanse.rolap.mapping.api.model.CatalogMapping;
 import org.eclipse.daanse.sql.guard.api.SqlGuardFactory;
-import org.osgi.namespace.unresolvable.UnresolvableNamespace;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferenceCardinality;
-import org.osgi.service.component.annotations.ReferencePolicy;
-import org.osgi.service.component.annotations.ServiceScope;
+import org.osgi.service.metatype.annotations.Designate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Component(service = Context.class, scope = ServiceScope.SINGLETON,configurationPid = Constants.BASIC_CONTEXT_PID)
+@Designate(ocd = OCD.class, factory = true)
+@Component(service = Context.class, scope = SINGLETON, configurationPid = BASIC_CONTEXT_PID)
 public class BasicContext extends AbstractRolapContext implements RolapContext {
 
     private static final String ERR_MSG_DIALECT_INIT = "Could not activate context. Error on initialisation of Dialect";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BasicContext.class);
 
-    @Reference(name = Constants.BASIC_CONTEXT_REF_NAME_DATA_SOURCE, target = UnresolvableNamespace.UNRESOLVABLE_FILTER)
+    @Reference(name = BASIC_CONTEXT_REF_NAME_DATA_SOURCE, target = UNRESOLVABLE_FILTER)
     private DataSource dataSource = null;
 
-    @Reference(name = Constants.BASIC_CONTEXT_REF_NAME_DIALECT_FACTORY)
+    @Reference(name = BASIC_CONTEXT_REF_NAME_DIALECT_FACTORY)
     private DialectFactory dialectFactory = null;
 
-    @Reference(name = Constants.BASIC_CONTEXT_REF_NAME_CATALOG_MAPPING_SUPPLIER, target = UnresolvableNamespace.UNRESOLVABLE_FILTER, cardinality = ReferenceCardinality.MANDATORY)
+    @Reference(name = BASIC_CONTEXT_REF_NAME_CATALOG_MAPPING_SUPPLIER, target = UNRESOLVABLE_FILTER, cardinality = MANDATORY)
     private CatalogMappingSupplier catalogMappingSupplier;
 
-    @Reference(name = Constants.BASIC_CONTEXT_REF_NAME_EXPRESSION_COMPILER_FACTORY, target = UnresolvableNamespace.UNRESOLVABLE_FILTER)
+    @Reference(name = BASIC_CONTEXT_REF_NAME_EXPRESSION_COMPILER_FACTORY, target = UNRESOLVABLE_FILTER)
     private ExpressionCompilerFactory expressionCompilerFactory = null;
 
     @Reference
     private FunctionService functionService;
 
-    @Reference(cardinality = ReferenceCardinality.OPTIONAL)
+    @Reference(cardinality = OPTIONAL)
     private SqlGuardFactory sqlGuardFactory;
 
     private Dialect dialect = null;
@@ -99,7 +110,7 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
 
     private Semaphore queryLimitSemaphore;
 
-    @Reference(name = Constants.BASIC_CONTEXT_REF_NAME_MDX_PARSER_PROVIDER, target = UnresolvableNamespace.UNRESOLVABLE_FILTER)
+    @Reference(name = BASIC_CONTEXT_REF_NAME_MDX_PARSER_PROVIDER, target = UNRESOLVABLE_FILTER)
     private MdxParserProvider mdxParserProvider;
 
     private List<CustomAggregatorFactory> customAggregators = new ArrayList<CustomAggregatorFactory>();
@@ -110,7 +121,7 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
         activate1();
     }
 
-    @Reference(name = Constants.BASIC_CONTEXT_REF_NAME_CUSTOM_AGGREGATOR, cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC)
+    @Reference(name = BASIC_CONTEXT_REF_NAME_CUSTOM_AGGREGATOR, cardinality = MULTIPLE, policy = DYNAMIC)
     public void bindCustomAgregators(CustomAggregatorFactory aggregator) {
         customAggregators.add(aggregator);
     }
