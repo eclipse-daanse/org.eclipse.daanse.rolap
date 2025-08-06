@@ -68,7 +68,7 @@ import org.osgi.service.component.annotations.ServiceScope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Component(service = Context.class, scope = ServiceScope.SINGLETON)
+@Component(service = Context.class, scope = ServiceScope.SINGLETON,configurationPid = Constants.BASIC_CONTEXT_PID)
 public class BasicContext extends AbstractRolapContext implements RolapContext {
 
     private static final String ERR_MSG_DIALECT_INIT = "Could not activate context. Error on initialisation of Dialect";
