@@ -66,6 +66,7 @@ import org.eclipse.daanse.rolap.common.RolapResult;
 import org.eclipse.daanse.rolap.common.RolapResultShepherd;
 import org.eclipse.daanse.rolap.common.agg.AggregationManager;
 import org.eclipse.daanse.rolap.common.aggregator.AggregationFactoryImpl;
+import org.eclipse.daanse.rolap.core.api.BasicContextOCD;
 import org.eclipse.daanse.rolap.mapping.api.CatalogMappingSupplier;
 import org.eclipse.daanse.rolap.mapping.api.model.AccessRoleMapping;
 import org.eclipse.daanse.rolap.mapping.api.model.CatalogMapping;
@@ -78,7 +79,7 @@ import org.osgi.service.metatype.annotations.Designate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Designate(ocd = OCD.class, factory = true)
+@Designate(ocd = BasicContextOCD.class, factory = true)
 @Component(service = Context.class, scope = SINGLETON, configurationPid = BASIC_CONTEXT_PID)
 public class BasicContext extends AbstractRolapContext implements RolapContext {
 
