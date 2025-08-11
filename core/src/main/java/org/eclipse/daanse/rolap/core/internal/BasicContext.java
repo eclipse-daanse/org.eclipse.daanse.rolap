@@ -90,13 +90,13 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
     @Reference(name = BASIC_CONTEXT_REF_NAME_DATA_SOURCE, target = UNRESOLVABLE_FILTER)
     private DataSource dataSource = null;
 
-    @Reference(name = BASIC_CONTEXT_REF_NAME_DIALECT_FACTORY)
+    @Reference(name = BASIC_CONTEXT_REF_NAME_DIALECT_FACTORY, target = UNRESOLVABLE_FILTER)
     private DialectFactory dialectFactory = null;
 
     @Reference(name = BASIC_CONTEXT_REF_NAME_CATALOG_MAPPING_SUPPLIER, target = UNRESOLVABLE_FILTER, cardinality = MANDATORY)
     private CatalogMappingSupplier catalogMappingSupplier;
 
-    @Reference(name = BASIC_CONTEXT_REF_NAME_EXPRESSION_COMPILER_FACTORY, target = UNRESOLVABLE_FILTER)
+    @Reference(name = BASIC_CONTEXT_REF_NAME_EXPRESSION_COMPILER_FACTORY)
     private ExpressionCompilerFactory expressionCompilerFactory = null;
 
     @Reference
@@ -105,14 +105,15 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
     @Reference(cardinality = OPTIONAL)
     private SqlGuardFactory sqlGuardFactory;
 
+    @Reference(name = BASIC_CONTEXT_REF_NAME_MDX_PARSER_PROVIDER)
+    private MdxParserProvider mdxParserProvider;
+
     private Dialect dialect = null;
 
     private AggregationFactory aggregationFactory = null;
 
     private Semaphore queryLimitSemaphore;
 
-    @Reference(name = BASIC_CONTEXT_REF_NAME_MDX_PARSER_PROVIDER, target = UNRESOLVABLE_FILTER)
-    private MdxParserProvider mdxParserProvider;
 
     private List<CustomAggregatorFactory> customAggregators = new ArrayList<CustomAggregatorFactory>();
 
