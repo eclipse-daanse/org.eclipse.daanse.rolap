@@ -24,6 +24,8 @@
   <artifactId>org.eclipse.daanse.rolap</artifactId>
   <version>${revision}</version>
   <packaging>pom</packaging>
+  <name>Eclipse Daanse ROLAP Engine</name>
+  <description>Relational OLAP (ROLAP) processing engine providing core analytical query execution, aggregation processing, and multidimensional data access over relational databases. Implements the runtime execution environment for ROLAP schemas defined in the mapping framework, distinct from the schema modeling components.</description>
 
   <properties>
     <revision>0.0.1-SNAPSHOT</revision>

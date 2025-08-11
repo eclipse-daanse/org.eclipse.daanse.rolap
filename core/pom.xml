@@ -21,6 +21,8 @@
 	</parent>
 	<artifactId>org.eclipse.daanse.rolap.core</artifactId>
 	<packaging>jar</packaging>
+	<name>Eclipse Daanse ROLAP Core Engine</name>
+	<description>Core implementation of the Relational OLAP (ROLAP) processing engine providing analytical query execution, aggregation processing, and multidimensional data access over relational databases. Implements the runtime execution environment for ROLAP schemas with comprehensive caching and optimization features.</description>
 
 	<dependencies>
 		<dependency>
