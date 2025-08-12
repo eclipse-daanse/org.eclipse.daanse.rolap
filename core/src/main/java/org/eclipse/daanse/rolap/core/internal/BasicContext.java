@@ -19,9 +19,9 @@ import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_REF_NAME
 import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_REF_NAME_DATA_SOURCE;
 import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_REF_NAME_DIALECT_FACTORY;
 import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_REF_NAME_EXPRESSION_COMPILER_FACTORY;
+import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_REF_NAME_FUNCTION_SERVICE;
 import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_REF_NAME_MDX_PARSER_PROVIDER;
 import static org.osgi.namespace.unresolvable.UnresolvableNamespace.UNRESOLVABLE_FILTER;
-import static org.osgi.service.component.annotations.ReferenceCardinality.MANDATORY;
 import static org.osgi.service.component.annotations.ReferenceCardinality.MULTIPLE;
 import static org.osgi.service.component.annotations.ReferenceCardinality.OPTIONAL;
 import static org.osgi.service.component.annotations.ReferencePolicy.DYNAMIC;
@@ -88,32 +88,31 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
     private static final Logger LOGGER = LoggerFactory.getLogger(BasicContext.class);
 
     @Reference(name = BASIC_CONTEXT_REF_NAME_DATA_SOURCE, target = UNRESOLVABLE_FILTER)
-    private DataSource dataSource = null;
+    private DataSource dataSource;
 
     @Reference(name = BASIC_CONTEXT_REF_NAME_DIALECT_FACTORY, target = UNRESOLVABLE_FILTER)
-    private DialectFactory dialectFactory = null;
+    private DialectFactory dialectFactory;
 
-    @Reference(name = BASIC_CONTEXT_REF_NAME_CATALOG_MAPPING_SUPPLIER, target = UNRESOLVABLE_FILTER, cardinality = MANDATORY)
+    @Reference(name = BASIC_CONTEXT_REF_NAME_CATALOG_MAPPING_SUPPLIER, target = UNRESOLVABLE_FILTER)
     private CatalogMappingSupplier catalogMappingSupplier;
 
     @Reference(name = BASIC_CONTEXT_REF_NAME_EXPRESSION_COMPILER_FACTORY)
-    private ExpressionCompilerFactory expressionCompilerFactory = null;
+    private ExpressionCompilerFactory expressionCompilerFactory;
 
-    @Reference
+    @Reference(name = BASIC_CONTEXT_REF_NAME_MDX_PARSER_PROVIDER)
+    private MdxParserProvider mdxParserProvider;
+
+    @Reference(name = BASIC_CONTEXT_REF_NAME_FUNCTION_SERVICE)
     private FunctionService functionService;
 
     @Reference(cardinality = OPTIONAL)
     private SqlGuardFactory sqlGuardFactory;
-
-    @Reference(name = BASIC_CONTEXT_REF_NAME_MDX_PARSER_PROVIDER)
-    private MdxParserProvider mdxParserProvider;
 
     private Dialect dialect = null;
 
     private AggregationFactory aggregationFactory = null;
 
     private Semaphore queryLimitSemaphore;
-
 
     private List<CustomAggregatorFactory> customAggregators = new ArrayList<CustomAggregatorFactory>();
 
