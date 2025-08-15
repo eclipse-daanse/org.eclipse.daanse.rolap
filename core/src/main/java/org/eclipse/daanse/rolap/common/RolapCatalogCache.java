@@ -1,18 +1,5 @@
 /*
- * This software is subject to the terms of the Eclipse Public License v1.0
- * Agreement, available at the following URL:
- * http://www.eclipse.org/legal/epl-v10.html.
- * You must accept the terms of that agreement to use this software.
- *
- * Copyright (C) 2001-2005 Julian Hyde and others
- * Copyright (C) 2005-2019 Hitachi Vantara and others
- * All Rights Reserved.
- *
- * ---- All changes after Fork in 2023 ------------------------
- *
- * Project: Eclipse daanse
- *
- * Copyright (c) 2023 Contributors to the Eclipse Foundation.
+ * Copyright (c) 2025 Contributors to the Eclipse Foundation.
  *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -20,16 +7,14 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Contributors after Fork in 2023:
- *   SmartCity Jena - initial
+ * Contributors:
+ *   SmartCity Jena, Stefan Bischof - initial
+ *
  */
 package org.eclipse.daanse.rolap.common;
 
-import java.lang.ref.Reference;
 import java.time.Duration;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -40,202 +25,206 @@ import org.eclipse.daanse.olap.util.ByteString;
 import org.eclipse.daanse.rolap.api.RolapContext;
 import org.eclipse.daanse.rolap.element.RolapCatalog;
 import org.eclipse.daanse.rolap.mapping.api.model.CatalogMapping;
-import org.eclipse.daanse.rolap.util.reference.expiring.ExpiringReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.Expiry;
+
 public class RolapCatalogCache implements CatalogCache {
 
-	static final Logger LOGGER = LoggerFactory.getLogger(RolapCatalogCache.class);
+    static final Logger LOGGER = LoggerFactory.getLogger(RolapCatalogCache.class);
 
-	private final Map<CacheKey, ExpiringReference<RolapCatalog>> innerCache = new HashMap<>();
+    private static record CatalogEntry(RolapCatalog catalog, Duration timeout) {
+        // This record is used to store catalog entries in the cache together with there timeout duration
+    }
 
-	private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private final Cache<CacheKey, CatalogEntry> innerCache = Caffeine.newBuilder()
+            .expireAfter(new Expiry<CacheKey, CatalogEntry>() {
+                @Override
+                public long expireAfterCreate(CacheKey key, CatalogEntry entry, long currentTime) {
+                    return entry.timeout.toNanos();
+                }
 
-	private RolapContext context;
+                @Override
+                public long expireAfterUpdate(CacheKey key, CatalogEntry entry, long currentTime,
+                        long currentDuration) {
+                    return entry.timeout.toNanos();
+                }
 
-	public RolapCatalogCache(RolapContext context) {
-		this.context = context;
-	}
+                @Override
+                public long expireAfterRead(CacheKey key, CatalogEntry entry, long currentTime, long currentDuration) {
+                    return entry.timeout.toNanos();
+                }
+            }).build();
 
-	public RolapCatalog getOrCreateCatalog(CatalogMapping catalogMapping, final ConnectionProps connectionProps,
-			final Optional<String> oSessionId) {
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
-		final boolean useSchemaPool = connectionProps.useSchemaPool();
-		final CatalogContentKey catalogContentKey = CatalogContentKey.create(catalogMapping);
-		final ConnectionKey connectionKey = ConnectionKey.of(context.getDataSource(), oSessionId.orElse(null));
-		final CacheKey key = new CacheKey(catalogContentKey, connectionKey);
+    private RolapContext context;
 
-		if (LOGGER.isDebugEnabled()) {
-			LOGGER.debug("getOrCreateSchema" + key.toString());
-		}
+    public RolapCatalogCache(RolapContext context) {
+        this.context = context;
+    }
 
-		// Use the schema pool unless "UseSchemaPool" is explicitly false.
-		if (useSchemaPool) {
-			return getFromCacheByKey(context, connectionProps, key);
-		}
+    public RolapCatalog getOrCreateCatalog(CatalogMapping catalogMapping, final ConnectionProps connectionProps,
+            final Optional<String> oSessionId) {
 
-		if (LOGGER.isDebugEnabled()) {
-			LOGGER.debug("create (no pool): " + key);
-		}
-		RolapCatalog schema = createRolapCatalog(context, connectionProps, key);
-		return schema;
+        final boolean useSchemaPool = connectionProps.useSchemaPool();
+        final CatalogContentKey catalogContentKey = CatalogContentKey.create(catalogMapping);
+        final ConnectionKey connectionKey = ConnectionKey.of(context.getDataSource(), oSessionId.orElse(null));
+        final CacheKey key = new CacheKey(catalogContentKey, connectionKey);
 
-	}
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("getOrCreateSchema" + key.toString());
+        }
 
-	// is extracted and made package-local for testing purposes
-	RolapCatalog createRolapCatalog(RolapContext context, ConnectionProps connectionProps, CacheKey key) {
-		return new RolapCatalog(key, connectionProps, context);
-	}
+        // Use the schema pool unless "UseSchemaPool" is explicitly false.
+        if (useSchemaPool) {
+            return getFromCacheByKey(context, connectionProps, key);
+        }
 
-	private RolapCatalog getFromCacheByKey(RolapContext context, ConnectionProps connectionProps, CacheKey key) {
-		Duration timeOut = connectionProps.pinSchemaTimeout();
-		RolapCatalog catalog = lookUp(key, timeOut);
-		if (catalog != null) {
-			return catalog;
-		}
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("create (no pool): " + key);
+        }
+        RolapCatalog schema = createRolapCatalog(context, connectionProps, key);
+        return schema;
 
-		lock.writeLock().lock();
-		try {
-			// We need to check once again, now under
-			// write lock's protection, because it is possible,
-			// that another thread has already replaced old ref
-			// with a new one, having the same key.
-			// If the condition were not checked, then this thread
-			// would remove the newborn schema
-			ExpiringReference<RolapCatalog> expiringRefToRolapCatalog = innerCache.get(key);
-			if (expiringRefToRolapCatalog != null) {
-				catalog = expiringRefToRolapCatalog.getCatalogAndResetTimeout(timeOut);
-				if (catalog == null) {
-					innerCache.remove(key);
-				} else {
-					return catalog;
-				}
-			}
+    }
 
-			catalog = createRolapCatalog(context, connectionProps, key);
-			if (LOGGER.isDebugEnabled()) {
-				LOGGER.debug("create: " + catalog);
-			}
-			putSchemaIntoPool(catalog, null, timeOut);
-			return catalog;
-		} finally {
-			lock.writeLock().unlock();
-		}
-	}
+    // is extracted and made package-local for testing purposes
+    RolapCatalog createRolapCatalog(RolapContext context, ConnectionProps connectionProps, CacheKey key) {
+        return new RolapCatalog(key, connectionProps, context);
+    }
 
-	private <T> RolapCatalog lookUp(T key, Duration timeOut) {
-		lock.readLock().lock();
-		try {
-			ExpiringReference<RolapCatalog> expiringReference = innerCache.get(key);
-			if (LOGGER.isDebugEnabled()) {
-				LOGGER.debug("get(key={}) returned {}", key, toString(expiringReference));
-			}
+    private RolapCatalog getFromCacheByKey(RolapContext context, ConnectionProps connectionProps, CacheKey key) {
+        Duration timeOut = connectionProps.pinSchemaTimeout();
+        RolapCatalog catalog = lookUp(key, timeOut);
+        if (catalog != null) {
+            return catalog;
+        }
 
-			if (expiringReference != null) {
-				RolapCatalog schema = expiringReference.getCatalogAndResetTimeout(timeOut);
-				if (schema != null) {
-					return schema;
-				}
-			}
-		} finally {
-			lock.readLock().unlock();
-		}
+        lock.writeLock().lock();
+        try {
+            // We need to check once again, now under
+            // write lock's protection, because it is possible,
+            // that another thread has already replaced old ref
+            // with a new one, having the same key.
+            // If the condition were not checked, then this thread
+            // would remove the newborn schema
+            CatalogEntry entry = innerCache.getIfPresent(key);
+            if (entry != null) {
+                catalog = entry.catalog;
+                // Reset timeout by putting the catalog back with the same timeout
+                innerCache.put(key, new CatalogEntry(catalog, timeOut));
+                return catalog;
+            }
 
-		return null;
-	}
+            catalog = createRolapCatalog(context, connectionProps, key);
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("create: " + catalog);
+            }
+            putSchemaIntoPool(catalog, null, timeOut);
+            return catalog;
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
 
-	/**
-	 * Adds schema to the pool. Attention! This method is not doing
-	 * any synchronization internally and relies on the assumption that it is
-	 * invoked inside a critical section
-	 *
-	 * @param schema     schema to be stored
-	 * @param md5Bytes   md5 hash, can be null
-	 * @param pinTimeout timeout mark
-	 */
-	private void putSchemaIntoPool(final RolapCatalog schema, final ByteString md5Bytes, Duration timeOut) {
-		final ExpiringReference<RolapCatalog> reference = new ExpiringReference<>(schema, timeOut);
+    private RolapCatalog lookUp(CacheKey key, Duration timeOut) {
+        lock.readLock().lock();
+        try {
+            CatalogEntry entry = innerCache.getIfPresent(key);
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("get(key={}) returned {}", key, entry != null ? entry.catalog : null);
+            }
 
-		innerCache.put(schema.getKey(), reference);
+            if (entry != null) {
+                // Reset timeout by putting the catalog back with the same timeout
+                innerCache.put(key, new CatalogEntry(entry.catalog, timeOut));
+                return entry.catalog;
+            }
+        } finally {
+            lock.readLock().unlock();
+        }
 
-		if (LOGGER.isDebugEnabled()) {
-			LOGGER.debug("put: schema={}, key={}, checksum={}, map-size={}", schema, schema.getKey(), md5Bytes,
-					innerCache.size());
-		}
-	}
+        return null;
+    }
 
-	public void remove(RolapCatalog schema) {
-		if (schema != null) {
-			if (RolapCatalog.LOGGER.isDebugEnabled()) {
-				RolapCatalog.LOGGER.debug(new StringBuilder("Pool.remove: schema \"").append(schema.getName())
-						.append("\" and datasource object").toString());
-			}
-			remove(schema.getKey());
-		}
-	}
+    /**
+     * Adds schema to the pool. Attention! This method is not doing any synchronization internally and
+     * relies on the assumption that it is invoked inside a critical section
+     *
+     * @param rolapCatalog catalog to be stored
+     * @param md5Bytes     md5 hash, can be null
+     * @param pinTimeout   timeout mark
+     */
+    private void putSchemaIntoPool(final RolapCatalog rolapCatalog, final ByteString md5Bytes, Duration timeOut) {
+        final CatalogEntry entry = new CatalogEntry(rolapCatalog, timeOut);
 
-	private void remove(CacheKey key) {
-		lock.writeLock().lock();
-		RolapCatalog schema = null;
-		try {
-			Reference<RolapCatalog> ref = innerCache.get(key);
-			if (ref != null) {
-				schema = ref.get();
-			}
-			innerCache.remove(key);
-		} finally {
-			lock.writeLock().unlock();
-		}
+        innerCache.put(rolapCatalog.getKey(), entry);
 
-		if (schema != null) {
-			schema.finalCleanUp();
-		}
-	}
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("put: schema={}, key={}, checksum={}, map-size={}", rolapCatalog, rolapCatalog.getKey(),
+                    md5Bytes, innerCache.estimatedSize());
+        }
+    }
 
-	public void clear() {
-		if (RolapCatalog.LOGGER.isDebugEnabled()) {
-			RolapCatalog.LOGGER.debug("Pool.clear: clearing all RolapCatalogs");
-		}
-		List<RolapCatalog> schemas = getRolapCatalogs();
-		innerCache.clear();
+    public void remove(RolapCatalog schema) {
+        if (schema != null) {
+            if (RolapCatalog.LOGGER.isDebugEnabled()) {
+                RolapCatalog.LOGGER.debug(new StringBuilder("Pool.remove: schema \"").append(schema.getName())
+                        .append("\" and datasource object").toString());
+            }
+            remove(schema.getKey());
+        }
+    }
 
-		schemas.forEach(s -> s.finalCleanUp());
-	}
+    private void remove(CacheKey key) {
+        lock.writeLock().lock();
+        RolapCatalog schema = null;
+        try {
+            CatalogEntry entry = innerCache.getIfPresent(key);
+            if (entry != null) {
+                schema = entry.catalog;
+            }
+            innerCache.invalidate(key);
+        } finally {
+            lock.writeLock().unlock();
+        }
 
-	public List<RolapCatalog> getRolapCatalogs() {
-		lock.readLock().lock();
-		try {
+        if (schema != null) {
+            schema.finalCleanUp();
+        }
+    }
 
-			List<RolapCatalog> list = innerCache.values().parallelStream().filter(Objects::nonNull)
-					.map(ExpiringReference::get).filter(Objects::nonNull).toList();
+    public void clear() {
+        if (RolapCatalog.LOGGER.isDebugEnabled()) {
+            RolapCatalog.LOGGER.debug("Pool.clear: clearing all RolapCatalogs");
+        }
+        List<RolapCatalog> schemas = getRolapCatalogs();
+        innerCache.invalidateAll();
 
-			return list;
-		} finally {
-			lock.readLock().unlock();
-		}
-	}
+        schemas.forEach(s -> s.finalCleanUp());
+    }
 
-	boolean contains(RolapCatalog rolapSchema) {
-		lock.readLock().lock();
-		try {
-			return innerCache.containsKey(rolapSchema.getKey());
-		} finally {
-			lock.readLock().unlock();
-		}
-	}
+    public List<RolapCatalog> getRolapCatalogs() {
+        lock.readLock().lock();
+        try {
+            return innerCache.asMap().values().parallelStream().filter(Objects::nonNull).map(entry -> entry.catalog)
+                    .filter(Objects::nonNull).toList();
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
 
-	private static <T> String toString(Reference<T> ref) {
-		if (ref == null) {
-			return "null";
-		} else {
-			T t = ref.get();
-			if (t == null) {
-				return "ref(null)";
-			} else {
-				return new StringBuilder("ref(").append(t).append(", id=")
-						.append(Integer.toHexString(System.identityHashCode(t))).append(")").toString();
-			}
-		}
-	}
+    boolean contains(RolapCatalog rolapSchema) {
+        lock.readLock().lock();
+        try {
+            return innerCache.getIfPresent(rolapSchema.getKey()) != null;
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
 }
