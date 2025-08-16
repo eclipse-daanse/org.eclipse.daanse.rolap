@@ -73,7 +73,7 @@ import org.eclipse.daanse.olap.spi.SegmentHeader;
 import  org.eclipse.daanse.olap.util.Pair;
 import org.eclipse.daanse.rolap.api.RolapContext;
 import org.eclipse.daanse.rolap.common.CacheControlImpl;
-import org.eclipse.daanse.rolap.common.CacheKey;
+import org.eclipse.daanse.rolap.common.RolapCatalogKey;
 import org.eclipse.daanse.rolap.common.RolapCatalogCache;
 import org.eclipse.daanse.rolap.common.RolapStar;
 import org.eclipse.daanse.rolap.element.RolapStoredMeasure;
@@ -1687,7 +1687,7 @@ public class SegmentCacheManager implements ISegmentCacheManager {
    * The index is based off the checksum of the schema.
    */
   public class SegmentCacheIndexRegistry implements ISegmentCacheIndex{
-    private final Map<CacheKey, SegmentCacheIndex> indexes =
+    private final Map<RolapCatalogKey, SegmentCacheIndex> indexes =
       Collections.synchronizedMap(
         new HashMap<>() );
 
@@ -1739,7 +1739,7 @@ public class SegmentCacheManager implements ISegmentCacheManager {
   }
 
   RolapStar getStar(SegmentHeader header ) {
-    for ( RolapCatalog schema : ((RolapCatalogCache)context.getCatalogCache()).getRolapCatalogs() ) {
+    for ( RolapCatalog schema : ((RolapCatalogCache)context.getCatalogCache()).getCachedCatalogs() ) {
       if ( !schema.getChecksum().equals( header.schemaChecksum ) ) {
         continue;
       }

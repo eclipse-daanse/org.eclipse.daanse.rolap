@@ -13,7 +13,7 @@
  */
 package org.eclipse.daanse.rolap.common;
 
-public record CacheKey(CatalogContentKey schemaContentKey, ConnectionKey connectionKey)
+public record RolapCatalogKey(RolapCatalogContentKey catalogContentKey, ConnectionKey connectionKey)
 {
 
 }

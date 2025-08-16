@@ -15,10 +15,10 @@ package org.eclipse.daanse.rolap.common;
 
 import org.eclipse.daanse.rolap.mapping.api.model.CatalogMapping;
 
-public record CatalogContentKey(String schemaName, int schemaMappingHash) {
-	static CatalogContentKey create(CatalogMapping catalogMapping) {
+public record RolapCatalogContentKey(String catalogName, int catalogMappingHash) {
+	static RolapCatalogContentKey create(CatalogMapping catalogMapping) {
 
 		int hash = System.identityHashCode(catalogMapping);
-		return new CatalogContentKey(catalogMapping.getName(), hash);
+		return new RolapCatalogContentKey(catalogMapping.getName(), hash);
 	}
 }

@@ -96,7 +96,7 @@ import org.eclipse.daanse.olap.query.component.FormulaImpl;
 import org.eclipse.daanse.olap.query.component.IdImpl;
 import org.eclipse.daanse.olap.util.ByteString;
 import org.eclipse.daanse.rolap.api.RolapContext;
-import org.eclipse.daanse.rolap.common.CacheKey;
+import org.eclipse.daanse.rolap.common.RolapCatalogKey;
 import org.eclipse.daanse.rolap.common.CacheMemberReader;
 import org.eclipse.daanse.rolap.common.MemberReader;
 import org.eclipse.daanse.rolap.common.MemberSource;
@@ -199,7 +199,7 @@ public class RolapCatalog implements Catalog {
 	 * This is basically a unique identifier for this RolapCatalog instance used it
 	 * its equals and hashCode methods.
 	 */
-	private final CacheKey key;
+	private final RolapCatalogKey key;
 
 	/**
 	 * Maps {@link AccessRoleMapping} to {@link Role roles }.
@@ -249,7 +249,7 @@ public class RolapCatalog implements Catalog {
 	 * @param rolapConnectionProps Connect properties
 	 * @param context     Context
 	 */
-	public RolapCatalog(final CacheKey key, ConnectionProps rolapConnectionProps, final RolapContext context) {
+	public RolapCatalog(final RolapCatalogKey key, ConnectionProps rolapConnectionProps, final RolapContext context) {
 		this.id = UUID.randomUUID().toString();
 		this.key = key;
 		rolapStarRegistry = new RolapStarRegistry(this, context);
@@ -273,7 +273,7 @@ public class RolapCatalog implements Catalog {
 	 */
 	@Deprecated
     public
-	RolapCatalog(CacheKey key, RolapConnection internalConnection, final RolapContext context) {
+	RolapCatalog(RolapCatalogKey key, RolapConnection internalConnection, final RolapContext context) {
 		this.id = UUID.randomUUID().toString();
 		this.key = key;
 		this.defaultRole = RoleImpl.createRootRole(this);
@@ -386,11 +386,11 @@ public class RolapCatalog implements Catalog {
 	}
 
 	/**
-	 * Returns this schema instance unique key.
+	 * Returns this catalog instance unique key.
 	 *
-	 * @return a {@link CacheKey}.
+	 * @return a {@link RolapCatalogKey}.
 	 */
-	public CacheKey getKey() {
+	public RolapCatalogKey getKey() {
 		return key;
 	}
 

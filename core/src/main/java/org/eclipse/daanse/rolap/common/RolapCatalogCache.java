@@ -14,14 +14,13 @@
 package org.eclipse.daanse.rolap.common;
 
 import java.time.Duration;
+import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.stream.Stream;
 
 import org.eclipse.daanse.olap.api.CatalogCache;
 import org.eclipse.daanse.olap.api.connection.ConnectionProps;
-import org.eclipse.daanse.olap.util.ByteString;
 import org.eclipse.daanse.rolap.api.RolapContext;
 import org.eclipse.daanse.rolap.element.RolapCatalog;
 import org.eclipse.daanse.rolap.mapping.api.model.CatalogMapping;
@@ -31,200 +30,243 @@ import org.slf4j.LoggerFactory;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.Expiry;
+import com.github.benmanes.caffeine.cache.RemovalCause;
+import com.github.benmanes.caffeine.cache.RemovalListener;
 
+/**
+ * Thread-safe cache implementation for RolapCatalog instances using Caffeine cache.
+ * 
+ * <p>
+ * This cache provides efficient storage and retrieval of ROLAP catalogs with automatic cleanup and
+ * configurable expiration. Key features include:
+ * </p>
+ * 
+ * <ul>
+ * <li>Thread-safe operations using Caffeine's built-in concurrency control</li>
+ * <li>Automatic expiration based on individual catalog timeout settings</li>
+ * <li>Automatic cleanup of resources via RemovalListener</li>
+ * <li>Optional catalog pooling to reuse catalogs across connections</li>
+ * </ul>
+ * 
+ * <p>
+ * The cache uses a composite key consisting of catalog content and connection information to ensure
+ * proper isolation between different catalogs and data sources.
+ * </p>
+ * 
+ * 
+ * <p>
+ * Expired cache elements are stored in a soft cache to allow for garbage collection, if needed. The
+ * Cache lookup will first check the soft cache before creating a new catalog.
+ * </p>
+ * 
+ * @see CatalogCache
+ * @see RolapCatalog
+ */
 public class RolapCatalogCache implements CatalogCache {
 
     static final Logger LOGGER = LoggerFactory.getLogger(RolapCatalogCache.class);
 
-    private static record CatalogEntry(RolapCatalog catalog, Duration timeout) {
-        // This record is used to store catalog entries in the cache together with there timeout duration
+    /**
+     * Cache entry combining a RolapCatalog with its individual timeout duration.
+     * 
+     * @param catalog the cached catalog instance
+     * @param timeout the duration after which this catalog should expire
+     */
+    private static record CatalogCacheValue(RolapCatalog catalog, Duration timeout) {
     }
 
-    private final Cache<CacheKey, CatalogEntry> innerCache = Caffeine.newBuilder()
-            .expireAfter(new Expiry<CacheKey, CatalogEntry>() {
+    private final Cache<RolapCatalogKey, RolapCatalog> softCache = Caffeine.newBuilder().softValues()
+            .removalListener((RemovalListener<RolapCatalogKey, RolapCatalog>) (key, value, cause) -> {
+                LOGGER.debug("Cleaning up catalog from softCache '{}' due to removal cause: {}", key, cause);
+            }).build();
+
+    /**
+     * The underlying Caffeine cache with custom expiration and cleanup logic.
+     * 
+     * <ul>
+     * <li>Variable expiration based on individual catalog timeout settings</li>
+     * <li>Automatic resource cleanup via RemovalListener</li>
+     * </ul>
+     */
+    private final Cache<RolapCatalogKey, CatalogCacheValue> cache = Caffeine.newBuilder()
+            .expireAfter(new Expiry<RolapCatalogKey, CatalogCacheValue>() {
                 @Override
-                public long expireAfterCreate(CacheKey key, CatalogEntry entry, long currentTime) {
-                    return entry.timeout.toNanos();
+                public long expireAfterCreate(RolapCatalogKey key, CatalogCacheValue value, long currentTime) {
+                    return value.timeout.toNanos();
                 }
 
                 @Override
-                public long expireAfterUpdate(CacheKey key, CatalogEntry entry, long currentTime,
+                public long expireAfterUpdate(RolapCatalogKey key, CatalogCacheValue value, long currentTime,
                         long currentDuration) {
-                    return entry.timeout.toNanos();
+                    return value.timeout.toNanos();
                 }
 
                 @Override
-                public long expireAfterRead(CacheKey key, CatalogEntry entry, long currentTime, long currentDuration) {
-                    return entry.timeout.toNanos();
+                public long expireAfterRead(RolapCatalogKey key, CatalogCacheValue value, long currentTime,
+                        long currentDuration) {
+                    return value.timeout.toNanos();
+                }
+            }).removalListener((RemovalListener<RolapCatalogKey, CatalogCacheValue>) (key, value, cause) -> {
+                if (value != null && value.catalog != null) {
+
+                    if (cause == RemovalCause.EXPIRED || cause == RemovalCause.SIZE) {
+                        softCache.put(key, value.catalog);
+                    }
+                    LOGGER.debug("Cleaning up catalog '{}' due to removal cause: {}", key, cause);
+                    value.catalog.finalCleanUp();
                 }
             }).build();
 
-    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-
+    /** The ROLAP context used for catalog creation. */
     private RolapContext context;
 
+    /**
+     * Creates a new catalog cache with the specified ROLAP context.
+     * 
+     * @param context the ROLAP context used for creating new catalogs
+     */
     public RolapCatalogCache(RolapContext context) {
         this.context = context;
-    }
-
-    public RolapCatalog getOrCreateCatalog(CatalogMapping catalogMapping, final ConnectionProps connectionProps,
-            final Optional<String> oSessionId) {
-
-        final boolean useSchemaPool = connectionProps.useSchemaPool();
-        final CatalogContentKey catalogContentKey = CatalogContentKey.create(catalogMapping);
-        final ConnectionKey connectionKey = ConnectionKey.of(context.getDataSource(), oSessionId.orElse(null));
-        final CacheKey key = new CacheKey(catalogContentKey, connectionKey);
-
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("getOrCreateSchema" + key.toString());
-        }
-
-        // Use the schema pool unless "UseSchemaPool" is explicitly false.
-        if (useSchemaPool) {
-            return getFromCacheByKey(context, connectionProps, key);
-        }
-
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("create (no pool): " + key);
-        }
-        RolapCatalog schema = createRolapCatalog(context, connectionProps, key);
-        return schema;
-
-    }
-
-    // is extracted and made package-local for testing purposes
-    RolapCatalog createRolapCatalog(RolapContext context, ConnectionProps connectionProps, CacheKey key) {
-        return new RolapCatalog(key, connectionProps, context);
-    }
-
-    private RolapCatalog getFromCacheByKey(RolapContext context, ConnectionProps connectionProps, CacheKey key) {
-        Duration timeOut = connectionProps.pinSchemaTimeout();
-        RolapCatalog catalog = lookUp(key, timeOut);
-        if (catalog != null) {
-            return catalog;
-        }
-
-        lock.writeLock().lock();
-        try {
-            // We need to check once again, now under
-            // write lock's protection, because it is possible,
-            // that another thread has already replaced old ref
-            // with a new one, having the same key.
-            // If the condition were not checked, then this thread
-            // would remove the newborn schema
-            CatalogEntry entry = innerCache.getIfPresent(key);
-            if (entry != null) {
-                catalog = entry.catalog;
-                // Reset timeout by putting the catalog back with the same timeout
-                innerCache.put(key, new CatalogEntry(catalog, timeOut));
-                return catalog;
-            }
-
-            catalog = createRolapCatalog(context, connectionProps, key);
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("create: " + catalog);
-            }
-            putSchemaIntoPool(catalog, null, timeOut);
-            return catalog;
-        } finally {
-            lock.writeLock().unlock();
-        }
-    }
-
-    private RolapCatalog lookUp(CacheKey key, Duration timeOut) {
-        lock.readLock().lock();
-        try {
-            CatalogEntry entry = innerCache.getIfPresent(key);
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("get(key={}) returned {}", key, entry != null ? entry.catalog : null);
-            }
-
-            if (entry != null) {
-                // Reset timeout by putting the catalog back with the same timeout
-                innerCache.put(key, new CatalogEntry(entry.catalog, timeOut));
-                return entry.catalog;
-            }
-        } finally {
-            lock.readLock().unlock();
-        }
-
-        return null;
+        LOGGER.info("Initialized RolapCatalogCache with context: {}", context.getClass().getSimpleName());
     }
 
     /**
-     * Adds schema to the pool. Attention! This method is not doing any synchronization internally and
-     * relies on the assumption that it is invoked inside a critical section
-     *
-     * @param rolapCatalog catalog to be stored
-     * @param md5Bytes     md5 hash, can be null
-     * @param pinTimeout   timeout mark
+     * Retrieves an existing catalog from cache or creates a new one if not found.
+     * 
+     * <p>
+     * This method respects the {@code useSchemaPool} setting from connection properties. When schema
+     * pooling is disabled, a new catalog is created for each request without caching.
+     * </p>
+     * 
+     * @param catalogMapping  the catalog mapping definition
+     * @param connectionProps connection properties containing cache and timeout settings
+     * @param oSessionId      optional session identifier for connection isolation
+     * @return the cached or newly created catalog
      */
-    private void putSchemaIntoPool(final RolapCatalog rolapCatalog, final ByteString md5Bytes, Duration timeOut) {
-        final CatalogEntry entry = new CatalogEntry(rolapCatalog, timeOut);
+    public RolapCatalog getOrCreateCatalog(CatalogMapping catalogMapping, final ConnectionProps connectionProps,
+            final Optional<String> oSessionId) {
 
-        innerCache.put(rolapCatalog.getKey(), entry);
+        final boolean useCatalogCache = connectionProps.useCatalogCache();
+        final RolapCatalogContentKey catalogContentKey = RolapCatalogContentKey.create(catalogMapping);
+        final ConnectionKey connectionKey = ConnectionKey.of(context.getDataSource(), oSessionId.orElse(null));
+        final RolapCatalogKey key = new RolapCatalogKey(catalogContentKey, connectionKey);
 
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("put: schema={}, key={}, checksum={}, map-size={}", rolapCatalog, rolapCatalog.getKey(),
-                    md5Bytes, innerCache.estimatedSize());
+        LOGGER.debug("Requesting catalog for key: {}, pooling: {}", key, useCatalogCache);
+
+        // Use the schema pool unless "UseSchemaPool" is explicitly false.
+        if (useCatalogCache) {
+            return getCatalogFromCache(context, connectionProps, key);
         }
+
+        LOGGER.debug("Creating catalog without pooling for key: {}", key);
+        RolapCatalog catalog = createCatalog(context, connectionProps, key);
+        return catalog;
+
     }
 
-    public void remove(RolapCatalog schema) {
-        if (schema != null) {
-            if (RolapCatalog.LOGGER.isDebugEnabled()) {
-                RolapCatalog.LOGGER.debug(new StringBuilder("Pool.remove: schema \"").append(schema.getName())
-                        .append("\" and datasource object").toString());
+    /**
+     * Creates a new RolapCatalog instance.
+     * 
+     * 
+     * @param context         the ROLAP context
+     * @param connectionProps connection properties
+     * @param key             the cache key for the catalog
+     * @return a new RolapCatalog instance
+     */
+    private RolapCatalog createCatalog(RolapContext context, ConnectionProps connectionProps, RolapCatalogKey key) {
+        LOGGER.debug("Creating new RolapCatalog for key: {}", key);
+        return new RolapCatalog(key, connectionProps, context);
+    }
+
+    /**
+     * Retrieves a catalog from cache or creates it if not present.
+     * 
+     * <p>
+     * This method uses Caffeine's atomic get-or-create functionality to ensure thread-safe catalog
+     * creation. It also updates the timeout on each access.
+     * </p>
+     * 
+     * @param context         the ROLAP context
+     * @param connectionProps connection properties containing timeout settings
+     * @param key             the cache key for the catalog
+     * @return the cached or newly created catalog
+     */
+    private RolapCatalog getCatalogFromCache(RolapContext context, ConnectionProps connectionProps,
+            RolapCatalogKey key) {
+        Duration timeOut = connectionProps.pinSchemaTimeout();
+
+        LOGGER.debug("Attempting to retrieve catalog from cache for key: {}, timeout: {}", key, timeOut);
+
+        CatalogCacheValue entry = cache.get(key, k -> {
+
+            RolapCatalog catalog = softCache.getIfPresent(key);
+
+            if (catalog != null) {
+                LOGGER.debug("Cache hit - found existing catalog for key: {}", k);
+
+                return new CatalogCacheValue(catalog, timeOut);
             }
-            remove(schema.getKey());
+
+            LOGGER.debug("Cache miss - creating new catalog for key: {}", k);
+            catalog = createCatalog(context, connectionProps, k);
+            return new CatalogCacheValue(catalog, timeOut);
+        });
+
+        return entry.catalog;
+    }
+
+    /**
+     * Removes a specific catalog from the cache.
+     * 
+     * <p>
+     * The catalog's cleanup will be handled automatically by the RemovalListener.
+     * </p>
+     * 
+     * @param catalog the catalog to remove, null values are ignored
+     */
+    public void remove(RolapCatalog catalog) {
+        if (catalog != null) {
+            LOGGER.debug("Removing catalog '{}' from cache", catalog.getName());
+            cache.invalidate(catalog.getKey());
+            softCache.invalidate(catalog.getKey());
+
+        } else {
+            LOGGER.debug("Attempted to remove null catalog - ignoring");
         }
     }
 
-    private void remove(CacheKey key) {
-        lock.writeLock().lock();
-        RolapCatalog schema = null;
-        try {
-            CatalogEntry entry = innerCache.getIfPresent(key);
-            if (entry != null) {
-                schema = entry.catalog;
-            }
-            innerCache.invalidate(key);
-        } finally {
-            lock.writeLock().unlock();
-        }
-
-        if (schema != null) {
-            schema.finalCleanUp();
-        }
-    }
-
+    /**
+     * Removes all catalogs from the cache.
+     * 
+     * <p>
+     * All catalog cleanup will be handled automatically by the RemovalListener.
+     * </p>
+     */
     public void clear() {
-        if (RolapCatalog.LOGGER.isDebugEnabled()) {
-            RolapCatalog.LOGGER.debug("Pool.clear: clearing all RolapCatalogs");
-        }
-        List<RolapCatalog> schemas = getRolapCatalogs();
-        innerCache.invalidateAll();
-
-        schemas.forEach(s -> s.finalCleanUp());
+        long size = cache.estimatedSize();
+        LOGGER.info("Clearing cache containing approximately {} catalogs", size);
+        cache.invalidateAll();
+        softCache.invalidateAll();
+        LOGGER.debug("Cache cleared successfully");
     }
 
-    public List<RolapCatalog> getRolapCatalogs() {
-        lock.readLock().lock();
-        try {
-            return innerCache.asMap().values().parallelStream().filter(Objects::nonNull).map(entry -> entry.catalog)
-                    .filter(Objects::nonNull).toList();
-        } finally {
-            lock.readLock().unlock();
-        }
-    }
+    /**
+     * Returns a list of all currently cached catalogs.
+     * 
+     * <p>
+     * This method creates a snapshot of the current cache state. The returned list may not reflect
+     * concurrent modifications to the cache.
+     * </p>
+     * 
+     * @return an immutable list of all cached catalogs
+     */
+    public List<RolapCatalog> getCachedCatalogs() {
+        List<RolapCatalog> catalogs = cache.asMap().values().stream().map(CatalogCacheValue::catalog).toList();
+        LOGGER.debug("Retrieved {} catalogs from cache", catalogs.size());
 
-    boolean contains(RolapCatalog rolapSchema) {
-        lock.readLock().lock();
-        try {
-            return innerCache.getIfPresent(rolapSchema.getKey()) != null;
-        } finally {
-            lock.readLock().unlock();
-        }
+        List<RolapCatalog> catalogsSoft = softCache.asMap().values().stream().filter(catalog -> catalog != null)
+                .toList();
+        return Collections.unmodifiableList(Stream.concat(catalogs.stream(), catalogsSoft.stream()).toList());
     }
 
 }
