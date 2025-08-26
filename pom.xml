@@ -43,6 +43,7 @@
 
   <modules>
     <module>core</module>
+    <module>documentation</module>
   </modules>
 
   <dependencies>
