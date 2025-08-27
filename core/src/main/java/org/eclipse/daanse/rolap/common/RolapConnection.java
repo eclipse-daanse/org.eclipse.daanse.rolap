@@ -98,7 +98,7 @@ public class RolapConnection extends ConnectionBase {
   private static final AtomicLong ID_GENERATOR = new AtomicLong();
 
 
-  private final ConnectionProps rolapConnectionProps;
+  private final ConnectionProps connectionProps;
 
   private RolapContext context = null;
   private final RolapCatalog catalog;
@@ -127,18 +127,18 @@ public class RolapConnection extends ConnectionBase {
    * 
    * @param catalog      Schema for the connection. Must be null unless this is to
    *                    be an internal connection.
-   * @param rolapConnectionProps  ConnectionProps
+   * @param connectionProps  ConnectionProps
    * 
    */
-	public RolapConnection(RolapContext context, RolapCatalog catalog, ConnectionProps rolapConnectionProps) {
+	public RolapConnection(RolapContext context, RolapCatalog catalog, ConnectionProps connectionProps) {
     super();
 
     this.context = context;
     this.id = ID_GENERATOR.getAndIncrement();
 
-    assert rolapConnectionProps != null;
+    assert connectionProps != null;
 
-    this.rolapConnectionProps = rolapConnectionProps;
+    this.connectionProps = connectionProps;
 
     Role roleInner = null;
 
@@ -159,8 +159,7 @@ public class RolapConnection extends ConnectionBase {
 
 			// TODO: switch from schemareader to catalogreader;
 			CatalogMapping catalogMapping = context.getCatalogMapping();
-			catalog = ((RolapCatalogCache) context.getCatalogCache()).getOrCreateCatalog(catalogMapping, rolapConnectionProps,
-					Optional.empty());
+			catalog = ((RolapCatalogCache) context.getCatalogCache()).getOrCreateCatalog(catalogMapping, connectionProps);
 
       } finally {
         LocusImpl.pop( locus );
@@ -168,7 +167,7 @@ public class RolapConnection extends ConnectionBase {
       }
       internalStatement =
         catalog.getInternalConnection().getInternalStatement();
-      List<String> roleNameList =rolapConnectionProps.roles();
+      List<String> roleNameList =connectionProps.roles();
       if ( !roleNameList.isEmpty() ) {
 
         List<Role> roleList = new ArrayList<>();
@@ -206,7 +205,7 @@ public class RolapConnection extends ConnectionBase {
     }
 
     // Set the locale.
-    this.locale  =rolapConnectionProps.locale();
+    this.locale  =connectionProps.locale();
 
     this.catalog = catalog;
     setRole( roleInner );

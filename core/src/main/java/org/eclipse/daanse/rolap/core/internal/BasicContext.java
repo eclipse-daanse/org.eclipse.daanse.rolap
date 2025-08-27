@@ -57,7 +57,6 @@ import org.eclipse.daanse.rolap.api.RolapContext;
 import org.eclipse.daanse.rolap.common.AbstractRolapContext;
 import org.eclipse.daanse.rolap.common.RolapCatalogCache;
 import org.eclipse.daanse.rolap.common.RolapConnection;
-import org.eclipse.daanse.rolap.common.RolapConnectionPropsR;
 import org.eclipse.daanse.rolap.common.RolapDependencyTestingEvaluator;
 import org.eclipse.daanse.rolap.common.RolapEvaluator;
 import org.eclipse.daanse.rolap.common.RolapEvaluatorRoot;
@@ -205,7 +204,7 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
 
     @Override
     public RolapConnection getConnectionWithDefaultRole() {
-        return getConnection(new RolapConnectionPropsR());
+        return getConnection(new ConnectionProps());
     }
 
     @Override

@@ -48,6 +48,7 @@ import org.eclipse.daanse.olap.api.CatalogReader;
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.SqlExpression;
 import org.eclipse.daanse.olap.api.SqlStatement;
+import org.eclipse.daanse.olap.api.connection.ConnectionProps;
 import org.eclipse.daanse.olap.api.element.Catalog;
 import org.eclipse.daanse.olap.api.element.Cube;
 import org.eclipse.daanse.olap.api.element.DatabaseColumn;
@@ -58,10 +59,9 @@ import org.eclipse.daanse.olap.api.element.Hierarchy;
 import org.eclipse.daanse.olap.api.element.KPI;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.element.NamedSet;
-import org.eclipse.daanse.rolap.documentation.api.ConntextDocumentationProvider;
 import org.eclipse.daanse.rolap.api.RolapContext;
 import org.eclipse.daanse.rolap.common.RolapConnection;
-import org.eclipse.daanse.rolap.common.RolapConnectionPropsR;
+import org.eclipse.daanse.rolap.documentation.api.ConntextDocumentationProvider;
 import org.eclipse.daanse.rolap.element.RolapColumn;
 import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.element.RolapCubeDimension;
@@ -155,7 +155,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
     }
 
     private void writeCatalog(RolapContext context, Path catPath, String role) throws Exception {
-        RolapConnection connection = role != null ? (RolapConnection)context.getConnection(new RolapConnectionPropsR(List.of(role))) : (RolapConnection)context.getConnectionWithDefaultRole();
+        RolapConnection connection = role != null ? (RolapConnection)context.getConnection(new ConnectionProps(List.of(role))) : (RolapConnection)context.getConnectionWithDefaultRole();
         CatalogReader catalogReader = connection.getCatalogReader();
         String fileName = "DOCUMENTATION" + (role != null ? ("_" + role) : "") + ".MD";
         Path path = catPath.resolve(fileName);

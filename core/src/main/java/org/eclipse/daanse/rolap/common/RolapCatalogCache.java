@@ -143,12 +143,11 @@ public class RolapCatalogCache implements CatalogCache {
      * @param oSessionId      optional session identifier for connection isolation
      * @return the cached or newly created catalog
      */
-    public RolapCatalog getOrCreateCatalog(CatalogMapping catalogMapping, final ConnectionProps connectionProps,
-            final Optional<String> oSessionId) {
+    public RolapCatalog getOrCreateCatalog(CatalogMapping catalogMapping, final ConnectionProps connectionProps) {
 
         final boolean useCatalogCache = connectionProps.useCatalogCache();
         final RolapCatalogContentKey catalogContentKey = RolapCatalogContentKey.create(catalogMapping);
-        final ConnectionKey connectionKey = ConnectionKey.of(context.getDataSource(), oSessionId.orElse(null));
+        final ConnectionKey connectionKey = ConnectionKey.of(context.getDataSource(), connectionProps.sessionId().orElse(null));
         final RolapCatalogKey key = new RolapCatalogKey(catalogContentKey, connectionKey);
 
         LOGGER.debug("Requesting catalog for key: {}, pooling: {}", key, useCatalogCache);
@@ -193,7 +192,7 @@ public class RolapCatalogCache implements CatalogCache {
      */
     private RolapCatalog getCatalogFromCache(RolapContext context, ConnectionProps connectionProps,
             RolapCatalogKey key) {
-        Duration timeOut = connectionProps.pinSchemaTimeout();
+        Duration timeOut = connectionProps.pinCatalogTimeout();
 
         LOGGER.debug("Attempting to retrieve catalog from cache for key: {}, timeout: {}", key, timeOut);
 
