@@ -11,7 +11,7 @@
  *   SmartCity Jena - initial
  *   Stefan Bischof (bipolis.org) - initial
  */
-package org.eclipse.daanse.rolap.documentation.common;
+package org.eclipse.daanse.rolap.documentation.common.impl;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -61,7 +61,8 @@ import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.element.NamedSet;
 import org.eclipse.daanse.rolap.api.RolapContext;
 import org.eclipse.daanse.rolap.common.RolapConnection;
-import org.eclipse.daanse.rolap.documentation.api.ConntextDocumentationProvider;
+import org.eclipse.daanse.rolap.documentation.api.ContextDocumentationProvider;
+import org.eclipse.daanse.rolap.documentation.common.api.Constants;
 import org.eclipse.daanse.rolap.element.RolapColumn;
 import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.element.RolapCubeDimension;
@@ -92,17 +93,14 @@ import org.eclipse.daanse.rolap.mapping.verifyer.api.VerificationResult;
 import org.eclipse.daanse.rolap.mapping.verifyer.api.Verifyer;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.metatype.annotations.Designate;
-import org.osgi.util.converter.Converter;
-import org.osgi.util.converter.Converters;
 
 @Designate(ocd = DocumentationProviderConfig.class, factory = true)
-@Component(service = ConntextDocumentationProvider.class, configurationPolicy = ConfigurationPolicy.REQUIRE)
+@Component(service = ContextDocumentationProvider.class, immediate = true, configurationPid = Constants.DOC_PROVIDER_MARKDOWN_PID)
 public class MarkdownDocumentationProvider extends AbstractContextDocumentationProvider {
 
     private static final String underline = "_";
@@ -111,7 +109,6 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
     public static final String EMPTY_STRING = "";
     public static final String NEGATIVE_FLAG = "❌";
     public static final String POSITIVE_FLAG = "✔";
-    public static final Converter CONVERTER = Converters.standardConverter();
     double MAX_ROW = 10000.00;
     double MAX_LEVEL = 20.00;
     private static final long CARDINALITY_UNKNOWN = -1;
@@ -120,42 +117,40 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
     private List<Verifyer> verifyers = new CopyOnWriteArrayList<>();
     private List<CheckService> checkServices = new CopyOnWriteArrayList<>();
     private DocumentationProviderConfig config;
+    private MetaInfo metaInfo;
 
     @Reference
     DatabaseService databaseService;
-    private MetaInfo metaInfo;
-
-    //@Reference
-    //StatisticsProvider statisticsProvider;
 
     @Activate
-    public void activate(Map<String, Object> configMap) {
-        this.config = CONVERTER.convert(configMap)
-            .to(DocumentationProviderConfig.class);
+    public void activate(DocumentationProviderConfig config) {
+        this.config = config;
     }
-
 
     @Deactivate
     public void deactivate() {
-
         config = null;
     }
 
     @Override
-    public void createDocumentation(Context ctx, Path catPath) throws Exception {
-    	RolapContext context=(RolapContext) ctx;
-    	metaInfo = databaseService.createMetaInfo(context.getConnectionWithDefaultRole().getDataSource());
-    	List<String>  roles = ctx.getAccessRoles();
+    public void createDocumentation(Context<?> ctx, Path outputFolder) throws Exception {
+        Files.createDirectories(outputFolder);
+
+        RolapContext context = (RolapContext) ctx;
+        metaInfo = databaseService.createMetaInfo(context.getConnectionWithDefaultRole().getDataSource());
+        List<String> roles = ctx.getAccessRoles();
         if (roles != null) {
             for (String role : roles) {
-                writeCatalog(context, catPath, role);
+                writeCatalog(context, outputFolder, role);
             }
         }
-        writeCatalog(context, catPath, null);
+        writeCatalog(context, outputFolder, null);
     }
 
     private void writeCatalog(RolapContext context, Path catPath, String role) throws Exception {
-        RolapConnection connection = role != null ? (RolapConnection)context.getConnection(new ConnectionProps(List.of(role))) : (RolapConnection)context.getConnectionWithDefaultRole();
+        RolapConnection connection = role != null
+                ? (RolapConnection) context.getConnection(new ConnectionProps(List.of(role)))
+                : (RolapConnection) context.getConnectionWithDefaultRole();
         CatalogReader catalogReader = connection.getCatalogReader();
         String fileName = "DOCUMENTATION" + (role != null ? ("_" + role) : "") + ".MD";
         Path path = catPath.resolve(fileName);
@@ -199,7 +194,6 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
         writer.flush();
         writer.close();
 
-
     }
 
     private void writeCubeMatrixDiagram(FileWriter writer, RolapContext context) {
@@ -214,36 +208,36 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
             writer.write(":");
             writer.write("""
 
-                ```mermaid
-                quadrantChart
-                title Cube Matrix
-                x-axis small level number --> high level number
-                y-axis Low row count --> High row count
-                quadrant-1 Complex
-                quadrant-2 Deep
-                quadrant-3 Simple
-                quadrant-4 Wide
-                """);
+                    ```mermaid
+                    quadrantChart
+                    title Cube Matrix
+                    x-axis small level number --> high level number
+                    y-axis Low row count --> High row count
+                    quadrant-1 Complex
+                    quadrant-2 Deep
+                    quadrant-3 Simple
+                    quadrant-4 Wide
+                    """);
             writer.write(ENTER);
             for (CubeMapping cube : catalog.getCubes()) {
-            	if (cube instanceof PhysicalCubeMapping c) {
-            		String cubeName = prepare(c.getName());
-            		double x = getLevelsCount(catalog, c) / MAX_LEVEL;
-            		double y = getFactCount(c) / MAX_ROW;
-            		x = x > 1 ? 1 : x;
-            		y = y > 1 ? 1 : y;
-            		y = y < 0 ? (-1)*y : y;
-            		String sx = quadrantChartFormat(x);
-            		String sy = quadrantChartFormat(y);
-            		writer.write("Cube ");
-            		writer.write(cubeName);
-            		writer.write(": [");
-            		writer.write(sx);
-            		writer.write(", ");
-            		writer.write(sy);
-            		writer.write("]");
-            		writer.write(ENTER);
-            	}
+                if (cube instanceof PhysicalCubeMapping c) {
+                    String cubeName = prepare(c.getName());
+                    double x = getLevelsCount(catalog, c) / MAX_LEVEL;
+                    double y = getFactCount(c) / MAX_ROW;
+                    x = x > 1 ? 1 : x;
+                    y = y > 1 ? 1 : y;
+                    y = y < 0 ? (-1) * y : y;
+                    String sx = quadrantChartFormat(x);
+                    String sy = quadrantChartFormat(y);
+                    writer.write("Cube ");
+                    writer.write(cubeName);
+                    writer.write(": [");
+                    writer.write(sx);
+                    writer.write(", ");
+                    writer.write(sy);
+                    writer.write("]");
+                    writer.write(ENTER);
+                }
             }
             writer.write("```");
             writer.write(ENTER);
@@ -255,7 +249,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
     }
 
     private String quadrantChartFormat(double x) {
-        return  x < 1 ? String.format("%,.4f", x) : "1";
+        return x < 1 ? String.format("%,.4f", x) : "1";
     }
 
     private long getFactCount(PhysicalCubeMapping c) {
@@ -270,7 +264,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
                 result = it.getTable().getRows() == null ? 0l : it.getTable().getRows().size();
             }
             if (relation instanceof SqlSelectQueryMapping mv) {
-                //TODO
+                // TODO
                 return 0l;
             }
             if (relation instanceof JoinQueryMapping mj) {
@@ -287,9 +281,9 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
         return result;
     }
 
-
     private long getTableCardinality(TableReference tableReference) {
-        Optional<IndexInfo> oIndexInfo = metaInfo.indexInfos().stream().filter(i -> i.tableReference().name().equals(tableReference.name())).findAny();
+        Optional<IndexInfo> oIndexInfo = metaInfo.indexInfos().stream()
+                .filter(i -> i.tableReference().name().equals(tableReference.name())).findAny();
         long maxNonUnique = CARDINALITY_UNKNOWN;
         if (oIndexInfo.isPresent()) {
             if (oIndexInfo.get().indexInfoItems() != null) {
@@ -301,16 +295,16 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
                         return cardinality;
                     }
                     if (!unique) {
-    	                maxNonUnique = Math.max(maxNonUnique, cardinality);
-    	            }
+                        maxNonUnique = Math.max(maxNonUnique, cardinality);
+                    }
                 }
                 return maxNonUnique;
             }
         }
         return maxNonUnique;
-	}
+    }
 
-	private int getLevelsCount(CatalogMapping catalog, CubeMapping c) {
+    private int getLevelsCount(CatalogMapping catalog, CubeMapping c) {
         int res = 0;
         for (DimensionConnectorMapping d : c.getDimensionConnectors()) {
             res = res + getLevelsCount1(catalog, d);
@@ -320,25 +314,24 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
 
     private int getLevelsCount1(CatalogMapping catalog, DimensionConnectorMapping d) {
         int res = 0;
-            if (d.getDimension()!= null &&  d.getDimension().getHierarchies() != null) {
-                for (HierarchyMapping h : d.getDimension().getHierarchies()) {
-                    if (h instanceof ExplicitHierarchyMapping eh) {
-                        if (eh.getLevels() != null) {
-                            res = res + eh.getLevels().size();
-                        }
+        if (d.getDimension() != null && d.getDimension().getHierarchies() != null) {
+            for (HierarchyMapping h : d.getDimension().getHierarchies()) {
+                if (h instanceof ExplicitHierarchyMapping eh) {
+                    if (eh.getLevels() != null) {
+                        res = res + eh.getLevels().size();
                     }
-                    if (h instanceof ParentChildHierarchyMapping pch) {
-                        if (pch.getLevel() != null) {
-                            res = res + 1;
-                        }
+                }
+                if (h instanceof ParentChildHierarchyMapping pch) {
+                    if (pch.getLevel() != null) {
+                        res = res + 1;
                     }
                 }
             }
+        }
         return res;
     }
 
-    @Reference(name = REF_NAME_VERIFIERS, cardinality = ReferenceCardinality.MULTIPLE, policy =
-        ReferencePolicy.DYNAMIC)
+    @Reference(name = REF_NAME_VERIFIERS, cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC)
     public void bindVerifiers(Verifyer verifyer) {
         verifyers.add(verifyer);
     }
@@ -359,20 +352,22 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
     private List<String> schemaTablesConnections(RolapContext context, List<String> missedTableNames) {
         List<String> result = new ArrayList<>();
         CatalogMapping catalog = context.getCatalogMapping();
-        result.addAll(catalog.getCubes().stream().flatMap(c -> cubeTablesConnections(catalog, c, missedTableNames).stream()).toList());
+        result.addAll(catalog.getCubes().stream()
+                .flatMap(c -> cubeTablesConnections(catalog, c, missedTableNames).stream()).toList());
         return result;
     }
 
-    private List<String> cubeTablesConnections(CatalogMapping catalog, CubeMapping cube, List<String> missedTableNames) {
+    private List<String> cubeTablesConnections(CatalogMapping catalog, CubeMapping cube,
+            List<String> missedTableNames) {
 
         List<String> result = new ArrayList<>();
         if (cube instanceof PhysicalCubeMapping c) {
-        Optional<String> optionalFactTable = getFactTableName(c.getQuery());
-        if (optionalFactTable.isPresent()) {
-            result.addAll(getFactTableConnections(c.getQuery(), missedTableNames));
-            result.addAll(dimensionsTablesConnections(catalog, c.getDimensionConnectors(),
-                optionalFactTable.get(), missedTableNames));
-        }
+            Optional<String> optionalFactTable = getFactTableName(c.getQuery());
+            if (optionalFactTable.isPresent()) {
+                result.addAll(getFactTableConnections(c.getQuery(), missedTableNames));
+                result.addAll(dimensionsTablesConnections(catalog, c.getDimensionConnectors(), optionalFactTable.get(),
+                        missedTableNames));
+            }
         }
 
         return result;
@@ -382,128 +377,98 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
         List<String> result = new ArrayList<>();
         String cubeName = new StringBuilder("c").append(cubeIndex).toString();
         if (cubeName != null) {
-            result.addAll(dimensionsConnections(catalogReader, catalogReader.getCubeDimensions(c), cubeName, cubeIndex));
+            result.addAll(
+                    dimensionsConnections(catalogReader, catalogReader.getCubeDimensions(c), cubeName, cubeIndex));
         }
 
         return result;
     }
 
-    private List<String> dimensionsConnections(
-            CatalogReader catalogReader,
-            List<Dimension> dimensionUsageOrDimensions,
-            String cubeName,
-            int cubeIndex
-        ) {
-            List<String> result = new ArrayList<>();
-            if (dimensionUsageOrDimensions != null) {
-                int i = 0;
-                for (Dimension d : dimensionUsageOrDimensions) {
-                    if ( d instanceof RolapCubeDimension rcd) {
-                        result.addAll(dimensionConnections(catalogReader, rcd, cubeName, cubeIndex, i));
-                    }
-                    i++;
+    private List<String> dimensionsConnections(CatalogReader catalogReader, List<Dimension> dimensionUsageOrDimensions,
+            String cubeName, int cubeIndex) {
+        List<String> result = new ArrayList<>();
+        if (dimensionUsageOrDimensions != null) {
+            int i = 0;
+            for (Dimension d : dimensionUsageOrDimensions) {
+                if (d instanceof RolapCubeDimension rcd) {
+                    result.addAll(dimensionConnections(catalogReader, rcd, cubeName, cubeIndex, i));
                 }
+                i++;
             }
-            return result;
+        }
+        return result;
     }
 
-    private List<String> dimensionConnections(
-            CatalogReader catalogReader,
-            RolapCubeDimension d,
-            String cubeName,
-            int cubeIndex,
-            int dimensionIndex
-        ) {
-            List<String> result = new ArrayList<>();
+    private List<String> dimensionConnections(CatalogReader catalogReader, RolapCubeDimension d, String cubeName,
+            int cubeIndex, int dimensionIndex) {
+        List<String> result = new ArrayList<>();
 
-            result.addAll(hierarchyConnections(catalogReader, cubeName, d.getDimension(), getColumnName(d.getDimensionConnector().getForeignKey()), cubeIndex, dimensionIndex));
-            /*
-            if (d instanceof MappingVirtualCubeDimension vcd) {
-                String cubeN = vcd.cubeName();
-                String name = vcd.name();
-                if (cubeN != null && name != null) {
-                    Optional<MappingCube> oCube = schema.cubes().stream().filter(c -> cubeN.equals(c.name())).findFirst();
-                    if (oCube.isPresent()) {
-                        Optional<MappingCubeDimension> od = oCube.get().dimensionUsageOrDimensions().stream()
-                            .filter(dim -> name.equals(dim.name())).findFirst();
-                        if (od.isPresent()) {
-                            result.addAll(dimensionConnections(
-                                schema,
-                                od.get(),
-                                cubeName,
-                                cubeIndex,
-                                dimensionIndex));
-                        }
-                    }
-                }
-            }
-            */
-            return result;
+        result.addAll(hierarchyConnections(catalogReader, cubeName, d.getDimension(),
+                getColumnName(d.getDimensionConnector().getForeignKey()), cubeIndex, dimensionIndex));
+        /*
+         * if (d instanceof MappingVirtualCubeDimension vcd) { String cubeN =
+         * vcd.cubeName(); String name = vcd.name(); if (cubeN != null && name != null)
+         * { Optional<MappingCube> oCube = schema.cubes().stream().filter(c ->
+         * cubeN.equals(c.name())).findFirst(); if (oCube.isPresent()) {
+         * Optional<MappingCubeDimension> od =
+         * oCube.get().dimensionUsageOrDimensions().stream() .filter(dim ->
+         * name.equals(dim.name())).findFirst(); if (od.isPresent()) {
+         * result.addAll(dimensionConnections( schema, od.get(), cubeName, cubeIndex,
+         * dimensionIndex)); } } } }
+         */
+        return result;
     }
 
-    private List<String> hierarchyConnections(
-        CatalogReader catalogReader,
-        String cubeName,
-        Dimension d,
-        String foreignKey,
-        int cubeIndex,
-        int dimensionIndex
-    ) {
+    private List<String> hierarchyConnections(CatalogReader catalogReader, String cubeName, Dimension d,
+            String foreignKey, int cubeIndex, int dimensionIndex) {
         List<Hierarchy> hList = catalogReader.getDimensionHierarchies(d);
         List<String> result = new ArrayList<>();
         int i = 0;
         String dName = new StringBuilder("d").append(cubeIndex).append(dimensionIndex).toString();
         for (Hierarchy h : hList) {
-            ColumnMapping primaryKey = ((RolapHierarchy)h).getHierarchyMapping().getPrimaryKey();
+            ColumnMapping primaryKey = ((RolapHierarchy) h).getHierarchyMapping().getPrimaryKey();
             result.add(connection1(cubeName, dName, foreignKey, getColumnName(primaryKey)));
             for (org.eclipse.daanse.olap.api.element.Level l : catalogReader.getHierarchyLevels(h)) {
-                result.add(connection1(dName, new StringBuilder("h").append(cubeIndex).append(dimensionIndex).append(i).toString(), getColumnName(primaryKey),
-                    getColumnName(((RolapLevel)l).getKeyExp())));
+                result.add(connection1(dName,
+                        new StringBuilder("h").append(cubeIndex).append(dimensionIndex).append(i).toString(),
+                        getColumnName(primaryKey), getColumnName(((RolapLevel) l).getKeyExp())));
             }
             i++;
         }
         return result;
     }
 
-    private List<String> dimensionsTablesConnections(
-        CatalogMapping catalog,
-        List<? extends DimensionConnectorMapping> dimensionUsageOrDimensions,
-        String fact,
-        List<String> missedTableNames
-    ) {
+    private List<String> dimensionsTablesConnections(CatalogMapping catalog,
+            List<? extends DimensionConnectorMapping> dimensionUsageOrDimensions, String fact,
+            List<String> missedTableNames) {
         if (dimensionUsageOrDimensions != null) {
-            return dimensionUsageOrDimensions.stream().flatMap(d -> dimensionTablesConnections(catalog, d, fact, missedTableNames).stream()).toList();
+            return dimensionUsageOrDimensions.stream()
+                    .flatMap(d -> dimensionTablesConnections(catalog, d, fact, missedTableNames).stream()).toList();
         }
         return List.of();
     }
 
     private List<String> dimensionTablesConnections(CatalogMapping catalog, DimensionConnectorMapping d, String fact,
-                                                    List<String> missedTableNames) {
+            List<String> missedTableNames) {
 
-        return hierarchiesTablesConnections(catalog, d.getDimension().getHierarchies(), fact, getColumnName(d.getForeignKey()), missedTableNames);
+        return hierarchiesTablesConnections(catalog, d.getDimension().getHierarchies(), fact,
+                getColumnName(d.getForeignKey()), missedTableNames);
 
     }
 
-    private List<String> hierarchiesTablesConnections(
-        CatalogMapping catalog,
-        List<? extends HierarchyMapping> hierarchies,
-        String fact,
-        String foreignKey,
-        List<String> missedTableNames
-    ) {
+    private List<String> hierarchiesTablesConnections(CatalogMapping catalog,
+            List<? extends HierarchyMapping> hierarchies, String fact, String foreignKey,
+            List<String> missedTableNames) {
         if (hierarchies != null) {
-            return hierarchies.stream().flatMap(h -> hierarchyTablesConnections(catalog, h, fact, foreignKey, missedTableNames).stream()).toList();
+            return hierarchies.stream()
+                    .flatMap(h -> hierarchyTablesConnections(catalog, h, fact, foreignKey, missedTableNames).stream())
+                    .toList();
         }
         return List.of();
     }
 
-    private List<String> hierarchyTablesConnections(
-        CatalogMapping catalog,
-        HierarchyMapping h,
-        String fact,
-        String foreignKey,
-        List<String> missedTableNames
-    ) {
+    private List<String> hierarchyTablesConnections(CatalogMapping catalog, HierarchyMapping h, String fact,
+            String foreignKey, List<String> missedTableNames) {
         List<String> result = new ArrayList<>();
         String primaryKeyTable = getTableName(h.getPrimaryKey().getTable());
         if (primaryKeyTable == null) {
@@ -516,7 +481,8 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
             if (fact != null && !fact.equals(primaryKeyTable)) {
                 String flag1 = missedTableNames.contains(fact) ? NEGATIVE_FLAG : POSITIVE_FLAG;
                 String flag2 = missedTableNames.contains(primaryKeyTable) ? NEGATIVE_FLAG : POSITIVE_FLAG;
-                result.add(connection(fact, primaryKeyTable, flag1, flag2, foreignKey, getColumnName(h.getPrimaryKey())));
+                result.add(
+                        connection(fact, primaryKeyTable, flag1, flag2, foreignKey, getColumnName(h.getPrimaryKey())));
             }
         }
         result.addAll(getFactTableConnections(h.getQuery(), missedTableNames));
@@ -531,22 +497,22 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
     }
 
     private String getColumnName(SqlExpression expression) {
-		if (expression != null) {
-		    if (expression instanceof RolapColumn column) {
-			    return column.getName();
-		    } else {
-		        Optional<SqlStatement> oSqlStatement = expression.getSqls().stream().filter(s -> s.getDialects().contains("generic")).findFirst();
-		        if (oSqlStatement.isPresent()) {
-		            return oSqlStatement.get().getSql();
-		        }
-		    }
+        if (expression != null) {
+            if (expression instanceof RolapColumn column) {
+                return column.getName();
+            } else {
+                Optional<SqlStatement> oSqlStatement = expression.getSqls().stream()
+                        .filter(s -> s.getDialects().contains("generic")).findFirst();
+                if (oSqlStatement.isPresent()) {
+                    return oSqlStatement.get().getSql();
+                }
+            }
 
-		}
-		return null;
-	}
+        }
+        return null;
+    }
 
-
-	private void writeVerifyer(FileWriter writer, RolapContext context) {
+    private void writeVerifyer(FileWriter writer, RolapContext context) {
         writeSchemaVerifyer(writer, context.getCatalogMapping(), context);
 
     }
@@ -577,14 +543,10 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
                         writer.write(ENTER);
                         writer.write("|----|---|");
                         writer.write(ENTER);
-                        map.values().stream()
-                            .sorted((r1, r2) -> r1.cause().compareTo(r2.cause()))
-                            .forEach(r -> {
-                                writeVerifyResult(writer, r);
-                            });
-                        dbMap.values().stream()
-                        .sorted((r1, r2) -> r1.cause().compareTo(r2.cause()))
-                        .forEach(r -> {
+                        map.values().stream().sorted((r1, r2) -> r1.cause().compareTo(r2.cause())).forEach(r -> {
+                            writeVerifyResult(writer, r);
+                        });
+                        dbMap.values().stream().sorted((r1, r2) -> r1.cause().compareTo(r2.cause())).forEach(r -> {
                             writeDbVerifyResult(writer, r);
                         });
 
@@ -598,30 +560,29 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
 
     private String getColoredLevel(Level level) {
         switch (level) {
-            case ERROR:
-                return "<span style='color: red;'>" + level.name() + "</span>";
-            case WARNING:
-                return "<span style='color: blue;'>" + level.name() + "</span>";
-            case INFO:
-                return "<span style='color: yellow;'>" + level.name() + "</span>";
-            case QUALITY:
-                return "<span style='green: yellow;'>" + level.name() + "</span>";
-            default:
-                return "<span style='color: red;'>" + level.name() + "</span>";
+        case ERROR:
+            return "<span style='color: red;'>" + level.name() + "</span>";
+        case WARNING:
+            return "<span style='color: blue;'>" + level.name() + "</span>";
+        case INFO:
+            return "<span style='color: yellow;'>" + level.name() + "</span>";
+        case QUALITY:
+            return "<span style='green: yellow;'>" + level.name() + "</span>";
+        default:
+            return "<span style='color: red;'>" + level.name() + "</span>";
         }
     }
 
-    private Map<String, VerificationResult> getVerificationResultMap
-        (List<VerificationResult> verifyResult, String l) {
+    private Map<String, VerificationResult> getVerificationResultMap(List<VerificationResult> verifyResult, String l) {
         return verifyResult.stream().filter(r -> l.equals(r.level().name()))
-            .collect(Collectors.toMap(VerificationResult::description, Function.identity(), (o1, o2) -> o1));
+                .collect(Collectors.toMap(VerificationResult::description, Function.identity(), (o1, o2) -> o1));
     }
 
-    private Map<String, VerificationResult> getDBVerificationResultMap
-        (List<VerificationResult> verifyResult, String l) {
-    return verifyResult.stream().filter(r -> l.equals(r.level().name()))
-        .collect(Collectors.toMap(VerificationResult::description, Function.identity(), (o1, o2) -> o1));
-}
+    private Map<String, VerificationResult> getDBVerificationResultMap(List<VerificationResult> verifyResult,
+            String l) {
+        return verifyResult.stream().filter(r -> l.equals(r.level().name()))
+                .collect(Collectors.toMap(VerificationResult::description, Function.identity(), (o1, o2) -> o1));
+    }
 
     private void writeVerifyResult(FileWriter writer, VerificationResult r) {
         try {
@@ -650,11 +611,11 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
     }
 
     private void writeSchemasAsXML(FileWriter writer, RolapContext context) {
-            writeSchemaAsXML(writer, context.getCatalogMapping());
+        writeSchemaAsXML(writer, context.getCatalogMapping());
     }
 
     private void writeSchemaDiagram(FileWriter writer, RolapContext context, CatalogReader catalogReader) {
-        List<Cube> cubes =  catalogReader.getCubes();
+        List<Cube> cubes = catalogReader.getCubes();
         int i = 0;
         if (cubes != null && !cubes.isEmpty()) {
             for (Cube c : cubes) {
@@ -672,9 +633,9 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
             writer.write(catalogName);
             writer.write(" as XML: ");
             writer.write(ENTER);
-            //TODO
-            //SerializerModifier serializerModifier = new SerializerModifier(catalog);
-            //writer.write(serializerModifier.getXML());
+            // TODO
+            // SerializerModifier serializerModifier = new SerializerModifier(catalog);
+            // writer.write(serializerModifier.getXML());
             writer.write(ENTER);
         } catch (IOException e) {
             e.printStackTrace();
@@ -688,8 +649,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
             writer.write(catalogName);
             writer.write(" : ");
             writer.write(ENTER);
-            String cubes = catalogReader.getCubes().stream().map(c -> c.getName())
-                .collect(Collectors.joining(", "));
+            String cubes = catalogReader.getCubes().stream().map(c -> c.getName()).collect(Collectors.joining(", "));
             writer.write("---");
             writer.write(ENTER);
             writer.write("### Cubes :");
@@ -699,17 +659,15 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
             writer.write(cubes);
             writer.write(ENTER);
             writer.write(ENTER);
-            writeCubeList(writer, catalogReader.getCubes().stream()
-                    .sorted(Comparator.comparing(Cube::getName))
-                    .toList(), catalogReader);
-            //write database
+            writeCubeList(writer,
+                    catalogReader.getCubes().stream().sorted(Comparator.comparing(Cube::getName)).toList(),
+                    catalogReader);
+            // write database
 
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-
-
 
     private void writeCubeList(FileWriter writer, List<Cube> cubes, CatalogReader catalogReader) {
         if (cubes != null && !cubes.isEmpty()) {
@@ -772,11 +730,13 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
         }
     }
 
-    private void writeCubeDiagram(FileWriter writer, Cube cube, int index, RolapContext context, CatalogReader catalogReader) {
+    private void writeCubeDiagram(FileWriter writer, Cube cube, int index, RolapContext context,
+            CatalogReader catalogReader) {
         try {
             List<String> connections = cubeDimensionConnections(catalogReader, cube, index);
             if (cube.getName() != null) {
-                String tableName = new StringBuilder("c").append(index).append("[\"").append(cube.getName()).append("\"]").toString();
+                String tableName = new StringBuilder("c").append(index).append("[\"").append(cube.getName())
+                        .append("\"]").toString();
                 String cubeName = cube.getName();
                 writer.write("### Cube \"");
                 writer.write(cubeName);
@@ -784,90 +744,90 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
                 writer.write(ENTER);
                 writer.write(ENTER);
                 writer.write("""
-                    ---
+                        ---
 
-                    ```mermaid
-                    %%{init: {
-                    "theme": "default",
-                    "themeCSS": [
-                        ".er.entityBox {stroke: black;}",
-                        ".er.attributeBoxEven {stroke: black;}",
-                        ".er.attributeBoxOdd {stroke: black;}",
-                        "[id^=entity-c] .er.entityBox { fill: lightgreen;} ",
-                        "[id^=entity-d] .er.entityBox { fill: powderblue;} ",
-                        "[id^=entity-h] .er.entityBox { fill: pink;} "
-                    ]
-                    }}%%
-                    erDiagram
-                    """);
-                    writer.write(tableName);
-                    writer.write("{");
+                        ```mermaid
+                        %%{init: {
+                        "theme": "default",
+                        "themeCSS": [
+                            ".er.entityBox {stroke: black;}",
+                            ".er.attributeBoxEven {stroke: black;}",
+                            ".er.attributeBoxOdd {stroke: black;}",
+                            "[id^=entity-c] .er.entityBox { fill: lightgreen;} ",
+                            "[id^=entity-d] .er.entityBox { fill: powderblue;} ",
+                            "[id^=entity-h] .er.entityBox { fill: pink;} "
+                        ]
+                        }}%%
+                        erDiagram
+                        """);
+                writer.write(tableName);
+                writer.write("{");
+                writer.write(ENTER);
+                for (Member m : cube.getMeasures()) {
+                    String description = m.getDescription() == null ? EMPTY_STRING : m.getDescription();
+                    String measureName = prepare(m.getName());
+                    writer.write("M ");
+                    writer.write(prepare(measureName));
+                    writer.write(" \"");
+                    writer.write(description);
+                    writer.write("\"");
                     writer.write(ENTER);
-                    for (Member m : cube.getMeasures()) {
-                            String description = m.getDescription() == null ? EMPTY_STRING : m.getDescription();
-                            String measureName = prepare(m.getName());
-                            writer.write("M ");
-                            writer.write(prepare(measureName));
-                            writer.write(" \"");
-                            writer.write(description);
-                            writer.write("\"");
-                            writer.write(ENTER);
-                    }
-                    for (Dimension d : catalogReader.getCubeDimensions(cube)) {
-                       String description = d.getDescription() == null ? EMPTY_STRING : d.getDescription();
-                       String dimensionName =  d.getName();
-                       writer.write("D ");
-                       writer.write(dimensionName);
-                       writer.write(" \"");
-                       writer.write(description);
-                       writer.write("\"");
-                       writer.write(ENTER);
-                   }
-                   for (NamedSet ns : cube.getNamedSets()) {
-                       String description = ns.getDescription() == null ? EMPTY_STRING : ns.getDescription();
-                       String namedSetName =  prepare(ns.getName());
-                       writer.write("NS ");
-                       writer.write(namedSetName);
-                       writer.write(" \"");
-                       writer.write(description);
-                       writer.write("\"");
-                       writer.write(ENTER);
-                   }
-                   for (Member cm : catalogReader.getCalculatedMembers()) {
-                       String description = cm.getDescription() == null ? EMPTY_STRING : cm.getDescription();
-                       String calculatedMemberName =  prepare(cm.getName());
-                       writer.write("CM ");
-                       writer.write(calculatedMemberName);
-                       writer.write(" \"");
-                       writer.write(description);
-                       writer.write("\"");
-                       writer.write(ENTER);
-                   }
-                   for (KPI cm : cube.getKPIs()) {
-                       String description = cm.getDescription() == null ? EMPTY_STRING : cm.getDescription();
-                       String kpiName =  prepare(cm.getName());
-                       writer.write("KPI ");
-                       writer.write(kpiName);
-                       writer.write(" \"");
-                       writer.write(description);
-                       writer.write("\"");
-                       writer.write(ENTER);
-                   }
-                   writer.write("}");
-                   writer.write(ENTER);
+                }
+                for (Dimension d : catalogReader.getCubeDimensions(cube)) {
+                    String description = d.getDescription() == null ? EMPTY_STRING : d.getDescription();
+                    String dimensionName = d.getName();
+                    writer.write("D ");
+                    writer.write(dimensionName);
+                    writer.write(" \"");
+                    writer.write(description);
+                    writer.write("\"");
+                    writer.write(ENTER);
+                }
+                for (NamedSet ns : cube.getNamedSets()) {
+                    String description = ns.getDescription() == null ? EMPTY_STRING : ns.getDescription();
+                    String namedSetName = prepare(ns.getName());
+                    writer.write("NS ");
+                    writer.write(namedSetName);
+                    writer.write(" \"");
+                    writer.write(description);
+                    writer.write("\"");
+                    writer.write(ENTER);
+                }
+                for (Member cm : catalogReader.getCalculatedMembers()) {
+                    String description = cm.getDescription() == null ? EMPTY_STRING : cm.getDescription();
+                    String calculatedMemberName = prepare(cm.getName());
+                    writer.write("CM ");
+                    writer.write(calculatedMemberName);
+                    writer.write(" \"");
+                    writer.write(description);
+                    writer.write("\"");
+                    writer.write(ENTER);
+                }
+                for (KPI cm : cube.getKPIs()) {
+                    String description = cm.getDescription() == null ? EMPTY_STRING : cm.getDescription();
+                    String kpiName = prepare(cm.getName());
+                    writer.write("KPI ");
+                    writer.write(kpiName);
+                    writer.write(" \"");
+                    writer.write(description);
+                    writer.write("\"");
+                    writer.write(ENTER);
+                }
+                writer.write("}");
+                writer.write(ENTER);
 
-                   writeDimensionPartDiagram(writer, catalogReader, cube, index);
+                writeDimensionPartDiagram(writer, catalogReader, cube, index);
 
-                   for (String c : connections) {
-                       writer.write(c);
-                       writer.write(ENTER);
-                   }
-                   writer.write("```");
-                   writer.write(ENTER);
-                   writer.write("---");
-                   writer.write(ENTER);
+                for (String c : connections) {
+                    writer.write(c);
+                    writer.write(ENTER);
+                }
+                writer.write("```");
+                writer.write(ENTER);
+                writer.write("---");
+                writer.write(ENTER);
 
-                   writeAggregationSection(writer, catalogReader, cube, context);
+                writeAggregationSection(writer, catalogReader, cube, context);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -876,7 +836,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
 
     private void writeAggregationSection(FileWriter writer, CatalogReader catalogReader, Cube cube,
             RolapContext context) {
-        Optional<TableQueryMapping> tableQuery = getFactTableQuery((RolapCube)cube);
+        Optional<TableQueryMapping> tableQuery = getFactTableQuery((RolapCube) cube);
         if (tableQuery.isPresent() && tableQuery.get().getAggregationTables() != null) {
             try (Connection connection = context.getDataSource().getConnection()) {
                 List<? extends AggregationTableMapping> aggregationTables = tableQuery.get().getAggregationTables();
@@ -891,12 +851,14 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
                 writer.write(ENTER);
                 writer.write(ENTER);
                 writer.write("""
-                    ---
-                    ```mermaid
-                       erDiagram
-                       """);
+                        ---
+                        ```mermaid
+                           erDiagram
+                           """);
                 TableMapping factTable = tableQuery.get().getTable();
-                Optional<TableReference> oTableReference = tables.stream().filter(t -> (t.table() != null && t.table().name().equals(factTable.getName()))).map(t -> t.table()).findAny();
+                Optional<TableReference> oTableReference = tables.stream()
+                        .filter(t -> (t.table() != null && t.table().name().equals(factTable.getName())))
+                        .map(t -> t.table()).findAny();
                 List<String> mt = new ArrayList<>();
                 List<String> tablesConnections = new ArrayList<>();
                 if (oTableReference.isPresent()) {
@@ -905,9 +867,12 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
                     writeTablesDiagram(writer, factTable);
                 }
                 for (AggregationTableMapping aggregationTable : aggregationTables) {
-                    if(aggregationTable instanceof AggregationNameMapping aggregationName && aggregationName.getName() != null) {
+                    if (aggregationTable instanceof AggregationNameMapping aggregationName
+                            && aggregationName.getName() != null) {
                         TableMapping aggTable = aggregationName.getName();
-                        oTableReference = tables.stream().filter(t -> (t.table() != null && t.table().name().equals(factTable.getName()))).map(t -> t.table()).findAny();
+                        oTableReference = tables.stream()
+                                .filter(t -> (t.table() != null && t.table().name().equals(factTable.getName())))
+                                .map(t -> t.table()).findAny();
                         if (oTableReference.isPresent()) {
                             writeTablesDiagram(writer, oTableReference.get(), databaseMetaData, dbschemas, mt);
                         } else {
@@ -916,14 +881,15 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
                         tablesConnections.addAll(aggregationConnections(aggregationName, mt));
                     }
                 }
-                if (tableQuery.get().getAggregationExcludes() != null && !tableQuery.get().getAggregationExcludes().isEmpty()) {
+                if (tableQuery.get().getAggregationExcludes() != null
+                        && !tableQuery.get().getAggregationExcludes().isEmpty()) {
                     String tableFlag = NEGATIVE_FLAG;
                     writer.write("\"");
                     writer.write("excludes");
                     writer.write(tableFlag);
                     writer.write("\"{");
                     writer.write(ENTER);
-                    for(AggregationExcludeMapping aggregationExclude : tableQuery.get().getAggregationExcludes()) {
+                    for (AggregationExcludeMapping aggregationExclude : tableQuery.get().getAggregationExcludes()) {
                         writer.write("x ");
                         writer.write(aggregationExclude.getName());
                         writer.write(ENTER);
@@ -936,34 +902,43 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
                     writer.write(ENTER);
                 }
                 writer.write("""
-                    ```
-                    ---
-                    """);
+                        ```
+                        ---
+                        """);
 
             } catch (IOException | SQLException e) {
                 e.printStackTrace();
             }
         }
     }
-    private Collection<? extends String> aggregationConnections(AggregationNameMapping aggregationName, List<String> mt) {
-    	List<String> tablesConnections = new ArrayList<>();
+
+    private Collection<? extends String> aggregationConnections(AggregationNameMapping aggregationName,
+            List<String> mt) {
+        List<String> tablesConnections = new ArrayList<>();
         if (aggregationName.getAggregationForeignKeys() != null) {
             for (AggregationForeignKeyMapping aggregationForeignKey : aggregationName.getAggregationForeignKeys()) {
-                if(aggregationForeignKey.getFactColumn() != null && aggregationForeignKey.getFactColumn().getTable() != null
-                        && aggregationForeignKey.getAggregationColumn() != null && aggregationForeignKey.getAggregationColumn().getTable() != null) {
-                    tablesConnections.add(
-                        connection1(aggregationForeignKey.getFactColumn().getTable().getName(), aggregationForeignKey.getAggregationColumn().getTable().getName(),
-                                aggregationForeignKey.getFactColumn().getName(), aggregationForeignKey.getAggregationColumn().getName()));
+                if (aggregationForeignKey.getFactColumn() != null
+                        && aggregationForeignKey.getFactColumn().getTable() != null
+                        && aggregationForeignKey.getAggregationColumn() != null
+                        && aggregationForeignKey.getAggregationColumn().getTable() != null) {
+                    tablesConnections.add(connection1(aggregationForeignKey.getFactColumn().getTable().getName(),
+                            aggregationForeignKey.getAggregationColumn().getTable().getName(),
+                            aggregationForeignKey.getFactColumn().getName(),
+                            aggregationForeignKey.getAggregationColumn().getName()));
                 }
             }
         }
         if (aggregationName.getAggregationMeasureFactCounts() != null) {
-            for (AggregationMeasureFactCountMapping aggregationMeasureFactCount : aggregationName.getAggregationMeasureFactCounts()) {
-                if(aggregationMeasureFactCount.getFactColumn() != null && aggregationMeasureFactCount.getFactColumn().getTable() != null
-                        && aggregationMeasureFactCount.getColumn() != null && aggregationMeasureFactCount.getColumn().getTable() != null) {
-                    tablesConnections.add(
-                        connection1(aggregationMeasureFactCount.getFactColumn().getTable().getName(), aggregationMeasureFactCount.getColumn().getTable().getName(),
-                                aggregationMeasureFactCount.getFactColumn().getName(), aggregationMeasureFactCount.getColumn().getName()));
+            for (AggregationMeasureFactCountMapping aggregationMeasureFactCount : aggregationName
+                    .getAggregationMeasureFactCounts()) {
+                if (aggregationMeasureFactCount.getFactColumn() != null
+                        && aggregationMeasureFactCount.getFactColumn().getTable() != null
+                        && aggregationMeasureFactCount.getColumn() != null
+                        && aggregationMeasureFactCount.getColumn().getTable() != null) {
+                    tablesConnections.add(connection1(aggregationMeasureFactCount.getFactColumn().getTable().getName(),
+                            aggregationMeasureFactCount.getColumn().getTable().getName(),
+                            aggregationMeasureFactCount.getFactColumn().getName(),
+                            aggregationMeasureFactCount.getColumn().getName()));
                 }
             }
         }
@@ -971,27 +946,17 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
     }
 
     private Optional<TableQueryMapping> getFactTableQuery(RolapCube cube) {
-	    if (cube.getFact() != null && cube.getFact() instanceof TableQueryMapping tableQuery) {
-	        return Optional.of(tableQuery);
-	    }
-	    return Optional.empty();
-	}
+        if (cube.getFact() != null && cube.getFact() instanceof TableQueryMapping tableQuery) {
+            return Optional.of(tableQuery);
+        }
+        return Optional.empty();
+    }
 
     private String prepare(String name) {
         if (name != null && !name.isEmpty()) {
-            return name
-                .replace("ü", "ue")
-                .replace("ö", "oe")
-                .replace("ä", "ae")
-                .replace(" ", underline)
-                .replace(":", underline)
-                .replace("(", underline)
-                .replace(")", underline)
-                .replace(".", underline)
-                .replace("[", "")
-                .replace("]", "")
-                .replace("#", "x")
-                .replace(",", "_");
+            return name.replace("ü", "ue").replace("ö", "oe").replace("ä", "ae").replace(" ", underline)
+                    .replace(":", underline).replace("(", underline).replace(")", underline).replace(".", underline)
+                    .replace("[", "").replace("]", "").replace("#", "x").replace(",", "_");
 
         }
         return underline;
@@ -1005,19 +970,15 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
         }
     }
 
-    private void writeDimensionPartDiagram(FileWriter writer, CatalogReader catalogReader, Dimension d, int cubeIndex, int dimIndex) {
-       writeDimensionPartDiagram1(writer, catalogReader, d, cubeIndex, dimIndex);
+    private void writeDimensionPartDiagram(FileWriter writer, CatalogReader catalogReader, Dimension d, int cubeIndex,
+            int dimIndex) {
+        writeDimensionPartDiagram1(writer, catalogReader, d, cubeIndex, dimIndex);
     }
 
-    private void writeDimensionPartDiagram1(
-        FileWriter writer,
-        CatalogReader catalogReader,
-        Dimension pd,
-        int cubeIndex,
-        int dimensionIndex
-    ) {
+    private void writeDimensionPartDiagram1(FileWriter writer, CatalogReader catalogReader, Dimension pd, int cubeIndex,
+            int dimensionIndex) {
         try {
-        	String name = pd.getName();
+            String name = pd.getName();
             writer.write("d");
             writer.write("" + cubeIndex);
             writer.write("" + dimensionIndex);
@@ -1067,7 +1028,8 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
         }
     }
 
-    private void writeCubeDimensions(FileWriter writer, List<Dimension> dimensionUsageOrDimensions, CatalogReader catalogReader) {
+    private void writeCubeDimensions(FileWriter writer, List<Dimension> dimensionUsageOrDimensions,
+            CatalogReader catalogReader) {
         try {
             if (!dimensionUsageOrDimensions.isEmpty()) {
                 writer.write("##### Dimensions:");
@@ -1082,15 +1044,14 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
         }
     }
 
-
     private void writeCubeDimension(FileWriter writer, Dimension d, CatalogReader catalogReader) {
         try {
             String dimension = d.getName() != null ? d.getName() : "";
             String description = d.getDimension().getDescription() != null ? d.getDimension().getDescription() : "";
             AtomicInteger index = new AtomicInteger();
-            String hierarchies = catalogReader.getDimensionHierarchies(d).stream().map(h -> h.getName() == null ?
-                "Hierarchy" + index.getAndIncrement() : h.getName())
-                .collect(Collectors.joining(", "));
+            String hierarchies = catalogReader.getDimensionHierarchies(d).stream()
+                    .map(h -> h.getName() == null ? "Hierarchy" + index.getAndIncrement() : h.getName())
+                    .collect(Collectors.joining(", "));
             writer.write("##### Dimension \"");
             writer.write(dimension);
             writer.write("\":");
@@ -1119,9 +1080,9 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
     private void writeHierarchy(FileWriter writer, int index, Hierarchy h, CatalogReader catalogReader) {
         try {
             String name = h.getName() == null ? "Hierarchy" + index : h.getName();
-            String tables = getTable(((RolapHierarchy)h).getRelation());
+            String tables = getTable(((RolapHierarchy) h).getRelation());
             String levels = h.getLevels() != null ? catalogReader.getHierarchyLevels(h).stream().map(l -> l.getName())
-                .collect(Collectors.joining(", ")) : EMPTY_STRING;
+                    .collect(Collectors.joining(", ")) : EMPTY_STRING;
             writer.write("##### Hierarchy ");
             writer.write(name);
             writer.write(":");
@@ -1147,7 +1108,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
         try {
             String name = level.getName();
             String description = level.getDescription();
-            String columns = getColumnName(((RolapLevel)level).getKeyExp());
+            String columns = getColumnName(((RolapLevel) level).getKeyExp());
             writer.write("###### Level \"");
             writer.write(name);
             writer.write("\" :");
@@ -1155,7 +1116,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
             writer.write(ENTER);
             writer.write("    column(s): ");
             if (columns != null) {
-            	writer.write(columns);
+                writer.write(columns);
             }
             writer.write(ENTER);
             writer.write(ENTER);
@@ -1190,14 +1151,13 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
     }
 
     private String getTableName(TableMapping table) {
-    	if (table != null) {
-    		return table.getName();
-    	}
-		return null;
-	}
+        if (table != null) {
+            return table.getName();
+        }
+        return null;
+    }
 
-
-	private List<String> getFactTableConnections(QueryMapping relation, List<String> missedTableNames) {
+    private List<String> getFactTableConnections(QueryMapping relation, List<String> missedTableNames) {
         if (relation instanceof TableQueryMapping mt) {
             return List.of();
         }
@@ -1208,14 +1168,16 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
             return List.of();
         }
         if (relation instanceof JoinQueryMapping mj) {
-            if (mj.getLeft() != null && mj.getRight() != null && mj.getLeft().getQuery() != null && mj.getRight().getQuery() != null) {
+            if (mj.getLeft() != null && mj.getRight() != null && mj.getLeft().getQuery() != null
+                    && mj.getRight().getQuery() != null) {
                 ArrayList<String> res = new ArrayList<>();
                 String t1 = getFirstTable(mj.getLeft().getQuery());
-                String flag1  = missedTableNames.contains(t1) ? NEGATIVE_FLAG : POSITIVE_FLAG;
+                String flag1 = missedTableNames.contains(t1) ? NEGATIVE_FLAG : POSITIVE_FLAG;
                 String t2 = getFirstTable(mj.getRight().getQuery());
-                String flag2  = missedTableNames.contains(t2) ? NEGATIVE_FLAG : POSITIVE_FLAG;
+                String flag2 = missedTableNames.contains(t2) ? NEGATIVE_FLAG : POSITIVE_FLAG;
                 if (t1 != null && !t1.equals(t2)) {
-                    res.add(connection(t1, t2, flag1, flag2, getColumnName(mj.getLeft().getKey()), getColumnName(mj.getRight().getKey())));
+                    res.add(connection(t1, t2, flag1, flag2, getColumnName(mj.getLeft().getKey()),
+                            getColumnName(mj.getRight().getKey())));
                 }
                 res.addAll(getFactTableConnections(mj.getRight().getQuery(), missedTableNames));
                 return res;
@@ -1253,19 +1215,21 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
             return getTableName(mt.getTable());
         }
         if (relation instanceof InlineTableQueryMapping it) {
-            //TODO
+            // TODO
         }
         if (relation instanceof SqlSelectQueryMapping mv) {
             StringBuilder sb = new StringBuilder();
             if (mv.getSql() != null && mv.getSql().getSqlStatements() != null) {
-            	mv.getSql().getSqlStatements().stream().filter(s -> s.getDialects().stream().anyMatch(d -> "generic".equals(d)))
-                    .findFirst().ifPresent(s -> sb.append(s.getSql()));
+                mv.getSql().getSqlStatements().stream()
+                        .filter(s -> s.getDialects().stream().anyMatch(d -> "generic".equals(d))).findFirst()
+                        .ifPresent(s -> sb.append(s.getSql()));
             }
             return sb.toString();
         }
         if (relation instanceof JoinQueryMapping mj) {
             StringBuilder sb = new StringBuilder();
-            if (mj.getLeft() != null && mj.getRight() != null && mj.getLeft().getQuery() != null && mj.getRight().getQuery() != null) {
+            if (mj.getLeft() != null && mj.getRight() != null && mj.getLeft().getQuery() != null
+                    && mj.getRight().getQuery() != null) {
                 sb.append(getTable(mj.getLeft().getQuery())).append(",").append(getTable(mj.getRight().getQuery()));
                 return sb.toString();
             }
@@ -1285,31 +1249,27 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
         }
     }
 
-    private void writeTables(
-        final FileWriter writer,
-        final RolapContext context,
-        final List<TableDefinition> tables,
-        final DatabaseMetaData databaseMetaData,
-        List<? extends DatabaseSchema> dbschemas
-    ) {
+    private void writeTables(final FileWriter writer, final RolapContext context, final List<TableDefinition> tables,
+            final DatabaseMetaData databaseMetaData, List<? extends DatabaseSchema> dbschemas) {
         try {
             if (tables != null && !tables.isEmpty()) {
                 writer.write("### Database :");
                 writer.write(ENTER);
                 writer.write("""
-                    ---
-                    ```mermaid
-                    ---
-                    title: Diagram;
-                    ---
-                    erDiagram
-                    """);
+                        ---
+                        ```mermaid
+                        ---
+                        title: Diagram;
+                        ---
+                        erDiagram
+                        """);
                 List<DatabaseTable> missedTables = getMissedTablesFromDbStructureFromSchema(dbschemas, tables);
                 List<DatabaseTable> availableTables = dbschemas.parallelStream().flatMap(d -> d.getDbTables().stream())
-                .toList();
+                        .toList();
                 List<String> missedTableNames = new ArrayList<>();
                 missedTableNames.addAll(missedTables.stream().map(t -> t.getName()).toList());
-                availableTables.forEach(t -> writeTablesDiagram(writer, t, getTableDefinition(tables, t), databaseMetaData, dbschemas, missedTableNames));
+                availableTables.forEach(t -> writeTablesDiagram(writer, t, getTableDefinition(tables, t),
+                        databaseMetaData, dbschemas, missedTableNames));
                 missedTables.forEach(t -> writeTablesDiagram(writer, t));
                 writer.write(ENTER);
                 List<String> tablesConnections = schemaTablesConnections(context, missedTableNames);
@@ -1318,21 +1278,22 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
                     writer.write(ENTER);
                 }
                 writer.write("""
-                    ```
-                    ---
-                    """);
+                        ```
+                        ---
+                        """);
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
     private Optional<TableReference> getTableDefinition(List<TableDefinition> tables, DatabaseTable t) {
         if (tables != null) {
-            return tables.stream().filter(td -> td.table().name().equals(t.getName())).map(td -> td.table()).findFirst();
+            return tables.stream().filter(td -> td.table().name().equals(t.getName())).map(td -> td.table())
+                    .findFirst();
         }
         return Optional.empty();
     }
-
 
     private void writeTablesDiagram(FileWriter writer, TableMapping table) {
         try {
@@ -1399,11 +1360,17 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
             e.printStackTrace();
         }
     }
-    private void writeTablesDiagram(FileWriter writer, DatabaseTable table, Optional<TableReference> tableReference, DatabaseMetaData databaseMetaData, List<? extends DatabaseSchema> databaseSchemaList, List<String> missedTableNames) {
+
+    private void writeTablesDiagram(FileWriter writer, DatabaseTable table, Optional<TableReference> tableReference,
+            DatabaseMetaData databaseMetaData, List<? extends DatabaseSchema> databaseSchemaList,
+            List<String> missedTableNames) {
         try {
-            List<ColumnDefinition> columnList = tableReference.isPresent() ? databaseService.getColumnDefinitions(databaseMetaData, tableReference.get()) : List.of();
+            List<ColumnDefinition> columnList = tableReference.isPresent()
+                    ? databaseService.getColumnDefinitions(databaseMetaData, tableReference.get())
+                    : List.of();
             String name = table.getName();
-            List<DatabaseColumn> missedColumns = getMissedColumnsFromDbStructureFromSchema(databaseSchemaList, name, columnList);
+            List<DatabaseColumn> missedColumns = getMissedColumnsFromDbStructureFromSchema(databaseSchemaList, name,
+                    columnList);
             String tableFlag = POSITIVE_FLAG;
             if (!missedColumns.isEmpty()) {
                 tableFlag = NEGATIVE_FLAG;
@@ -1454,11 +1421,13 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
         }
     }
 
-    private void writeTablesDiagram(FileWriter writer, TableReference tableReference, DatabaseMetaData databaseMetaData, List<? extends DatabaseSchema> databaseSchemaList, List<String> missedTableNames) {
+    private void writeTablesDiagram(FileWriter writer, TableReference tableReference, DatabaseMetaData databaseMetaData,
+            List<? extends DatabaseSchema> databaseSchemaList, List<String> missedTableNames) {
         try {
             List<ColumnDefinition> columnList = databaseService.getColumnDefinitions(databaseMetaData, tableReference);
             String name = tableReference.name();
-            List<DatabaseColumn> missedColumns = getMissedColumnsFromDbStructureFromSchema(databaseSchemaList, name, columnList);
+            List<DatabaseColumn> missedColumns = getMissedColumnsFromDbStructureFromSchema(databaseSchemaList, name,
+                    columnList);
             String tableFlag = POSITIVE_FLAG;
             if (!missedColumns.isEmpty()) {
                 tableFlag = NEGATIVE_FLAG;
@@ -1475,7 +1444,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
                     String type = TYPE_MAP.get(c.columnMetaData().dataType().getVendorTypeNumber());
                     String flag = POSITIVE_FLAG;
                     if (type != null) {
-                    	writer.write(type);
+                        writer.write(type);
                     }
                     writer.write(" ");
                     writer.write(columnName);
@@ -1524,36 +1493,37 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
     }
 
     private String getSize(DatabaseColumn column) {
-    	if (column.getColumnSize() != null && column.getColumnSize() > 0) {
-    		StringBuilder r = new StringBuilder();
-    		r.append("(");
-    		r.append(column.getColumnSize());
-    		if (column.getDecimalDigits() != null && column.getDecimalDigits() > 0) {
-    			r.append(".").append(column.getDecimalDigits());
-    		}
-    		r.append(") ");
-    		return r.toString();
-    	}
-    	return "";
-	}
+        if (column.getColumnSize() != null && column.getColumnSize() > 0) {
+            StringBuilder r = new StringBuilder();
+            r.append("(");
+            r.append(column.getColumnSize());
+            if (column.getDecimalDigits() != null && column.getDecimalDigits() > 0) {
+                r.append(".").append(column.getDecimalDigits());
+            }
+            r.append(") ");
+            return r.toString();
+        }
+        return "";
+    }
 
     private String getSize(ColumnMetaData columnMetaData) {
-    	if (columnMetaData.columnSize().isPresent()) {
-    		StringBuilder r = new StringBuilder();
-    		r.append("(");
-    		r.append(columnMetaData.columnSize().getAsInt());
-    		if (columnMetaData.decimalDigits().isPresent()) {
-    			r.append(".").append(columnMetaData.decimalDigits().getAsInt());
-    		}
-    		r.append(") ");
-    		return r.toString();
-    	}
-    	return "";
-	}
+        if (columnMetaData.columnSize().isPresent()) {
+            StringBuilder r = new StringBuilder();
+            r.append("(");
+            r.append(columnMetaData.columnSize().getAsInt());
+            if (columnMetaData.decimalDigits().isPresent()) {
+                r.append(".").append(columnMetaData.decimalDigits().getAsInt());
+            }
+            r.append(") ");
+            return r.toString();
+        }
+        return "";
+    }
 
-	private String getNullable(ColumnMetaData columnMetaData) {
-		return columnMetaData.nullable().isPresent() && columnMetaData.nullable().getAsInt() > 0 ? "is null " : "not null ";
-	}
+    private String getNullable(ColumnMetaData columnMetaData) {
+        return columnMetaData.nullable().isPresent() && columnMetaData.nullable().getAsInt() > 0 ? "is null "
+                : "not null ";
+    }
 
     private String getNullable(ColumnMapping column) {
 
@@ -1566,26 +1536,29 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
 
     private String getNullable(DatabaseColumn column) {
 
-		if (column.getNullable() != null) {
-			return column.getNullable() ? "is null " : "not null ";
-		} else {
-			return "is null ";
-		}
-	}
+        if (column.getNullable() != null) {
+            return column.getNullable() ? "is null " : "not null ";
+        } else {
+            return "is null ";
+        }
+    }
 
-	private List<DatabaseColumn> getMissedColumnsFromDbStructureFromSchema(List<? extends DatabaseSchema> databaseSchemaList, String tableName, List<ColumnDefinition> columnList) {
-        List<DatabaseTable> ts = databaseSchemaList.parallelStream().flatMap(d -> d.getDbTables().stream().filter(t -> tableName.equals(t.getName()))).toList();
+    private List<DatabaseColumn> getMissedColumnsFromDbStructureFromSchema(
+            List<? extends DatabaseSchema> databaseSchemaList, String tableName, List<ColumnDefinition> columnList) {
+        List<DatabaseTable> ts = databaseSchemaList.parallelStream()
+                .flatMap(d -> d.getDbTables().stream().filter(t -> tableName.equals(t.getName()))).toList();
         if (!ts.isEmpty()) {
             List<DatabaseColumn> columns = ts.stream().flatMap(t -> t.getDbColumns().stream()).toList();
-            return columns.stream().filter(c -> columnList.stream().noneMatch(cd -> cd.column().name().equals(c.getName()))).toList();
+            return columns.stream()
+                    .filter(c -> columnList.stream().noneMatch(cd -> cd.column().name().equals(c.getName()))).toList();
         }
         return List.of();
     }
 
-    private List<DatabaseTable> getMissedTablesFromDbStructureFromSchema(List<? extends DatabaseSchema> databaseSchemaList, List<TableDefinition> tables) {
+    private List<DatabaseTable> getMissedTablesFromDbStructureFromSchema(
+            List<? extends DatabaseSchema> databaseSchemaList, List<TableDefinition> tables) {
         return databaseSchemaList.parallelStream().flatMap(d -> d.getDbTables().stream())
-            .filter(t -> !tables.stream().anyMatch(td -> td.table().name().equals(t.getName())))
-            .toList();
+                .filter(t -> !tables.stream().anyMatch(td -> td.table().name().equals(t.getName()))).toList();
     }
 
     /*

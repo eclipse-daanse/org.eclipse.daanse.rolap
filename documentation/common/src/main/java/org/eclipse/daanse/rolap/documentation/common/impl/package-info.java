@@ -10,13 +10,6 @@
 * Contributors:
 *   SmartCity Jena - initial
 */
-package org.eclipse.daanse.rolap.documentation.api;
 
-import java.nio.file.Path;
-
-import org.eclipse.daanse.olap.api.Context;
-
-public interface ConntextDocumentationProvider {
-
-	void createDocumentation(Context context, Path path) throws Exception;
-}
+@org.osgi.annotation.versioning.Version("0.0.1")
+package org.eclipse.daanse.rolap.documentation.common.impl;

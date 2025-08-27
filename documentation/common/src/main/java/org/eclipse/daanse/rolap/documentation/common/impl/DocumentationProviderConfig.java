@@ -11,43 +11,31 @@
  *   SmartCity Jena - initial
  *   Stefan Bischof (bipolis.org) - initial
  */
-package org.eclipse.daanse.rolap.documentation.common;
+package org.eclipse.daanse.rolap.documentation.common.impl;
 
-import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 import org.osgi.service.metatype.annotations.AttributeDefinition;
-
+import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 
 @ObjectClassDefinition
-public interface DocumentationProviderConfig {
+public @interface DocumentationProviderConfig {
 
     @AttributeDefinition(name = "writeSchemasDescribing", description = "write schemas describing property", required = false)
-    default boolean writeSchemasDescribing() {
-        return true;
-    }
+    boolean writeSchemasDescribing() default true;
 
     @AttributeDefinition(name = "writeCubsDiagrams", description = "write cubs diagrams property", required = false)
-    default boolean writeCubsDiagrams() {
-        return true;
-    }
+    boolean writeCubsDiagrams() default true;
 
     @AttributeDefinition(name = "writeCubeMatrixDiagram", description = "write cube matrix diagram property", required = false)
-    default boolean writeCubeMatrixDiagram() {
-        return true;
-
-    }
+    boolean writeCubeMatrixDiagram() default true;
 
     @AttributeDefinition(name = "writeDatabaseInfoDiagrams", description = "write database info diagrams property", required = false)
-    default boolean writeDatabaseInfoDiagrams() {
-        return true;
-    }
+    boolean writeDatabaseInfoDiagrams() default true;
 
     @AttributeDefinition(name = "writeVerifierResult", description = "write verifier result property", required = false)
-    default boolean writeVerifierResult() {
-        return true;
-    }
+    boolean writeVerifierResult() default true;
 
     @AttributeDefinition(name = "writeSchemasAsXML", description = "write schemas as XML property", required = false)
-    default boolean writeSchemasAsXML() {
-        return true;
-    }
+    boolean writeSchemasAsXML() default true;
+
+
 }

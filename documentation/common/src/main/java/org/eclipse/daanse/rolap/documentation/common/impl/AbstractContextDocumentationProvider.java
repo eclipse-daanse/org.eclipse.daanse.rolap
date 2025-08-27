@@ -10,16 +10,16 @@
 * Contributors:
 *   SmartCity Jena - initial
 */
-package org.eclipse.daanse.rolap.documentation.common;
+package org.eclipse.daanse.rolap.documentation.common.impl;
 
-import org.eclipse.daanse.rolap.documentation.api.ConntextDocumentationProvider;
+import org.eclipse.daanse.rolap.documentation.api.ContextDocumentationProvider;
 
 import java.sql.Types;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-public abstract class AbstractContextDocumentationProvider implements ConntextDocumentationProvider {
+public abstract class AbstractContextDocumentationProvider implements ContextDocumentationProvider {
 
     protected static final Map<Integer, String> TYPE_MAP;
     static {
