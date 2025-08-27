@@ -16,7 +16,6 @@ package org.eclipse.daanse.rolap.common;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.eclipse.daanse.olap.api.CatalogCache;
@@ -140,7 +139,6 @@ public class RolapCatalogCache implements CatalogCache {
      * 
      * @param catalogMapping  the catalog mapping definition
      * @param connectionProps connection properties containing cache and timeout settings
-     * @param oSessionId      optional session identifier for connection isolation
      * @return the cached or newly created catalog
      */
     public RolapCatalog getOrCreateCatalog(CatalogMapping catalogMapping, final ConnectionProps connectionProps) {
