@@ -944,7 +944,7 @@ public class RolapCatalog implements Catalog {
 	@Override
 	public Role lookupRole(final String roleName) {
 
-		Optional<Role> oRole = mapNameToRole.entrySet().stream().filter(e -> roleName == e.getKey().getName())
+		Optional<Role> oRole = mapNameToRole.entrySet().stream().filter(e -> roleName.equals(e.getKey().getName()))
 				.findFirst().map(Entry::getValue);
 		return oRole.orElse(null);
 	}
