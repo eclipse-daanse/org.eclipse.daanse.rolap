@@ -54,11 +54,11 @@ public class WritebackUtil {
                 connection.createStatement()) {
                 for (Map<String, Map.Entry<Datatype, Object>> wbc : sessionValues) {
                     StringBuilder sql = new StringBuilder("INSERT INTO ").append(writebackTable.getName()).append(" (");
-                    sql.append(writebackTable.getColumns().stream().map(c -> c.getColumn().getName())
+                    sql.append(writebackTable.getColumns().stream().map(c -> dialect.quoteIdentifier(c.getColumn().getName()))
                         .collect(Collectors.joining(", ")));
-                    sql.append(", ID");
+                    sql.append(", ").append(dialect.quoteIdentifier("ID"));
                     if (userId != null) {
-                        sql.append(", USER");
+                        sql.append(", ").append(dialect.quoteIdentifier("USER"));
                     }
                     sql.append(") values (");
                     boolean flag = true;
@@ -112,13 +112,13 @@ public class WritebackUtil {
                             rolapCube.getMeasures().stream().filter(m -> m.getUniqueName().equals(measureName)).findFirst();
                         if (oMember.isPresent() && oMember.get() instanceof RolapBaseCubeMeasure rolapBaseCubeMeasure) {
                             if (!tuples.isEmpty()) {
-                                String hierarchyName = tuples.get(0);
+                                String hierarchyName = tuples.get(1);
                                 Optional<Hierarchy> oRolapHierarchy =
                                     rolapCube.getHierarchies().stream()
                                         .filter(h -> h.getName().equals(hierarchyName)).findFirst();
                                 List<String> ls = new ArrayList<>();
-                                if (tuples.size() > 1) {
-                                    for (int i = 1; i < tuples.size(); i++) {
+                                if (tuples.size() > 2) {
+                                    for (int i = 2; i < tuples.size(); i++) {
                                         ls.add(tuples.get(i));
                                     }
                                 }

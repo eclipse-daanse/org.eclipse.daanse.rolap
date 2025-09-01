@@ -13,6 +13,7 @@
  */
 package org.eclipse.daanse.rolap.common;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -27,19 +28,21 @@ public class EnumConvertor {
     public static List<Map<String, Entry<Datatype, Object>>> convertSessionValues(
             List<Map<String, Entry<DataTypeJdbc, Object>>> sessionValues) {
         if (sessionValues != null) {
-            sessionValues.stream().map(e -> convertMap(e)).toList();
+            return sessionValues.stream().map(e -> convertMap(e)).toList();
         }
         return List.of();
     }
 
     private static Map<String, Entry<Datatype, Object>> convertMap(Map<String, Entry<DataTypeJdbc, Object>> map) {
-        return map.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
-                e -> toEntry(e.getValue())));
-
+    	Map<String, Entry<Datatype, Object>> result = new LinkedHashMap<String, Entry<Datatype, Object>>();
+    	for (Map.Entry<String, Entry<DataTypeJdbc, Object>> e :  map.entrySet()) {
+    		result.put(e.getKey(), toEntry(e.getValue()));
+    	}
+        return result;
     }
 
     private static Entry<Datatype, Object> toEntry(Entry<DataTypeJdbc, Object> e) {
-        return Map.entry(Datatype.fromValue(e.getKey().name()), e.getValue());
+        return Map.entry(Datatype.fromValue(e.getKey().getValue()), e.getValue());
     }
 
     public static BestFitColumnType toBestFitColumnType(String type) {

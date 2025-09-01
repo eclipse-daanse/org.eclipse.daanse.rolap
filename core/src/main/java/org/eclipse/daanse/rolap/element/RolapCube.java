@@ -2504,7 +2504,8 @@ public abstract class RolapCube extends CubeBase {
                         changeFact(SqlSelectQueryMappingImpl.builder().withSql(sqlView).withAlias(alias).build());
                     }
                     if (fact instanceof InlineTableQueryMapping mappingInlineTable) {
-                        RelationalQueryMapping mappingRelation = RolapUtil.convertInlineTableToRelation(mappingInlineTable, getContext().getDialect());
+                    	List<String> columns =  writebackTable.getColumns().stream().map(c -> c.getColumn().getName()).toList();
+                        RelationalQueryMapping mappingRelation = RolapUtil.convertInlineTableToRelation(mappingInlineTable, getContext().getDialect(), columns);
                         if (mappingRelation instanceof SqlSelectQueryMapping mappingView) {
                             changeFact(mappingView, dialect, writebackTable, rolapSessionValues);
                         }

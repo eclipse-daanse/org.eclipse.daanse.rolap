@@ -34,10 +34,12 @@ import static org.eclipse.daanse.rolap.common.util.RelationUtil.getAlias;
 import java.sql.SQLException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.function.Consumer;
@@ -67,6 +69,7 @@ import org.eclipse.daanse.rolap.element.RolapLevel;
 import org.eclipse.daanse.rolap.element.RolapMember;
 import org.eclipse.daanse.rolap.element.RolapProperty;
 import org.eclipse.daanse.rolap.element.RolapHierarchy.LimitedRollupMember;
+import org.eclipse.daanse.rolap.mapping.api.model.ColumnMapping;
 import org.eclipse.daanse.rolap.mapping.api.model.InlineTableQueryMapping;
 import org.eclipse.daanse.rolap.mapping.api.model.RelationalQueryMapping;
 import org.eclipse.daanse.rolap.mapping.api.model.RowMapping;
@@ -512,6 +515,43 @@ public class RolapUtil {
         		.build();
         return view;
     }
+
+    public static RelationalQueryMapping convertInlineTableToRelation(
+            InlineTableQueryMapping inlineTable,
+            final Dialect dialect, List<String> orderColumns)
+        {
+            List<String> columnNames = new ArrayList<>();
+            List<String> columnTypes = new ArrayList<>();
+            
+            List<? extends ColumnMapping> columns = inlineTable.getTable().getColumns().stream().sorted(Comparator.comparingInt(o -> orderColumns.indexOf(o.getName()))).toList();
+            
+            for (ColumnMapping columnMapping : columns) {
+            		columnNames.add(columnMapping.getName());
+            		columnTypes.add(columnMapping.getDataType().getValue());
+            }
+            List<String[]> valueList = new ArrayList<>();
+            for (RowMapping row : inlineTable.getTable().getRows()) {
+                List<String> values = new ArrayList<>();
+                List<? extends RowValueMapping> rowValues = row.getRowValues().stream().sorted(Comparator.comparingInt(v -> orderColumns.indexOf(v.getColumn().getName()))).toList();
+                for (RowValueMapping rowValue : rowValues) {                	
+                	values.add(rowValue.getValue());
+                }
+                valueList.add(values.toArray(new String[0]));
+            }
+            SqlSelectQueryMappingImpl view = SqlSelectQueryMappingImpl.builder()
+            		.withAlias(getAlias(inlineTable))
+            		.withSql(SqlViewMappingImpl.builder()
+            				//TODO
+            				.withSqlStatements(List.of(
+            					SqlStatementMappingImpl.builder()
+            					.withDialects(List.of("generic"))
+            					.withSql(dialect.generateInline(columnNames, columnTypes, valueList).toString())
+            					.build()
+            				))
+            				.build())
+            		.build();
+            return view;
+        }
 
     public static RolapMember strip(RolapMember member) {
         if (member instanceof RolapCubeMember rolapCubeMember) {
