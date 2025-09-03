@@ -168,11 +168,8 @@ public class RolapConnection extends ConnectionBase {
       internalStatement =
         catalog.getInternalConnection().getInternalStatement();
       List<String> roleNameList =connectionProps.roles();
-      if ( roleNameList.isEmpty() ) {
-          if (!catalog.roleNames().isEmpty()) {
-             throw new RuntimeException("User doesn't have any roles"); // TODO need throw access exception  
-          }
-      } else {
+      if ( !roleNameList.isEmpty() ) {
+
         List<Role> roleList = new ArrayList<>();
         for ( String roleName : roleNameList ) {
 
@@ -198,9 +195,9 @@ public class RolapConnection extends ConnectionBase {
             roleInner = RoleImpl.union( roleList );
             break;
         }
-     }
+      }
     } else {
-      this.internalStatement = createInternalStatement( true, this );
+      this.internalStatement = createInternalStatement( true,this);
     }
 
     if ( roleInner == null ) {
