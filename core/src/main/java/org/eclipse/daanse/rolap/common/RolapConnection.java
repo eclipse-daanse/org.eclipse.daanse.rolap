@@ -130,7 +130,11 @@ public class RolapConnection extends ConnectionBase {
    * @param connectionProps  ConnectionProps
    * 
    */
-	public RolapConnection(RolapContext context, RolapCatalog catalog, ConnectionProps connectionProps) {
+    public RolapConnection(RolapContext context, RolapCatalog catalog, ConnectionProps connectionProps) {
+        this(context, catalog, connectionProps, true);
+    }
+
+    public RolapConnection(RolapContext context, RolapCatalog catalog, ConnectionProps connectionProps, boolean checkRole) {
     super();
 
     this.context = context;
@@ -168,8 +172,11 @@ public class RolapConnection extends ConnectionBase {
       internalStatement =
         catalog.getInternalConnection().getInternalStatement();
       List<String> roleNameList =connectionProps.roles();
-      if ( !roleNameList.isEmpty() ) {
-
+      if ( roleNameList.isEmpty() ) {
+          if (checkRole && context.getCatalogMapping().getDefaultAccessRole() == null && !catalog.roleNames().isEmpty()) {
+             throw new RuntimeException("User doesn't have any roles"); // TODO need throw access exception
+          }
+      } else {
         List<Role> roleList = new ArrayList<>();
         for ( String roleName : roleNameList ) {
 

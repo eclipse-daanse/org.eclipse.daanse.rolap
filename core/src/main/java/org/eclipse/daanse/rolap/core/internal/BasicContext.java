@@ -204,7 +204,7 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
 
     @Override
     public RolapConnection getConnectionWithDefaultRole() {
-        return getConnection(new ConnectionProps());
+        return new RolapConnection(this, null, new ConnectionProps(), false);
     }
 
     @Override
