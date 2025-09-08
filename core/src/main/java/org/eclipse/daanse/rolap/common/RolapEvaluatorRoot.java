@@ -30,6 +30,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.eclipse.daanse.olap.api.CatalogReader;
 import org.eclipse.daanse.olap.api.ConfigConstants;
@@ -123,7 +124,8 @@ public RolapEvaluatorRoot( Statement statement ) {
     List<RolapMember> list = new ArrayList<>();
     nonAllPositions = new int[cube.getHierarchies().size()];
     nonAllPositionCount = 0;
-    for ( Hierarchy hierarchy : cube.getHierarchies() ) {
+    Set<Hierarchy> hierarchies = statement.getCatalogReader().getCubeDimensions(cube).stream().flatMap(d -> statement.getCatalogReader().getDimensionHierarchies(d).stream()).collect(Collectors.toSet());
+    for ( Hierarchy hierarchy : hierarchies ) {
       RolapMember defaultMember = (RolapMember) schemaReader.getHierarchyDefaultMember( hierarchy );
       assert defaultMember != null;
 
