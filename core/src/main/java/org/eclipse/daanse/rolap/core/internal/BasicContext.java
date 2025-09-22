@@ -55,8 +55,9 @@ import org.eclipse.daanse.olap.core.LoggingEventBus;
 import org.eclipse.daanse.olap.server.ExecutionImpl;
 import org.eclipse.daanse.rolap.api.RolapContext;
 import org.eclipse.daanse.rolap.common.AbstractRolapContext;
+import org.eclipse.daanse.rolap.common.connection.ExternalRolapConnection;
+import org.eclipse.daanse.rolap.common.connection.InternalRolapConnection;
 import org.eclipse.daanse.rolap.common.RolapCatalogCache;
-import org.eclipse.daanse.rolap.common.RolapConnection;
 import org.eclipse.daanse.rolap.common.RolapDependencyTestingEvaluator;
 import org.eclipse.daanse.rolap.common.RolapEvaluator;
 import org.eclipse.daanse.rolap.common.RolapEvaluatorRoot;
@@ -203,13 +204,13 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
     }
 
     @Override
-    public RolapConnection getConnectionWithDefaultRole() {
-        return new RolapConnection(this, null, new ConnectionProps(), false);
+    public org.eclipse.daanse.olap.api.connection.Connection getConnectionWithDefaultRole() {
+        return new InternalRolapConnection(this, null, new ConnectionProps());
     }
 
     @Override
-    public RolapConnection getConnection(ConnectionProps props) {
-        return new RolapConnection(this, props);
+    public org.eclipse.daanse.olap.api.connection.Connection getConnection(ConnectionProps props) {
+        return new ExternalRolapConnection(this, props);
     }
 
     @Override

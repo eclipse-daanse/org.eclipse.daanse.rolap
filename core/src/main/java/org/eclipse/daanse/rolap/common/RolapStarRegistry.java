@@ -35,6 +35,7 @@ import java.util.Map;
 
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.ISegmentCacheManager;
+import org.eclipse.daanse.olap.api.connection.Connection;
 import org.eclipse.daanse.olap.core.AbstractBasicContext;
 import org.eclipse.daanse.rolap.common.agg.SegmentCacheManager;
 import org.eclipse.daanse.rolap.element.RolapCatalog;
@@ -46,7 +47,7 @@ import org.eclipse.daanse.rolap.mapping.api.model.RelationalQueryMapping;
 public class RolapStarRegistry {
 	private final Map<List<String>, RolapStar> stars = new HashMap<>();
 	private RolapCatalog schema;
-	private Context context;
+	private Context<?> context;
 
 	public RolapStarRegistry(RolapCatalog schema, Context context) {
 		this.schema = schema;
@@ -66,7 +67,7 @@ public class RolapStarRegistry {
 			stars.put(rolapStarKey, star);
 			// let cache manager load pending segments
 			// from external cache if needed
-			RolapConnection internalConnection = schema.getInternalConnection();
+			Connection internalConnection = schema.getInternalConnection();
 			AbstractBasicContext abc = (AbstractBasicContext) internalConnection.getContext();
 			ISegmentCacheManager segmentCacheManager = abc.getAggregationManager().getCacheMgr(internalConnection);
 			((SegmentCacheManager)segmentCacheManager).loadCacheForStar(star);

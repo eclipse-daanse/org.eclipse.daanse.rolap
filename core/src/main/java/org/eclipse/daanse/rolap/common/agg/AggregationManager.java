@@ -52,7 +52,6 @@ import org.eclipse.daanse.rolap.api.RolapContext;
 import org.eclipse.daanse.rolap.common.CacheControlImpl;
 import org.eclipse.daanse.rolap.common.GroupingSetsCollector;
 import org.eclipse.daanse.rolap.common.RolapAggregationManager;
-import org.eclipse.daanse.rolap.common.RolapConnection;
 import org.eclipse.daanse.rolap.common.RolapStar;
 import org.eclipse.daanse.rolap.common.StarColumnPredicate;
 import org.eclipse.daanse.rolap.common.StarPredicate;
@@ -212,7 +211,7 @@ public class AggregationManager extends RolapAggregationManager implements IAggr
         return measure.getStar().getCellFromCache(request, pinSet);
     }
 
-    public Object getCellFromAllCaches(CellRequest request, RolapConnection rolapConnection) {
+    public Object getCellFromAllCaches(CellRequest request, Connection rolapConnection) {
         final RolapStar.Measure measure = request.getMeasure();
         return measure.getStar().getCellFromAllCaches(request, rolapConnection);
     }
