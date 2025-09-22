@@ -49,7 +49,7 @@ import org.eclipse.daanse.olap.common.Util;
 import  org.eclipse.daanse.olap.util.Pair;
 
 /**
- * A utility class for {@link RolapConnection}. It specializes in
+ * A utility class for Connection. It specializes in
  * shepherding the creation of RolapResult by running the actual execution
  * on a separate thread from the user thread so we can:
  *

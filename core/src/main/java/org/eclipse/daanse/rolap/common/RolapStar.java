@@ -245,7 +245,7 @@ public class RolapStar {
         return null;
     }
 
-    public Object getCellFromAllCaches(final CellRequest request, RolapConnection rolapConnection) {
+    public Object getCellFromAllCaches(final CellRequest request, org.eclipse.daanse.olap.api.connection.Connection rolapConnection) {
         // First, try the local/thread cache.
         Object result = getCellFromCache(request, null);
         if (result != null) {
@@ -255,7 +255,7 @@ public class RolapStar {
         return getCellFromExternalCache(request, rolapConnection);
     }
 
-    private Object getCellFromExternalCache(CellRequest request, RolapConnection rolapConnection) {
+    private Object getCellFromExternalCache(CellRequest request, org.eclipse.daanse.olap.api.connection.Connection rolapConnection) {
     	AbstractBasicContext abc = (AbstractBasicContext) LocusImpl.peek().getContext();
     	final ISegmentCacheManager segmentCacheManager = abc.getAggregationManager()
                 .getCacheMgr(rolapConnection);

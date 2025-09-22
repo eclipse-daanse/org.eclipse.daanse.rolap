@@ -327,7 +327,7 @@ public class ScenarioImpl implements Scenario {
             buf.append(")");
         }
         final String mdx = buf.toString();
-        final RolapConnection connection =
+        final Connection connection =
             cube.getCatalog().getInternalConnection();
         final Query query = connection.parseQuery(mdx);
         final Result result = connection.execute(query);

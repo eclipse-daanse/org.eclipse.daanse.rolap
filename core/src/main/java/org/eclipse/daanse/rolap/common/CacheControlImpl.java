@@ -78,6 +78,7 @@ import  org.eclipse.daanse.olap.server.ExecutionImpl;
 import  org.eclipse.daanse.olap.server.LocusImpl;
 import org.eclipse.daanse.olap.spi.SegmentColumn;
 import org.eclipse.daanse.olap.util.ArraySortedSet;
+import org.eclipse.daanse.rolap.common.connection.AbstractRolapConnection;
 import org.eclipse.daanse.rolap.common.sql.MemberChildrenConstraint;
 import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.element.RolapCubeLevel;
@@ -298,7 +299,7 @@ public class CacheControlImpl implements CacheControl {
             break;
         }
         if (!containsMeasures(cellRegion)) {
-            for (RolapCube cube : ((RolapConnection)connection).getCatalog().getCubeList()) {
+            for (RolapCube cube : ((AbstractRolapConnection)connection).getCatalog().getCubeList()) {
                 flush(
                     createCrossjoinRegion(
                         createMeasuresRegion(cube),
@@ -338,7 +339,7 @@ public class CacheControlImpl implements CacheControl {
         if (connection != null
             && connection.getCatalog() != null)
         {
-            ((RolapConnection)connection).getCatalog().finalCleanUp();
+            ((AbstractRolapConnection)connection).getCatalog().finalCleanUp();
         }
     }
 
@@ -671,7 +672,7 @@ public class CacheControlImpl implements CacheControl {
         // REVIEW How is flush(s) different to executing createDeleteCommand(s)?
         synchronized (MEMBER_CACHE_LOCK) {
             // firstly clear all cache associated with native sets
-            ((RolapConnection)connection).getCatalog().getNativeRegistry().flushAllNativeSetCache();
+            ((AbstractRolapConnection)connection).getCatalog().getNativeRegistry().flushAllNativeSetCache();
             final List<CellRegion> cellRegionList = new ArrayList<>();
             ((MemberSetPlus) memberSet).accept(
                 new MemberSetVisitorImpl() {

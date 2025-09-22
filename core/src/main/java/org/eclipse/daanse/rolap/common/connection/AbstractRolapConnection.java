@@ -27,11 +27,10 @@
  *   Stefan Bischof (bipolis.org) - initial
  */
 
-package org.eclipse.daanse.rolap.common;
+package org.eclipse.daanse.rolap.common.connection;
 
 import java.io.PrintWriter;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -48,8 +47,6 @@ import org.eclipse.daanse.olap.api.CacheControl;
 import org.eclipse.daanse.olap.api.CatalogReader;
 import org.eclipse.daanse.olap.api.Command;
 import org.eclipse.daanse.olap.api.ConfigConstants;
-import org.eclipse.daanse.olap.api.connection.Connection;
-import org.eclipse.daanse.olap.api.connection.ConnectionProps;
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.Execution;
 import org.eclipse.daanse.olap.api.Locus;
@@ -57,6 +54,8 @@ import org.eclipse.daanse.olap.api.Statement;
 import org.eclipse.daanse.olap.api.access.Role;
 import org.eclipse.daanse.olap.api.calc.todo.TupleCursor;
 import org.eclipse.daanse.olap.api.calc.todo.TupleList;
+import org.eclipse.daanse.olap.api.connection.Connection;
+import org.eclipse.daanse.olap.api.connection.ConnectionProps;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.query.component.Expression;
 import org.eclipse.daanse.olap.api.query.component.Query;
@@ -67,15 +66,14 @@ import org.eclipse.daanse.olap.api.result.Position;
 import org.eclipse.daanse.olap.api.result.Result;
 import org.eclipse.daanse.olap.api.result.Scenario;
 import org.eclipse.daanse.olap.calc.base.type.tuplebase.TupleCollections;
-import org.eclipse.daanse.olap.connection.ConnectionBase;
 import org.eclipse.daanse.olap.common.ExecuteDurationUtil;
 import org.eclipse.daanse.olap.common.QueryCanceledException;
 import org.eclipse.daanse.olap.common.QueryTimeoutException;
 import org.eclipse.daanse.olap.common.ResourceLimitExceededException;
 import org.eclipse.daanse.olap.common.ResultBase;
 import org.eclipse.daanse.olap.common.ResultLimitExceededException;
-import org.eclipse.daanse.olap.access.RoleImpl;
 import org.eclipse.daanse.olap.common.Util;
+import org.eclipse.daanse.olap.connection.ConnectionBase;
 import org.eclipse.daanse.olap.core.AbstractBasicContext;
 import org.eclipse.daanse.olap.exceptions.FailedToParseQueryException;
 import org.eclipse.daanse.olap.query.component.QueryImpl;
@@ -83,6 +81,15 @@ import org.eclipse.daanse.olap.query.component.TransactionCommandImpl;
 import  org.eclipse.daanse.olap.server.ExecutionImpl;
 import  org.eclipse.daanse.olap.server.LocusImpl;
 import org.eclipse.daanse.rolap.api.RolapContext;
+import org.eclipse.daanse.rolap.common.RolapAxis;
+import org.eclipse.daanse.rolap.common.RolapCatalogCache;
+import org.eclipse.daanse.rolap.common.RolapCatalogReader;
+import org.eclipse.daanse.rolap.common.RolapCell;
+import org.eclipse.daanse.rolap.common.RolapResult;
+import org.eclipse.daanse.rolap.common.RolapUtil;
+import org.eclipse.daanse.rolap.common.ScenarioImpl;
+import org.eclipse.daanse.rolap.common.statement.InternalStatement;
+import org.eclipse.daanse.rolap.common.statement.ReentrantInternalStatement;
 import org.eclipse.daanse.rolap.element.RolapCatalog;
 import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.mapping.api.model.CatalogMapping;
@@ -92,28 +99,24 @@ import org.eclipse.daanse.rolap.util.NotificationMemoryMonitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RolapConnection extends ConnectionBase {
+public abstract class AbstractRolapConnection extends ConnectionBase {
   private static final Logger LOGGER =
-    LoggerFactory.getLogger( RolapConnection.class );
+    LoggerFactory.getLogger( AbstractRolapConnection.class );
   private static final AtomicLong ID_GENERATOR = new AtomicLong();
 
 
-  private final ConnectionProps connectionProps;
+  protected final ConnectionProps connectionProps;
 
   private RolapContext context = null;
-  private final RolapCatalog catalog;
+  protected final RolapCatalog catalog;
   private CatalogReader schemaReader;
-  protected Role role;
+  private Role role;
   private Locale locale = Locale.getDefault(); //TODO need take locale from LcidService
   private Scenario scenario;
   private boolean closed = false;
   private final long id;
   private final Statement internalStatement;
 
-
-	public RolapConnection(RolapContext context, ConnectionProps rolapConnectionProps) {
-		this(context, null, rolapConnectionProps);
-	}
 
   /**
    * Creates a RolapConnection.
@@ -124,100 +127,47 @@ public class RolapConnection extends ConnectionBase {
    * the Catalog property.
    *
    * @param context      context
-   * 
-   * @param catalog      Schema for the connection. Must be null unless this is to
-   *                    be an internal connection.
+   *
    * @param connectionProps  ConnectionProps
-   * 
+   *
    */
-    public RolapConnection(RolapContext context, RolapCatalog catalog, ConnectionProps connectionProps) {
-        this(context, catalog, connectionProps, true);
-    }
+    protected AbstractRolapConnection(RolapContext context, RolapCatalog catalog, ConnectionProps connectionProps) {
+        this.context = context;
+        this.id = ID_GENERATOR.getAndIncrement();
 
-    public RolapConnection(RolapContext context, RolapCatalog catalog, ConnectionProps connectionProps, boolean checkRole) {
-    super();
+        assert connectionProps != null;
 
-    this.context = context;
-    this.id = ID_GENERATOR.getAndIncrement();
+        this.connectionProps = connectionProps;
 
-    assert connectionProps != null;
+        // Register this connection before we register its internal statement.
+        context.addConnection( this );
+        if ( catalog == null ) {
+        Statement bootstrapStatement = createInternalStatement( false, this);
+        final Locus locus =
+          new LocusImpl(
+            new ExecutionImpl( bootstrapStatement, ExecuteDurationUtil.executeDurationValue(context) ),
+            null,
+            "Initializing connection" );
+        LocusImpl.push( locus );
+        try {
+            // TODO: switch from schemareader to catalogreader;
+            CatalogMapping catalogMapping = context.getCatalogMapping();
+            catalog = ((RolapCatalogCache) context.getCatalogCache()).getOrCreateCatalog(catalogMapping, connectionProps);
 
-    this.connectionProps = connectionProps;
-
-    Role roleInner = null;
-
-    // Register this connection before we register its internal statement.
-    context.addConnection( this );
-
-    if ( catalog == null ) {
-      // If RolapCatalog.Pool.get were to call this with schema == null,
-      // we would loop.
-      Statement bootstrapStatement = createInternalStatement( false, this);
-      final Locus locus =
-        new LocusImpl(
-          new ExecutionImpl( bootstrapStatement, ExecuteDurationUtil.executeDurationValue(context) ),
-          null,
-          "Initializing connection" );
-      LocusImpl.push( locus );
-      try {
-
-			// TODO: switch from schemareader to catalogreader;
-			CatalogMapping catalogMapping = context.getCatalogMapping();
-			catalog = ((RolapCatalogCache) context.getCatalogCache()).getOrCreateCatalog(catalogMapping, connectionProps);
-
-      } finally {
-        LocusImpl.pop( locus );
-        bootstrapStatement.close();
-      }
-      internalStatement =
-        catalog.getInternalConnection().getInternalStatement();
-      List<String> roleNameList =connectionProps.roles();
-      if ( roleNameList.isEmpty() ) {
-          if (checkRole && context.getCatalogMapping().getDefaultAccessRole() == null && !catalog.roleNames().isEmpty()) {
-             throw new RuntimeException("User doesn't have any roles"); // TODO need throw access exception
-          }
-      } else {
-        List<Role> roleList = new ArrayList<>();
-        for ( String roleName : roleNameList ) {
-
-          Role role1 = catalog.lookupRole( roleName );
-
-          if ( role1 == null ) {
-            throw Util.newError(
-              new StringBuilder("Role '").append(roleName).append("' not found").toString() );
-          }
-          roleList.add( role1 );
+        } finally {
+          LocusImpl.pop( locus );
+          bootstrapStatement.close();
         }
-        switch ( roleList.size() ) {
-          case 0:
-            // If they specify 'Role=;', the list of names will be
-            // empty, and the effect will be as if they did specify
-            // Role at all.
-            roleInner = null;
-            break;
-          case 1:
-            roleInner = roleList.get( 0 );
-            break;
-          default:
-            roleInner = RoleImpl.union( roleList );
-            break;
+        internalStatement =
+          catalog.getInternalConnection().getInternalStatement();
+        } else {
+            this.internalStatement = createInternalStatement( true,this);
         }
-      }
-    } else {
-      this.internalStatement = createInternalStatement( true,this);
+        this.catalog = catalog;
+        // Set the locale.
+        this.locale = connectionProps.locale();
     }
-
-    if ( roleInner == null ) {
-      roleInner = catalog.getDefaultRole();
-    }
-
-    // Set the locale.
-    this.locale  =connectionProps.locale();
-
-    this.catalog = catalog;
-    setRole( roleInner );
-  }
-
+ 
    /**
    * Returns the identifier of this connection. Unique within the lifetime of
    * this JVM.
@@ -504,7 +454,7 @@ public Statement getInternalStatement() {
     }
   }
 
-  private Statement createInternalStatement( boolean reentrant, Connection connection ) {
+  protected Statement createInternalStatement( boolean reentrant, Connection connection ) {
     final Statement statement =
       reentrant
         ? new ReentrantInternalStatement(connection)
@@ -654,83 +604,6 @@ public Context<?> getContext() {
       }
   }
 
-
-  /**
-   * Implementation of {@link Statement} for use when you don't have an
-   * olap4j connection.
-   */
-  private class InternalStatement extends org.eclipse.daanse.olap.impl.StatementImpl {
-    private boolean closed = false;
-
-      /**
-       * Creates a StatementImpl.
-       *
-       * @param queryTimeout
-       */
-      protected InternalStatement(Connection connection) {
-          super(connection);
-      }
-
-      @Override
-	public void close() {
-      if ( !closed ) {
-        closed = true;
-        context.removeStatement( this );
-      }
-    }
-
-    @Override
-	public RolapConnection getMondrianConnection() {
-      return RolapConnection.this;
-    }
-  }
-
-  /**
-   * A statement that can be used for all of the various internal
-   * operations, such as resolving MDX identifiers, that require a
-   * {@link Statement} and an {@link ExecutionImpl}.
-   *
-   * The statement needs to be reentrant because there are many such
-   * operations; several of these operations might be active at one time. We
-   * don't want to create a new statement for each, but just one internal
-   * statement for each connection. The statement shouldn't have a unique
-   * execution. For this reason, we don't use the inherited {execution}
-   * field.
-   *
-   * But there is a drawback. If we can't find the unique execution, the
-   * statement cannot be canceled or time out. If you want that behavior
-   * from an internal statement, use the base class: create a new
-   * {@link InternalStatement} for each operation.
-   */
-  private class ReentrantInternalStatement extends InternalStatement {
-
-      /**
-       * Creates a StatementImpl.
-       *
-       * @param queryTimeout
-       */
-      protected ReentrantInternalStatement(Connection connection) {
-          super(connection);
-      }
-
-      @Override
-    public synchronized void start( Execution execution ) {
-      // Unlike StatementImpl, there is not a unique execution. An
-      // internal statement can execute several at the same time. So,
-      // we don't set this.execution.
-      execution.start();
-    }
-
-    @Override
-    public synchronized void end( Execution execution ) {
-      execution.end();
-    }
-
-    @Override
-    public void close() {
-      // do not close
-    }
-  }
 
   //TODO: Extract a statement between connection and Resuolt without the query
   @Override

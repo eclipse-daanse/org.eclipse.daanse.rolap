@@ -46,32 +46,25 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.eclipse.daanse.olap.access.RoleImpl;
 import org.eclipse.daanse.olap.api.CatalogReader;
 import org.eclipse.daanse.olap.api.ConfigConstants;
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.DataType;
+import org.eclipse.daanse.olap.api.connection.Connection;
 import org.eclipse.daanse.olap.api.element.Dimension;
 import org.eclipse.daanse.olap.api.element.Hierarchy;
 import org.eclipse.daanse.olap.api.element.Level;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.element.OlapElement;
 import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
-import org.eclipse.daanse.olap.access.RoleImpl;
 import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.olap.exceptions.RoleUnionGrantsException;
 import org.eclipse.daanse.olap.exceptions.UnknownRoleException;
-import org.eclipse.daanse.rolap.common.AbstractRolapContext;
-import org.eclipse.daanse.rolap.common.RolapCatalogKey;
-import org.eclipse.daanse.rolap.common.RolapCatalogContentKey;
-import org.eclipse.daanse.rolap.common.ConnectionKey;
-import org.eclipse.daanse.rolap.element.RolapCatalog;
-import org.eclipse.daanse.rolap.common.RolapConnection;
-import org.eclipse.daanse.rolap.element.RolapCube;
-import org.eclipse.daanse.rolap.common.RolapStar;
-import org.eclipse.daanse.rolap.common.RolapStarRegistry;
-import org.eclipse.daanse.rolap.common.RolapUtil;
 import org.eclipse.daanse.rolap.common.agg.AggregationManager;
 import org.eclipse.daanse.rolap.common.agg.SegmentCacheManager;
+import org.eclipse.daanse.rolap.element.RolapCatalog;
+import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.mapping.api.model.AccessCubeGrantMapping;
 import org.eclipse.daanse.rolap.mapping.api.model.AccessHierarchyGrantMapping;
 import org.eclipse.daanse.rolap.mapping.api.model.CubeMapping;
@@ -129,7 +122,7 @@ class RolapCatalogTest {
         //noinspection deprecation
         //mock rolap connection to eliminate calls for cache loading
         contextMock = mock(AbstractRolapContext.class);
-        RolapConnection rolapConnectionMock = mock(RolapConnection.class);
+        Connection rolapConnectionMock = mock(Connection.class);
         AggregationManager aggManagerMock = mock(AggregationManager.class);
         SegmentCacheManager scManagerMock = mock(SegmentCacheManager.class);
         Context context = contextMock;

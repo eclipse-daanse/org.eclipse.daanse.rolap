@@ -13,9 +13,10 @@
  */
 package org.eclipse.daanse.rolap.common;
 
+import org.eclipse.daanse.olap.api.connection.Connection;
 import org.eclipse.daanse.olap.core.AbstractBasicContext;
 import org.eclipse.daanse.rolap.api.RolapContext;
 
-public abstract class AbstractRolapContext extends AbstractBasicContext<RolapConnection> implements RolapContext {
+public abstract class AbstractRolapContext extends AbstractBasicContext<Connection> implements RolapContext {
 
 }
