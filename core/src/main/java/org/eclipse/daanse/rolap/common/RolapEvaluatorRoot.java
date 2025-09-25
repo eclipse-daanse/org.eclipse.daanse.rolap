@@ -124,8 +124,7 @@ public RolapEvaluatorRoot( Statement statement ) {
     List<RolapMember> list = new ArrayList<>();
     nonAllPositions = new int[cube.getHierarchies().size()];
     nonAllPositionCount = 0;
-    Set<Hierarchy> hierarchies = statement.getCatalogReader().getCubeDimensions(cube).stream().flatMap(d -> statement.getCatalogReader().getDimensionHierarchies(d).stream()).collect(Collectors.toSet());
-    for ( Hierarchy hierarchy : hierarchies ) {
+    for ( Hierarchy hierarchy : cube.getHierarchies() ) {
       RolapMember defaultMember = (RolapMember) schemaReader.getHierarchyDefaultMember( hierarchy );
       assert defaultMember != null;
 
