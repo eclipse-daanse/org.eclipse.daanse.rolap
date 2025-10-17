@@ -190,7 +190,7 @@ public class RolapUtil {
     /**
      * Names of classes of drivers we've loaded (or have tried to load).
      *
-     * NOTE: Synchronization policy: Lock the {@link RolapConnection} class
+     * NOTE: Synchronization policy: Lock the {@link AbstractRolapConnection} class
      * before modifying or using this member.
      */
     private static final Set<String> loadedDrivers = new HashSet<>();

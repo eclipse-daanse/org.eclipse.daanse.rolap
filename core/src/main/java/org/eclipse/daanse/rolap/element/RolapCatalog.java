@@ -51,6 +51,7 @@ import java.util.stream.Collectors;
 import org.eclipse.daanse.olap.api.CacheControl;
 import org.eclipse.daanse.olap.api.CatalogReader;
 import org.eclipse.daanse.olap.api.ConfigConstants;
+import org.eclipse.daanse.olap.api.connection.Connection;
 import org.eclipse.daanse.olap.api.connection.ConnectionProps;
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.DataType;
@@ -98,12 +99,12 @@ import org.eclipse.daanse.olap.util.ByteString;
 import org.eclipse.daanse.rolap.api.RolapContext;
 import org.eclipse.daanse.rolap.common.RolapCatalogKey;
 import org.eclipse.daanse.rolap.common.CacheMemberReader;
+import org.eclipse.daanse.rolap.common.connection.InternalRolapConnection;
 import org.eclipse.daanse.rolap.common.MemberReader;
 import org.eclipse.daanse.rolap.common.MemberSource;
 import org.eclipse.daanse.rolap.common.NoCacheMemberReader;
 import org.eclipse.daanse.rolap.common.RolapCatalogParameter;
 import org.eclipse.daanse.rolap.common.RolapCatalogReader;
-import org.eclipse.daanse.rolap.common.RolapConnection;
 import org.eclipse.daanse.rolap.common.RolapNativeRegistry;
 import org.eclipse.daanse.rolap.common.RolapStar;
 import org.eclipse.daanse.rolap.common.RolapStarRegistry;
@@ -137,10 +138,10 @@ import org.slf4j.LoggerFactory;
 
 /**
  * A RolapCatalog is a collection of {@link RolapCube}s and shared
- * {@link RolapDimension}s. It is shared betweeen {@link RolapConnection}s. It
+ * {@link RolapDimension}s. It is shared betweeen {@link Connection}s. It
  * caches {@link MemberReader}s, etc.
  *
- * @see RolapConnection
+ * @see Connection
  * @author jhyde
  * @since 26 July, 2001
  */
@@ -154,7 +155,7 @@ public class RolapCatalog implements Catalog {
 	/**
 	 * Internal use only.
 	 */
-	private RolapConnection internalConnection;
+	private Connection internalConnection;
 
 	private RolapStarRegistry rolapStarRegistry;
 
@@ -257,7 +258,7 @@ public class RolapCatalog implements Catalog {
 		// the order of the next two lines is important
 		this.defaultRole = RoleImpl.createRootRole(this);
 
-		this.internalConnection = new RolapConnection(context, this, rolapConnectionProps);
+		this.internalConnection = new InternalRolapConnection(context, this, rolapConnectionProps);
 		context.removeConnection(internalConnection);
 		context.removeStatement(internalConnection.getInternalStatement());
 
@@ -273,7 +274,7 @@ public class RolapCatalog implements Catalog {
 	 */
 	@Deprecated
     public
-	RolapCatalog(RolapCatalogKey key, RolapConnection internalConnection, final RolapContext context) {
+	RolapCatalog(RolapCatalogKey key, Connection internalConnection, final RolapContext context) {
 		this.id = UUID.randomUUID().toString();
 		this.key = key;
 		this.defaultRole = RoleImpl.createRootRole(this);
@@ -285,7 +286,7 @@ public class RolapCatalog implements Catalog {
 	}
 
 	protected void flushSegments() {
-		final RolapConnection internalConnection = getInternalConnection();
+		final Connection internalConnection = getInternalConnection();
 		if (internalConnection != null) {
 			final CacheControl cc = internalConnection.getCacheControl(null);
 			for (RolapCube cube : getCubeList()) {
@@ -1065,7 +1066,7 @@ public class RolapCatalog implements Catalog {
 	 * correct locale or access-control profile.
 	 */
 	@Override
-	public RolapConnection getInternalConnection() {
+	public Connection getInternalConnection() {
 		return internalConnection;
 	}
 

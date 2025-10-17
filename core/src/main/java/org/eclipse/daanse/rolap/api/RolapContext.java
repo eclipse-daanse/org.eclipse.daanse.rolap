@@ -14,10 +14,10 @@
 package org.eclipse.daanse.rolap.api;
 
 import org.eclipse.daanse.olap.api.Context;
-import org.eclipse.daanse.rolap.common.RolapConnection;
+import org.eclipse.daanse.olap.api.connection.Connection;
 import org.eclipse.daanse.rolap.mapping.api.model.CatalogMapping;
 
-public interface RolapContext extends Context<RolapConnection> {
+public interface RolapContext extends Context<Connection> {
 
 	CatalogMapping getCatalogMapping();
 }

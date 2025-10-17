@@ -69,6 +69,7 @@ import org.eclipse.daanse.olap.api.Statement;
 import org.eclipse.daanse.olap.api.access.Role;
 import org.eclipse.daanse.olap.api.calc.Calc;
 import org.eclipse.daanse.olap.api.calc.compiler.ExpressionCompiler;
+import org.eclipse.daanse.olap.api.connection.Connection;
 import org.eclipse.daanse.olap.api.element.Cube;
 import org.eclipse.daanse.olap.api.element.Dimension;
 import org.eclipse.daanse.olap.api.element.DimensionType;
@@ -113,7 +114,6 @@ import org.eclipse.daanse.rolap.common.HierarchyUsage;
 import org.eclipse.daanse.rolap.common.MemberCacheHelper;
 import org.eclipse.daanse.rolap.common.MemberReader;
 import org.eclipse.daanse.rolap.common.RelNode;
-import org.eclipse.daanse.rolap.common.RolapConnection;
 import org.eclipse.daanse.rolap.common.RolapCubeCatalogReader;
 import org.eclipse.daanse.rolap.common.RolapCubeComparator;
 import org.eclipse.daanse.rolap.common.RolapStar;
@@ -606,7 +606,7 @@ public abstract class RolapCube extends CubeBase {
         // Parse and validate this huge MDX query we've created.
         final String queryString = buf.toString();
         try {
-            final RolapConnection conn = catalog.getInternalConnection();
+            final Connection conn = catalog.getInternalConnection();
             return LocusImpl.execute(
                 conn,
                 "RolapCube.resolveCalcMembers",
@@ -2390,7 +2390,7 @@ public abstract class RolapCube extends CubeBase {
       return cubesList;
     }
 
-    public void flushCache(RolapConnection rolapConnection) {
+    public void flushCache(Connection rolapConnection) {
         //Data cache exists in connection context
         final CacheControl cacheControl = rolapConnection.getCacheControl(null);
         cacheControl.flush(cacheControl.createMeasuresRegion(this));

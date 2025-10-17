@@ -210,11 +210,11 @@ public class RolapVirtualCube extends RolapCube implements VirtualCube {
         if (cm != null) {
             for (CalculatedMemberMapping calculatedMember : cm) {
                 measureHash.put(calculatedMember.getName(), calculatedMember);
-                if (calculatedMember.getPhysicalCube() != null) {
-                    RolapCube cube = catalog.lookupCube(calculatedMember.getPhysicalCube());
+                if (calculatedMember.getCube() != null) {
+                    RolapCube cube = catalog.lookupCube(calculatedMember.getCube());
                     if (cube == null) {
                         throw Util.newError(new StringBuilder("Cube '")
-                                .append(calculatedMember.getPhysicalCube().getName()).append("' not found").toString());
+                                .append(calculatedMember.getCube().getName()).append("' not found").toString());
                     }
                     if (cube instanceof RolapPhysicalCube physicalCube) {
                         List<Member> cubeMeasures = cube.getMeasures();
@@ -241,11 +241,11 @@ public class RolapVirtualCube extends RolapCube implements VirtualCube {
                         if (!found) {
                             throw Util.newInternal(new StringBuilder("could not find calculated member '")
                                 .append(calculatedMember.getName()).append("' in cube '")
-                                .append(calculatedMember.getPhysicalCube().getName()).append("'").toString());
+                                .append(calculatedMember.getCube().getName()).append("'").toString());
                         }
                     } else {
                         throw Util.newInternal(new StringBuilder("Cube '")
-                                .append(calculatedMember.getPhysicalCube().getName()).append("' is not physical cube").toString());
+                                .append(calculatedMember.getCube().getName()).append("' is not physical cube").toString());
                     }
 
                 } else {

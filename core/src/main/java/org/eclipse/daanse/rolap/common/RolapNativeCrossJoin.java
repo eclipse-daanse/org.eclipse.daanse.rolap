@@ -86,7 +86,7 @@ public class RolapNativeCrossJoin extends RolapNativeSet {
      *
      * If the current context contains calculated members, silently ignores
      * them. This means means that too many members are returned, but this does
-     * not matter, because the {@link RolapConnection.NonEmptyResult} will
+     * not matter, because the {@link AbstractRolapConnection.NonEmptyResult} will
      * filter out these later.
      */
     static class NonEmptyCrossJoinConstraint extends SetConstraint {
