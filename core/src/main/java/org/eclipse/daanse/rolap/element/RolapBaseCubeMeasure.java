@@ -143,7 +143,7 @@ public class RolapBaseCubeMeasure
         this.aggregator = aggregator;
 
         setProperty(StandardProperty.AGGREGATION_TYPE.getName(), aggregator);
-        if (datatype == null) {
+        if (datatype == null || InternalDataType.UNDEFINED.equals(datatype)) {
             if (aggregator == CountAggregator.INSTANCE
                 || aggregator == DistinctCountAggregator.INSTANCE)
             {

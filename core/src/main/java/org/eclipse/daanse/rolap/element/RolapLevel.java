@@ -534,7 +534,7 @@ public class RolapLevel extends LevelBase {
     }
 
     private static Datatype getType(LevelMapping mappingLevel) {
-        if (mappingLevel.getDataType() != null) {
+        if (mappingLevel.getDataType() != null && !InternalDataType.UNDEFINED.equals(mappingLevel.getDataType()) ) {
             if (InternalDataType.STRING.equals(mappingLevel.getDataType())) {
                 return org.eclipse.daanse.jdbc.db.dialect.api.Datatype.VARCHAR;
             }
