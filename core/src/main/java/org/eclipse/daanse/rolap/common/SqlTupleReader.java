@@ -313,15 +313,14 @@ public class SqlTupleReader implements TupleReader {
           if ( member != members.get( i ) ) {
             // Flush list we've been building.
             List<RolapMember> children = siblings.get( i + 1 );
-            if ( children != null && children.size() > 0) {
-              MemberChildrenConstraint mcc =
-                constraint.getMemberChildrenConstraint(
-                  members.get( i ) );
-              if ( mcc != null ) {
-                cache.putChildren(
-                  members.get( i ), mcc, children );
-              }
-            }
+            //if ( children != null && children.size() > 0) {
+            //  MemberChildrenConstraint mcc =
+            //    constraint.getMemberChildrenConstraint(
+            //      members.get( i ) );
+            //  if ( mcc != null ) {
+            //    cache.putChildren(members.get( i ), mcc, children);
+            //  }
+            //}
             // Start a new list, if the cache needs one. (We don't
             // synchronize, so it's possible that the cache will
             // have one by the time we complete it.)
