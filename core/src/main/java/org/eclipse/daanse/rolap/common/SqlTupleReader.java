@@ -1418,6 +1418,8 @@ public TupleList readTuples(
         if ( whichSelect == WhichSelect.ONLY ) {
           sqlQuery.addOrderBy(
             ordinalSql, orderByAlias, true, false, true, true );
+          sqlQuery.addOrderBy(
+                  keySql, keyAlias, true, false, true, true );
         }
       } else {
         if ( whichSelect == WhichSelect.ONLY ) {
