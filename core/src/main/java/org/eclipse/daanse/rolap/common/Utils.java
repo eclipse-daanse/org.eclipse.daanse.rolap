@@ -21,6 +21,7 @@ package org.eclipse.daanse.rolap.common;
 import java.util.List;
 import java.util.Objects;
 
+import org.eclipse.daanse.rolap.mapping.api.model.DatabaseSchemaMapping;
 import org.eclipse.daanse.rolap.mapping.api.model.InlineTableQueryMapping;
 import org.eclipse.daanse.rolap.mapping.api.model.QueryMapping;
 import org.eclipse.daanse.rolap.mapping.api.model.SqlSelectQueryMapping;
@@ -35,7 +36,7 @@ public class Utils {
         if (relation instanceof TableQueryMapping t1 && q2 instanceof TableQueryMapping t2) {
             return t1.getTable() != null && t2.getTable() != null &&  t1.getTable().getName().equals(t2.getTable().getName()) &&
                 Objects.equals(t1.getAlias(), t2.getAlias()) &&
-                Objects.equals(t1.getTable().getSchema(), t2.getTable().getSchema());
+                equalsSchema(t1.getTable().getSchema(), t2.getTable().getSchema());
         }
         if (relation instanceof SqlSelectQueryMapping s1 && q2 instanceof SqlSelectQueryMapping s2) {
             if (!Objects.equals(s1.getAlias(), s2.getAlias())) {
@@ -72,4 +73,11 @@ public class Utils {
         }
         return false;
     }
+
+	private static boolean equalsSchema(DatabaseSchemaMapping schema1, DatabaseSchemaMapping schema2) {
+        if (schema1 == null && schema2 == null) {
+            return true;
+        }
+        return schema1 != null && schema2 != null && Objects.equals(schema1.getName(), schema2.getName());
+	}
 }
