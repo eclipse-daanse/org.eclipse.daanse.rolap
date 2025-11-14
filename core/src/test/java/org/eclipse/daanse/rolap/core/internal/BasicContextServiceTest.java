@@ -36,8 +36,10 @@ import org.eclipse.daanse.olap.api.calc.compiler.ExpressionCompilerFactory;
 import org.eclipse.daanse.olap.api.function.FunctionService;
 import org.eclipse.daanse.rolap.api.RolapContext;
 import org.eclipse.daanse.rolap.core.api.Constants;
+import org.eclipse.daanse.rolap.mapping.model.RolapMappingFactory;
 import org.eclipse.daanse.rolap.mapping.model.provider.CatalogMappingSupplier;
 import org.eclipse.daanse.sql.guard.api.SqlGuardFactory;
+import org.eclipse.emf.common.util.BasicEList;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -91,8 +93,7 @@ class BasicContextServiceTest {
     @Mock
     MdxParserProvider mdxParserProvider;
 
-    @Mock
-    org.eclipse.daanse.rolap.mapping.model.Catalog catalogMapping;
+    org.eclipse.daanse.rolap.mapping.model.Catalog catalogMapping=RolapMappingFactory.eINSTANCE.createCatalog();
 
     @Mock
     FunctionService functionService;
@@ -113,7 +114,7 @@ class BasicContextServiceTest {
         when(dataSource.getConnection()).thenReturn(connection);
         when(dialectFactory.createDialect(connection)).thenReturn(dialect);
         when(catalogMappingSupplier.get()).thenReturn(catalogMapping);
-        when(catalogMapping.getName()).thenReturn("schemaName");
+        catalogMapping.setName("schemaName");
 
         assertThat(saContext).isNotNull().extracting(ServiceAware::size).isEqualTo(0);
 

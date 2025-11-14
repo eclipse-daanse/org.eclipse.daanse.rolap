@@ -21,6 +21,7 @@ import static org.eclipse.daanse.rolap.common.util.JoinUtil.right;
 import java.util.List;
 
 import org.eclipse.daanse.olap.common.Util;
+import org.eclipse.daanse.rolap.mapping.model.Query;
 import org.eclipse.daanse.rolap.mapping.model.RolapMappingFactory;
 
 public class PojoUtil {
@@ -72,7 +73,7 @@ public class PojoUtil {
 //	}
 
 	/**
-     * Copies a {@link QueryMapping}.
+     * Copies a {@link Query}.
      *
      * @param relation A table or a join
      */

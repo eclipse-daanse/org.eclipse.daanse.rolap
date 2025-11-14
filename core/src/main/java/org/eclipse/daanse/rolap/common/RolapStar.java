@@ -91,6 +91,7 @@ import org.eclipse.daanse.rolap.element.RolapCubeLevel;
 import org.eclipse.daanse.rolap.element.RolapLevel;
 import org.eclipse.daanse.rolap.element.RolapProperty;
 import org.eclipse.daanse.rolap.element.RolapStoredMeasure;
+import org.eclipse.daanse.rolap.mapping.model.Query;
 import org.eclipse.daanse.rolap.mapping.model.RolapMappingFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -1300,7 +1301,7 @@ public class RolapStar {
      * Definition of a table in a star schema.
      *
      * A 'table' is defined by a
-     * {@link QueryMapping} so may, in fact, be a
+     * {@link Query} so may, in fact, be a
      * view.
      *
      * Every table in the star schema except the fact table has a parent
