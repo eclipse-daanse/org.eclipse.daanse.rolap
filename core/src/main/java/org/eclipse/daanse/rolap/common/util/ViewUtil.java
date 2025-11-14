@@ -16,10 +16,9 @@ package org.eclipse.daanse.rolap.common.util;
 import static org.eclipse.daanse.rolap.common.util.SQLUtil.toCodeSetSqlStatement;
 
 import org.eclipse.daanse.rolap.common.sql.SqlQuery;
-import org.eclipse.daanse.rolap.mapping.api.model.SqlSelectQueryMapping;
 
 public class ViewUtil {
-    public static SqlQuery.CodeSet getCodeSet(SqlSelectQueryMapping view) {
+    public static SqlQuery.CodeSet getCodeSet(org.eclipse.daanse.rolap.mapping.model.SqlSelectQuery view) {
         return toCodeSetSqlStatement(view.getSql().getSqlStatements());
     }
 

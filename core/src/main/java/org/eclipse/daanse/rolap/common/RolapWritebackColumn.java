@@ -28,13 +28,12 @@ package org.eclipse.daanse.rolap.common;
 
 import org.eclipse.daanse.olap.api.element.DatabaseColumn;
 import org.eclipse.daanse.rolap.element.RolapDatabaseColumn;
-import org.eclipse.daanse.rolap.mapping.api.model.ColumnMapping;
 
 public abstract class RolapWritebackColumn{
 
     protected final RolapDatabaseColumn column;
 
-    protected RolapWritebackColumn(ColumnMapping column) {
+    protected RolapWritebackColumn(org.eclipse.daanse.rolap.mapping.model.Column column) {
         this.column = new RolapDatabaseColumn();
         this.column.setName(column.getName());
     }

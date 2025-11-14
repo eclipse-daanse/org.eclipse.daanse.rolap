@@ -13,10 +13,8 @@
  */
 package org.eclipse.daanse.rolap.common;
 
-import org.eclipse.daanse.rolap.mapping.api.model.CatalogMapping;
-
 public record RolapCatalogContentKey(String catalogName, int catalogMappingHash) {
-	static RolapCatalogContentKey create(CatalogMapping catalogMapping) {
+	static RolapCatalogContentKey create(org.eclipse.daanse.rolap.mapping.model.Catalog catalogMapping) {
 
 		int hash = System.identityHashCode(catalogMapping);
 		return new RolapCatalogContentKey(catalogMapping.getName(), hash);

@@ -55,6 +55,7 @@ import org.eclipse.daanse.jdbc.db.dialect.api.Datatype;
 import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.mdx.model.api.expression.operation.FunctionOperationAtom;
 import org.eclipse.daanse.mdx.model.api.expression.operation.OperationAtom;
+import org.eclipse.daanse.olap.access.RoleImpl;
 import org.eclipse.daanse.olap.api.CacheControl;
 import org.eclipse.daanse.olap.api.CatalogReader;
 import org.eclipse.daanse.olap.api.Context;
@@ -92,7 +93,6 @@ import org.eclipse.daanse.olap.api.query.component.Query;
 import org.eclipse.daanse.olap.api.query.component.ResolvedFunCall;
 import org.eclipse.daanse.olap.api.result.AllocationPolicy;
 import org.eclipse.daanse.olap.common.CubeBase;
-import org.eclipse.daanse.olap.access.RoleImpl;
 import org.eclipse.daanse.olap.common.SetBase;
 import org.eclipse.daanse.olap.common.StandardProperty;
 import org.eclipse.daanse.olap.common.Util;
@@ -126,31 +126,8 @@ import org.eclipse.daanse.rolap.common.aggmatcher.ExplicitRules;
 import org.eclipse.daanse.rolap.common.cache.SoftSmartCache;
 import org.eclipse.daanse.rolap.common.util.DimensionUtil;
 import org.eclipse.daanse.rolap.common.util.PojoUtil;
-import org.eclipse.daanse.rolap.mapping.api.model.CalculatedMemberMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.CalculatedMemberPropertyMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.CatalogMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.CubeMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.DimensionConnectorMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.DimensionMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.HierarchyMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.InlineTableQueryMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.JoinQueryMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.LevelMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.NamedSetMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.PhysicalCubeMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.QueryMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.RelationalQueryMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.SqlSelectQueryMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.SqlStatementMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.TableQueryMapping;
-import org.eclipse.daanse.rolap.mapping.pojo.DatabaseSchemaMappingImpl;
-import org.eclipse.daanse.rolap.mapping.pojo.JoinQueryMappingImpl;
-import org.eclipse.daanse.rolap.mapping.pojo.JoinedQueryElementMappingImpl;
-import org.eclipse.daanse.rolap.mapping.pojo.PhysicalColumnMappingImpl;
-import org.eclipse.daanse.rolap.mapping.pojo.QueryMappingImpl;
-import org.eclipse.daanse.rolap.mapping.pojo.SqlSelectQueryMappingImpl;
-import org.eclipse.daanse.rolap.mapping.pojo.SqlStatementMappingImpl;
-import org.eclipse.daanse.rolap.mapping.pojo.SqlViewMappingImpl;
+import org.eclipse.daanse.rolap.mapping.model.RolapMappingFactory;
+import org.eclipse.daanse.rolap.mapping.model.SqlStatement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -186,10 +163,10 @@ public abstract class RolapCube extends CubeBase {
     private final MetaData metaData;
     private final RolapHierarchy measuresHierarchy;
 
-    private RelationalQueryMapping restoreFact = null;
+    private org.eclipse.daanse.rolap.mapping.model.RelationalQuery restoreFact = null;
 
     /** For SQL generator. Fact table. */
-    private RelationalQueryMapping fact;
+    private org.eclipse.daanse.rolap.mapping.model.RelationalQuery fact;
 
     /** Schema reader which can see this cube and nothing else. */
     private CatalogReader schemaReader;
@@ -246,10 +223,35 @@ public abstract class RolapCube extends CubeBase {
 
     protected RolapCube(
             RolapCatalog catalog,
-            CatalogMapping catalogMapping,
-            CubeMapping cubeMapping,
+            org.eclipse.daanse.rolap.mapping.model.Catalog catalogMapping,
+            org.eclipse.daanse.rolap.mapping.model.PhysicalCube cubeMapping,
             boolean isCache,
-            RelationalQueryMapping fact,
+            org.eclipse.daanse.rolap.mapping.model.RelationalQuery fact,
+            Context context)
+        {
+        this(
+                catalog,
+                catalogMapping,
+                cubeMapping.getName(),
+                cubeMapping.isVisible(),
+                cubeMapping.getName(),
+                cubeMapping.getDescription(),
+                isCache,
+                fact,
+                cubeMapping.getDimensionConnectors(),
+                RolapMetaData.createMetaData(cubeMapping.getAnnotations()),
+                context);
+        catalog.addCube(cubeMapping, this);
+        fillKpiIfExist(cubeMapping);
+        logMessage();
+    }
+
+    protected RolapCube(
+            RolapCatalog catalog,
+            org.eclipse.daanse.rolap.mapping.model.Catalog catalogMapping,
+            org.eclipse.daanse.rolap.mapping.model.VirtualCube cubeMapping,
+            boolean isCache,
+            org.eclipse.daanse.rolap.mapping.model.RelationalQuery fact,
             Context context)
         {
         this(
@@ -281,14 +283,14 @@ public abstract class RolapCube extends CubeBase {
      */
     private RolapCube(
         RolapCatalog catalog,
-        CatalogMapping catalogMapping,
+        org.eclipse.daanse.rolap.mapping.model.Catalog catalogMapping,
         String name,
         boolean visible,
         String caption,
         String description,
         boolean isCache,
-        RelationalQueryMapping fact,
-        List<? extends DimensionConnectorMapping> dimensions,
+        org.eclipse.daanse.rolap.mapping.model.RelationalQuery fact,
+        List<? extends org.eclipse.daanse.rolap.mapping.model.DimensionConnector> dimensions,
         MetaData metaData,
         Context context)
     {
@@ -339,7 +341,7 @@ public abstract class RolapCube extends CubeBase {
         }
 
         for (int i = 0; i < dimensions.size(); i++) {
-            DimensionConnectorMapping mappingCubeDimension = dimensions.get(i);
+        	org.eclipse.daanse.rolap.mapping.model.DimensionConnector mappingCubeDimension = dimensions.get(i);
 
             // Look up usages of shared dimensions in the schema before
             // consulting the XML schema (which may be null).
@@ -381,11 +383,11 @@ public abstract class RolapCube extends CubeBase {
     /**
      * Returns this cube's fact table, null if the cube is virtual.
      */
-    public RelationalQueryMapping getFact() {
+    public org.eclipse.daanse.rolap.mapping.model.RelationalQuery getFact() {
         return fact;
     }
 
-    public void setFact(RelationalQueryMapping fact) {
+    public void setFact(org.eclipse.daanse.rolap.mapping.model.RelationalQuery fact) {
         this.fact = fact;
     }
 
@@ -417,7 +419,7 @@ public abstract class RolapCube extends CubeBase {
 		return closureColumnBitKey;
 	}
     
-    private void fillKpiIfExist(CubeMapping cube) {
+    private void fillKpiIfExist(org.eclipse.daanse.rolap.mapping.model.Cube cube) {
         if (cube != null && cube.getKpis() != null) {
             cube.getKpis().stream().forEach(kpiMapping -> {
                 RolapKPI kpi = new RolapKPI();
@@ -479,7 +481,7 @@ public abstract class RolapCube extends CubeBase {
         return aggGroup;
     }
 
-    void loadAggGroup(PhysicalCubeMapping mappingCube) {
+    void loadAggGroup(org.eclipse.daanse.rolap.mapping.model.PhysicalCube mappingCube) {
         aggGroup = ExplicitRules.Group.make(this, mappingCube);
     }
 
@@ -496,9 +498,9 @@ public abstract class RolapCube extends CubeBase {
      * @return A dimension
      */
     private RolapCubeDimension getOrCreateDimension(
-        DimensionConnectorMapping mappingCubeDimension,
+    		org.eclipse.daanse.rolap.mapping.model.DimensionConnector mappingCubeDimension,
         RolapCatalog schema,
-        CatalogMapping mappingSchema,
+        org.eclipse.daanse.rolap.mapping.model.Catalog mappingSchema,
         int dimensionOrdinal,
         List<RolapHierarchy> cubeHierarchyList)
     {
@@ -512,7 +514,7 @@ public abstract class RolapCube extends CubeBase {
 
 
         if (dimension == null) {
-            DimensionMapping mappingDimension = mappingCubeDimension.getDimension();
+        	org.eclipse.daanse.rolap.mapping.model.Dimension mappingDimension = mappingCubeDimension.getDimension();
             if (mappingDimension == null) {
             	if (mappingCubeDimension.getPhysicalCube() != null) { //for virtual cube
             		mappingDimension = DimensionUtil.getDimension(mappingCubeDimension.getPhysicalCube(), mappingSchema, mappingCubeDimension.getOverrideDimensionName());
@@ -542,8 +544,8 @@ public abstract class RolapCube extends CubeBase {
      * @param errOnDups throws an error if a duplicate member is found
      */
     public void createCalcMembersAndNamedSets(
-    	List<? extends CalculatedMemberMapping> list,
-        List<? extends NamedSetMapping> mappingNamedSets,
+    	List<? extends org.eclipse.daanse.rolap.mapping.model.CalculatedMember> list,
+        List<? extends org.eclipse.daanse.rolap.mapping.model.NamedSet> mappingNamedSets,
         List<RolapMember> memberList,
         RolapCube cube,
         boolean errOnDups)
@@ -572,8 +574,8 @@ public abstract class RolapCube extends CubeBase {
     }
 
     protected Query resolveCalcMembers(
-    	List<? extends CalculatedMemberMapping> list,
-        List<? extends NamedSetMapping> mappingNamedSets,
+    	List<? extends org.eclipse.daanse.rolap.mapping.model.CalculatedMember> list,
+        List<? extends org.eclipse.daanse.rolap.mapping.model.NamedSet> mappingNamedSets,
         RolapCube cube,
         boolean errOnDups)
     {
@@ -597,7 +599,7 @@ public abstract class RolapCube extends CubeBase {
         for (Formula namedSet : namedSetList) {
             nameSet.add(namedSet.getName());
         }
-        for (NamedSetMapping mappingNamedSet : mappingNamedSets) {
+        for (org.eclipse.daanse.rolap.mapping.model.NamedSet mappingNamedSet : mappingNamedSets) {
             preNamedSet(mappingNamedSet, nameSet, buf);
         }
 
@@ -625,12 +627,12 @@ public abstract class RolapCube extends CubeBase {
     }
 
     private void postNamedSet(
-        List<? extends NamedSetMapping> mappingNamedSets,
+        List<? extends org.eclipse.daanse.rolap.mapping.model.NamedSet> mappingNamedSets,
         final int offset,
         int i,
         final Query queryExp)
     {
-        NamedSetMapping mappingNamedSet = mappingNamedSets.get(i);
+    	org.eclipse.daanse.rolap.mapping.model.NamedSet mappingNamedSet = mappingNamedSets.get(i);
 //        discard(xmlNamedSet);
         Formula formula = queryExp.getFormulas()[offset + i];
         final SetBase namedSet = (SetBase) formula.getNamedSet();
@@ -659,7 +661,7 @@ public abstract class RolapCube extends CubeBase {
     }
 
     private void preNamedSet(
-        NamedSetMapping mappingNamedSet,
+    		org.eclipse.daanse.rolap.mapping.model.NamedSet mappingNamedSet,
         Set<String> nameSet,
         StringBuilder buf)
     {
@@ -677,12 +679,12 @@ public abstract class RolapCube extends CubeBase {
     }
 
     private void postCalcMember(
-        List<? extends CalculatedMemberMapping> mappingCalcMembers,
+        List<? extends org.eclipse.daanse.rolap.mapping.model.CalculatedMember> mappingCalcMembers,
         int i,
         final Query queryExp,
         List<RolapMember> memberList)
     {
-        CalculatedMemberMapping mappingCalcMember = mappingCalcMembers.get(i);
+    	org.eclipse.daanse.rolap.mapping.model.CalculatedMember mappingCalcMember = mappingCalcMembers.get(i);
 
         final Formula formula = queryExp.getFormulas()[i];
 
@@ -727,14 +729,14 @@ public abstract class RolapCube extends CubeBase {
     }
 
     private void preCalcMember(
-    	List<? extends CalculatedMemberMapping> list,
+    	List<? extends org.eclipse.daanse.rolap.mapping.model.CalculatedMember> list,
         int j,
         StringBuilder buf,
         RolapCube cube,
         boolean errOnDup,
         Set<String> fqNames)
     {
-        CalculatedMemberMapping mappingCalcMember = list.get(j);
+    	org.eclipse.daanse.rolap.mapping.model.CalculatedMember mappingCalcMember = list.get(j);
 
         // Lookup dimension
         Hierarchy hierarchy = null;
@@ -743,7 +745,7 @@ public abstract class RolapCube extends CubeBase {
             hierarchy = measuresHierarchy;
         } else {
             // with new mapping
-            HierarchyMapping hierarchyMappingOfCalcMember = mappingCalcMember.getHierarchy();
+        	org.eclipse.daanse.rolap.mapping.model.Hierarchy hierarchyMappingOfCalcMember = mappingCalcMember.getHierarchy();
             hierarchy = hierarchyList.stream(
                     ).filter(h -> hierarchyMappingOfCalcMember.equals(h.hierarchyMapping))
                     .findAny().orElse(null);
@@ -824,7 +826,7 @@ public abstract class RolapCube extends CubeBase {
             throw new CalcMemberNotUniqueException(fqName, getName());
         }
 
-        final List<? extends CalculatedMemberPropertyMapping> mappingProperties =
+        final List<? extends org.eclipse.daanse.rolap.mapping.model.CalculatedMemberProperty> mappingProperties =
                 mappingCalcMember.getCalculatedMemberProperties();
         List<String> propNames = new ArrayList<>();
         List<String> propExprs = new ArrayList<>();
@@ -911,7 +913,7 @@ public abstract class RolapCube extends CubeBase {
     }
 
     public void processFormatStringAttribute(
-        CalculatedMemberMapping mappingCalcMember,
+    		org.eclipse.daanse.rolap.mapping.model.CalculatedMember mappingCalcMember,
         StringBuilder buf)
     {
         if (getFormatString(mappingCalcMember) != null) {
@@ -933,7 +935,7 @@ public abstract class RolapCube extends CubeBase {
      * @param memberName Name of member which the properties belong to.
      */
     protected void validateMemberProps(
-        final List<? extends CalculatedMemberPropertyMapping> list,
+        final List<? extends org.eclipse.daanse.rolap.mapping.model.CalculatedMemberProperty> list,
         List<String> propNames,
         List<String> propExprs,
         String memberName)
@@ -941,7 +943,7 @@ public abstract class RolapCube extends CubeBase {
         if (list == null) {
             return;
         }
-        for (CalculatedMemberPropertyMapping mappingProperty : list) {
+        for (org.eclipse.daanse.rolap.mapping.model.CalculatedMemberProperty mappingProperty : list) {
             if (mappingProperty.getExpression() == null && mappingProperty.getValue() == null) {
                 throw  new OlapRuntimeException(MessageFormat.format(
                     neitherExprNorValueForCalcMemberProperty,
@@ -1002,11 +1004,11 @@ public abstract class RolapCube extends CubeBase {
         }
     }
 
-    private DimensionConnectorMapping lookup(
-        List<? extends DimensionConnectorMapping> mappingDimensions,
+    private org.eclipse.daanse.rolap.mapping.model.DimensionConnector lookup(
+        List<? extends org.eclipse.daanse.rolap.mapping.model.DimensionConnector> mappingDimensions,
         String name)
     {
-        for (DimensionConnectorMapping cd : mappingDimensions) {
+        for (org.eclipse.daanse.rolap.mapping.model.DimensionConnector cd : mappingDimensions) {
             if (name.equals(cd.getOverrideDimensionName())) {
                 return cd;
             }
@@ -1015,7 +1017,7 @@ public abstract class RolapCube extends CubeBase {
         return null;
     }
 
-    protected void init(List<? extends DimensionConnectorMapping> mappingDimensions) {
+    protected void init(List<? extends org.eclipse.daanse.rolap.mapping.model.DimensionConnector> mappingDimensions) {
         for (Dimension dimension1 : dimensions) {
             final RolapDimension dimension = (RolapDimension) dimension1;
             dimension.init(lookup(mappingDimensions, dimension.getName()));
@@ -1110,7 +1112,7 @@ public abstract class RolapCube extends CubeBase {
 
     private void createUsages(
         RolapCubeDimension dimension,
-        DimensionConnectorMapping mappingCubeDimension)
+        org.eclipse.daanse.rolap.mapping.model.DimensionConnector mappingCubeDimension)
     {
         // RME level may not be in all hierarchies
         // If one uses the DimensionUsage attribute "level", which level
@@ -1163,7 +1165,7 @@ public abstract class RolapCube extends CubeBase {
 
     synchronized void createUsage(
         RolapCubeHierarchy hierarchy,
-        DimensionConnectorMapping cubeDim)
+        org.eclipse.daanse.rolap.mapping.model.DimensionConnector cubeDim)
     {
         HierarchyUsage usage = new HierarchyUsage(this, hierarchy, cubeDim);
         if (LOGGER.isDebugEnabled()) {
@@ -1341,7 +1343,7 @@ public abstract class RolapCube extends CubeBase {
         for (Hierarchy hierarchy1 : hierarchies) {
             RolapHierarchy hierarchy = (RolapHierarchy) hierarchy1;
 
-            QueryMapping relation = hierarchy.getRelation();
+            org.eclipse.daanse.rolap.mapping.model.Query relation = hierarchy.getRelation();
             if (relation == null) {
                 continue; // e.g. [Measures] hierarchy
             }
@@ -1384,10 +1386,10 @@ public abstract class RolapCube extends CubeBase {
                 // a Join, i.e., the dimension is not a snowflake,
                 // there is a single dimension table, then this is currently
                 // an unsupported configuation and all bets are off.
-                if (relation instanceof JoinQueryMapping) {
+                if (relation instanceof org.eclipse.daanse.rolap.mapping.model.JoinQuery) {
                     // RME
                     // take out after things seem to be working
-                    QueryMapping relationTmp1 = relation;
+                	org.eclipse.daanse.rolap.mapping.model.Query relationTmp1 = relation;
 
                     relation = reorder(relation, levels);
 
@@ -1400,7 +1402,7 @@ public abstract class RolapCube extends CubeBase {
                     }
                 }
 
-                QueryMapping relationTmp2 = relation;
+                org.eclipse.daanse.rolap.mapping.model.Query relationTmp2 = relation;
 
                 if (levelName != null) {
                     // When relation is a table, this does nothing. Otherwise
@@ -1430,7 +1432,7 @@ public abstract class RolapCube extends CubeBase {
                     // If the child level is null, then the DimensionUsage
                     // level attribute was simply set to the default, lowest
                     // level and we do nothing.
-                    if (relation instanceof JoinQueryMapping) {
+                    if (relation instanceof org.eclipse.daanse.rolap.mapping.model.JoinQuery) {
                         RolapLevel childLevel =
                             (RolapLevel) level.getChildLevel();
                         if (childLevel != null) {
@@ -1479,26 +1481,29 @@ public abstract class RolapCube extends CubeBase {
                             && hierarchy.getHierarchyMapping().getPrimaryKey() != null
                             && hierarchy.getHierarchyMapping().getPrimaryKey()
                             .getTable() != null
-                            && relation instanceof JoinQueryMappingImpl join
-                            && right(join) instanceof TableQueryMapping tqm
+                            && relation instanceof org.eclipse.daanse.rolap.mapping.model.JoinQuery join
+                            && right(join) instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery tqm
                             && getAlias(tqm) != null
                             && getAlias(tqm)
                             .equals(
                                 hierarchy.getHierarchyMapping().getPrimaryKey()
                               .getTable().getName()))
                     {
-                        JoinQueryMapping newRelation = JoinQueryMappingImpl.builder()
-                        		.withLeft(JoinedQueryElementMappingImpl.builder()
-                        				.withAlias(getRightAlias(join))
-                        				.withKey(join.getRight().getKey())
-                        				.withQuery(PojoUtil.copy(right(join)))
-                        				.build())
-                        		.withRight(JoinedQueryElementMappingImpl.builder()
-                        				.withAlias(getLeftAlias(join))
-                        				.withKey(join.getLeft().getKey())
-                        				.withQuery(PojoUtil.copy(left(join)))
-                        				.build())
-                        		.build();
+                        org.eclipse.daanse.rolap.mapping.model.JoinQuery newRelation = RolapMappingFactory.eINSTANCE.createJoinQuery();
+                        org.eclipse.daanse.rolap.mapping.model.JoinedQueryElement leftElement = RolapMappingFactory.eINSTANCE.createJoinedQueryElement();
+                        org.eclipse.daanse.rolap.mapping.model.JoinedQueryElement rightElement = RolapMappingFactory.eINSTANCE.createJoinedQueryElement();
+                        
+                        leftElement.setAlias(getRightAlias(join));
+                        leftElement.setKey(join.getRight().getKey());
+                        leftElement.setQuery(PojoUtil.copy(right(join)));
+
+                        rightElement.setAlias(getLeftAlias(join));
+                        rightElement.setKey(join.getLeft().getKey());
+                        rightElement.setQuery(PojoUtil.copy(left(join)));
+
+                        newRelation.setLeft(leftElement);
+                        newRelation.setRight(rightElement);
+                        
                         relation = newRelation;
                     }
 
@@ -1607,18 +1612,18 @@ public abstract class RolapCube extends CubeBase {
      *
      * @param relation A table or a join
      */
-    private static String format(QueryMapping relation) {
+    private static String format(org.eclipse.daanse.rolap.mapping.model.Query relation) {
         StringBuilder buf = new StringBuilder();
         format(relation, buf, "");
         return buf.toString();
     }
 
     private static void format(
-        QueryMapping relation,
+        org.eclipse.daanse.rolap.mapping.model.Query relation,
         StringBuilder buf,
         String indent)
     {
-        if (relation instanceof TableQueryMapping table) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery table) {
             buf.append(indent);
             buf.append(table.getTable().getName());
             if (table.getAlias() != null) {
@@ -1628,7 +1633,7 @@ public abstract class RolapCube extends CubeBase {
             }
             buf.append(Util.NL);
         } else {
-            JoinQueryMapping join = (JoinQueryMapping) relation;
+        	org.eclipse.daanse.rolap.mapping.model.JoinQuery join = (org.eclipse.daanse.rolap.mapping.model.JoinQuery) relation;
             String subindent = new StringBuilder(indent).append("  ").toString();
 
             buf.append(indent);
@@ -1772,8 +1777,8 @@ public abstract class RolapCube extends CubeBase {
      * @param relation A table or a join
      * @param levels Levels in hierarchy
      */
-    private static QueryMapping reorder(
-        QueryMapping relation,
+    private static org.eclipse.daanse.rolap.mapping.model.Query reorder(
+        org.eclipse.daanse.rolap.mapping.model.Query relation,
         List<RolapCubeLevel> levels)
     {
         // Need at least two levels, with only one level theres nothing to do.
@@ -1803,7 +1808,7 @@ public abstract class RolapCube extends CubeBase {
         if (! validateNodes(relation, nodeMap)) {
             return relation;
         }
-        QueryMappingImpl relationImpl = copy(relation);
+        org.eclipse.daanse.rolap.mapping.model.Query relationImpl = copy(relation);
 
         // Put lower levels to the left of upper levels
         leftToRight(relationImpl, nodeMap);
@@ -1823,14 +1828,14 @@ public abstract class RolapCube extends CubeBase {
      * @param map Names of tables and {@link RelNode} pairs
      */
     private static boolean validateNodes(
-        QueryMapping relation,
+        org.eclipse.daanse.rolap.mapping.model.Query relation,
         Map<String, RelNode> map)
     {
-        if (relation instanceof RelationalQueryMapping table) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.RelationalQuery table) {
             RelNode relNode = RelNode.lookup(table, map);
             return (relNode != null);
 
-        } else if (relation instanceof JoinQueryMapping join) {
+        } else if (relation instanceof org.eclipse.daanse.rolap.mapping.model.JoinQuery join) {
             return validateNodes(left(join), map)
                 && validateNodes(right(join), map);
 
@@ -1848,10 +1853,10 @@ public abstract class RolapCube extends CubeBase {
      * @param map Names of tables and {@link RelNode} pairs
      */
     private static int leftToRight(
-        QueryMappingImpl relation,
+        org.eclipse.daanse.rolap.mapping.model.Query relation,
         Map<String, RelNode> map)
     {
-        if (relation instanceof RelationalQueryMapping table) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.RelationalQuery table) {
             RelNode relNode = RelNode.lookup(table, map);
             // Associate the table with its RelNode!!!! This is where this
             // happens.
@@ -1859,17 +1864,17 @@ public abstract class RolapCube extends CubeBase {
 
             return relNode.getDepth();
 
-        } else if (relation instanceof JoinQueryMappingImpl join) {
-            int leftDepth = leftToRight((QueryMappingImpl)left(join), map);
-            int rightDepth = leftToRight((QueryMappingImpl)right(join), map);
+        } else if (relation instanceof org.eclipse.daanse.rolap.mapping.model.JoinQuery join) {
+            int leftDepth = leftToRight((org.eclipse.daanse.rolap.mapping.model.Query)left(join), map);
+            int rightDepth = leftToRight((org.eclipse.daanse.rolap.mapping.model.Query)right(join), map);
 
             // we want the right side to be less than the left
             if (rightDepth > leftDepth) {
                 // switch
                 String leftAlias = getLeftAlias(join);
-                PhysicalColumnMappingImpl leftKey = join.getLeft().getKey();;
-                QueryMappingImpl left = copy(left(join));
-                QueryMappingImpl right = copy(right(join));
+                org.eclipse.daanse.rolap.mapping.model.Column leftKey = join.getLeft().getKey();
+                org.eclipse.daanse.rolap.mapping.model.Query left = copy(left(join));
+                org.eclipse.daanse.rolap.mapping.model.Query right = copy(right(join));
                 join.getLeft().setAlias(getRightAlias(join));
                 join.getLeft().setKey(join.getRight().getKey());
                 changeLeftRight(join, right, left);
@@ -1894,23 +1899,35 @@ public abstract class RolapCube extends CubeBase {
      *
      * @param relation A table or a join
      */
-    private static void topToBottom(QueryMappingImpl relation) {
-        if (relation instanceof TableQueryMapping) {
+    private static void topToBottom(org.eclipse.daanse.rolap.mapping.model.Query relation) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery) {
             // nothing
 
-        } else if (relation instanceof JoinQueryMappingImpl join) {
-            while (left(join) instanceof JoinQueryMapping leftJoin) {
-                JoinQueryMapping jleft = leftJoin;
-                changeLeftRight(join, copy(left(jleft)), JoinQueryMappingImpl.builder()
-                		.withLeft(JoinedQueryElementMappingImpl.builder().withAlias(getLeftAlias(join)).withKey(join.getLeft().getKey()).withQuery(PojoUtil.copy(right(jleft))).build())
-                		.withRight(JoinedQueryElementMappingImpl.builder().withAlias(getRightAlias(join)).withKey(join.getRight().getKey()).withQuery(PojoUtil.copy(right(join))).build())
-                		.build());
-                JoinedQueryElementMappingImpl right = join.getRight();
-                JoinedQueryElementMappingImpl left = join.getLeft();
+        } else if (relation instanceof org.eclipse.daanse.rolap.mapping.model.JoinQuery join) {
+            while (left(join) instanceof org.eclipse.daanse.rolap.mapping.model.JoinQuery leftJoin) {
+                org.eclipse.daanse.rolap.mapping.model.JoinQuery jleft = leftJoin;
+                org.eclipse.daanse.rolap.mapping.model.JoinQuery joinQuery = RolapMappingFactory.eINSTANCE.createJoinQuery();
+
+                org.eclipse.daanse.rolap.mapping.model.JoinedQueryElement leftElement = RolapMappingFactory.eINSTANCE.createJoinedQueryElement();
+                leftElement.setAlias(getLeftAlias(join));
+                leftElement.setKey(join.getLeft().getKey());
+                leftElement.setQuery(PojoUtil.copy(right(jleft)));
+
+                org.eclipse.daanse.rolap.mapping.model.JoinedQueryElement rightElement = RolapMappingFactory.eINSTANCE.createJoinedQueryElement();
+                rightElement.setAlias(getRightAlias(join));
+                rightElement.setKey(join.getRight().getKey());
+                rightElement.setQuery(PojoUtil.copy(right(join)));
+                
+                joinQuery.setLeft(leftElement);
+                joinQuery.setRight(rightElement);
+                
+                changeLeftRight(join, copy(left(jleft)), joinQuery);
+                org.eclipse.daanse.rolap.mapping.model.JoinedQueryElement right = join.getRight();
+                org.eclipse.daanse.rolap.mapping.model.JoinedQueryElement left = join.getLeft();
                 right.setAlias(getRightAlias(jleft));
-                right.setKey((PhysicalColumnMappingImpl) jleft.getRight().getKey());
+                right.setKey((org.eclipse.daanse.rolap.mapping.model.PhysicalColumn) jleft.getRight().getKey());
                 left.setAlias(getLeftAlias(jleft));
-                left.setKey((PhysicalColumnMappingImpl) jleft.getLeft().getKey());
+                left.setKey((org.eclipse.daanse.rolap.mapping.model.PhysicalColumn) jleft.getLeft().getKey());
             }
         }
     }
@@ -1925,11 +1942,11 @@ public abstract class RolapCube extends CubeBase {
      * @param relation A table or a join
      * @param tableName Table name in relation
      */
-    private static QueryMapping snip(
-        QueryMapping relation,
+    private static org.eclipse.daanse.rolap.mapping.model.Query snip(
+        org.eclipse.daanse.rolap.mapping.model.Query relation,
         String tableName)
     {
-        if (relation instanceof TableQueryMapping table) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery table) {
             // Return null if the table's name or alias matches tableName
             if ((table.getAlias() != null) && table.getAlias().equals(tableName)) {
                 return null;
@@ -1937,9 +1954,9 @@ public abstract class RolapCube extends CubeBase {
                 return table.getTable().getName().equals(tableName) ? null : table;
             }
 
-        } else if (relation instanceof JoinQueryMapping join) {
+        } else if (relation instanceof org.eclipse.daanse.rolap.mapping.model.JoinQuery join) {
             // snip left
-            QueryMapping left = snip(left(join), tableName);
+        	org.eclipse.daanse.rolap.mapping.model.Query left = snip(left(join), tableName);
             if (left == null) {
                 // left got snipped so return the right
                 // (the join is no longer a join).
@@ -1947,10 +1964,10 @@ public abstract class RolapCube extends CubeBase {
 
             } else {
                 // whatever happened on the left, save it
-                changeLeftRight((JoinQueryMappingImpl)copy(join), copy(left), copy(right(join)));
+                changeLeftRight((org.eclipse.daanse.rolap.mapping.model.JoinQuery)copy(join), copy(left), copy(right(join)));
 
                 // snip right
-                QueryMapping right = snip(right(join), tableName);
+                org.eclipse.daanse.rolap.mapping.model.Query right = snip(right(join), tableName);
                 if (right == null) {
                     // right got snipped so return the left.
                     return left(join);
@@ -1958,7 +1975,7 @@ public abstract class RolapCube extends CubeBase {
                 } else {
                     // save the right, join still has right and left children
                     // so return it.
-                    changeLeftRight((JoinQueryMappingImpl)copy(join), copy(left(join)), copy(right));
+                    changeLeftRight((org.eclipse.daanse.rolap.mapping.model.JoinQuery)copy(join), copy(left(join)), copy(right));
                     return join;
                 }
             }
@@ -2459,13 +2476,13 @@ public abstract class RolapCube extends CubeBase {
         this.writebackTable = writebackTable;
     }
 
-	public Hierarchy lookupHierarchy(HierarchyMapping hierarchy) {
+	public Hierarchy lookupHierarchy(org.eclipse.daanse.rolap.mapping.model.Hierarchy hierarchy) {
         return hierarchyList.stream(
                 ).filter(h -> hierarchy.equals(h.hierarchyMapping))
                 .findAny().orElse(null);
 	}
 
-	public Level lookupLevel(LevelMapping level, Hierarchy h) {
+	public Level lookupLevel(org.eclipse.daanse.rolap.mapping.model.Level level, Hierarchy h) {
 		if (level != null && h != null && h.getLevels() != null) {
 			for (Level l : h.getLevels()) {
 				if (l instanceof RolapLevel rl) {
@@ -2485,7 +2502,7 @@ public abstract class RolapCube extends CubeBase {
 
 	@Override
     public void modifyFact(List<Map<String, Entry<DataTypeJdbc, Object>>> sessionValues) {
-            RelationalQueryMapping fact = getFact();
+		org.eclipse.daanse.rolap.mapping.model.RelationalQuery fact = getFact();
             restoreFact = fact;
             Optional<RolapWritebackTable> oWritebackTable = getWritebackTable();
             Dialect dialect = getContext().getDialect();
@@ -2493,43 +2510,61 @@ public abstract class RolapCube extends CubeBase {
                 RolapWritebackTable writebackTable = oWritebackTable.get();
                 if (getWritebackTable() != null && getWritebackTable().isPresent()) {
                     List<Map<String, Entry<Datatype, Object>>> rolapSessionValues = EnumConvertor.convertSessionValues(sessionValues);
-                    if (fact instanceof TableQueryMapping mappingTable) {
+                    if (fact instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery mappingTable) {
                         String alias = mappingTable.getAlias() != null ? mappingTable.getAlias() : mappingTable.getTable().getName();
                         StringBuilder sql = new StringBuilder("select ").append(writebackTable.getColumns().stream().map( c -> c.getColumn().getName() )
                         .collect(Collectors.joining(", "))).append(" from ").append(mappingTable.getTable().getName());
                         sql.append(getWriteBackSql(dialect, writebackTable, rolapSessionValues));
-                        SqlStatementMappingImpl sqlStatement = SqlStatementMappingImpl.builder().withSql(sql.toString()).withDialects(List.of("generic", dialect.getDialectName())).build();
-                        DatabaseSchemaMappingImpl schema = DatabaseSchemaMappingImpl.builder().withName(mappingTable.getTable().getSchema().getName()).build();
-                        SqlViewMappingImpl sqlView = ((SqlViewMappingImpl.Builder) SqlViewMappingImpl.builder().withSqlStatements(List.of(sqlStatement)).withsSchema(schema)).build();
-                        changeFact(SqlSelectQueryMappingImpl.builder().withSql(sqlView).withAlias(alias).build());
+                        org.eclipse.daanse.rolap.mapping.model.SqlStatement sqlStatement = RolapMappingFactory.eINSTANCE.createSqlStatement();
+                        sqlStatement.setSql(sql.toString());
+                        sqlStatement.getDialects().add("generic");
+                        sqlStatement.getDialects().add(dialect.getDialectName());
+                        
+                        org.eclipse.daanse.rolap.mapping.model.DatabaseSchema schema = RolapMappingFactory.eINSTANCE.createDatabaseSchema();
+                        schema.setName(mappingTable.getTable().getSchema().getName());
+                        org.eclipse.daanse.rolap.mapping.model.SqlView sqlView = RolapMappingFactory.eINSTANCE.createSqlView();
+                        sqlView.getSqlStatements().add(sqlStatement);
+                        sqlView.setSchema(schema);
+                        org.eclipse.daanse.rolap.mapping.model.SqlSelectQuery sqlSelectQuery = RolapMappingFactory.eINSTANCE.createSqlSelectQuery();
+                        sqlSelectQuery.setSql(sqlView);
+                        sqlSelectQuery.setAlias(alias);
+                        changeFact(sqlSelectQuery);
                     }
-                    if (fact instanceof InlineTableQueryMapping mappingInlineTable) {
+                    if (fact instanceof org.eclipse.daanse.rolap.mapping.model.InlineTableQuery mappingInlineTable) {
                     	List<String> columns =  writebackTable.getColumns().stream().map(c -> c.getColumn().getName()).toList();
-                        RelationalQueryMapping mappingRelation = RolapUtil.convertInlineTableToRelation(mappingInlineTable, getContext().getDialect(), columns);
-                        if (mappingRelation instanceof SqlSelectQueryMapping mappingView) {
+                    	org.eclipse.daanse.rolap.mapping.model.RelationalQuery mappingRelation = RolapUtil.convertInlineTableToRelation(mappingInlineTable, getContext().getDialect(), columns);
+                        if (mappingRelation instanceof org.eclipse.daanse.rolap.mapping.model.SqlSelectQuery mappingView) {
                             changeFact(mappingView, dialect, writebackTable, rolapSessionValues);
                         }
                     }
-                    if (fact instanceof SqlSelectQueryMapping mappingView) {
+                    if (fact instanceof org.eclipse.daanse.rolap.mapping.model.SqlSelectQuery mappingView) {
                         changeFact(mappingView, dialect, writebackTable, rolapSessionValues);
                     }
                 }
             }
     }
 
-    private void changeFact(SqlSelectQueryMapping mappingView, Dialect dialect, RolapWritebackTable writebackTable, List<Map<String, Map.Entry<Datatype, Object>>> sessionValues) {
+    private void changeFact(org.eclipse.daanse.rolap.mapping.model.SqlSelectQuery mappingView, Dialect dialect, RolapWritebackTable writebackTable, List<Map<String, Map.Entry<Datatype, Object>>> sessionValues) {
         if (mappingView.getSql() != null && mappingView.getSql().getSqlStatements() != null) {
-            List<? extends SqlStatementMapping> statements = mappingView.getSql().getSqlStatements().stream()
-                .map(sql -> SqlStatementMappingImpl.builder()
-                        .withSql(new StringBuilder(sql.getSql()).append(getWriteBackSql(dialect, writebackTable, sessionValues)).toString())
-                        .withDialects(sql.getDialects()).build())
+            List<? extends org.eclipse.daanse.rolap.mapping.model.SqlStatement> statements = mappingView.getSql().getSqlStatements().stream()
+                .map(sql -> {
+                    SqlStatement sqlStatement = RolapMappingFactory.eINSTANCE.createSqlStatement();
+                    sqlStatement.setSql(new StringBuilder(sql.getSql()).append(getWriteBackSql(dialect, writebackTable, sessionValues)).toString());
+                    sqlStatement.getDialects().addAll(sql.getDialects());
+                    return sqlStatement;
+                })
                 .toList();
-            SqlViewMappingImpl sqlView = ((SqlViewMappingImpl.Builder) SqlViewMappingImpl.builder().withSqlStatements(statements).withsSchema((DatabaseSchemaMappingImpl) mappingView.getSql().getSchema())).build();
-            changeFact(SqlSelectQueryMappingImpl.builder().withSql(sqlView).withAlias(mappingView.getAlias()).build());
+            org.eclipse.daanse.rolap.mapping.model.SqlView sqlView = RolapMappingFactory.eINSTANCE.createSqlView();
+            sqlView.getSqlStatements().addAll(statements);
+            sqlView.setSchema(mappingView.getSql().getSchema());
+            org.eclipse.daanse.rolap.mapping.model.SqlSelectQuery sqlSelectQuery = RolapMappingFactory.eINSTANCE.createSqlSelectQuery();
+            sqlSelectQuery.setSql(sqlView);
+            sqlSelectQuery.setAlias(mappingView.getAlias());
+            changeFact(sqlSelectQuery);
         }
     }
 
-    private void changeFact(SqlSelectQueryMappingImpl sqls) {
+    private void changeFact(org.eclipse.daanse.rolap.mapping.model.SqlSelectQuery sqls) {
         setFact(sqls);
         register();
     }

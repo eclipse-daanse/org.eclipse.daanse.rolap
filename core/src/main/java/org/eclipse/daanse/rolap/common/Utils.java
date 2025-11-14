@@ -21,24 +21,19 @@ package org.eclipse.daanse.rolap.common;
 import java.util.List;
 import java.util.Objects;
 
-import org.eclipse.daanse.rolap.mapping.api.model.DatabaseSchemaMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.InlineTableQueryMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.QueryMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.SqlSelectQueryMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.TableQueryMapping;
 
 public class Utils {
 
     private Utils() {
     }
 
-    public static boolean equalsQuery(QueryMapping relation, QueryMapping q2) {
-        if (relation instanceof TableQueryMapping t1 && q2 instanceof TableQueryMapping t2) {
+    public static boolean equalsQuery(org.eclipse.daanse.rolap.mapping.model.Query relation, org.eclipse.daanse.rolap.mapping.model.Query q2) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery t1 && q2 instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery t2) {
             return t1.getTable() != null && t2.getTable() != null &&  t1.getTable().getName().equals(t2.getTable().getName()) &&
                 Objects.equals(t1.getAlias(), t2.getAlias()) &&
                 equalsSchema(t1.getTable().getSchema(), t2.getTable().getSchema());
         }
-        if (relation instanceof SqlSelectQueryMapping s1 && q2 instanceof SqlSelectQueryMapping s2) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.SqlSelectQuery s1 && q2 instanceof org.eclipse.daanse.rolap.mapping.model.SqlSelectQuery s2) {
             if (!Objects.equals(s1.getAlias(), s2.getAlias())) {
                 return false;
             }
@@ -68,13 +63,13 @@ public class Utils {
             }
             return true;
         }
-        if (relation instanceof InlineTableQueryMapping it1 && q2 instanceof InlineTableQueryMapping it2) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.InlineTableQuery it1 && q2 instanceof org.eclipse.daanse.rolap.mapping.model.InlineTableQuery it2) {
             return it1.getAlias() != null && it1.getAlias().equals(it2.getAlias()); //old implementation
         }
         return false;
     }
 
-	private static boolean equalsSchema(DatabaseSchemaMapping schema1, DatabaseSchemaMapping schema2) {
+	private static boolean equalsSchema(org.eclipse.daanse.rolap.mapping.model.DatabaseSchema schema1, org.eclipse.daanse.rolap.mapping.model.DatabaseSchema schema2) {
         if (schema1 == null && schema2 == null) {
             return true;
         }

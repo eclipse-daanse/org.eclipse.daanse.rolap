@@ -27,14 +27,13 @@
 package org.eclipse.daanse.rolap.common;
 
 import org.eclipse.daanse.olap.api.element.Dimension;
-import org.eclipse.daanse.rolap.mapping.api.model.ColumnMapping;
 
 public class RolapWritebackAttribute extends RolapWritebackColumn {
     private final Dimension dimension;
 
     public RolapWritebackAttribute(
             Dimension dimension,
-            ColumnMapping column
+            org.eclipse.daanse.rolap.mapping.model.Column column
     ) {
         super(column);
         this.dimension = dimension;

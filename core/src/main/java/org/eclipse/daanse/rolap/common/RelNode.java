@@ -17,9 +17,6 @@ import static org.eclipse.daanse.rolap.common.util.RelationUtil.getAlias;
 
 import java.util.Map;
 
-import org.eclipse.daanse.rolap.mapping.api.model.RelationalQueryMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.TableQueryMapping;
-
 public class RelNode {
     /**
      * Finds a RelNode by table name or, if that fails, by table alias
@@ -29,11 +26,11 @@ public class RelNode {
      * @param map Names of tables and RelNode pairs
      */
     public static RelNode lookup(
-        RelationalQueryMapping table,
+        org.eclipse.daanse.rolap.mapping.model.RelationalQuery table,
         Map<String, RelNode> map)
     {
         RelNode relNode;
-        if (table instanceof TableQueryMapping t) {
+        if (table instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery t) {
             relNode = map.get(t.getTable().getName());
             if (relNode != null) {
                 return relNode;
@@ -44,14 +41,14 @@ public class RelNode {
 
     private int depth;
     private String alias;
-    private RelationalQueryMapping table;
+    private org.eclipse.daanse.rolap.mapping.model.RelationalQuery table;
 
     public RelNode(String alias, int depth) {
         this.alias = alias;
         this.depth = depth;
     }
 
-    public void setTable(RelationalQueryMapping table) {
+    public void setTable(org.eclipse.daanse.rolap.mapping.model.RelationalQuery table) {
         this.table = table;
     }
 

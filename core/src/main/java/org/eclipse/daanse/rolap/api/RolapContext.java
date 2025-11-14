@@ -15,9 +15,9 @@ package org.eclipse.daanse.rolap.api;
 
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.connection.Connection;
-import org.eclipse.daanse.rolap.mapping.api.model.CatalogMapping;
+import org.eclipse.daanse.rolap.mapping.model.Catalog;
 
 public interface RolapContext extends Context<Connection> {
 
-	CatalogMapping getCatalogMapping();
+	Catalog getCatalogMapping();
 }

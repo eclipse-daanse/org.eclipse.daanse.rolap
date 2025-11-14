@@ -20,16 +20,15 @@ import org.eclipse.daanse.olap.api.Evaluator;
 import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.olap.api.calc.Calc;
 import org.eclipse.daanse.olap.api.calc.todo.TupleList;
-import org.eclipse.daanse.rolap.mapping.api.model.enums.BitAggregationType;
 
 public class BitAggAggregator implements Aggregator {
 
     private boolean not;
-    private BitAggregationType bitAggType;
+    private org.eclipse.daanse.rolap.mapping.model.BitAggType bitAggType;
     private Dialect dialect;
 
     //
-    public BitAggAggregator(boolean not, BitAggregationType bitAggType, Dialect dialect) {
+    public BitAggAggregator(boolean not, org.eclipse.daanse.rolap.mapping.model.BitAggType bitAggType, Dialect dialect) {
         this.not = not;
         this.bitAggType = bitAggType;
         this.dialect = dialect;
@@ -53,9 +52,9 @@ public class BitAggAggregator implements Aggregator {
     @Override
     public StringBuilder getExpression(CharSequence operand) {
         return switch (bitAggType) {
-        case BitAggregationType.AND -> and(operand);
-        case BitAggregationType.OR -> or(operand);
-        case BitAggregationType.XOR -> xor(operand);
+        case org.eclipse.daanse.rolap.mapping.model.BitAggType.AND -> and(operand);
+        case org.eclipse.daanse.rolap.mapping.model.BitAggType.OR -> or(operand);
+        case org.eclipse.daanse.rolap.mapping.model.BitAggType.XOR -> xor(operand);
         };
     }
 

@@ -36,8 +36,7 @@ import org.eclipse.daanse.olap.api.calc.compiler.ExpressionCompilerFactory;
 import org.eclipse.daanse.olap.api.function.FunctionService;
 import org.eclipse.daanse.rolap.api.RolapContext;
 import org.eclipse.daanse.rolap.core.api.Constants;
-import org.eclipse.daanse.rolap.mapping.api.CatalogMappingSupplier;
-import org.eclipse.daanse.rolap.mapping.api.model.CatalogMapping;
+import org.eclipse.daanse.rolap.mapping.model.provider.CatalogMappingSupplier;
 import org.eclipse.daanse.sql.guard.api.SqlGuardFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -93,7 +92,7 @@ class BasicContextServiceTest {
     MdxParserProvider mdxParserProvider;
 
     @Mock
-    CatalogMapping catalogMapping;
+    org.eclipse.daanse.rolap.mapping.model.Catalog catalogMapping;
 
     @Mock
     FunctionService functionService;

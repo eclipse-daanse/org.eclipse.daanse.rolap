@@ -67,25 +67,6 @@ import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.element.RolapCubeDimension;
 import org.eclipse.daanse.rolap.element.RolapHierarchy;
 import org.eclipse.daanse.rolap.element.RolapLevel;
-import org.eclipse.daanse.rolap.mapping.api.model.AggregationExcludeMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.AggregationForeignKeyMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.AggregationMeasureFactCountMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.AggregationNameMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.AggregationTableMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.CatalogMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.ColumnMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.CubeMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.DimensionConnectorMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.ExplicitHierarchyMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.HierarchyMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.InlineTableQueryMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.JoinQueryMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.ParentChildHierarchyMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.PhysicalCubeMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.QueryMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.SqlSelectQueryMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.TableMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.TableQueryMapping;
 import org.eclipse.daanse.rolap.mapping.verifyer.api.CheckService;
 import org.eclipse.daanse.rolap.mapping.verifyer.api.Level;
 import org.eclipse.daanse.rolap.mapping.verifyer.api.VerificationResult;
@@ -199,7 +180,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
         writeCubeMatrixDiagram(writer, context, context.getCatalogMapping());
     }
 
-    private void writeCubeMatrixDiagram(FileWriter writer, Context context, CatalogMapping catalog) {
+    private void writeCubeMatrixDiagram(FileWriter writer, Context context, org.eclipse.daanse.rolap.mapping.model.Catalog catalog) {
         try {
             String catalogName = catalog.getName();
             writer.write("### Cube Matrix for ");
@@ -218,8 +199,8 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
                     quadrant-4 Wide
                     """);
             writer.write(ENTER);
-            for (CubeMapping cube : catalog.getCubes()) {
-                if (cube instanceof PhysicalCubeMapping c) {
+            for (org.eclipse.daanse.rolap.mapping.model.Cube cube : catalog.getCubes()) {
+                if (cube instanceof org.eclipse.daanse.rolap.mapping.model.PhysicalCube c) {
                     String cubeName = prepare(c.getName());
                     double x = getLevelsCount(catalog, c) / MAX_LEVEL;
                     double y = getFactCount(c) / MAX_ROW;
@@ -251,22 +232,22 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
         return x < 1 ? String.format("%,.4f", x) : "1";
     }
 
-    private long getFactCount(PhysicalCubeMapping c) {
+    private long getFactCount(org.eclipse.daanse.rolap.mapping.model.PhysicalCube c) {
         long result = 0l;
         try {
-            QueryMapping relation = c.getQuery();
-            if (relation instanceof TableQueryMapping mt) {
+        	org.eclipse.daanse.rolap.mapping.model.Query relation = c.getQuery();
+            if (relation instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery mt) {
                 TableReference tableReference = new TableReferenceR(mt.getTable().getName());
                 return getTableCardinality(tableReference);
             }
-            if (relation instanceof InlineTableQueryMapping it) {
+            if (relation instanceof org.eclipse.daanse.rolap.mapping.model.InlineTableQuery it) {
                 result = it.getTable().getRows() == null ? 0l : it.getTable().getRows().size();
             }
-            if (relation instanceof SqlSelectQueryMapping mv) {
+            if (relation instanceof org.eclipse.daanse.rolap.mapping.model.SqlSelectQuery mv) {
                 // TODO
                 return 0l;
             }
-            if (relation instanceof JoinQueryMapping mj) {
+            if (relation instanceof org.eclipse.daanse.rolap.mapping.model.JoinQuery mj) {
                 Optional<String> tableName = getFactTableName(mj);
                 if (tableName.isPresent()) {
                     TableReference tableReference = new TableReferenceR(tableName.get());
@@ -303,24 +284,24 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
         return maxNonUnique;
     }
 
-    private int getLevelsCount(CatalogMapping catalog, CubeMapping c) {
+    private int getLevelsCount(org.eclipse.daanse.rolap.mapping.model.Catalog catalog, org.eclipse.daanse.rolap.mapping.model.PhysicalCube c) {
         int res = 0;
-        for (DimensionConnectorMapping d : c.getDimensionConnectors()) {
+        for (org.eclipse.daanse.rolap.mapping.model.DimensionConnector d : c.getDimensionConnectors()) {
             res = res + getLevelsCount1(catalog, d);
         }
         return res;
     }
 
-    private int getLevelsCount1(CatalogMapping catalog, DimensionConnectorMapping d) {
+    private int getLevelsCount1(org.eclipse.daanse.rolap.mapping.model.Catalog catalog, org.eclipse.daanse.rolap.mapping.model.DimensionConnector d) {
         int res = 0;
         if (d.getDimension() != null && d.getDimension().getHierarchies() != null) {
-            for (HierarchyMapping h : d.getDimension().getHierarchies()) {
-                if (h instanceof ExplicitHierarchyMapping eh) {
+            for (org.eclipse.daanse.rolap.mapping.model.Hierarchy h : d.getDimension().getHierarchies()) {
+                if (h instanceof org.eclipse.daanse.rolap.mapping.model.ExplicitHierarchy eh) {
                     if (eh.getLevels() != null) {
                         res = res + eh.getLevels().size();
                     }
                 }
-                if (h instanceof ParentChildHierarchyMapping pch) {
+                if (h instanceof org.eclipse.daanse.rolap.mapping.model.ParentChildHierarchy pch) {
                     if (pch.getLevel() != null) {
                         res = res + 1;
                     }
@@ -350,17 +331,17 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
 
     private List<String> schemaTablesConnections(RolapContext context, List<String> missedTableNames) {
         List<String> result = new ArrayList<>();
-        CatalogMapping catalog = context.getCatalogMapping();
+        org.eclipse.daanse.rolap.mapping.model.Catalog catalog = context.getCatalogMapping();
         result.addAll(catalog.getCubes().stream()
                 .flatMap(c -> cubeTablesConnections(catalog, c, missedTableNames).stream()).toList());
         return result;
     }
 
-    private List<String> cubeTablesConnections(CatalogMapping catalog, CubeMapping cube,
+    private List<String> cubeTablesConnections(org.eclipse.daanse.rolap.mapping.model.Catalog catalog, org.eclipse.daanse.rolap.mapping.model.Cube cube,
             List<String> missedTableNames) {
 
         List<String> result = new ArrayList<>();
-        if (cube instanceof PhysicalCubeMapping c) {
+        if (cube instanceof org.eclipse.daanse.rolap.mapping.model.PhysicalCube c) {
             Optional<String> optionalFactTable = getFactTableName(c.getQuery());
             if (optionalFactTable.isPresent()) {
                 result.addAll(getFactTableConnections(c.getQuery(), missedTableNames));
@@ -425,7 +406,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
         int i = 0;
         String dName = new StringBuilder("d").append(cubeIndex).append(dimensionIndex).toString();
         for (Hierarchy h : hList) {
-            ColumnMapping primaryKey = ((RolapHierarchy) h).getHierarchyMapping().getPrimaryKey();
+        	org.eclipse.daanse.rolap.mapping.model.Column primaryKey = ((RolapHierarchy) h).getHierarchyMapping().getPrimaryKey();
             result.add(connection1(cubeName, dName, foreignKey, getColumnName(primaryKey)));
             for (org.eclipse.daanse.olap.api.element.Level l : catalogReader.getHierarchyLevels(h)) {
                 result.add(connection1(dName,
@@ -437,8 +418,8 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
         return result;
     }
 
-    private List<String> dimensionsTablesConnections(CatalogMapping catalog,
-            List<? extends DimensionConnectorMapping> dimensionUsageOrDimensions, String fact,
+    private List<String> dimensionsTablesConnections(org.eclipse.daanse.rolap.mapping.model.Catalog catalog,
+            List<? extends org.eclipse.daanse.rolap.mapping.model.DimensionConnector> dimensionUsageOrDimensions, String fact,
             List<String> missedTableNames) {
         if (dimensionUsageOrDimensions != null) {
             return dimensionUsageOrDimensions.stream()
@@ -447,7 +428,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
         return List.of();
     }
 
-    private List<String> dimensionTablesConnections(CatalogMapping catalog, DimensionConnectorMapping d, String fact,
+    private List<String> dimensionTablesConnections(org.eclipse.daanse.rolap.mapping.model.Catalog catalog, org.eclipse.daanse.rolap.mapping.model.DimensionConnector d, String fact,
             List<String> missedTableNames) {
 
         return hierarchiesTablesConnections(catalog, d.getDimension().getHierarchies(), fact,
@@ -455,8 +436,8 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
 
     }
 
-    private List<String> hierarchiesTablesConnections(CatalogMapping catalog,
-            List<? extends HierarchyMapping> hierarchies, String fact, String foreignKey,
+    private List<String> hierarchiesTablesConnections(org.eclipse.daanse.rolap.mapping.model.Catalog catalog,
+            List<? extends org.eclipse.daanse.rolap.mapping.model.Hierarchy> hierarchies, String fact, String foreignKey,
             List<String> missedTableNames) {
         if (hierarchies != null) {
             return hierarchies.stream()
@@ -466,7 +447,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
         return List.of();
     }
 
-    private List<String> hierarchyTablesConnections(CatalogMapping catalog, HierarchyMapping h, String fact,
+    private List<String> hierarchyTablesConnections(org.eclipse.daanse.rolap.mapping.model.Catalog catalog, org.eclipse.daanse.rolap.mapping.model.Hierarchy h, String fact,
             String foreignKey, List<String> missedTableNames) {
         List<String> result = new ArrayList<>();
         String primaryKeyTable = getTableName(h.getPrimaryKey().getTable());
@@ -488,7 +469,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
         return result;
     }
 
-    private String getColumnName(ColumnMapping column) {
+    private String getColumnName(org.eclipse.daanse.rolap.mapping.model.Column column) {
         if (column != null) {
             return column.getName();
         }
@@ -516,7 +497,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
 
     }
 
-    private void writeSchemaVerifyer(FileWriter writer, CatalogMapping catalog, RolapContext context) {
+    private void writeSchemaVerifyer(FileWriter writer, org.eclipse.daanse.rolap.mapping.model.Catalog catalog, RolapContext context) {
         try {
             List<VerificationResult> verifyResult = new ArrayList<>();
             List<VerificationResult> dbVerifyResult = new ArrayList<>();
@@ -625,7 +606,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
         }
     }
 
-    private void writeSchemaAsXML(FileWriter writer, CatalogMapping catalog) {
+    private void writeSchemaAsXML(FileWriter writer, org.eclipse.daanse.rolap.mapping.model.Catalog catalog) {
         try {
             String catalogName = catalog.getName();
             writer.write("### Schema ");
@@ -702,7 +683,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
 
     private void writeCube(FileWriter writer, Cube cube, CatalogReader catalogReader) {
         try {
-            if (cube instanceof PhysicalCubeMapping pc) {
+            if (cube instanceof org.eclipse.daanse.rolap.mapping.model.PhysicalCube pc) {
                 String description = cube.getDescription() != null ? cube.getDescription() : EMPTY_STRING;
                 String name = cube.getName() != null ? cube.getName() : "";
                 String table = getTable(pc.getQuery());
@@ -835,10 +816,10 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
 
     private void writeAggregationSection(FileWriter writer, CatalogReader catalogReader, Cube cube,
             RolapContext context) {
-        Optional<TableQueryMapping> tableQuery = getFactTableQuery((RolapCube) cube);
+        Optional<org.eclipse.daanse.rolap.mapping.model.TableQuery> tableQuery = getFactTableQuery((RolapCube) cube);
         if (tableQuery.isPresent() && tableQuery.get().getAggregationTables() != null) {
             try (Connection connection = context.getDataSource().getConnection()) {
-                List<? extends AggregationTableMapping> aggregationTables = tableQuery.get().getAggregationTables();
+                List<? extends org.eclipse.daanse.rolap.mapping.model.AggregationTable> aggregationTables = tableQuery.get().getAggregationTables();
                 DatabaseMetaData databaseMetaData = connection.getMetaData();
                 List<? extends DatabaseSchema> dbschemas = catalogReader.getDatabaseSchemas();
                 SchemaReference schemaReference = new SchemaReferenceR(connection.getSchema());
@@ -854,7 +835,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
                         ```mermaid
                            erDiagram
                            """);
-                TableMapping factTable = tableQuery.get().getTable();
+                org.eclipse.daanse.rolap.mapping.model.Table factTable = tableQuery.get().getTable();
                 Optional<TableReference> oTableReference = tables.stream()
                         .filter(t -> (t.table() != null && t.table().name().equals(factTable.getName())))
                         .map(t -> t.table()).findAny();
@@ -865,10 +846,10 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
                 } else {
                     writeTablesDiagram(writer, factTable);
                 }
-                for (AggregationTableMapping aggregationTable : aggregationTables) {
-                    if (aggregationTable instanceof AggregationNameMapping aggregationName
+                for (org.eclipse.daanse.rolap.mapping.model.AggregationTable aggregationTable : aggregationTables) {
+                    if (aggregationTable instanceof org.eclipse.daanse.rolap.mapping.model.AggregationName aggregationName
                             && aggregationName.getName() != null) {
-                        TableMapping aggTable = aggregationName.getName();
+                    	org.eclipse.daanse.rolap.mapping.model.Table aggTable = aggregationName.getName();
                         oTableReference = tables.stream()
                                 .filter(t -> (t.table() != null && t.table().name().equals(factTable.getName())))
                                 .map(t -> t.table()).findAny();
@@ -888,7 +869,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
                     writer.write(tableFlag);
                     writer.write("\"{");
                     writer.write(ENTER);
-                    for (AggregationExcludeMapping aggregationExclude : tableQuery.get().getAggregationExcludes()) {
+                    for (org.eclipse.daanse.rolap.mapping.model.AggregationExclude aggregationExclude : tableQuery.get().getAggregationExcludes()) {
                         writer.write("x ");
                         writer.write(aggregationExclude.getName());
                         writer.write(ENTER);
@@ -911,11 +892,11 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
         }
     }
 
-    private Collection<? extends String> aggregationConnections(AggregationNameMapping aggregationName,
+    private Collection<? extends String> aggregationConnections(org.eclipse.daanse.rolap.mapping.model.AggregationName aggregationName,
             List<String> mt) {
         List<String> tablesConnections = new ArrayList<>();
         if (aggregationName.getAggregationForeignKeys() != null) {
-            for (AggregationForeignKeyMapping aggregationForeignKey : aggregationName.getAggregationForeignKeys()) {
+            for (org.eclipse.daanse.rolap.mapping.model.AggregationForeignKey aggregationForeignKey : aggregationName.getAggregationForeignKeys()) {
                 if (aggregationForeignKey.getFactColumn() != null
                         && aggregationForeignKey.getFactColumn().getTable() != null
                         && aggregationForeignKey.getAggregationColumn() != null
@@ -928,7 +909,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
             }
         }
         if (aggregationName.getAggregationMeasureFactCounts() != null) {
-            for (AggregationMeasureFactCountMapping aggregationMeasureFactCount : aggregationName
+            for (org.eclipse.daanse.rolap.mapping.model.AggregationMeasureFactCount aggregationMeasureFactCount : aggregationName
                     .getAggregationMeasureFactCounts()) {
                 if (aggregationMeasureFactCount.getFactColumn() != null
                         && aggregationMeasureFactCount.getFactColumn().getTable() != null
@@ -944,8 +925,8 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
         return tablesConnections;
     }
 
-    private Optional<TableQueryMapping> getFactTableQuery(RolapCube cube) {
-        if (cube.getFact() != null && cube.getFact() instanceof TableQueryMapping tableQuery) {
+    private Optional<org.eclipse.daanse.rolap.mapping.model.TableQuery> getFactTableQuery(RolapCube cube) {
+        if (cube.getFact() != null && cube.getFact() instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery tableQuery) {
             return Optional.of(tableQuery);
         }
         return Optional.empty();
@@ -1131,17 +1112,17 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
         }
     }
 
-    private Optional<String> getFactTableName(QueryMapping relation) {
-        if (relation instanceof TableQueryMapping mt) {
+    private Optional<String> getFactTableName(org.eclipse.daanse.rolap.mapping.model.Query relation) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery mt) {
             return Optional.ofNullable(getTableName(mt.getTable()));
         }
-        if (relation instanceof InlineTableQueryMapping it) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.InlineTableQuery it) {
             return Optional.ofNullable(it.getAlias());
         }
-        if (relation instanceof SqlSelectQueryMapping mv) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.SqlSelectQuery mv) {
             return Optional.ofNullable(mv.getAlias());
         }
-        if (relation instanceof JoinQueryMapping mj) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.JoinQuery mj) {
             if (mj.getLeft() != null && mj.getLeft().getQuery() != null) {
                 return getFactTableName(mj.getLeft().getQuery());
             }
@@ -1149,24 +1130,24 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
         return Optional.empty();
     }
 
-    private String getTableName(TableMapping table) {
+    private String getTableName(org.eclipse.daanse.rolap.mapping.model.Table table) {
         if (table != null) {
             return table.getName();
         }
         return null;
     }
 
-    private List<String> getFactTableConnections(QueryMapping relation, List<String> missedTableNames) {
-        if (relation instanceof TableQueryMapping mt) {
+    private List<String> getFactTableConnections(org.eclipse.daanse.rolap.mapping.model.Query relation, List<String> missedTableNames) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery mt) {
             return List.of();
         }
-        if (relation instanceof InlineTableQueryMapping it) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.InlineTableQuery it) {
             return List.of();
         }
-        if (relation instanceof SqlSelectQueryMapping mv) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.SqlSelectQuery mv) {
             return List.of();
         }
-        if (relation instanceof JoinQueryMapping mj) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.JoinQuery mj) {
             if (mj.getLeft() != null && mj.getRight() != null && mj.getLeft().getQuery() != null
                     && mj.getRight().getQuery() != null) {
                 ArrayList<String> res = new ArrayList<>();
@@ -1197,11 +1178,11 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
         return "\"" + t1 + "\" ||--|| \"" + t2 + "\" : \"" + k1 + k2 + "\"";
     }
 
-    private String getFirstTable(QueryMapping relation) {
-        if (relation instanceof TableQueryMapping mt) {
+    private String getFirstTable(org.eclipse.daanse.rolap.mapping.model.Query relation) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery mt) {
             return getTableName(mt.getTable());
         }
-        if (relation instanceof JoinQueryMapping mj) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.JoinQuery mj) {
             if (mj.getLeft() != null && mj.getLeft().getQuery() != null) {
                 return getFirstTable(mj.getLeft().getQuery());
             }
@@ -1209,14 +1190,14 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
         return null;
     }
 
-    private String getTable(QueryMapping relation) {
-        if (relation instanceof TableQueryMapping mt) {
+    private String getTable(org.eclipse.daanse.rolap.mapping.model.Query relation) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery mt) {
             return getTableName(mt.getTable());
         }
-        if (relation instanceof InlineTableQueryMapping it) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.InlineTableQuery it) {
             // TODO
         }
-        if (relation instanceof SqlSelectQueryMapping mv) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.SqlSelectQuery mv) {
             StringBuilder sb = new StringBuilder();
             if (mv.getSql() != null && mv.getSql().getSqlStatements() != null) {
                 mv.getSql().getSqlStatements().stream()
@@ -1225,7 +1206,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
             }
             return sb.toString();
         }
-        if (relation instanceof JoinQueryMapping mj) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.JoinQuery mj) {
             StringBuilder sb = new StringBuilder();
             if (mj.getLeft() != null && mj.getRight() != null && mj.getLeft().getQuery() != null
                     && mj.getRight().getQuery() != null) {
@@ -1294,9 +1275,9 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
         return Optional.empty();
     }
 
-    private void writeTablesDiagram(FileWriter writer, TableMapping table) {
+    private void writeTablesDiagram(FileWriter writer, org.eclipse.daanse.rolap.mapping.model.Table table) {
         try {
-            List<? extends ColumnMapping> columnList = table.getColumns();
+            List<? extends org.eclipse.daanse.rolap.mapping.model.Column> columnList = table.getColumns();
             String name = table.getName();
             String tableFlag = NEGATIVE_FLAG;
             writer.write("\"");
@@ -1305,9 +1286,9 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
             writer.write("\"{");
             writer.write(ENTER);
             if (columnList != null) {
-                for (ColumnMapping c : columnList) {
+                for (org.eclipse.daanse.rolap.mapping.model.Column c : columnList) {
                     String columnName = c.getName();
-                    String type = c.getDataType() != null ? c.getDataType().getValue() : "";
+                    String type = c.getType() != null ? c.getType().getLiteral() : "";
                     String flag = NEGATIVE_FLAG;
                     writer.write(type);
                     writer.write(" ");
@@ -1477,7 +1458,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
         }
     }
 
-    private String getSize(ColumnMapping column) {
+    private String getSize(org.eclipse.daanse.rolap.mapping.model.Column column) {
         if (column.getColumnSize() != null && column.getColumnSize() > 0) {
             StringBuilder r = new StringBuilder();
             r.append("(");
@@ -1524,7 +1505,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
                 : "not null ";
     }
 
-    private String getNullable(ColumnMapping column) {
+    private String getNullable(org.eclipse.daanse.rolap.mapping.model.Column column) {
 
         if (column.getNullable() != null) {
             return column.getNullable() ? "is null " : "not null ";

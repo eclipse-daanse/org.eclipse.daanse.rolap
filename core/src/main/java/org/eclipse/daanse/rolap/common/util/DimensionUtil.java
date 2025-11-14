@@ -14,10 +14,6 @@
 package org.eclipse.daanse.rolap.common.util;
 
 import org.eclipse.daanse.olap.common.Util;
-import org.eclipse.daanse.rolap.mapping.api.model.CatalogMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.CubeMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.DimensionConnectorMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.DimensionMapping;
 
 public class DimensionUtil {
 
@@ -27,7 +23,7 @@ public class DimensionUtil {
         // constructor
     }
 
-    public static DimensionMapping getDimension(CatalogMapping schema, DimensionConnectorMapping dimension) {
+    public static org.eclipse.daanse.rolap.mapping.model.Dimension getDimension(org.eclipse.daanse.rolap.mapping.model.Catalog schema, org.eclipse.daanse.rolap.mapping.model.DimensionConnector dimension) {
     	/*
         if (dimension instanceof MappingDimensionUsage dimensionUsage) {
             Util.assertPrecondition(schema != null, SCHEMA_NULL);
@@ -81,7 +77,7 @@ public class DimensionUtil {
 //        throw Util.newInternal(new StringBuilder("Cannot find cube '").append(cubeName).append("'").toString());
 //    }
 
-    public static DimensionMapping getDimension(CubeMapping cube, CatalogMapping schema, String dimensionName) {
+    public static org.eclipse.daanse.rolap.mapping.model.Dimension getDimension(org.eclipse.daanse.rolap.mapping.model.PhysicalCube cube, org.eclipse.daanse.rolap.mapping.model.Catalog schema, String dimensionName) {
         for (int i = 0; i < cube.getDimensionConnectors().size(); i++) {
             if (cube.getDimensionConnectors().get(i).getOverrideDimensionName().equals(dimensionName)) {
                 return getDimension(schema, cube.getDimensionConnectors().get(i));

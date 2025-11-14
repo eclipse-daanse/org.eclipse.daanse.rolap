@@ -14,9 +14,6 @@
 package org.eclipse.daanse.rolap.common.util;
 
 import org.eclipse.daanse.olap.api.element.DimensionType;
-import org.eclipse.daanse.rolap.mapping.api.model.DimensionMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.StandardDimensionMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.TimeDimensionMapping;
 
 public class DimensionTypeUtil {
 
@@ -25,11 +22,11 @@ public class DimensionTypeUtil {
     }
 
     // Return the dimension's enumerated type.
-    public static DimensionType getDimensionType(DimensionMapping dimension) {
-        if (dimension instanceof StandardDimensionMapping) {
+    public static DimensionType getDimensionType(org.eclipse.daanse.rolap.mapping.model.Dimension dimension) {
+        if (dimension instanceof org.eclipse.daanse.rolap.mapping.model.StandardDimension) {
             return DimensionType.STANDARD_DIMENSION;
         }
-        if (dimension instanceof TimeDimensionMapping) {
+        if (dimension instanceof org.eclipse.daanse.rolap.mapping.model.TimeDimension) {
         	return DimensionType.TIME_DIMENSION;
         }
         return null;

@@ -48,7 +48,6 @@ import org.eclipse.daanse.rolap.common.RolapStar;
 import org.eclipse.daanse.rolap.common.aggmatcher.JdbcSchema.Table.Column;
 import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.element.RolapLevel;
-import org.eclipse.daanse.rolap.mapping.api.model.ColumnMapping;
 import org.eclipse.daanse.rolap.recorder.MessageRecorder;
 
 /**
@@ -179,7 +178,7 @@ class ExplicitRecognizer extends Recognizer {
 
                 if (factColumn.hasUsage(JdbcSchema.UsageType.FOREIGN_KEY)) {
                     // What we've got here is a measure based upon a foreign key
-                	ColumnMapping aggFK =
+                	org.eclipse.daanse.rolap.mapping.model.Column aggFK =
                         getTableDef().getAggregateFK(factColumn.getName());
                     // OK, not a lost dimension
                     if (aggFK != null) {
@@ -255,7 +254,7 @@ class ExplicitRecognizer extends Recognizer {
         final JdbcSchema.Table.Column.Usage factUsage)
     {
         JdbcSchema.Table.Column factColumn = factUsage.getColumn();
-        ColumnMapping aggFK = getTableDef().getAggregateFK(factColumn.getName());
+        org.eclipse.daanse.rolap.mapping.model.Column aggFK = getTableDef().getAggregateFK(factColumn.getName());
 
         // OK, a lost dimension
         if (aggFK == null) {
@@ -359,7 +358,7 @@ class ExplicitRecognizer extends Recognizer {
     }
 
     private Column getColumn(
-    		ColumnMapping columnName, Map<String, Column> aggTableColumnMap)
+    		org.eclipse.daanse.rolap.mapping.model.Column columnName, Map<String, Column> aggTableColumnMap)
     {
         if (columnName == null) {
             return null;
@@ -368,10 +367,10 @@ class ExplicitRecognizer extends Recognizer {
     }
 
     private Map<String, Column> getProperties(
-        Map<String, ColumnMapping> properties, Map<String, Column> columnMap)
+        Map<String, org.eclipse.daanse.rolap.mapping.model.Column> properties, Map<String, Column> columnMap)
     {
         Map<String, Column> map = new HashMap<>();
-        for (Map.Entry<String, ColumnMapping> entry : properties.entrySet()) {
+        for (Map.Entry<String, org.eclipse.daanse.rolap.mapping.model.Column> entry : properties.entrySet()) {
             map.put(entry.getKey(), getColumn(entry.getValue(), columnMap));
         }
         return Collections.unmodifiableMap(map);
@@ -507,8 +506,8 @@ class ExplicitRecognizer extends Recognizer {
 	protected String getFactCountColumnName
             (final JdbcSchema.Table.Column.Usage aggUsage) {
         String measureName = aggUsage.getColumn().getName();
-        Map<ColumnMapping, ColumnMapping> measuresFactCount = tableDef.getMeasuresFactCount();
-        Optional<Map.Entry<ColumnMapping, ColumnMapping>> op = measuresFactCount.entrySet()
+        Map<org.eclipse.daanse.rolap.mapping.model.Column, org.eclipse.daanse.rolap.mapping.model.Column> measuresFactCount = tableDef.getMeasuresFactCount();
+        Optional<Map.Entry<org.eclipse.daanse.rolap.mapping.model.Column, org.eclipse.daanse.rolap.mapping.model.Column>> op = measuresFactCount.entrySet()
         		.stream().filter(e -> e.getKey().getName().equals(measureName)).findAny();
         String factCountColumnName;
         if (op.isPresent() && !Util.isEmpty(op.get().getValue().getName())) {

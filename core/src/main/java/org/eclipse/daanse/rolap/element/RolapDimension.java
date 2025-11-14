@@ -46,8 +46,6 @@ import org.eclipse.daanse.olap.exceptions.TimeLevelInNonTimeHierarchyException;
 import org.eclipse.daanse.rolap.common.MemberReader;
 import org.eclipse.daanse.rolap.common.RolapEvaluator;
 import org.eclipse.daanse.rolap.common.util.DimensionTypeUtil;
-import org.eclipse.daanse.rolap.mapping.api.model.DimensionConnectorMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.DimensionMapping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -121,8 +119,8 @@ public class RolapDimension extends DimensionBase {
     public RolapDimension(
         RolapCatalog schema,
         RolapCube cube,
-        DimensionMapping mappingDimension,
-        DimensionConnectorMapping dimensionConnector)
+        org.eclipse.daanse.rolap.mapping.model.Dimension mappingDimension,
+        org.eclipse.daanse.rolap.mapping.model.DimensionConnector dimensionConnector)
     {
         this(
             schema,
@@ -187,7 +185,7 @@ public class RolapDimension extends DimensionBase {
         }
     }
 
-    public static String getDimensionName(DimensionConnectorMapping mappingCubeDimension) {
+    public static String getDimensionName(org.eclipse.daanse.rolap.mapping.model.DimensionConnector mappingCubeDimension) {
         return  mappingCubeDimension.getOverrideDimensionName() != null ? mappingCubeDimension.getOverrideDimensionName() : mappingCubeDimension.getDimension().getName();
     }
 
@@ -199,7 +197,7 @@ public class RolapDimension extends DimensionBase {
     /**
      * Initializes a dimension within the context of a cube.
      */
-    void init(DimensionConnectorMapping mappingDimension) {
+    void init(org.eclipse.daanse.rolap.mapping.model.DimensionConnector mappingDimension) {
         for (Hierarchy h : hierarchies) {
             if (h != null) {
                 ((RolapHierarchy) h).init(mappingDimension);

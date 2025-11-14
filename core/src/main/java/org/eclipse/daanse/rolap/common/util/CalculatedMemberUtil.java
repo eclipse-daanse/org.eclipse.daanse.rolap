@@ -14,15 +14,13 @@
 package org.eclipse.daanse.rolap.common.util;
 
 import org.eclipse.daanse.olap.common.StandardProperty;
-import org.eclipse.daanse.rolap.mapping.api.model.CalculatedMemberMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.CalculatedMemberPropertyMapping;
 
 public class CalculatedMemberUtil {
 
     private CalculatedMemberUtil() {
     }
 
-    public static String getFormula(CalculatedMemberMapping calculatedMember) {
+    public static String getFormula(org.eclipse.daanse.rolap.mapping.model.CalculatedMember calculatedMember) {
     	return calculatedMember.getFormula();
     }
 
@@ -31,8 +29,8 @@ public class CalculatedMemberUtil {
      * "FORMAT_STRING" first, then looking for an attribute called
      * "formatString".
      */
-    public static String getFormatString(CalculatedMemberMapping calculatedMember) {
-        for (CalculatedMemberPropertyMapping prop : calculatedMember.getCalculatedMemberProperties()) {
+    public static String getFormatString(org.eclipse.daanse.rolap.mapping.model.CalculatedMember calculatedMember) {
+        for (org.eclipse.daanse.rolap.mapping.model.CalculatedMemberProperty prop : calculatedMember.getCalculatedMemberProperties()) {
             if (prop.getName().equals(
                 StandardProperty.FORMAT_STRING.getName()))
             {

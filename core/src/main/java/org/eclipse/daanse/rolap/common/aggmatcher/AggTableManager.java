@@ -33,8 +33,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.eclipse.daanse.olap.api.ConfigConstants;
-import org.eclipse.daanse.olap.api.connection.ConnectionProps;
 import org.eclipse.daanse.olap.api.Context;
+import org.eclipse.daanse.olap.api.connection.ConnectionProps;
 import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.rolap.api.RolapContext;
@@ -42,16 +42,8 @@ import org.eclipse.daanse.rolap.common.RolapStar;
 import org.eclipse.daanse.rolap.common.util.PojoUtil;
 import org.eclipse.daanse.rolap.element.RolapCatalog;
 import org.eclipse.daanse.rolap.element.RolapCube;
-import org.eclipse.daanse.rolap.mapping.api.model.ColumnMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.DatabaseSchemaMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.QueryMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.TableQueryMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.enums.ColumnDataType;
-import org.eclipse.daanse.rolap.mapping.pojo.DatabaseSchemaMappingImpl;
-import org.eclipse.daanse.rolap.mapping.pojo.PhysicalColumnMappingImpl;
-import org.eclipse.daanse.rolap.mapping.pojo.PhysicalTableMappingImpl;
-import org.eclipse.daanse.rolap.mapping.pojo.TableQueryMappingImpl;
-import org.eclipse.daanse.rolap.mapping.pojo.TableQueryOptimizationHintMappingImpl;
+import org.eclipse.daanse.rolap.mapping.model.ColumnType;
+import org.eclipse.daanse.rolap.mapping.model.RolapMappingFactory;
 import org.eclipse.daanse.rolap.recorder.ListRecorder;
 import org.eclipse.daanse.rolap.recorder.MessageRecorder;
 import org.eclipse.daanse.rolap.recorder.RecorderException;
@@ -185,14 +177,14 @@ public class AggTableManager {
 //            connectionProps.aggregateScanCatalog();
             Optional<String> oAaggregateScanSchema=    connectionProps.aggregateScanSchema();
 
-			List<? extends DatabaseSchemaMapping> schemas = ((RolapContext) context).getCatalogMapping()
+			List<? extends org.eclipse.daanse.rolap.mapping.model.DatabaseSchema> schemas = ((RolapContext) context).getCatalogMapping()
 					.getDbschemas();
 
-			DatabaseSchemaMapping databaseSchema = schemas.getFirst();
+			org.eclipse.daanse.rolap.mapping.model.DatabaseSchema databaseSchema = schemas.getFirst();
 			if (oAaggregateScanSchema.isPresent()) {
 				String aaggregateScanSchema = oAaggregateScanSchema.get();
 
-				for (DatabaseSchemaMapping dbs : schemas) {
+				for (org.eclipse.daanse.rolap.mapping.model.DatabaseSchema dbs : schemas) {
 					if (dbs.getName().equals(aaggregateScanSchema)) {
 						databaseSchema = dbs;
 						break;
@@ -229,7 +221,7 @@ public class AggTableManager {
                     // are measure or foreign key columns
 
                     bindToStar(dbFactTable, star, msgRecorder);
-                    DatabaseSchemaMappingImpl schemaInner = getDatabaseSchema(dbFactTable.table.getTable().getSchema());
+                    org.eclipse.daanse.rolap.mapping.model.DatabaseSchema schemaInner = getDatabaseSchema(dbFactTable.table.getTable().getSchema());
 
                     // Now look at all tables in the database and per table,
                     // first see if it is a match for an aggregate table for
@@ -238,8 +230,16 @@ public class AggTableManager {
 
                     for (JdbcSchema.Table dbTable : db.getTables()) {
                         String name = dbTable.getName();
-                        List<ColumnMapping> columns =  dbTable.getColumns().stream().map(c -> (ColumnMapping)PhysicalColumnMappingImpl.builder().withName(c.getName()).withDataType(ColumnDataType.valueOf(c.getTypeName())).build()).toList();
-                        PhysicalTableMappingImpl t = ((PhysicalTableMappingImpl.Builder) PhysicalTableMappingImpl.builder().withName(name).withColumns(columns).withsSchema(schemaInner)).build();
+                        List<org.eclipse.daanse.rolap.mapping.model.PhysicalColumn> columns =  dbTable.getColumns().stream().map(c -> {
+                            org.eclipse.daanse.rolap.mapping.model.PhysicalColumn column = RolapMappingFactory.eINSTANCE.createPhysicalColumn();
+                            column.setName(c.getName());
+                            column.setType(ColumnType.getByName(c.getTypeName()));
+                            return column;
+                        }).toList();
+                        org.eclipse.daanse.rolap.mapping.model.PhysicalTable t = RolapMappingFactory.eINSTANCE.createPhysicalTable();
+                        t.setName(name);
+                        t.getColumns().addAll(columns);
+                        t.setSchema(schemaInner);
 
                         // Do the catalog schema aggregate excludes, exclude
                         // this table name.
@@ -281,7 +281,9 @@ public class AggTableManager {
                         if (makeAggStar) {
                             dbTable.setTableUsageType(
                                 JdbcSchema.TableUsageType.AGG);
-                            dbTable.table = TableQueryMappingImpl.builder().withTable(t).build();
+                            org.eclipse.daanse.rolap.mapping.model.TableQuery q = RolapMappingFactory.eINSTANCE.createTableQuery();
+                            q.setTable(t);
+                            dbTable.table = q;
                             AggStar aggStar = AggStar.makeAggStar(
                                 star,
                                 dbTable,
@@ -316,9 +318,10 @@ public class AggTableManager {
         }
     }
 
-    private DatabaseSchemaMappingImpl getDatabaseSchema(DatabaseSchemaMapping schema) {
+    private org.eclipse.daanse.rolap.mapping.model.DatabaseSchema getDatabaseSchema(org.eclipse.daanse.rolap.mapping.model.DatabaseSchema schema) {
         if (schema != null) {
-            return DatabaseSchemaMappingImpl.builder().withName(schema.getName()).withId(schema.getId()).build(); //TODO add tables?
+            //return DatabaseSchemaMappingImpl.builder().withName(schema.getName()).withId(schema.getId()).build(); //TODO add tables?
+        	return schema; //TODO remove
         }
         return null;
     }
@@ -361,20 +364,32 @@ public class AggTableManager {
 
             dbFactTable.setTableUsageType(JdbcSchema.TableUsageType.FACT);
 
-            QueryMapping relation =
+            org.eclipse.daanse.rolap.mapping.model.Query relation =
                 star.getFactTable().getRelation();
-            DatabaseSchemaMappingImpl schemaInner = null;
-            List<TableQueryOptimizationHintMappingImpl> tableHints = null;
-            if (relation instanceof TableQueryMapping table) {
+            org.eclipse.daanse.rolap.mapping.model.DatabaseSchema schemaInner = null;
+            List<? extends org.eclipse.daanse.rolap.mapping.model.TableQueryOptimizationHint> tableHints = null;
+            if (relation instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery table) {
                 schemaInner = getDatabaseSchema(table.getTable().getSchema());
                 tableHints = PojoUtil.getOptimizationHints(table.getOptimizationHints());
             }
             String tableName = dbFactTable.getName();
-            List<ColumnMapping> columns =  dbFactTable.getColumns().stream().map(c -> ((ColumnMapping)PhysicalColumnMappingImpl.builder().withName(c.getName()).withDataType(ColumnDataType.valueOf(c.getTypeName())).build())).toList();
-            PhysicalTableMappingImpl t = ((PhysicalTableMappingImpl.Builder) PhysicalTableMappingImpl.builder().withName(tableName).withColumns(columns).withsSchema(schemaInner)).build();
+            List<org.eclipse.daanse.rolap.mapping.model.PhysicalColumn> columns =  dbFactTable.getColumns().stream().map(c -> {
+                org.eclipse.daanse.rolap.mapping.model.PhysicalColumn column = RolapMappingFactory.eINSTANCE.createPhysicalColumn();
+                column.setName(c.getName());
+                column.setType(ColumnType.getByName(c.getTypeName()));
+                return column;
+                }).toList();
+            
+            org.eclipse.daanse.rolap.mapping.model.PhysicalTable t = RolapMappingFactory.eINSTANCE.createPhysicalTable();
+            t.setName(tableName);
+            t.getColumns().addAll(columns);
+            t.setSchema(schemaInner);
 
             String alias = null;
-            dbFactTable.table = TableQueryMappingImpl.builder().withTable(t).withAlias(alias).withOptimizationHints(tableHints).build();
+            org.eclipse.daanse.rolap.mapping.model.TableQuery q = RolapMappingFactory.eINSTANCE.createTableQuery();
+            q.setAlias(alias);
+            q.getOptimizationHints().addAll(tableHints);
+            dbFactTable.table = q;
 
             for (JdbcSchema.Table.Column factColumn
                 : dbFactTable.getColumns())

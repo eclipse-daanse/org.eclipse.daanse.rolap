@@ -19,12 +19,6 @@ import static org.eclipse.daanse.rolap.common.util.JoinUtil.right;
 import java.util.Objects;
 
 import org.eclipse.daanse.rolap.common.RolapRuntimeException;
-import org.eclipse.daanse.rolap.mapping.api.model.InlineTableQueryMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.JoinQueryMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.QueryMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.RelationalQueryMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.SqlSelectQueryMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.TableQueryMapping;
 
 public class RelationUtil {
 
@@ -32,31 +26,31 @@ public class RelationUtil {
         // constructor
     }
 
-    public static RelationalQueryMapping find(QueryMapping relationOrJoin, String tableName) {
+    public static org.eclipse.daanse.rolap.mapping.model.RelationalQuery find(org.eclipse.daanse.rolap.mapping.model.Query relationOrJoin, String tableName) {
         switch (relationOrJoin) {
-        case InlineTableQueryMapping inlineTable -> {
-            return tableName.equals(inlineTable.getAlias()) ? (RelationalQueryMapping) relationOrJoin : null;
+        case org.eclipse.daanse.rolap.mapping.model.InlineTableQuery inlineTable -> {
+            return tableName.equals(inlineTable.getAlias()) ? (org.eclipse.daanse.rolap.mapping.model.RelationalQuery) relationOrJoin : null;
         }
-        case TableQueryMapping table -> {
+        case org.eclipse.daanse.rolap.mapping.model.TableQuery table -> {
             if (tableName.equals(table.getTable().getName())) {
-                return (RelationalQueryMapping) relationOrJoin;
+                return (org.eclipse.daanse.rolap.mapping.model.RelationalQuery) relationOrJoin;
             } else {
                     return null; //old version of code had wrong condition with equals
             }
         }
-        case SqlSelectQueryMapping view -> {
+        case org.eclipse.daanse.rolap.mapping.model.SqlSelectQuery view -> {
             if (tableName.equals(view.getAlias())) {
-                return (RelationalQueryMapping) relationOrJoin;
+                return (org.eclipse.daanse.rolap.mapping.model.RelationalQuery) relationOrJoin;
             } else {
                 return null;
             }
         }
-        case JoinQueryMapping join -> {
-            QueryMapping relation = find(left(join), tableName);
+        case org.eclipse.daanse.rolap.mapping.model.JoinQuery join -> {
+        	org.eclipse.daanse.rolap.mapping.model.Query relation = find(left(join), tableName);
             if (relation == null) {
                 relation = find(right(join), tableName);
             }
-            return (RelationalQueryMapping) relation;
+            return (org.eclipse.daanse.rolap.mapping.model.RelationalQuery) relation;
         }
         case null, default -> {
         }
@@ -65,8 +59,8 @@ public class RelationUtil {
         throw new RolapRuntimeException("Rlation: find error");
     }
 
-    public static String getAlias(RelationalQueryMapping relation) {
-        if (relation instanceof TableQueryMapping table) {
+    public static String getAlias(org.eclipse.daanse.rolap.mapping.model.RelationalQuery relation) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery table) {
             return (table.getAlias() != null) ? table.getAlias() : table.getTable() != null ? table.getTable().getName() : null;
         }
         else {
@@ -74,8 +68,8 @@ public class RelationUtil {
         }
     }
 
-    public static String getTableName(RelationalQueryMapping relation) {
-        if (relation instanceof TableQueryMapping table) {
+    public static String getTableName(org.eclipse.daanse.rolap.mapping.model.RelationalQuery relation) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery table) {
             return table.getTable() != null ? table.getTable().getName() : null;
         }
         else {
@@ -83,9 +77,9 @@ public class RelationUtil {
         }
     }
 
-    public static boolean equals(RelationalQueryMapping relation, Object o) {
-        if (relation instanceof SqlSelectQueryMapping view) {
-            if (o instanceof SqlSelectQueryMapping that) {
+    public static boolean equals(org.eclipse.daanse.rolap.mapping.model.RelationalQuery relation, Object o) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.SqlSelectQuery view) {
+            if (o instanceof org.eclipse.daanse.rolap.mapping.model.SqlSelectQuery that) {
                 if (!Objects.equals(relation.getAlias(), that.getAlias())) {
                     return false;
                 }
@@ -117,8 +111,8 @@ public class RelationUtil {
                 return false;
             }
         }
-        if (relation instanceof TableQueryMapping table) {
-            if (o instanceof TableQueryMapping that) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery table) {
+            if (o instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery that) {
                 return table.getTable() != null &&  that.getTable() != null && 
                 	table.getTable().getName().equals(that.getTable().getName()) &&
                     Objects.equals(relation.getAlias(), that.getAlias()) &&
@@ -127,8 +121,8 @@ public class RelationUtil {
                 return false;
             }
         }
-        if (relation instanceof InlineTableQueryMapping) {
-            if (o instanceof InlineTableQueryMapping that) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.InlineTableQuery) {
+            if (o instanceof org.eclipse.daanse.rolap.mapping.model.InlineTableQuery that) {
                 return relation.getAlias().equals(that.getAlias());
             } else {
                 return false;
@@ -138,28 +132,28 @@ public class RelationUtil {
         return relation == o;
     }
 
-    public static int hashCode(RelationalQueryMapping relation) {
-        if (relation instanceof TableQueryMapping) {
+    public static int hashCode(org.eclipse.daanse.rolap.mapping.model.RelationalQuery relation) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery) {
             return toString(relation).hashCode();
         }
-        if (relation instanceof InlineTableQueryMapping) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.InlineTableQuery) {
             return toString(relation).hashCode();
         }
         return System.identityHashCode(relation);
     }
 
-    private static Object toString(RelationalQueryMapping relation) {
-        if (relation instanceof TableQueryMapping table) {
+    private static Object toString(org.eclipse.daanse.rolap.mapping.model.RelationalQuery relation) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery table) {
             return (table.getTable().getSchema() == null || table.getTable().getSchema().getName() == null) ?
                 table.getTable().getName() :
                 new StringBuilder(table.getTable().getSchema().getName()).append(".").append(table.getTable().getName()).toString();
         }
-        if (relation instanceof JoinQueryMapping join) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.JoinQuery join) {
             return new StringBuilder("(").append(left(join)).append(") join (").append(right(join)).append(") on ")
                 .append(join.getLeft().getAlias()).append(".").append(join.getLeft().getKey()).append(" = ")
                 .append(join.getRight().getAlias()).append(".").append(join.getRight().getKey()).toString();
         }
-        if (relation instanceof InlineTableQueryMapping) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.InlineTableQuery) {
             return "<inline data>";
         }
         return relation.toString();

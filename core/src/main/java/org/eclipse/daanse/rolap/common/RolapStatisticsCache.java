@@ -38,9 +38,6 @@ import org.eclipse.daanse.olap.api.SqlExpression;
 import org.eclipse.daanse.olap.common.ExecuteDurationUtil;
 import  org.eclipse.daanse.olap.server.ExecutionImpl;
 import org.eclipse.daanse.rolap.common.sql.SqlQuery;
-import org.eclipse.daanse.rolap.mapping.api.model.RelationalQueryMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.TableMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.TableQueryMapping;
 import org.eclipse.daanse.rolap.sql.SqlStatisticsProviderNew;
 
 
@@ -62,14 +59,14 @@ public class RolapStatisticsCache {
     }
 
     public long getRelationCardinality(
-        RelationalQueryMapping relation,
+        org.eclipse.daanse.rolap.mapping.model.RelationalQuery relation,
         String alias,
         long approxRowCount)
     {
         if (approxRowCount >= 0) {
             return approxRowCount;
         }
-        if (relation instanceof TableQueryMapping table) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery table) {
             return getTableCardinality(
                 null, table.getTable());
         } else {
@@ -82,7 +79,7 @@ public class RolapStatisticsCache {
 
     private long getTableCardinality(
         String catalog,
-        TableMapping table)
+        org.eclipse.daanse.rolap.mapping.model.Table table)
     {
     	String schema = table.getSchema() != null ? table.getSchema().getName() : null;
         final List<String> key = Arrays.asList(catalog, schema, table.getName());
@@ -147,14 +144,14 @@ public class RolapStatisticsCache {
     }
 
     public long getColumnCardinality(
-    	RelationalQueryMapping relation,
-    	SqlExpression expression,
+        org.eclipse.daanse.rolap.mapping.model.RelationalQuery relation,
+        SqlExpression expression,
         long approxCardinality)
     {
         if (approxCardinality >= 0) {
             return approxCardinality;
         }
-        if (relation instanceof TableQueryMapping table
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery table
             && expression instanceof org.eclipse.daanse.rolap.element.RolapColumn column)
         {
             return getColumnCardinality(
@@ -172,7 +169,7 @@ public class RolapStatisticsCache {
 
     private long getColumnCardinality(
         String catalog,
-        TableMapping table,
+        org.eclipse.daanse.rolap.mapping.model.Table table,
         String column)
     {
     	String schema = table.getSchema() != null ? table.getSchema().getName() : null;

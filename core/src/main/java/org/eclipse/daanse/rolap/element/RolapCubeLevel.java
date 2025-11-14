@@ -43,11 +43,6 @@ import org.eclipse.daanse.rolap.common.agg.RangeColumnPredicate;
 import org.eclipse.daanse.rolap.common.agg.ValueColumnPredicate;
 import org.eclipse.daanse.rolap.common.util.ExpressionUtil;
 import org.eclipse.daanse.rolap.common.util.RelationUtil;
-import org.eclipse.daanse.rolap.mapping.api.model.DimensionConnectorMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.JoinQueryMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.QueryMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.RelationalQueryMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.TableQueryMapping;
 
 /**
  * RolapCubeLevel wraps a RolapLevel for a specific Cube.
@@ -104,7 +99,7 @@ public class RolapCubeLevel extends RolapLevel implements CubeLevel {
         if (parentCubeLevel != null) {
             parentCubeLevel.childCubeLevel = this;
         }
-        QueryMapping hierarchyRel = cubeHierarchy.getRelation();
+        org.eclipse.daanse.rolap.mapping.model.Query hierarchyRel = cubeHierarchy.getRelation();
         keyExp = convertExpression(level.getKeyExp(), hierarchyRel);
         nameExp = convertExpression(level.getNameExp(), hierarchyRel);
         captionExp = convertExpression(level.getCaptionExp(), hierarchyRel);
@@ -115,7 +110,7 @@ public class RolapCubeLevel extends RolapLevel implements CubeLevel {
 
     @Override
 	public
-	void init(DimensionConnectorMapping xmlDimension) {
+	void init(org.eclipse.daanse.rolap.mapping.model.DimensionConnector xmlDimension) {
         if (isAll()) {
             this.levelReader = new AllLevelReaderImpl();
         } else if (getLevelType() == LevelType.NULL) {
@@ -160,7 +155,7 @@ public class RolapCubeLevel extends RolapLevel implements CubeLevel {
 
     private RolapProperty[] convertProperties(
         RolapProperty[] properties,
-        QueryMapping rel)
+        org.eclipse.daanse.rolap.mapping.model.Query rel)
     {
         if (properties == null) {
             return new RolapProperty[0];
@@ -194,7 +189,7 @@ public class RolapCubeLevel extends RolapLevel implements CubeLevel {
      */
     private SqlExpression convertExpression(
             SqlExpression exp,
-        QueryMapping rel)
+            org.eclipse.daanse.rolap.mapping.model.Query rel)
     {
         if (getHierarchy().isUsingCubeFact()) {
             // no conversion necessary
@@ -202,12 +197,12 @@ public class RolapCubeLevel extends RolapLevel implements CubeLevel {
         } else if (exp == null || rel == null) {
             return null;
         } else if (exp instanceof org.eclipse.daanse.rolap.element.RolapColumn col) {
-            if (rel instanceof TableQueryMapping table) {
+            if (rel instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery table) {
                 return new org.eclipse.daanse.rolap.element.RolapColumn(
                     RelationUtil.getAlias(table),
                     col.getName());
-            } else if (rel instanceof JoinQueryMapping
-                || rel instanceof RelationalQueryMapping)
+            } else if (rel instanceof org.eclipse.daanse.rolap.mapping.model.JoinQuery
+                || rel instanceof org.eclipse.daanse.rolap.mapping.model.RelationalQuery)
             {
                 // need to determine correct name of alias for this level.
                 // this may be defined in level

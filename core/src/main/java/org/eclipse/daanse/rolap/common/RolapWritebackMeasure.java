@@ -27,14 +27,13 @@
 package org.eclipse.daanse.rolap.common;
 
 import org.eclipse.daanse.olap.api.element.Member;
-import org.eclipse.daanse.rolap.mapping.api.model.ColumnMapping;
 
 public class RolapWritebackMeasure  extends RolapWritebackColumn {
     private final Member measure;
 
     public RolapWritebackMeasure(
             Member measure,
-            ColumnMapping column
+            org.eclipse.daanse.rolap.mapping.model.Column column
     ) {
         super(column);
         this.measure = measure;

@@ -34,12 +34,10 @@ import static org.eclipse.daanse.rolap.common.util.RelationUtil.getAlias;
 import java.sql.SQLException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.function.Consumer;
@@ -61,23 +59,16 @@ import org.eclipse.daanse.olap.exceptions.MdxCantFindMemberException;
 import org.eclipse.daanse.olap.fun.FunUtil;
 import org.eclipse.daanse.olap.key.BitKey;
 import  org.eclipse.daanse.olap.server.LocusImpl;
+import org.eclipse.daanse.rolap.common.connection.AbstractRolapConnection;
 import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.element.RolapCubeLevel;
 import org.eclipse.daanse.rolap.element.RolapCubeMember;
 import org.eclipse.daanse.rolap.element.RolapHierarchy;
+import org.eclipse.daanse.rolap.element.RolapHierarchy.LimitedRollupMember;
 import org.eclipse.daanse.rolap.element.RolapLevel;
 import org.eclipse.daanse.rolap.element.RolapMember;
 import org.eclipse.daanse.rolap.element.RolapProperty;
-import org.eclipse.daanse.rolap.element.RolapHierarchy.LimitedRollupMember;
-import org.eclipse.daanse.rolap.mapping.api.model.ColumnMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.InlineTableQueryMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.RelationalQueryMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.RowMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.RowValueMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.TableQueryMapping;
-import org.eclipse.daanse.rolap.mapping.pojo.SqlSelectQueryMappingImpl;
-import org.eclipse.daanse.rolap.mapping.pojo.SqlStatementMappingImpl;
-import org.eclipse.daanse.rolap.mapping.pojo.SqlViewMappingImpl;
+import org.eclipse.daanse.rolap.mapping.model.RolapMappingFactory;
 import org.eclipse.daanse.rolap.util.ClassResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -476,8 +467,8 @@ public class RolapUtil {
         return bestMatch;
     }
 
-    public static RelationalQueryMapping convertInlineTableToRelation(
-        InlineTableQueryMapping inlineTable,
+    public static org.eclipse.daanse.rolap.mapping.model.RelationalQuery convertInlineTableToRelation(
+    		org.eclipse.daanse.rolap.mapping.model.InlineTableQuery inlineTable,
         final Dialect dialect)
     {
 
@@ -486,12 +477,12 @@ public class RolapUtil {
         List<String> columnTypes = new ArrayList<>();
         for (int i = 0; i < columnCount; i++) {
             columnNames.add(inlineTable.getTable().getColumns().get(i).getName());
-            columnTypes.add(inlineTable.getTable().getColumns().get(i).getDataType().getValue());
+            columnTypes.add(inlineTable.getTable().getColumns().get(i).getType().getLiteral());
         }
         List<String[]> valueList = new ArrayList<>();
-        for (RowMapping row : inlineTable.getTable().getRows()) {
+        for (org.eclipse.daanse.rolap.mapping.model.Row row : inlineTable.getTable().getRows()) {
             String[] values = new String[columnCount];
-            for (RowValueMapping value : row.getRowValues()) {
+            for (org.eclipse.daanse.rolap.mapping.model.RowValue value : row.getRowValues()) {
                 final int columnOrdinal = columnNames.indexOf(value.getColumn().getName());
                 if (columnOrdinal < 0) {
                     throw Util.newError(
@@ -501,55 +492,55 @@ public class RolapUtil {
             }
             valueList.add(values);
         }
-        SqlSelectQueryMappingImpl view = SqlSelectQueryMappingImpl.builder()
-        		.withAlias(getAlias(inlineTable))
-        		.withSql(SqlViewMappingImpl.builder()
-        				//TODO
-        				.withSqlStatements(List.of(
-        					SqlStatementMappingImpl.builder()
-        					.withDialects(List.of("generic"))
-        					.withSql(dialect.generateInline(columnNames, columnTypes, valueList).toString())
-        					.build()
-        				))
-        				.build())
-        		.build();
+        org.eclipse.daanse.rolap.mapping.model.SqlSelectQuery view = RolapMappingFactory.eINSTANCE.createSqlSelectQuery();
+        view.setAlias(getAlias(inlineTable));
+        
+        org.eclipse.daanse.rolap.mapping.model.SqlStatement sqlStatement = RolapMappingFactory.eINSTANCE.createSqlStatement();
+        sqlStatement.getDialects().add("generic");
+        sqlStatement.setSql(dialect.generateInline(columnNames, columnTypes, valueList).toString());
+        
+        org.eclipse.daanse.rolap.mapping.model.SqlView sqlView = RolapMappingFactory.eINSTANCE.createSqlView();
+        sqlView.getSqlStatements().add(sqlStatement);
+
+        view.setSql(sqlView);
+
         return view;
     }
 
-    public static RelationalQueryMapping convertInlineTableToRelation(
-            InlineTableQueryMapping inlineTable,
+    public static org.eclipse.daanse.rolap.mapping.model.RelationalQuery convertInlineTableToRelation(
+    		org.eclipse.daanse.rolap.mapping.model.InlineTableQuery inlineTable,
             final Dialect dialect, List<String> orderColumns)
         {
             List<String> columnNames = new ArrayList<>();
             List<String> columnTypes = new ArrayList<>();
             
-            List<? extends ColumnMapping> columns = inlineTable.getTable().getColumns().stream().sorted(Comparator.comparingInt(o -> orderColumns.indexOf(o.getName()))).toList();
+            List<? extends org.eclipse.daanse.rolap.mapping.model.Column> columns = inlineTable.getTable().getColumns().stream().sorted(Comparator.comparingInt(o -> orderColumns.indexOf(o.getName()))).toList();
             
-            for (ColumnMapping columnMapping : columns) {
+            for (org.eclipse.daanse.rolap.mapping.model.Column columnMapping : columns) {
             		columnNames.add(columnMapping.getName());
-            		columnTypes.add(columnMapping.getDataType().getValue());
+            		columnTypes.add(columnMapping.getType().getLiteral());
             }
             List<String[]> valueList = new ArrayList<>();
-            for (RowMapping row : inlineTable.getTable().getRows()) {
+            for (org.eclipse.daanse.rolap.mapping.model.Row row : inlineTable.getTable().getRows()) {
                 List<String> values = new ArrayList<>();
-                List<? extends RowValueMapping> rowValues = row.getRowValues().stream().sorted(Comparator.comparingInt(v -> orderColumns.indexOf(v.getColumn().getName()))).toList();
-                for (RowValueMapping rowValue : rowValues) {                	
+                List<? extends org.eclipse.daanse.rolap.mapping.model.RowValue> rowValues = row.getRowValues().stream().sorted(Comparator.comparingInt(v -> orderColumns.indexOf(v.getColumn().getName()))).toList();
+                for (org.eclipse.daanse.rolap.mapping.model.RowValue rowValue : rowValues) {
                 	values.add(rowValue.getValue());
                 }
                 valueList.add(values.toArray(new String[0]));
             }
-            SqlSelectQueryMappingImpl view = SqlSelectQueryMappingImpl.builder()
-            		.withAlias(getAlias(inlineTable))
-            		.withSql(SqlViewMappingImpl.builder()
-            				//TODO
-            				.withSqlStatements(List.of(
-            					SqlStatementMappingImpl.builder()
-            					.withDialects(List.of("generic"))
-            					.withSql(dialect.generateInline(columnNames, columnTypes, valueList).toString())
-            					.build()
-            				))
-            				.build())
-            		.build();
+            
+            org.eclipse.daanse.rolap.mapping.model.SqlStatement sqlStatement = RolapMappingFactory.eINSTANCE.createSqlStatement();
+            sqlStatement.getDialects().add("generic");
+            sqlStatement.setSql(dialect.generateInline(columnNames, columnTypes, valueList).toString());
+            
+            org.eclipse.daanse.rolap.mapping.model.SqlView sqlView = RolapMappingFactory.eINSTANCE.createSqlView();
+            sqlView.getSqlStatements().add(sqlStatement);
+            
+            org.eclipse.daanse.rolap.mapping.model.SqlSelectQuery view = RolapMappingFactory.eINSTANCE.createSqlSelectQuery();
+            view.setAlias(getAlias(inlineTable));
+            view.setSql(sqlView);
+            
             return view;
         }
 
@@ -637,12 +628,12 @@ public class RolapUtil {
      * @return the rolap star key
      */
     public static List<String> makeRolapStarKey(
-        final RelationalQueryMapping fact)
+        final org.eclipse.daanse.rolap.mapping.model.RelationalQuery fact)
     {
       List<String> rlStarKey = new ArrayList<>();
-      TableQueryMapping table = null;
+      org.eclipse.daanse.rolap.mapping.model.TableQuery table = null;
       rlStarKey.add(getAlias(fact));
-      if (fact instanceof TableQueryMapping t) {
+      if (fact instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery t) {
         table = t;
       }
       // Add SQL filter to the key

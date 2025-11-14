@@ -18,13 +18,10 @@
  */
 package org.eclipse.daanse.rolap.element;
 
-import org.eclipse.daanse.rolap.mapping.api.model.DimensionConnectorMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.DimensionMapping;
-
 public class TestPublicRolapDimension extends RolapDimension{
 
-	TestPublicRolapDimension(RolapCatalog schema, RolapCube cube, DimensionMapping xmlDimension,
-			DimensionConnectorMapping xmlCubeDimension) {
+	TestPublicRolapDimension(RolapCatalog schema, RolapCube cube, org.eclipse.daanse.rolap.mapping.model.Dimension xmlDimension,
+			org.eclipse.daanse.rolap.mapping.model.DimensionConnector xmlCubeDimension) {
 		super(schema, cube, xmlDimension, xmlCubeDimension);
 	}
 

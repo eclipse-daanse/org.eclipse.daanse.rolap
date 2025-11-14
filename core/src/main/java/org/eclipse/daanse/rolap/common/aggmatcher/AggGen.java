@@ -43,7 +43,6 @@ import org.eclipse.daanse.rolap.api.RolapContext;
 import org.eclipse.daanse.rolap.common.RolapStar;
 import org.eclipse.daanse.rolap.common.sql.SqlQuery;
 import org.eclipse.daanse.rolap.element.RolapColumn;
-import org.eclipse.daanse.rolap.mapping.api.model.DatabaseSchemaMapping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -186,7 +185,7 @@ public class AggGen {
      * create lost create and insert commands.
      */
     private void init() {
-    DatabaseSchemaMapping dbschema=	((RolapContext) star.getContext()).getCatalogMapping().getDbschemas().getFirst();
+    org.eclipse.daanse.rolap.mapping.model.DatabaseSchema dbschema=	((RolapContext) star.getContext()).getCatalogMapping().getDbschemas().getFirst();
         JdbcSchema db =   new JdbcSchema(dbschema);
 
         JdbcSchema.Table factTable = getTable(db, getFactTableName());

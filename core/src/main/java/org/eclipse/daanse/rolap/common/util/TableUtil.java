@@ -16,20 +16,18 @@ package org.eclipse.daanse.rolap.common.util;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.eclipse.daanse.rolap.mapping.api.model.TableQueryMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.TableQueryOptimizationHintMapping;
-
 
 public class TableUtil {
-	public static Map<String, String> getHintMap(TableQueryMapping table) {
+	public static Map<String, String> getHintMap(org.eclipse.daanse.rolap.mapping.model.TableQuery table) {
 
 		if (table.getOptimizationHints() == null) {
 			return Map.of();
 		}
-		return table.getOptimizationHints().stream().collect(Collectors.toMap(TableQueryOptimizationHintMapping::getType, TableQueryOptimizationHintMapping::getValue));
+		return table.getOptimizationHints().stream()
+				.collect(Collectors.toMap(org.eclipse.daanse.rolap.mapping.model.TableQueryOptimizationHint::getType, org.eclipse.daanse.rolap.mapping.model.TableQueryOptimizationHint::getValue));
 	}
 
-    public static String getFilter(TableQueryMapping table) {
+    public static String getFilter(org.eclipse.daanse.rolap.mapping.model.TableQuery table) {
         return (table.getSqlWhereExpression() == null) ? null : table.getSqlWhereExpression().getSql();
     }
 }

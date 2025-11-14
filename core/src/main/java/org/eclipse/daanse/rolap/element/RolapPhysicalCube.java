@@ -62,26 +62,8 @@ import org.eclipse.daanse.rolap.common.RolapWritebackAttribute;
 import org.eclipse.daanse.rolap.common.RolapWritebackColumn;
 import org.eclipse.daanse.rolap.common.RolapWritebackMeasure;
 import org.eclipse.daanse.rolap.common.RolapWritebackTable;
-import org.eclipse.daanse.rolap.mapping.api.model.ActionMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.CatalogMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.ColumnMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.ColumnMeasureMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.CountMeasureMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.CubeMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.DrillThroughActionMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.DrillThroughAttributeMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.MeasureGroupMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.MeasureMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.PhysicalColumnMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.PhysicalCubeMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.RelationalQueryMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.SQLExpressionColumnMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.SqlExpressionMeasureMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.WritebackAttributeMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.WritebackMeasureMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.WritebackTableMapping;
-import org.eclipse.daanse.rolap.mapping.pojo.AnnotationMappingImpl;
-import org.eclipse.daanse.rolap.mapping.pojo.CountMeasureMappingImpl;
+import org.eclipse.daanse.rolap.mapping.model.Annotation;
+import org.eclipse.daanse.rolap.mapping.model.RolapMappingFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,10 +75,10 @@ public class RolapPhysicalCube extends RolapCube implements PhysicalCube {
     /**
      * Creates a RolapCube from a regular cube.
      */
-    RolapPhysicalCube(RolapCatalog catalog, CatalogMapping catalogMapping, PhysicalCubeMapping cubeMapping,
+    RolapPhysicalCube(RolapCatalog catalog, org.eclipse.daanse.rolap.mapping.model.Catalog catalogMapping, org.eclipse.daanse.rolap.mapping.model.PhysicalCube cubeMapping,
             Context context) {
         super(catalog, catalogMapping, cubeMapping, cubeMapping.isCache(),
-                (RelationalQueryMapping) cubeMapping.getQuery(), context);
+                (org.eclipse.daanse.rolap.mapping.model.RelationalQuery) cubeMapping.getQuery(), context);
 
         if (getFact() == null) {
             throw Util.newError(
@@ -144,17 +126,17 @@ public class RolapPhysicalCube extends RolapCube implements PhysicalCube {
         }
     }
 
-    private List<RolapMember> initMeasures(PhysicalCubeMapping cubeMapping) {
+    private List<RolapMember> initMeasures(org.eclipse.daanse.rolap.mapping.model.PhysicalCube cubeMapping) {
         RolapLevel measuresLevel = this.getMeasuresHierarchy().newMeasuresLevel();
 
-        List<? extends MeasureMapping> measureMappings = cubeMapping.getMeasureGroups().stream()
-                .map(MeasureGroupMapping::getMeasures).flatMap(Collection::stream).toList();
+        List<? extends org.eclipse.daanse.rolap.mapping.model.BaseMeasure> measureMappings = cubeMapping.getMeasureGroups().stream()
+                .map(org.eclipse.daanse.rolap.mapping.model.MeasureGroup::getMeasures).flatMap(Collection::stream).toList();
 
         List<RolapMember> measureList = new ArrayList<>(measureMappings.size());
 
         AtomicInteger ai = new AtomicInteger();
         Member defaultMeasure = null;
-        for (MeasureMapping measureMapping : measureMappings) {
+        for (org.eclipse.daanse.rolap.mapping.model.BaseMeasure measureMapping : measureMappings) {
             RolapBaseCubeMeasure measure = createMeasure(cubeMapping, measuresLevel, ai.getAndIncrement(),
                     measureMapping);
             measureList.add(measure);
@@ -179,12 +161,15 @@ public class RolapPhysicalCube extends RolapCube implements PhysicalCube {
         // Ensure that cube has an atomic cell count
         // measure even if the schema does not contain one.
         if (factCountMeasure == null) {
-            AnnotationMappingImpl internalUsage = AnnotationMappingImpl.builder().withName("Internal Use")
-                    .withValue("For internal use").build();
-            List<AnnotationMappingImpl> annotations = new ArrayList<>();
+            Annotation internalUsage = RolapMappingFactory.eINSTANCE.createAnnotation();
+            internalUsage.setName("Internal Use");
+            internalUsage.setValue("For internal use");
+            List<Annotation> annotations = new ArrayList<>();
             annotations.add(internalUsage);
-            final CountMeasureMappingImpl mappingMeasure = CountMeasureMappingImpl.builder().withName("Fact Count")
-                    .withVisible(false).withAnnotations(annotations).build();
+            final org.eclipse.daanse.rolap.mapping.model.CountMeasure mappingMeasure = RolapMappingFactory.eINSTANCE.createCountMeasure();
+            mappingMeasure.setName("Fact Count");
+            mappingMeasure.setVisible(false);
+            mappingMeasure.getAnnotations().addAll(annotations);
             factCountMeasure = createMeasure(cubeMapping, measuresLevel, -1, mappingMeasure);
             measureList.add(factCountMeasure);
         }
@@ -196,12 +181,12 @@ public class RolapPhysicalCube extends RolapCube implements PhysicalCube {
         return measureList;
     }
 
-    private void initWritebackTables(PhysicalCubeMapping cubeMapping) {
+    private void initWritebackTables(org.eclipse.daanse.rolap.mapping.model.PhysicalCube cubeMapping) {
         if (cubeMapping.getWritebackTable() != null) {
-            WritebackTableMapping writebackTable = cubeMapping.getWritebackTable();
+        	org.eclipse.daanse.rolap.mapping.model.WritebackTable writebackTable = cubeMapping.getWritebackTable();
             List<RolapWritebackColumn> columns = new ArrayList<>();
 
-            for (WritebackAttributeMapping writebackAttribute : writebackTable.getWritebackAttribute()) {
+            for (org.eclipse.daanse.rolap.mapping.model.WritebackAttribute writebackAttribute : writebackTable.getWritebackAttribute()) {
 
                 Dimension dimension = null;
                 for (Dimension currentDimension : this.getDimensions()) {
@@ -220,7 +205,7 @@ public class RolapPhysicalCube extends RolapCube implements PhysicalCube {
                 columns.add(new RolapWritebackAttribute(dimension, writebackAttribute.getColumn()));
 
             }
-            for (WritebackMeasureMapping writebackMeasure : writebackTable.getWritebackMeasure()) {
+            for (org.eclipse.daanse.rolap.mapping.model.WritebackMeasure writebackMeasure : writebackTable.getWritebackMeasure()) {
                 Member measure = null;
                 for (Member currentMeasure : this.getMeasures()) {
                     if (currentMeasure instanceof RolapBaseCubeMeasure rbcm
@@ -241,12 +226,12 @@ public class RolapPhysicalCube extends RolapCube implements PhysicalCube {
         }
     }
 
-    private void initActions(PhysicalCubeMapping cubeMapping) {
-        for (ActionMapping mappingAction : cubeMapping.getAction()) {
-            if (mappingAction instanceof DrillThroughActionMapping mappingDrillThroughAction) {
+    private void initActions(org.eclipse.daanse.rolap.mapping.model.PhysicalCube cubeMapping) {
+        for (org.eclipse.daanse.rolap.mapping.model.Action mappingAction : cubeMapping.getAction()) {
+            if (mappingAction instanceof org.eclipse.daanse.rolap.mapping.model.DrillThroughAction mappingDrillThroughAction) {
                 List<DrillThroughColumn> columns = new ArrayList<>();
 
-                for (DrillThroughAttributeMapping mappingDrillThroughAttribute : mappingDrillThroughAction
+                for (org.eclipse.daanse.rolap.mapping.model.DrillThroughAttribute mappingDrillThroughAttribute : mappingDrillThroughAction
                         .getDrillThroughAttribute()) {
                     Dimension dimension = null;
                     Hierarchy hierarchy = null;
@@ -313,7 +298,7 @@ public class RolapPhysicalCube extends RolapCube implements PhysicalCube {
                     columns.add(new RolapDrillThroughAttribute(dimension, hierarchy, level, property));
 
                 }
-                for (MeasureMapping drillThroughMeasure : mappingDrillThroughAction.getDrillThroughMeasure()) {
+                for (org.eclipse.daanse.rolap.mapping.model.BaseMeasure drillThroughMeasure : mappingDrillThroughAction.getDrillThroughMeasure()) {
                     Member measure = null;
                     for (Member currntMeasure : this.getMeasures()) {
                         if (currntMeasure.getName().equals(drillThroughMeasure.getName())) {
@@ -345,24 +330,24 @@ public class RolapPhysicalCube extends RolapCube implements PhysicalCube {
      * @param measureMapping XML measure
      * @return Measure
      */
-    private RolapBaseCubeMeasure createMeasure(CubeMapping cubeMapping, RolapLevel measuresLevel, int ordinal,
-            final MeasureMapping measureMapping) {
-        ColumnMapping columnMapping;
+    private RolapBaseCubeMeasure createMeasure(org.eclipse.daanse.rolap.mapping.model.Cube cubeMapping, RolapLevel measuresLevel, int ordinal,
+            final org.eclipse.daanse.rolap.mapping.model.BaseMeasure measureMapping) {
+    	org.eclipse.daanse.rolap.mapping.model.Column columnMapping;
         RolapSqlExpression measureExp = null;
-        if (measureMapping instanceof ColumnMeasureMapping cmm) {
+        if (measureMapping instanceof org.eclipse.daanse.rolap.mapping.model.ColumnBaseMeasure cmm) {
             columnMapping = cmm.getColumn();
-            if (columnMapping instanceof PhysicalColumnMapping pc) {
+            if (columnMapping instanceof org.eclipse.daanse.rolap.mapping.model.PhysicalColumn pc) {
                 measureExp = new RolapColumn(getAlias(getFact()), pc.getName());
-            } else if (columnMapping instanceof SQLExpressionColumnMapping scm) {
+            } else if (columnMapping instanceof org.eclipse.daanse.rolap.mapping.model.SQLExpressionColumn scm) {
                 measureExp = new RolapSqlExpression(scm);
-            } else if (measureMapping instanceof CountMeasureMapping) {
+            } else if (measureMapping instanceof org.eclipse.daanse.rolap.mapping.model.CountMeasure) {
                 // it's ok if count has no expression; it means 'count(*)'
                 measureExp = null;
             } else {
                 throw new BadMeasureSourceException(cubeMapping.getName(), measureMapping.getName());
             }
         }
-        if (measureMapping instanceof SqlExpressionMeasureMapping cmm) {
+        if (measureMapping instanceof org.eclipse.daanse.rolap.mapping.model.SQLExpressionBaseMeasure cmm) {
             if (cmm.getColumn() != null) {
                 measureExp = new RolapSqlExpression(cmm.getColumn());
             } else {
@@ -374,7 +359,7 @@ public class RolapPhysicalCube extends RolapCube implements PhysicalCube {
         Aggregator aggregator = this.getContext().getAggragationFactory().getAggregator(measureMapping);
         final RolapBaseCubeMeasure measure = new RolapBaseCubeMeasure(this, null, measuresLevel,
                 measureMapping.getName(), measureMapping.getName(), measureMapping.getDescription(),
-                measureMapping.getFormatString(), measureExp, aggregator, measureMapping.getDatatype(),
+                measureMapping.getFormatString(), measureExp, aggregator, measureMapping.getDataType(),
                 RolapMetaData.createMetaData(measureMapping.getAnnotations()));
 
         FormatterCreateContext formatterContext = new FormatterCreateContext.Builder(measure.getUniqueName())
@@ -423,7 +408,7 @@ public class RolapPhysicalCube extends RolapCube implements PhysicalCube {
     /**
      * Post-initialization, doing things which cannot be done in the constructor.
      */
-    private void init(CubeMapping mappingCube, final List<RolapMember> memberList) {
+    private void init(org.eclipse.daanse.rolap.mapping.model.Cube mappingCube, final List<RolapMember> memberList) {
         // Load calculated members and named sets.
         // (We cannot do this in the constructor, because
         // cannot parse the generated query, because the schema has not been

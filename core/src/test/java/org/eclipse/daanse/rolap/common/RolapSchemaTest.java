@@ -65,30 +65,22 @@ import org.eclipse.daanse.rolap.common.agg.AggregationManager;
 import org.eclipse.daanse.rolap.common.agg.SegmentCacheManager;
 import org.eclipse.daanse.rolap.element.RolapCatalog;
 import org.eclipse.daanse.rolap.element.RolapCube;
-import org.eclipse.daanse.rolap.mapping.api.model.AccessCubeGrantMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.AccessHierarchyGrantMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.CubeMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.HierarchyMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.RelationalQueryMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.enums.AccessCatalog;
-import org.eclipse.daanse.rolap.mapping.api.model.enums.AccessCube;
-import org.eclipse.daanse.rolap.mapping.api.model.enums.AccessDimension;
-import org.eclipse.daanse.rolap.mapping.api.model.enums.AccessHierarchy;
-import org.eclipse.daanse.rolap.mapping.api.model.enums.AccessMember;
-import org.eclipse.daanse.rolap.mapping.api.model.enums.RollupPolicyType;
-import org.eclipse.daanse.rolap.mapping.pojo.AccessCatalogGrantMappingImpl;
-import org.eclipse.daanse.rolap.mapping.pojo.AccessCubeGrantMappingImpl;
-import org.eclipse.daanse.rolap.mapping.pojo.AccessDimensionGrantMappingImpl;
-import org.eclipse.daanse.rolap.mapping.pojo.AccessHierarchyGrantMappingImpl;
-import org.eclipse.daanse.rolap.mapping.pojo.AccessMemberGrantMappingImpl;
-import org.eclipse.daanse.rolap.mapping.pojo.AccessRoleMappingImpl;
-import org.eclipse.daanse.rolap.mapping.pojo.ExplicitHierarchyMappingImpl;
-import org.eclipse.daanse.rolap.mapping.pojo.HierarchyMappingImpl;
-import org.eclipse.daanse.rolap.mapping.pojo.PhysicalCubeMappingImpl;
-import org.eclipse.daanse.rolap.mapping.pojo.PhysicalTableMappingImpl;
-import org.eclipse.daanse.rolap.mapping.pojo.SqlStatementMappingImpl;
-import org.eclipse.daanse.rolap.mapping.pojo.StandardDimensionMappingImpl;
-import org.eclipse.daanse.rolap.mapping.pojo.TableQueryMappingImpl;
+import org.eclipse.daanse.rolap.mapping.model.AccessCatalogGrant;
+import org.eclipse.daanse.rolap.mapping.model.AccessCubeGrant;
+import org.eclipse.daanse.rolap.mapping.model.AccessDimensionGrant;
+import org.eclipse.daanse.rolap.mapping.model.AccessHierarchyGrant;
+import org.eclipse.daanse.rolap.mapping.model.AccessMemberGrant;
+import org.eclipse.daanse.rolap.mapping.model.CatalogAccess;
+import org.eclipse.daanse.rolap.mapping.model.CubeAccess;
+import org.eclipse.daanse.rolap.mapping.model.DimensionAccess;
+import org.eclipse.daanse.rolap.mapping.model.ExplicitHierarchy;
+import org.eclipse.daanse.rolap.mapping.model.HierarchyAccess;
+import org.eclipse.daanse.rolap.mapping.model.MemberAccess;
+import org.eclipse.daanse.rolap.mapping.model.PhysicalCube;
+import org.eclipse.daanse.rolap.mapping.model.PhysicalTable;
+import org.eclipse.daanse.rolap.mapping.model.RolapMappingFactory;
+import org.eclipse.daanse.rolap.mapping.model.RollupPolicy;
+import org.eclipse.daanse.rolap.mapping.model.StandardDimension;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -154,11 +146,9 @@ class RolapCatalogTest {
 
     @Test
     void testCreateUnionRole_ThrowsException_WhenSchemaGrantsExist() {
-    	AccessRoleMappingImpl role = AccessRoleMappingImpl.builder()
-    			.withAccessCatalogGrants(List.of(
-    					AccessCatalogGrantMappingImpl.builder().build()))
-    			.withReferencedAccessRoles(List.of())
-    			.build();
+    	org.eclipse.daanse.rolap.mapping.model.AccessRole role = RolapMappingFactory.eINSTANCE.createAccessRole();
+    	org.eclipse.daanse.rolap.mapping.model.AccessCatalogGrant accessCatalogGrant = RolapMappingFactory.eINSTANCE.createAccessCatalogGrant();
+    	role.getAccessCatalogGrants().add(accessCatalogGrant);
 
         try {
             createSchema().createUnionRole(role);
@@ -173,12 +163,11 @@ class RolapCatalogTest {
     @Test
     void testCreateUnionRole_ThrowsException_WhenRoleNameIsUnknown() {
         final String roleName = "non-existing role name";
-        AccessRoleMappingImpl usage = AccessRoleMappingImpl.builder()
-        		.withName(roleName)
-        		.build();
+        org.eclipse.daanse.rolap.mapping.model.AccessRole usage = RolapMappingFactory.eINSTANCE.createAccessRole();
+        usage.setName(roleName);
 
-        AccessRoleMappingImpl role = AccessRoleMappingImpl.builder().build();
-        role.setReferencedAccessRoles(List.of(usage));
+        org.eclipse.daanse.rolap.mapping.model.AccessRole role = RolapMappingFactory.eINSTANCE.createAccessRole();
+        role.getReferencedAccessRoles().add(usage);
 
         try {
             createSchema().createUnionRole(role);
@@ -197,21 +186,22 @@ class RolapCatalogTest {
         schema = spy(schema);
         doNothing().when(schema)
             .handleCubeGrant(
-                any(RoleImpl.class), any( AccessCubeGrantMapping.class));
+                any(RoleImpl.class), any( org.eclipse.daanse.rolap.mapping.model.AccessCubeGrant.class));
 
-        AccessCatalogGrantMappingImpl grant = AccessCatalogGrantMappingImpl.builder()
-        		.withAccess(AccessCatalog.CUSTOM)
-        		.withCubeGrant(null)
-        		.build();
-
-        grant.setCubeGrant(List.of(AccessCubeGrantMappingImpl.builder().build(), AccessCubeGrantMappingImpl.builder().build()));
+        AccessCubeGrant cubeGrant1 = RolapMappingFactory.eINSTANCE.createAccessCubeGrant();
+        AccessCubeGrant cubeGrant2 = RolapMappingFactory.eINSTANCE.createAccessCubeGrant();
+        
+        AccessCatalogGrant grant = RolapMappingFactory.eINSTANCE.createAccessCatalogGrant();
+        grant.setCatalogAccess(CatalogAccess.CUSTOM);
+        grant.getCubeGrants().add(cubeGrant1);
+        grant.getCubeGrants().add(cubeGrant2);
 
         org.eclipse.daanse.olap.access.RoleImpl role = new org.eclipse.daanse.olap.access.RoleImpl();
 
         schema.handleCatalogGrant(role, grant);
         assertEquals(org.eclipse.daanse.olap.api.access.AccessCatalog.CUSTOM, role.getAccess(schema));
         verify(schema, times(2))
-            .handleCubeGrant(eq(role), any(AccessCubeGrantMapping.class));
+            .handleCubeGrant(eq(role), any(AccessCubeGrant.class));
     }
 
 
@@ -221,8 +211,11 @@ class RolapCatalogTest {
         schema = spy(schema);
         doReturn(null).when(schema).lookupCube(anyString());
 
-        AccessCubeGrantMappingImpl grant = AccessCubeGrantMappingImpl.builder().build();
-        grant.setCube(PhysicalCubeMappingImpl.builder().withName("cube").build());
+        PhysicalCube cube = RolapMappingFactory.eINSTANCE.createPhysicalCube();
+        cube.setName("cube");
+        
+        AccessCubeGrant grant = RolapMappingFactory.eINSTANCE.createAccessCubeGrant();
+        grant.setCube(cube); 
 
         try {
             schema.handleCubeGrant(new org.eclipse.daanse.olap.access.RoleImpl(), grant);
@@ -243,25 +236,34 @@ class RolapCatalogTest {
                 any(org.eclipse.daanse.olap.access.RoleImpl.class),
                 any(RolapCube.class),
                 any(CatalogReader.class),
-                any(AccessHierarchyGrantMappingImpl.class));
+                any(AccessHierarchyGrant.class));
 
         final Dimension dimension = mock(Dimension.class);
         CatalogReader reader = mockCatalogReader(org.eclipse.daanse.olap.api.DataType.DIMENSION, dimension);
 
         RolapCube cube = mockCube(schema);
         when(cube.getCatalogReader(any())).thenReturn(reader);
-        doReturn(cube).when(schema).lookupCube(any(CubeMapping.class));
+        doReturn(cube).when(schema).lookupCube(any(org.eclipse.daanse.rolap.mapping.model.Cube.class));
 
-        AccessDimensionGrantMappingImpl dimensionGrant =
-        		AccessDimensionGrantMappingImpl.builder().build();
-        dimensionGrant.setDimension(StandardDimensionMappingImpl.builder().withName("dimension").build());
-        dimensionGrant.setAccess(AccessDimension.NONE);
+        StandardDimension dim = RolapMappingFactory.eINSTANCE.createStandardDimension();
+        dim.setName("dimension");
 
-        AccessCubeGrantMappingImpl grant = AccessCubeGrantMappingImpl.builder().build();
-        grant.setCube(PhysicalCubeMappingImpl.builder().withName("cube").build());
-        grant.setAccess(AccessCube.CUSTOM);
+        AccessDimensionGrant dimensionGrant = RolapMappingFactory.eINSTANCE.createAccessDimensionGrant();
+
+        dimensionGrant.setDimension(dim);
+        dimensionGrant.setDimensionAccess(DimensionAccess.NONE);
+
+        PhysicalCube c = RolapMappingFactory.eINSTANCE.createPhysicalCube();
+        c.setName("cube");
+
+        AccessCubeGrant grant = RolapMappingFactory.eINSTANCE.createAccessCubeGrant();
+        grant.setCube(c);
+        grant.setCubeAccess(CubeAccess.CUSTOM);
+        
+        AccessHierarchyGrant accessHierarchyGrant = RolapMappingFactory.eINSTANCE.createAccessHierarchyGrant();
+        
         grant.getDimensionGrants().addAll(List.of(dimensionGrant));
-        grant.getHierarchyGrants().addAll(List.of(AccessHierarchyGrantMappingImpl.builder().build()));
+        grant.getHierarchyGrants().addAll(List.of(accessHierarchyGrant));
 
         org.eclipse.daanse.olap.access.RoleImpl role = new org.eclipse.daanse.olap.access.RoleImpl();
 
@@ -274,7 +276,7 @@ class RolapCatalogTest {
                 eq(role),
                 eq(cube),
                 eq(reader),
-                any(AccessHierarchyGrantMapping.class));
+                any(AccessHierarchyGrant.class));
     }
 
     @Test
@@ -300,14 +302,18 @@ class RolapCatalogTest {
     void testGetOrCreateStar_StarCreatedAndUsed()
         throws Exception {
       //Create the test fact
-      RelationalQueryMapping fact = TableQueryMappingImpl.builder()
-      		  .withTable(((PhysicalTableMappingImpl.Builder) PhysicalTableMappingImpl.builder().withName("getFactTable())")).build())
-      		  .withAlias("TableAlias")
-      		  .withSqlWhereExpression(SqlStatementMappingImpl.builder()
-      				  .withDialects(List.of("mysql"))
-      				  .withSql("`TableAlias`.`promotion_id` = 112")
-      				  .build())
-      		  .build();
+    	PhysicalTable table = RolapMappingFactory.eINSTANCE.createPhysicalTable();
+    	table.setName("getFactTable())");
+    	
+    	org.eclipse.daanse.rolap.mapping.model.SqlStatement sqlWhereExpression = RolapMappingFactory.eINSTANCE.createSqlStatement();
+    	sqlWhereExpression.getDialects().add("mysql");
+    	sqlWhereExpression.setSql("`TableAlias`.`promotion_id` = 112");
+    	
+    	org.eclipse.daanse.rolap.mapping.model.TableQuery fact = RolapMappingFactory.eINSTANCE.createTableQuery();
+    	fact.setTable(table);
+    	fact.setAlias("TableAlias");
+    	fact.setSqlWhereExpression(sqlWhereExpression);
+    	
       List<String> rolapStarKey = RolapUtil.makeRolapStarKey(fact);
       //Expected result star
       RolapStar expectedStar = rlStarMock;
@@ -333,14 +339,19 @@ class RolapCatalogTest {
     @Test
     void testGetStarFromRegistryByStarKey() throws Exception {
       //Create the test fact
-      RelationalQueryMapping fact = TableQueryMappingImpl.builder()
-    		  .withTable(((PhysicalTableMappingImpl.Builder) PhysicalTableMappingImpl.builder().withName("getFactTable())")).build())
-    		  .withAlias("TableAlias")
-    		  .withSqlWhereExpression(SqlStatementMappingImpl.builder()
-    				  .withDialects(List.of("mysql"))
-    				  .withSql("`TableAlias`.`promotion_id` = 112")
-    				  .build())
-    		  .build();
+    	
+    	PhysicalTable table = RolapMappingFactory.eINSTANCE.createPhysicalTable();
+    	table.setName(getFactTable());
+    	
+    	org.eclipse.daanse.rolap.mapping.model.SqlStatement sqlWhereExpression = RolapMappingFactory.eINSTANCE.createSqlStatement();
+    	sqlWhereExpression.getDialects().add("mysql");
+    	sqlWhereExpression.setSql("`TableAlias`.`promotion_id` = 112");
+
+    	org.eclipse.daanse.rolap.mapping.model.TableQuery fact = RolapMappingFactory.eINSTANCE.createTableQuery();
+    	fact.setTable(table);
+    	fact.setAlias("TableAlias");
+    	fact.setSqlWhereExpression(sqlWhereExpression);
+    
       List<String> rolapStarKey = RolapUtil.makeRolapStarKey(fact);
       //Expected result star
       RolapStarRegistry rolapStarRegistry =
@@ -355,10 +366,13 @@ class RolapCatalogTest {
     @Test
     void testGetStarFromRegistryByFactTableName() throws Exception {
       //Create the test fact
-      RelationalQueryMapping fact = TableQueryMappingImpl.builder()
-    		  .withTable(((PhysicalTableMappingImpl.Builder) PhysicalTableMappingImpl.builder().withName("getFactTable())")).build())
-    		  .withAlias("TableAlias")
-    		  .build();
+    	
+    	PhysicalTable table = RolapMappingFactory.eINSTANCE.createPhysicalTable();
+    	table.setName("getFactTable())");
+    	
+    	org.eclipse.daanse.rolap.mapping.model.TableQuery fact = RolapMappingFactory.eINSTANCE.createTableQuery();
+    	fact.setTable(table);
+    	fact.setAlias("TableAlias");
 
       //Expected result star
       RolapStarRegistry rolapStarRegistry =
@@ -371,7 +385,7 @@ class RolapCatalogTest {
     }
 
     private static RolapStarRegistry getStarRegistryLinkedToRolapCatalogSpy(
-        RolapCatalog schemaSpy, RelationalQueryMapping fact) throws Exception
+        RolapCatalog schemaSpy, org.eclipse.daanse.rolap.mapping.model.RelationalQuery fact) throws Exception
     {
       //the rolap star registry is linked to the origin rolap schema,
       //not to the schemaSpy
@@ -430,20 +444,22 @@ class RolapCatalogTest {
         RolapCube cube = mockCube(schema);
         org.eclipse.daanse.olap.access.RoleImpl role = new org.eclipse.daanse.olap.access.RoleImpl();
 
-        AccessMemberGrantMappingImpl memberGrant = AccessMemberGrantMappingImpl.builder().withMember("member").withAccess(AccessMember.ALL).build();
+        AccessMemberGrant memberGrant = RolapMappingFactory.eINSTANCE.createAccessMemberGrant();
+        memberGrant.setMember("member");
+        memberGrant.setMemberAccess(MemberAccess.ALL);
 
-        HierarchyMappingImpl h = ExplicitHierarchyMappingImpl.builder().build();
-        AccessHierarchyGrantMappingImpl grant = AccessHierarchyGrantMappingImpl.builder().build();
-        grant.setAccess(AccessHierarchy.CUSTOM);
-        grant.setRollupPolicyType(RollupPolicyType.FULL);
+        ExplicitHierarchy h = RolapMappingFactory.eINSTANCE.createExplicitHierarchy();
+        AccessHierarchyGrant grant = RolapMappingFactory.eINSTANCE.createAccessHierarchyGrant();
+        grant.setHierarchyAccess(HierarchyAccess.CUSTOM);
+        grant.setRollupPolicy(RollupPolicy.FULL);
         grant.setHierarchy(h);
-        grant.setMemberGrants(List.of(memberGrant));
+        grant.getMemberGrants().add(memberGrant);
 
         Level level = mock(Level.class);
         Hierarchy hierarchy = mock(Hierarchy.class);
         when(hierarchy.getLevels()).thenAnswer(setupDummyListAnswer(level));
         when(level.getHierarchy()).thenReturn(hierarchy);
-        when(cube.lookupHierarchy(any(HierarchyMapping.class))).thenReturn(hierarchy);
+        when(cube.lookupHierarchy(any(org.eclipse.daanse.rolap.mapping.model.Hierarchy.class))).thenReturn(hierarchy);
         Dimension dimension = mock(Dimension.class);
         when(hierarchy.getDimension()).thenReturn(dimension);
 

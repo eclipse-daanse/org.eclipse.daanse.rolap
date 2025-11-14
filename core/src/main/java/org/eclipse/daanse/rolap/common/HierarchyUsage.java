@@ -46,11 +46,6 @@ import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.element.RolapCubeHierarchy;
 import org.eclipse.daanse.rolap.element.RolapHierarchy;
 import org.eclipse.daanse.rolap.element.RolapLevel;
-import org.eclipse.daanse.rolap.mapping.api.model.ColumnMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.DimensionConnectorMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.DimensionMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.RelationalQueryMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.TableMapping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,7 +91,7 @@ public class HierarchyUsage {
      * identifies the usage, and determines which join conditions need to be
      * used.
      */
-    protected final RelationalQueryMapping fact;
+    protected final org.eclipse.daanse.rolap.mapping.model.RelationalQuery fact;
 
     /**
      * This matches the hierarchy - may not be unique.
@@ -126,7 +121,7 @@ public class HierarchyUsage {
      * The foreign key by which this {@link Hierarchy} is joined to
      * the {@link #fact} table.
      */
-    private final ColumnMapping foreignKey;
+    private final org.eclipse.daanse.rolap.mapping.model.Column foreignKey;
 
     /**
      * not NULL for DimensionUsage
@@ -147,7 +142,7 @@ public class HierarchyUsage {
      * Dimension table which contains the primary key for the hierarchy.
      * (Usually the table of the lowest level of the hierarchy.)
      */
-    private RelationalQueryMapping joinTable;
+    private org.eclipse.daanse.rolap.mapping.model.RelationalQuery joinTable;
 
     /**
      * The expression (usually a {@link mondrian.olap.MappingColumn}) by
@@ -167,7 +162,7 @@ public class HierarchyUsage {
     public HierarchyUsage(
         RolapCube cube,
         RolapHierarchy hierarchy,
-        DimensionConnectorMapping cubeDim)
+        org.eclipse.daanse.rolap.mapping.model.DimensionConnector cubeDim)
     {
         assert cubeDim != null : "precondition: cubeDim != null";
 
@@ -178,7 +173,7 @@ public class HierarchyUsage {
         // foreignKey
         this.name = cubeDim.getOverrideDimensionName();
         this.foreignKey = cubeDim.getForeignKey();
-        DimensionMapping du = cubeDim.getDimension();
+        org.eclipse.daanse.rolap.mapping.model.Dimension du = cubeDim.getDimension();
 
         this.kind = Kind.SHARED;
 
@@ -329,7 +324,7 @@ public class HierarchyUsage {
     public String getName() {
         return this.name;
     }
-    public ColumnMapping getForeignKey() {
+    public org.eclipse.daanse.rolap.mapping.model.Column getForeignKey() {
         return this.foreignKey;
     }
     public String getSource() {
@@ -342,7 +337,7 @@ public class HierarchyUsage {
         return this.usagePrefix;
     }
 
-    public RelationalQueryMapping getJoinTable() {
+    public org.eclipse.daanse.rolap.mapping.model.RelationalQuery getJoinTable() {
         return this.joinTable;
     }
 
@@ -412,7 +407,7 @@ public class HierarchyUsage {
     void init(
         RolapCube cube,
         RolapHierarchy hierarchy,
-        DimensionConnectorMapping cubeDim)
+        org.eclipse.daanse.rolap.mapping.model.DimensionConnector cubeDim)
     {
         // Three ways that a hierarchy can be joined to the fact table.
         if (cubeDim != null && cubeDim.getLevel() != null) {
@@ -490,11 +485,11 @@ public class HierarchyUsage {
      *   has only one table
      * @return A table, never null
      */
-    private RelationalQueryMapping findJoinTable(
+    private org.eclipse.daanse.rolap.mapping.model.RelationalQuery findJoinTable(
         RolapHierarchy hierarchy,
-        TableMapping tab)
+        org.eclipse.daanse.rolap.mapping.model.Table tab)
     {
-        final RelationalQueryMapping table;
+        final org.eclipse.daanse.rolap.mapping.model.RelationalQuery table;
         if (tab == null || tab.getName() == null) {
             table = hierarchy.getUniqueTable();
             if (table == null) {
@@ -514,11 +509,11 @@ public class HierarchyUsage {
         return table;
     }
 
-    private RelationalQueryMapping findJoinTable(
+    private org.eclipse.daanse.rolap.mapping.model.RelationalQuery findJoinTable(
             RolapHierarchy hierarchy,
             String tableName)
         {
-            final RelationalQueryMapping table;
+            final org.eclipse.daanse.rolap.mapping.model.RelationalQuery table;
             if (tableName == null) {
                 table = hierarchy.getUniqueTable();
                 if (table == null) {

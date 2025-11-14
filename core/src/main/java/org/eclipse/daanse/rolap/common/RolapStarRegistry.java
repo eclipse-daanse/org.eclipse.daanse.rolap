@@ -39,7 +39,6 @@ import org.eclipse.daanse.olap.api.connection.Connection;
 import org.eclipse.daanse.olap.core.AbstractBasicContext;
 import org.eclipse.daanse.rolap.common.agg.SegmentCacheManager;
 import org.eclipse.daanse.rolap.element.RolapCatalog;
-import org.eclipse.daanse.rolap.mapping.api.model.RelationalQueryMapping;
 
 /**
  * A registry for {@link RolapStar}s of this Schema.
@@ -59,7 +58,7 @@ public class RolapStarRegistry {
 	 *
 	 * {@link RolapStar.Table#addJoin} works in a similar way.
 	 */
-	public synchronized RolapStar getOrCreateStar(final RelationalQueryMapping fact) {
+	public synchronized RolapStar getOrCreateStar(final org.eclipse.daanse.rolap.mapping.model.RelationalQuery fact) {
 		final List<String> rolapStarKey = RolapUtil.makeRolapStarKey(fact);
 		RolapStar star = stars.get(rolapStarKey);
 		if (star == null) {
@@ -79,7 +78,7 @@ public class RolapStarRegistry {
 		return getStar(makeRolapStarKey(factTableName));
 	}
 
-	public RolapStar makeRolapStar(final RelationalQueryMapping fact) {
+	public RolapStar makeRolapStar(final org.eclipse.daanse.rolap.mapping.model.RelationalQuery fact) {
 		return new RolapStar(schema, context, fact);
 	}
 

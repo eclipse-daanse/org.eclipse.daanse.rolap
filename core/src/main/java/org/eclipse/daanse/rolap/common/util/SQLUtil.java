@@ -17,16 +17,15 @@ import java.util.List;
 
 import org.eclipse.daanse.olap.api.SqlStatement;
 import org.eclipse.daanse.rolap.common.sql.SqlQuery;
-import org.eclipse.daanse.rolap.mapping.api.model.SqlStatementMapping;
 
 public class SQLUtil {
     /**
      * Converts an array of SQL to a
      * {@link org.eclipse.daanse.rolap.common.sql.SqlQuery.CodeSet} object.
      */
-    public static SqlQuery.CodeSet toCodeSetSqlStatement(List<? extends SqlStatementMapping> sqls) {
+    public static SqlQuery.CodeSet toCodeSetSqlStatement(List<? extends org.eclipse.daanse.rolap.mapping.model.SqlStatement> sqls) {
         SqlQuery.CodeSet codeSet = new SqlQuery.CodeSet();
-        for (SqlStatementMapping sql : sqls) {
+        for (org.eclipse.daanse.rolap.mapping.model.SqlStatement sql : sqls) {
             for (String dialect : sql.getDialects()) {
                 codeSet.put(dialect, sql.getSql());
             }
@@ -48,8 +47,8 @@ public class SQLUtil {
         return sql.getDialects().hashCode();
     }
 
-    public boolean equals(SqlStatementMapping sql, Object obj) {
-        if (!(obj instanceof SqlStatementMapping that)) {
+    public boolean equals(org.eclipse.daanse.rolap.mapping.model.SqlStatement sql, Object obj) {
+        if (!(obj instanceof org.eclipse.daanse.rolap.mapping.model.SqlStatement that)) {
             return false;
         }
         if (sql.getDialects().size() != that.getDialects().size()) {

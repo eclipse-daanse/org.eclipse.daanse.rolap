@@ -53,14 +53,6 @@ import org.eclipse.daanse.rolap.common.RolapStar;
 import org.eclipse.daanse.rolap.common.RolapUtil;
 import org.eclipse.daanse.rolap.common.Utils;
 import org.eclipse.daanse.rolap.common.util.RelationUtil;
-import org.eclipse.daanse.rolap.mapping.api.model.ColumnMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.DatabaseSchemaMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.InlineTableQueryMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.JoinQueryMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.QueryMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.RelationalQueryMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.SqlSelectQueryMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.TableQueryMapping;
 
 /**
  * SqlQuery allows us to build a select
@@ -150,14 +142,14 @@ public class SqlQuery {
     /** Scratch buffer. Clear it before use. */
     private final StringBuilder buf;
 
-    private final Set<RelationalQueryMapping> relations =
+    private final Set<org.eclipse.daanse.rolap.mapping.model.RelationalQuery> relations =
         new HashSet<>();
 
-    private final Map<RelationalQueryMapping, QueryMapping>
+    private final Map<org.eclipse.daanse.rolap.mapping.model.RelationalQuery, org.eclipse.daanse.rolap.mapping.model.Query>
         mapRelationToRoot =
         new HashMap<>();
 
-    private final Map<QueryMapping, List<RelInfo>>
+    private final Map<org.eclipse.daanse.rolap.mapping.model.Query, List<RelInfo>>
         mapRootToRelations =
         new HashMap<>();
 
@@ -350,13 +342,13 @@ public class SqlQuery {
      * @return true, if relation *was* added to query
      */
     public boolean addFrom(
-        final QueryMapping relation,
+        final org.eclipse.daanse.rolap.mapping.model.Query relation,
         final String alias,
         final boolean failIfExists)
     {
         registerRootRelation(relation);
 
-        if (relation instanceof RelationalQueryMapping relation1) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.RelationalQuery relation1) {
             if (relations.add(relation1)
                 && !SystemWideProperties.instance()
                 .FilterChildlessSnowflakeMembers)
@@ -367,11 +359,11 @@ public class SqlQuery {
                 // (If FilterChildlessSnowflakeMembers were false,
                 // this would be unnecessary. Adding a relation automatically
                 // adds all relations between it and the fact table.)
-                QueryMapping root =
+                org.eclipse.daanse.rolap.mapping.model.Query root =
                     mapRelationToRoot.get(relation1);
-                List<RelationalQueryMapping> relationsCopy =
+                List<org.eclipse.daanse.rolap.mapping.model.RelationalQuery> relationsCopy =
                     new ArrayList<>(relations);
-                for (RelationalQueryMapping relation2 : relationsCopy) {
+                for (org.eclipse.daanse.rolap.mapping.model.RelationalQuery relation2 : relationsCopy) {
                     if (relation2 != relation1
                         && mapRelationToRoot.get(relation2) == root)
                     {
@@ -381,7 +373,7 @@ public class SqlQuery {
             }
         }
 
-        if (relation instanceof SqlSelectQueryMapping view) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.SqlSelectQuery view) {
             final String viewAlias =
                 (alias == null)
                 ? RelationUtil.getAlias(view)
@@ -389,13 +381,13 @@ public class SqlQuery {
             final String sqlString = getCodeSet(view).chooseQuery(dialect);
             return addFromQuery(sqlString, viewAlias, false);
 
-        } else if (relation instanceof InlineTableQueryMapping inlineTableQueryMapping) {
-            final RelationalQueryMapping relation1 =
+        } else if (relation instanceof org.eclipse.daanse.rolap.mapping.model.InlineTableQuery inlineTableQueryMapping) {
+            final org.eclipse.daanse.rolap.mapping.model.RelationalQuery relation1 =
                 RolapUtil.convertInlineTableToRelation(
                 		inlineTableQueryMapping, dialect);
             return addFrom(relation1, alias, failIfExists);
 
-        } else if (relation instanceof TableQueryMapping table) {
+        } else if (relation instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery table) {
             final String tableAlias =
                 (alias == null)
                 ? RelationUtil.getAlias(table)
@@ -408,7 +400,7 @@ public class SqlQuery {
                 getHintMap(table),
                 failIfExists);
 
-        } else if (relation instanceof JoinQueryMapping join) {
+        } else if (relation instanceof org.eclipse.daanse.rolap.mapping.model.JoinQuery join) {
             return addJoin(
                 left(join),
                 getLeftAlias(join),
@@ -422,7 +414,7 @@ public class SqlQuery {
         }
     }
 
-    private String getSchemaName(DatabaseSchemaMapping schema) {
+    private String getSchemaName(org.eclipse.daanse.rolap.mapping.model.DatabaseSchema schema) {
         if (schema != null) {
             return schema.getName();
         }
@@ -430,12 +422,12 @@ public class SqlQuery {
 	}
 
 	private boolean addJoin(
-        QueryMapping left,
+	    org.eclipse.daanse.rolap.mapping.model.Query left,
         String leftAlias,
-        ColumnMapping leftKey,
-        QueryMapping right,
+        org.eclipse.daanse.rolap.mapping.model.Column leftKey,
+        org.eclipse.daanse.rolap.mapping.model.Query right,
         String rightAlias,
-        ColumnMapping rightKey,
+        org.eclipse.daanse.rolap.mapping.model.Column rightKey,
         boolean failIfExists)
     {
         boolean addLeft = addFrom(left, leftAlias, failIfExists);
@@ -461,9 +453,9 @@ public class SqlQuery {
     }
 
     private void addJoinBetween(
-        QueryMapping root,
-        RelationalQueryMapping relation1,
-        RelationalQueryMapping relation2)
+        org.eclipse.daanse.rolap.mapping.model.Query root,
+        org.eclipse.daanse.rolap.mapping.model.RelationalQuery relation1,
+        org.eclipse.daanse.rolap.mapping.model.RelationalQuery relation2)
     {
         List<RelInfo> relations = mapRootToRelations.get(root);
         int index1 = find(relations, relation1);
@@ -489,7 +481,7 @@ public class SqlQuery {
         }
     }
 
-    private int find(List<RelInfo> relations, RelationalQueryMapping relation) {
+    private int find(List<RelInfo> relations, org.eclipse.daanse.rolap.mapping.model.RelationalQuery relation) {
         for (int i = 0, n = relations.size(); i < n; i++) {
             RelInfo relInfo = relations.get(i);
             if (Utils.equalsQuery(relInfo.relation, relation)) {
@@ -790,7 +782,7 @@ public class SqlQuery {
         return Pair.of(toString(), types);
     }
 
-    public void registerRootRelation(QueryMapping root) {
+    public void registerRootRelation(org.eclipse.daanse.rolap.mapping.model.Query root) {
         // REVIEW: In this method, we are building data structures about the
         // structure of a star schema. These should be built into the schema,
         // not constructed afresh for each SqlQuery. In mondrian-4.0,
@@ -812,13 +804,13 @@ public class SqlQuery {
 
     private void flatten(
         List<RelInfo> relations,
-        QueryMapping root,
-        ColumnMapping leftKey,
+        org.eclipse.daanse.rolap.mapping.model.Query root,
+        org.eclipse.daanse.rolap.mapping.model.Column leftKey,
         String leftAlias,
-        ColumnMapping rightKey,
+        org.eclipse.daanse.rolap.mapping.model.Column rightKey,
         String rightAlias)
     {
-        if (root instanceof JoinQueryMapping join) {
+        if (root instanceof org.eclipse.daanse.rolap.mapping.model.JoinQuery join) {
             flatten(
                 relations, left(join), join.getLeft().getKey(), getLeftAlias(join),
                 join.getRight().getKey(), getRightAlias(join));
@@ -828,7 +820,7 @@ public class SqlQuery {
         } else {
             relations.add(
                 new RelInfo(
-                    (RelationalQueryMapping) root,
+                    (org.eclipse.daanse.rolap.mapping.model.RelationalQuery) root,
                     leftKey,
                     leftAlias,
                     rightKey,
@@ -1074,17 +1066,17 @@ public class SqlQuery {
     }
 
     private static class RelInfo {
-        final RelationalQueryMapping relation;
-        final ColumnMapping leftKey;
+        final org.eclipse.daanse.rolap.mapping.model.RelationalQuery relation;
+        final org.eclipse.daanse.rolap.mapping.model.Column leftKey;
         final String leftAlias;
-        final ColumnMapping rightKey;
+        final org.eclipse.daanse.rolap.mapping.model.Column rightKey;
         final String rightAlias;
 
         public RelInfo(
-            RelationalQueryMapping relation,
-            ColumnMapping leftKey,
+            org.eclipse.daanse.rolap.mapping.model.RelationalQuery relation,
+            org.eclipse.daanse.rolap.mapping.model.Column leftKey,
             String leftAlias,
-            ColumnMapping rightKey,
+            org.eclipse.daanse.rolap.mapping.model.Column rightKey,
             String rightAlias)
         {
             this.relation = relation;

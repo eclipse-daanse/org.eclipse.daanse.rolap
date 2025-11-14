@@ -29,8 +29,6 @@ package org.eclipse.daanse.rolap.common;
 
 import java.util.List;
 
-import org.eclipse.daanse.rolap.mapping.api.model.CubeConnectorMapping;
-
 /**
  * Provides the base cubes that a virtual cube uses and
  * specifies if unrelated dimensions to measures from these cubes should be
@@ -40,9 +38,9 @@ import org.eclipse.daanse.rolap.mapping.api.model.CubeConnectorMapping;
  * @since Nov 22 2007
  */
 public class RolapCubeUsages {
-    private List<? extends CubeConnectorMapping> cubeUsages;
+    private List<? extends org.eclipse.daanse.rolap.mapping.model.CubeConnector> cubeUsages;
 
-    public RolapCubeUsages(List<? extends CubeConnectorMapping> cubeUsage) {
+    public RolapCubeUsages(List<? extends org.eclipse.daanse.rolap.mapping.model.CubeConnector> cubeUsage) {
         this.cubeUsages = cubeUsage;
     }
 
@@ -50,7 +48,7 @@ public class RolapCubeUsages {
         if (cubeUsages == null) {
             return false;
         }
-        for (CubeConnectorMapping usage : cubeUsages) {
+        for (org.eclipse.daanse.rolap.mapping.model.CubeConnector usage : cubeUsages) {
             if (usage.getCube().getName().equals(baseCubeName)
                 && Boolean.TRUE.equals(usage.isIgnoreUnrelatedDimensions()))
             {

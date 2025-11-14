@@ -32,8 +32,6 @@ import org.eclipse.daanse.rolap.element.RolapMember;
 import org.eclipse.daanse.rolap.element.RolapPhysicalCube;
 import org.eclipse.daanse.rolap.element.RolapVirtualCube;
 import org.eclipse.daanse.rolap.element.RolapVirtualCubeMeasure;
-import org.eclipse.daanse.rolap.mapping.api.model.CalculatedMemberMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.NamedSetMapping;
 
 /**
  * Visitor that walks an MDX parse tree containing formulas
@@ -113,13 +111,13 @@ public class MeasureFinder extends MdxVisitorImpl
                         virtualCube.getMeasuresHierarchy(),
                         Util.<RolapMember>cast(measuresFound))));
 
-            CalculatedMemberMapping mappingCalcMember =
+            org.eclipse.daanse.rolap.mapping.model.CalculatedMember mappingCalcMember =
                 schema.lookupMappingCalculatedMember(
                     calcMember.getName(),
                     baseCube.getName());
             virtualCube.createCalcMembersAndNamedSets(
                 Collections.singletonList(mappingCalcMember),
-                Collections.<NamedSetMapping>emptyList(),
+                Collections.<org.eclipse.daanse.rolap.mapping.model.NamedSet>emptyList(),
                 new ArrayList<>(),
                 virtualCube,
                 false);

@@ -38,7 +38,7 @@ import org.eclipse.daanse.rolap.aggregator.CountAggregator;
 import org.eclipse.daanse.rolap.aggregator.DistinctCountAggregator;
 import org.eclipse.daanse.rolap.common.RolapResult;
 import org.eclipse.daanse.rolap.common.RolapSqlExpression;
-import org.eclipse.daanse.rolap.mapping.api.model.enums.InternalDataType;
+import org.eclipse.daanse.rolap.mapping.model.ColumnInternalDataType;
 
 /**
  * Measure which is computed from a SQL column (or expression) and which is
@@ -109,7 +109,7 @@ public class RolapBaseCubeMeasure
         String formatString,
         RolapSqlExpression expression,
         Aggregator aggregator,
-        InternalDataType datatype,
+        ColumnInternalDataType datatype,
         MetaData metadata)
     {
         super(parentMember, level, name, null, MemberType.MEASURE);
@@ -143,17 +143,17 @@ public class RolapBaseCubeMeasure
         this.aggregator = aggregator;
 
         setProperty(StandardProperty.AGGREGATION_TYPE.getName(), aggregator);
-        if (datatype == null || InternalDataType.UNDEFINED.equals(datatype)) {
+        if (datatype == null || ColumnInternalDataType.UNDEFINED.equals(datatype)) {
             if (aggregator == CountAggregator.INSTANCE
                 || aggregator == DistinctCountAggregator.INSTANCE)
             {
-                datatype = InternalDataType.INTEGER;
+                datatype = ColumnInternalDataType.INTEGER;
             } else {
-                datatype = InternalDataType.NUMERIC;
+                datatype = ColumnInternalDataType.NUMERIC;
             }
         }
-        if (RolapBaseCubeMeasure.DataType.valueOf(datatype.getValue()) == null) {
-            throw new CastInvalidTypeException(datatype.getValue());
+        if (RolapBaseCubeMeasure.DataType.valueOf(datatype.getLiteral()) == null) {
+            throw new CastInvalidTypeException(datatype.getLiteral());
         }
         setProperty(StandardProperty.DATATYPE.getName(), datatype.getValue());
     }

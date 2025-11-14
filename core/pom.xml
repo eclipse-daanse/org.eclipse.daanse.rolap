@@ -35,13 +35,7 @@
   <dependencies>
     <dependency>
       <groupId>org.eclipse.daanse</groupId>
-      <artifactId>org.eclipse.daanse.rolap.mapping.api</artifactId>
-      <version>${revision}</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.daanse</groupId>
-      <artifactId>org.eclipse.daanse.rolap.mapping.pojo</artifactId>
+      <artifactId>org.eclipse.daanse.rolap.mapping.model</artifactId>
       <version>${revision}</version>
       <scope>compile</scope>
     </dependency>

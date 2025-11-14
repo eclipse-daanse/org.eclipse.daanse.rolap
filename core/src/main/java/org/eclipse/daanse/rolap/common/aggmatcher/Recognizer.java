@@ -61,8 +61,6 @@ import org.eclipse.daanse.rolap.element.RolapColumn;
 import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.element.RolapLevel;
 import org.eclipse.daanse.rolap.element.RolapVirtualCube;
-import org.eclipse.daanse.rolap.mapping.api.model.ColumnMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.RelationalQueryMapping;
 import org.eclipse.daanse.rolap.recorder.MessageRecorder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -565,7 +563,7 @@ public abstract class Recognizer {
                         // Search through the notSeenForeignKeys list
                         // making sure that this HierarchyUsage's
                         // foreign key is not in the list.
-                    	ColumnMapping foreignKey = hierarchyUsage.getForeignKey();
+                    	org.eclipse.daanse.rolap.mapping.model.Column foreignKey = hierarchyUsage.getForeignKey();
                         boolean b = foreignKey == null
                             || inNotSeenForeignKeys(
                             foreignKey,
@@ -587,7 +585,7 @@ public abstract class Recognizer {
      * foreign keys.
      */
     boolean inNotSeenForeignKeys(
-    	ColumnMapping foreignKey,
+        org.eclipse.daanse.rolap.mapping.model.Column foreignKey,
         List<JdbcSchema.Table.Column.Usage> notSeenForeignKeys
     ) {
         for (JdbcSchema.Table.Column.Usage usage : notSeenForeignKeys) {
@@ -674,7 +672,7 @@ public abstract class Recognizer {
                      uit.hasNext(); ) {
                     JdbcSchema.Table.Column.Usage aggUsage = uit.next();
 
-                    RelationalQueryMapping rel = hierarchyUsage.getJoinTable();
+                    org.eclipse.daanse.rolap.mapping.model.RelationalQuery rel = hierarchyUsage.getJoinTable();
 
                     if (!aggUsageMatchesHierarchyUsage(aggUsage,
                         hierarchyUsage, levelColumnName)) {
@@ -809,7 +807,7 @@ public abstract class Recognizer {
         HierarchyUsage hierarchyUsage,
         String levelColumnName
     ) {
-        RelationalQueryMapping rel = hierarchyUsage.getJoinTable();
+    	org.eclipse.daanse.rolap.mapping.model.RelationalQuery rel = hierarchyUsage.getJoinTable();
 
         JdbcSchema.Table.Column aggColumn = aggUsage.getColumn();
         String aggColumnName = aggColumn.column.getName();

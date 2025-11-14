@@ -92,7 +92,6 @@ import org.eclipse.daanse.rolap.common.statement.InternalStatement;
 import org.eclipse.daanse.rolap.common.statement.ReentrantInternalStatement;
 import org.eclipse.daanse.rolap.element.RolapCatalog;
 import org.eclipse.daanse.rolap.element.RolapCube;
-import org.eclipse.daanse.rolap.mapping.api.model.CatalogMapping;
 import org.eclipse.daanse.rolap.util.FauxMemoryMonitor;
 import org.eclipse.daanse.rolap.util.MemoryMonitor;
 import org.eclipse.daanse.rolap.util.NotificationMemoryMonitor;
@@ -151,7 +150,7 @@ public abstract class AbstractRolapConnection extends ConnectionBase {
         LocusImpl.push( locus );
         try {
             // TODO: switch from schemareader to catalogreader;
-            CatalogMapping catalogMapping = context.getCatalogMapping();
+        	org.eclipse.daanse.rolap.mapping.model.Catalog catalogMapping = context.getCatalogMapping();
             catalog = ((RolapCatalogCache) context.getCatalogCache()).getOrCreateCatalog(catalogMapping, connectionProps);
 
         } finally {

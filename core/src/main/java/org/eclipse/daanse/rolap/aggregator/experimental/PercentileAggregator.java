@@ -21,17 +21,18 @@ import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.olap.api.calc.Calc;
 import org.eclipse.daanse.olap.api.calc.todo.TupleList;
 import org.eclipse.daanse.rolap.common.RolapOrderedColumn;
-import org.eclipse.daanse.rolap.mapping.api.model.enums.PercentileType;
+import org.eclipse.daanse.rolap.mapping.model.PercentType;
+
 
 public class PercentileAggregator implements Aggregator {
 
     private Double percentile;
-    private PercentileType percentileType;
+    private PercentType percentileType;
     private RolapOrderedColumn rolapOrderedColumn;
     private Dialect dialect;
 
 
-    public PercentileAggregator(PercentileType percentileType, Double percentile,
+    public PercentileAggregator(PercentType percentileType, Double percentile,
             RolapOrderedColumn rolapOrderedColumn, Dialect dialect) {
         this.percentile = percentile;
         this.percentileType = percentileType;
@@ -52,8 +53,8 @@ public class PercentileAggregator implements Aggregator {
         String name = rolapOrderedColumn.getColumn().getName();
 
         return switch (percentileType) {
-        case PercentileType.DISC -> dialect.generatePercentileDisc(percentile, desc, table, name);
-        case PercentileType.CONT -> dialect.generatePercentileCont(percentile, desc, table, name);
+        case PercentType.DISC -> dialect.generatePercentileDisc(percentile, desc, table, name);
+        case PercentType.CONT -> dialect.generatePercentileCont(percentile, desc, table, name);
         };
     }
 

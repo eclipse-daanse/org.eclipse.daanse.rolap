@@ -18,10 +18,6 @@ import java.util.Objects;
 import org.eclipse.daanse.olap.api.SqlExpression;
 import org.eclipse.daanse.rolap.element.RolapColumn;
 import org.eclipse.daanse.rolap.common.RolapSqlExpression;
-import org.eclipse.daanse.rolap.mapping.api.model.LevelMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.ParentChildHierarchyMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.SQLExpressionColumnMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.TableMapping;
 
 public class LevelUtil {
 
@@ -29,8 +25,8 @@ public class LevelUtil {
         // constructor
     }
 
-    public static SqlExpression getKeyExp(LevelMapping level) {
-        if (level.getColumn() instanceof SQLExpressionColumnMapping sec) {
+    public static SqlExpression getKeyExp(org.eclipse.daanse.rolap.mapping.model.Level level) {
+        if (level.getColumn() instanceof org.eclipse.daanse.rolap.mapping.model.SQLExpressionColumn sec) {
             return new RolapSqlExpression(sec);
         } else if (level.getColumn() != null) {
             return new RolapColumn(level.getColumn().getTable() != null ? level.getColumn().getTable().getName() : null, level.getColumn().getName());
@@ -39,8 +35,8 @@ public class LevelUtil {
         }
     }
 
-    public static RolapSqlExpression getNameExp(LevelMapping level) {
-        if (level.getNameColumn() instanceof SQLExpressionColumnMapping sec) {
+    public static RolapSqlExpression getNameExp(org.eclipse.daanse.rolap.mapping.model.Level level) {
+        if (level.getNameColumn() instanceof org.eclipse.daanse.rolap.mapping.model.SQLExpressionColumn sec) {
             return new RolapSqlExpression(sec);
         } else if (level.getNameColumn() != null && !Objects.equals(level.getNameColumn(), level.getColumn())) {
             return new RolapColumn(getTableName(level.getColumn().getTable()), level.getNameColumn().getName());
@@ -49,15 +45,15 @@ public class LevelUtil {
         }
     }
 
-    private static String getTableName(TableMapping table) {
+    private static String getTableName(org.eclipse.daanse.rolap.mapping.model.Table table) {
         if (table != null) {
             return table.getName();
         }
         return null;
 	}
 
-	public static RolapSqlExpression getCaptionExp(LevelMapping level) {
-	    if (level.getCaptionColumn() instanceof SQLExpressionColumnMapping sec) {
+	public static RolapSqlExpression getCaptionExp(org.eclipse.daanse.rolap.mapping.model.Level level) {
+	    if (level.getCaptionColumn() instanceof org.eclipse.daanse.rolap.mapping.model.SQLExpressionColumn sec) {
             return new RolapSqlExpression(sec);
         } else if (level.getCaptionColumn() != null) {
             return new RolapColumn(getTableName(level.getColumn().getTable()), level.getCaptionColumn().getName());
@@ -66,8 +62,8 @@ public class LevelUtil {
         }
     }
 
-    public static RolapSqlExpression getOrdinalExp(LevelMapping level) {
-        if (level.getOrdinalColumn() instanceof SQLExpressionColumnMapping sec) {
+    public static RolapSqlExpression getOrdinalExp(org.eclipse.daanse.rolap.mapping.model.Level level) {
+        if (level.getOrdinalColumn() instanceof org.eclipse.daanse.rolap.mapping.model.SQLExpressionColumn sec) {
             return new RolapSqlExpression(sec);
         } else if (level.getOrdinalColumn() != null) {
             return new RolapColumn(getTableName(level.getColumn().getTable()), level.getOrdinalColumn().getName());
@@ -76,8 +72,8 @@ public class LevelUtil {
         }
     }
 
-    public static RolapSqlExpression getParentExp(ParentChildHierarchyMapping hierarchy) {
-        if (hierarchy.getParentColumn() instanceof SQLExpressionColumnMapping sec) {
+    public static RolapSqlExpression getParentExp(org.eclipse.daanse.rolap.mapping.model.ParentChildHierarchy hierarchy) {
+        if (hierarchy.getParentColumn() instanceof org.eclipse.daanse.rolap.mapping.model.SQLExpressionColumn sec) {
             return new RolapSqlExpression(sec);
         } else if (hierarchy.getParentColumn() != null) {
             return new RolapColumn(getTableName(hierarchy.getParentColumn().getTable()), hierarchy.getParentColumn().getName());
@@ -86,7 +82,7 @@ public class LevelUtil {
         }
     }
 
-    public static RolapSqlExpression getPropertyExp(LevelMapping level, int i) {
+    public static RolapSqlExpression getPropertyExp(org.eclipse.daanse.rolap.mapping.model.Level level, int i) {
         return new RolapColumn(getTableName(level.getColumn().getTable()), level.getMemberProperties().get(i).getColumn().getName());
     }
 }

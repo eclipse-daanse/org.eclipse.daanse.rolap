@@ -50,15 +50,7 @@ import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
 import org.eclipse.daanse.rolap.common.RolapSqlExpression;
 import org.eclipse.daanse.rolap.common.RolapStar;
 import org.eclipse.daanse.rolap.element.RolapLevel;
-import org.eclipse.daanse.rolap.mapping.api.model.ColumnMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.DatabaseSchemaMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.PhysicalTableMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.RelationalQueryMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.SystemTableMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.TableMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.TableQueryMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.ViewTableMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.enums.ColumnDataType;
+import org.eclipse.daanse.rolap.mapping.model.ColumnType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -231,7 +223,7 @@ public class JdbcSchema {
                 public RolapStar.Measure rMeasure;
 
                 // hierarchy stuff
-                public RelationalQueryMapping relation;
+                public org.eclipse.daanse.rolap.mapping.model.RelationalQuery relation;
                 public SqlExpression joinExp;
                 public String levelColumnName;
 
@@ -732,18 +724,18 @@ public class JdbcSchema {
         private final String tableType;
 
         // mondriandef stuff
-        public TableQueryMapping table;
+        public org.eclipse.daanse.rolap.mapping.model.TableQuery table;
 
-        private Table(final String name, String tableType, List<? extends ColumnMapping> list) {
+        private Table(final String name, String tableType, List<? extends org.eclipse.daanse.rolap.mapping.model.Column> list) {
             this.name = name;
             this.tableUsageType = TableUsageType.UNKNOWN;
             this.tableType = tableType;
 
-			for (ColumnMapping rdbColumn : list) {
+			for (org.eclipse.daanse.rolap.mapping.model.Column rdbColumn : list) {
 
 				String nameInner = rdbColumn.getName();
-				int type = rdbColumn.getDataType() != null ? JDBCType.valueOf(rdbColumn.getDataType().name()).getVendorTypeNumber() : 0;
-				ColumnDataType typeName = rdbColumn.getDataType();
+				int type = rdbColumn.getType() != null ? JDBCType.valueOf(rdbColumn.getType().name()).getVendorTypeNumber() : 0;
+				ColumnType typeName = rdbColumn.getType();
 				Integer columnSize = rdbColumn.getColumnSize() == null ? 0 : rdbColumn.getColumnSize();
 				Integer decimalDigits = rdbColumn.getDecimalDigits() == null ? 0 : rdbColumn.getDecimalDigits();
 				int numPrecRadix = rdbColumn.getNumPrecRadix() == null ? 0 : rdbColumn.getNumPrecRadix();
@@ -945,7 +937,7 @@ public class JdbcSchema {
         }
     }
 
-    private DatabaseSchemaMapping databaseSchema;
+    private org.eclipse.daanse.rolap.mapping.model.DatabaseSchema databaseSchema;
 
     /**
      * Tables by name. We use a sorted map so {@link #getTables()}'s output
@@ -954,7 +946,7 @@ public class JdbcSchema {
     private final SortedMap<String, Table> tables =
         new TreeMap<>();
 
-	public JdbcSchema(final DatabaseSchemaMapping databaseSchema) {
+	public JdbcSchema(final org.eclipse.daanse.rolap.mapping.model.DatabaseSchema databaseSchema) {
 		this.databaseSchema = databaseSchema;
 		loadTables();
 	}
@@ -1013,8 +1005,8 @@ public class JdbcSchema {
      */
 	protected void loadTables() {
 
-		for (TableMapping rdbTable : databaseSchema.getTables()) {
-			if (rdbTable instanceof PhysicalTableMapping || rdbTable instanceof ViewTableMapping || rdbTable instanceof SystemTableMapping) {
+		for (org.eclipse.daanse.rolap.mapping.model.Table rdbTable : databaseSchema.getTables()) {
+			if (rdbTable instanceof org.eclipse.daanse.rolap.mapping.model.PhysicalTable || rdbTable instanceof org.eclipse.daanse.rolap.mapping.model.ViewTable || rdbTable instanceof org.eclipse.daanse.rolap.mapping.model.SystemTable) {
 
 			Table table = new Table(rdbTable.getName(), rdbTable.getClass().getSimpleName(),rdbTable.getColumns());
 				getLogger().debug("Adding table {}", rdbTable.getName());

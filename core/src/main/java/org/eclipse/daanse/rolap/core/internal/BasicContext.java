@@ -67,9 +67,7 @@ import org.eclipse.daanse.rolap.common.RolapResultShepherd;
 import org.eclipse.daanse.rolap.common.agg.AggregationManager;
 import org.eclipse.daanse.rolap.common.aggregator.AggregationFactoryImpl;
 import org.eclipse.daanse.rolap.core.api.BasicContextOCD;
-import org.eclipse.daanse.rolap.mapping.api.CatalogMappingSupplier;
-import org.eclipse.daanse.rolap.mapping.api.model.AccessRoleMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.CatalogMapping;
+import org.eclipse.daanse.rolap.mapping.model.provider.CatalogMappingSupplier;
 import org.eclipse.daanse.sql.guard.api.SqlGuardFactory;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -188,7 +186,7 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
     }
 
     @Override
-    public CatalogMapping getCatalogMapping() {
+    public org.eclipse.daanse.rolap.mapping.model.Catalog getCatalogMapping() {
         return catalogMappingSupplier.get();
     }
 
@@ -235,9 +233,9 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
 
     @Override
     public List<String> getAccessRoles() {
-        CatalogMapping catalogMapping = getCatalogMapping();
+    	org.eclipse.daanse.rolap.mapping.model.Catalog catalogMapping = getCatalogMapping();
         if (catalogMapping != null && catalogMapping.getAccessRoles() != null) {
-            return catalogMapping.getAccessRoles().stream().map(AccessRoleMapping::getName).toList();
+            return catalogMapping.getAccessRoles().stream().map(org.eclipse.daanse.rolap.mapping.model.AccessRole::getName).toList();
         }
         return List.of();// may take from mapping
     }

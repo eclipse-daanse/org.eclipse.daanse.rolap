@@ -15,11 +15,6 @@ package org.eclipse.daanse.rolap.common.util;
 
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.rolap.common.RolapRuntimeException;
-import org.eclipse.daanse.rolap.mapping.api.model.JoinQueryMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.QueryMapping;
-import org.eclipse.daanse.rolap.mapping.api.model.RelationalQueryMapping;
-import org.eclipse.daanse.rolap.mapping.pojo.JoinQueryMappingImpl;
-import org.eclipse.daanse.rolap.mapping.pojo.QueryMappingImpl;
 
 public class JoinUtil {
 
@@ -27,21 +22,21 @@ public class JoinUtil {
         // constructor
     }
 
-    public static QueryMapping left(JoinQueryMapping join) {
+    public static org.eclipse.daanse.rolap.mapping.model.Query left(org.eclipse.daanse.rolap.mapping.model.JoinQuery join) {
         if (join != null && join.getLeft() != null) {
             return join.getLeft().getQuery();
         }
         throw new RolapRuntimeException("Join left error");
     }
 
-    public static QueryMapping right(JoinQueryMapping join) {
+    public static org.eclipse.daanse.rolap.mapping.model.Query right(org.eclipse.daanse.rolap.mapping.model.JoinQuery join) {
         if (join != null && join.getRight() != null) {
             return join.getRight().getQuery();
         }
         throw new RolapRuntimeException("Join right error");
     }
 
-    public static void changeLeftRight(JoinQueryMappingImpl join, QueryMappingImpl left, QueryMappingImpl right) {
+    public static void changeLeftRight(org.eclipse.daanse.rolap.mapping.model.JoinQuery join, org.eclipse.daanse.rolap.mapping.model.Query left, org.eclipse.daanse.rolap.mapping.model.Query right) {
         join.getLeft().setQuery(left);
         join.getRight().setQuery(right);
     }
@@ -50,12 +45,12 @@ public class JoinUtil {
      * Returns the alias of the left join key, defaulting to left's
      * alias if left is a table.
      */
-    public static String getLeftAlias(JoinQueryMapping join) {
+    public static String getLeftAlias(org.eclipse.daanse.rolap.mapping.model.JoinQuery join) {
         if (join.getLeft() != null && join.getLeft().getAlias() != null) {
             return join.getLeft().getAlias();
         }
-        QueryMapping left = left(join);
-        if (left instanceof RelationalQueryMapping relation) {
+        org.eclipse.daanse.rolap.mapping.model.Query left = left(join);
+        if (left instanceof org.eclipse.daanse.rolap.mapping.model.RelationalQuery relation) {
             return RelationUtil.getAlias(relation);
         }
         throw Util.newInternal(
@@ -66,15 +61,15 @@ public class JoinUtil {
      * Returns the alias of the right join key, defaulting to right's
      * alias if right is a table.
      */
-    public static String getRightAlias(JoinQueryMapping join) {
+    public static String getRightAlias(org.eclipse.daanse.rolap.mapping.model.JoinQuery join) {
         if (join.getRight() != null && join.getRight().getAlias() != null) {
             return join.getRight().getAlias();
         }
-        QueryMapping right = right(join);
-        if (right instanceof RelationalQueryMapping relation) {
+        org.eclipse.daanse.rolap.mapping.model.Query right = right(join);
+        if (right instanceof org.eclipse.daanse.rolap.mapping.model.RelationalQuery relation) {
             return RelationUtil.getAlias(relation);
         }
-        if (right instanceof JoinQueryMapping j) {
+        if (right instanceof org.eclipse.daanse.rolap.mapping.model.JoinQuery j) {
             return getLeftAlias(j);
         }
         throw Util.newInternal(
