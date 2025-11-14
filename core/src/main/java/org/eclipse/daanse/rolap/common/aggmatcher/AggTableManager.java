@@ -388,6 +388,7 @@ public class AggTableManager {
             String alias = null;
             org.eclipse.daanse.rolap.mapping.model.TableQuery q = RolapMappingFactory.eINSTANCE.createTableQuery();
             q.setAlias(alias);
+            q.setTable(t);
             q.getOptimizationHints().addAll(tableHints);
             dbFactTable.table = q;
 

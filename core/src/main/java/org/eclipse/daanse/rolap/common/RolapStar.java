@@ -91,6 +91,7 @@ import org.eclipse.daanse.rolap.element.RolapCubeLevel;
 import org.eclipse.daanse.rolap.element.RolapLevel;
 import org.eclipse.daanse.rolap.element.RolapProperty;
 import org.eclipse.daanse.rolap.element.RolapStoredMeasure;
+import org.eclipse.daanse.rolap.mapping.model.JoinQuery;
 import org.eclipse.daanse.rolap.mapping.model.Query;
 import org.eclipse.daanse.rolap.mapping.model.RolapMappingFactory;
 import org.slf4j.Logger;
@@ -478,7 +479,7 @@ public class RolapStar {
             }
 
             if (left(join) != left || right(join) != right) {
-                join = RolapMappingFactory.eINSTANCE.createJoinQuery();
+                JoinQuery joinNew = RolapMappingFactory.eINSTANCE.createJoinQuery();
 
                 org.eclipse.daanse.rolap.mapping.model.JoinedQueryElement leftElement = RolapMappingFactory.eINSTANCE.createJoinedQueryElement();
                 leftElement.setAlias(left instanceof org.eclipse.daanse.rolap.mapping.model.RelationalQuery relation ? RelationUtil.getAlias(relation) : null);
@@ -490,8 +491,9 @@ public class RolapStar {
                 rightElement.setKey(PojoUtil.getColumn(join.getRight().getKey()));
                 rightElement.setQuery(PojoUtil.copy(right));
                 
-                join.setLeft(leftElement);
-                join.setRight(rightElement);
+                joinNew.setLeft(leftElement);
+                joinNew.setRight(rightElement);
+                join=joinNew;
             }
             return join;
         }

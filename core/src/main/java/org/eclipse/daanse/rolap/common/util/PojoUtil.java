@@ -117,7 +117,7 @@ public class PojoUtil {
             rightElement.setQuery(right);
             
             joinQuery.setLeft(leftElement);
-            joinQuery.setRight(leftElement);
+            joinQuery.setRight(rightElement);
             yield joinQuery;
         }
         case null, default -> throw Util.newInternal(BAD_RELATION_TYPE + relation);
