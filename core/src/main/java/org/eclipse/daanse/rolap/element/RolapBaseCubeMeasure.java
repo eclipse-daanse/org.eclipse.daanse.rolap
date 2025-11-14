@@ -155,7 +155,7 @@ public class RolapBaseCubeMeasure
         if (RolapBaseCubeMeasure.DataType.valueOf(datatype.getLiteral()) == null) {
             throw new CastInvalidTypeException(datatype.getLiteral());
         }
-        setProperty(StandardProperty.DATATYPE.getName(), datatype.getValue());
+        setProperty(StandardProperty.DATATYPE.getName(), datatype.getLiteral());
     }
 
     @Override
