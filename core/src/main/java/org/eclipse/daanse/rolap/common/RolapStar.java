@@ -67,7 +67,7 @@ import org.eclipse.daanse.olap.api.SqlExpression;
 import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
-import org.eclipse.daanse.olap.common.AbstractProperty;
+import org.eclipse.daanse.olap.element.AbstractProperty;
 import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.core.AbstractBasicContext;

@@ -45,7 +45,7 @@ import org.eclipse.daanse.olap.api.element.OlapElement;
 import org.eclipse.daanse.olap.api.element.Property;
 import org.eclipse.daanse.olap.api.formatter.MemberPropertyFormatter;
 import org.eclipse.daanse.olap.api.query.component.Expression;
-import org.eclipse.daanse.olap.common.MemberBase;
+import org.eclipse.daanse.olap.element.MemberBase;
 import org.eclipse.daanse.olap.common.StandardProperty;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.element.OlapMetaData;

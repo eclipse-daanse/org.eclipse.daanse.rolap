@@ -19,7 +19,7 @@ import org.eclipse.daanse.olap.api.calc.Calc;
 import org.eclipse.daanse.olap.api.calc.todo.TupleList;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.query.component.Expression;
-import org.eclipse.daanse.olap.common.MemberBase;
+import org.eclipse.daanse.olap.element.MemberBase;
 import org.eclipse.daanse.olap.util.type.TypeWrapperExp;
 import org.eclipse.daanse.rolap.common.RolapEvaluatorRoot;
 import org.eclipse.daanse.rolap.common.RolapResult.ValueFormatter;

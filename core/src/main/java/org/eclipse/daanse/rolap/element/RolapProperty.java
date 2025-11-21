@@ -40,7 +40,7 @@ import org.eclipse.daanse.olap.api.element.Dimension;
 import org.eclipse.daanse.olap.api.element.Hierarchy;
 import org.eclipse.daanse.olap.api.element.OlapElement;
 import org.eclipse.daanse.olap.api.formatter.MemberPropertyFormatter;
-import org.eclipse.daanse.olap.common.AbstractProperty;
+import org.eclipse.daanse.olap.element.AbstractProperty;
 import org.eclipse.daanse.rolap.common.RolapStar;
 import org.eclipse.daanse.rolap.common.RolapStar.Column;
 import org.slf4j.Logger;

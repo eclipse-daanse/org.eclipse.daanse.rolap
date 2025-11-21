@@ -85,7 +85,7 @@ import org.eclipse.daanse.olap.calc.base.constant.ConstantCalcs;
 import org.eclipse.daanse.olap.calc.base.type.tuplebase.AbstractProfilingNestedTupleListCalc;
 import org.eclipse.daanse.olap.calc.base.type.tuplebase.UnaryTupleList;
 import org.eclipse.daanse.olap.calc.base.value.CurrentValueUnknownCalc;
-import org.eclipse.daanse.olap.common.HierarchyBase;
+import org.eclipse.daanse.olap.element.HierarchyBase;
 import org.eclipse.daanse.olap.common.InvalidHierarchyException;
 import org.eclipse.daanse.olap.common.StandardProperty;
 import org.eclipse.daanse.olap.common.SystemWideProperties;
