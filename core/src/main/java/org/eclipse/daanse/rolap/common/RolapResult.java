@@ -97,7 +97,7 @@ import org.eclipse.daanse.olap.common.StandardProperty;
 import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.core.AbstractBasicContext;
-import org.eclipse.daanse.olap.fun.MondrianEvaluationException;
+import org.eclipse.daanse.olap.fun.DaanseEvaluationException;
 import org.eclipse.daanse.olap.fun.sort.Sorter;
 import org.eclipse.daanse.olap.function.core.FunctionMetaDataR;
 import org.eclipse.daanse.olap.function.core.FunctionParameterR;
@@ -132,7 +132,7 @@ import org.slf4j.LoggerFactory;
 public class RolapResult extends ResultBase {
 
     static final Logger LOGGER = LoggerFactory.getLogger( RolapResult.class );
-    public static final String MONDRIAN_EXCEPTION_IN_EXECUTE_STRIPE = "Mondrian: exception in executeStripe.";
+    public static final String DAANSE_EXCEPTION_IN_EXECUTE_STRIPE = "Daanse: exception in executeStripe.";
 
   private RolapEvaluator evaluator;
   RolapEvaluator slicerEvaluator;
@@ -160,13 +160,13 @@ public class RolapResult extends ResultBase {
     super( execution, null );
     this.maxEvalDepth = query.getConnection().getContext().getConfigValue(ConfigConstants.MAX_EVAL_DEPTH, ConfigConstants.MAX_EVAL_DEPTH_DEFAULT_VALUE, Integer.class);
     int solveOrder = execution
-        .getMondrianStatement().getMondrianConnection()
+        .getDaanseStatement().getDaanseConnection()
         .getContext().getConfigValue(ConfigConstants.COMPOUND_SLICER_MEMBER_SOLVE_ORDER, ConfigConstants.COMPOUND_SLICER_MEMBER_SOLVE_ORDER_DEFAULT_VALUE, Integer.class);
     this.point = CellKey.Generator.newCellKey( axes.length );
-    AbstractBasicContext abc = (AbstractBasicContext) execution.getMondrianStatement().getMondrianConnection().getContext();
+    AbstractBasicContext abc = (AbstractBasicContext) execution.getDaanseStatement().getDaanseConnection().getContext();
     final IAggregationManager aggMgr = abc.getAggregationManager();
     this.aggregatingReader = ((AggregationManager)aggMgr).getCacheCellReader();
-    final int expDeps = execution.getMondrianStatement().getMondrianConnection().getContext().getConfigValue(ConfigConstants.TEST_EXP_DEPENDENCIES, ConfigConstants.TEST_EXP_DEPENDENCIES_DEFAULT_VALUE, Integer.class);
+    final int expDeps = execution.getDaanseStatement().getDaanseConnection().getContext().getConfigValue(ConfigConstants.TEST_EXP_DEPENDENCIES, ConfigConstants.TEST_EXP_DEPENDENCIES_DEFAULT_VALUE, Integer.class);
     if ( expDeps > 0 ) {
       this.evaluator = new RolapDependencyTestingEvaluator( this, expDeps );
     } else {
@@ -1244,8 +1244,8 @@ public Cell getCell( int[] pos ) {
         Object o;
         try {
           o = revaluator.evaluateCurrent();
-        } catch ( MondrianEvaluationException e ) {
-          LOGGER.warn(MONDRIAN_EXCEPTION_IN_EXECUTE_STRIPE, e );
+        } catch ( DaanseEvaluationException e ) {
+          LOGGER.warn(DAANSE_EXCEPTION_IN_EXECUTE_STRIPE, e );
           o = e;
         } finally {
           revaluator.restore( savepoint );
@@ -1278,7 +1278,7 @@ public Cell getCell( int[] pos ) {
           ValueFormatter valueFormatter = m.getFormatter();
           if ( valueFormatter == null ) {
             cachedFormatString = revaluator.getFormatString();
-            Locale locale = statement.getMondrianConnection().getLocale();
+            Locale locale = statement.getDaanseConnection().getLocale();
             valueFormatter = formatValueFormatters.get( locale );
             if ( valueFormatter == null ) {
               valueFormatter = new FormatValueFormatter( locale );
@@ -1293,11 +1293,11 @@ public Cell getCell( int[] pos ) {
           // or We need to throw this so another phase happens.
           // or Errors indicate fatal JVM problems; do not discard
           throw e;
-        } catch ( MondrianEvaluationException e ) {
+        } catch ( DaanseEvaluationException e ) {
           // ignore but warn
-          LOGGER.warn( MONDRIAN_EXCEPTION_IN_EXECUTE_STRIPE, e );
+          LOGGER.warn( DAANSE_EXCEPTION_IN_EXECUTE_STRIPE, e );
         } catch ( Exception e ) {
-          LOGGER.warn( MONDRIAN_EXCEPTION_IN_EXECUTE_STRIPE, e );
+          LOGGER.warn( DAANSE_EXCEPTION_IN_EXECUTE_STRIPE, e );
 //            discard( e );
         }
 

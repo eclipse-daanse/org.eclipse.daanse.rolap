@@ -155,7 +155,7 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
         aggMgr = new AggregationManager(this);
 
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("new MondrianServer: id=" + getId());
+            LOGGER.debug("new DaanseServer: id=" + getId());
         }
     }
 

@@ -34,7 +34,7 @@ import java.math.BigDecimal;
 import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.olap.api.query.component.Expression;
 import org.eclipse.daanse.olap.api.type.NullType;
-import org.eclipse.daanse.olap.fun.MondrianEvaluationException;
+import org.eclipse.daanse.olap.fun.DaanseEvaluationException;
 import org.eclipse.daanse.olap.query.component.NumericLiteralImpl;
 import org.eclipse.daanse.olap.query.component.StringLiteralImpl;
 import org.eclipse.daanse.olap.util.type.TypeWrapperExp;
@@ -150,9 +150,9 @@ class NumberSqlCompilerTest {
         Expression exp = StringLiteralImpl.create(value);
         try {
             compiler.compile(exp);
-        } catch (MondrianEvaluationException e) {
+        } catch (DaanseEvaluationException e) {
             return;
         }
-        fail("Expected to get MondrianEvaluationException for " + value);
+        fail("Expected to get DaanseEvaluationException for " + value);
     }
 }

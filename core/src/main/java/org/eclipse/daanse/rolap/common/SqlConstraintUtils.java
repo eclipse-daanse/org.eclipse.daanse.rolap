@@ -108,7 +108,7 @@ public class SqlConstraintUtils {
     Aggregate star fact table ''{0}'':  A constraint will not be generated because name column is not the same as key column.
     """;
     private final static String nativeSqlInClauseTooLarge = """
-    Cannot use native aggregation constraints for level ''{0}'' because the number of members is larger than the value of ''mondrian.rolap.maxConstraints'' ({1})
+    Cannot use native aggregation constraints for level ''{0}'' because the number of members is larger than the value of ''daanse.rolap.maxConstraints'' ({1})
     """;
 
     /** Utility class */

@@ -57,7 +57,7 @@ class TopCountNativeEvaluatorTest {
         RolapNativeTopCount nativeTopCount = new RolapNativeTopCount(false);
 
         assertThat(nativeTopCount.createEvaluator(null, null, null, true)).as("Native evaluator should not be created when "
-            + "'mondrian.native.topcount.enable' is 'false'").isNull();
+            + "'daanse.native.topcount.enable' is 'false'").isNull();
     }
 
     @Test

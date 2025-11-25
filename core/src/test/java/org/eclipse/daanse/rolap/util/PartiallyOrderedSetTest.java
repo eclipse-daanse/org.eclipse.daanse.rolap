@@ -238,7 +238,7 @@ class PartiallyOrderedSetTest {
     }
 
     @Test
-    void mondrian2628() {
+    void daanse2628() {
         PartiallyOrderedSet<Integer> integers =
             new PartiallyOrderedSet<>(isDivisorWithNulls,
               range(1, 1000));

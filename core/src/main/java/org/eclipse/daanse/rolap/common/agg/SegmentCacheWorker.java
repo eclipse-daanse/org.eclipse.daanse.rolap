@@ -55,8 +55,8 @@ public final class SegmentCacheWorker {
     private static final Logger LOGGER =
         LoggerFactory.getLogger(SegmentCacheWorker.class);
     private final static String segmentCacheIsNotImplementingInterface = """
-    The mondrian.rolap.SegmentCache property points to a class name which is not an
-            implementation of mondrian.spi.SegmentCache.
+    The daanse.rolap.SegmentCache property points to a class name which is not an
+            implementation of daanse.spi.SegmentCache.
     """;
 
     final SegmentCache cache;

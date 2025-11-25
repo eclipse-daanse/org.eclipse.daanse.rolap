@@ -47,7 +47,7 @@ public interface RolapStoredMeasure extends RolapMeasure, StoredMeasure {
     /**
      * Returns the column which holds the value of the measure.
      */
-    RolapSqlExpression getMondrianDefExpression();
+    RolapSqlExpression getDaanseDefExpression();
 
     /**
      * Returns the aggregation function which rolls up this measure: "SUM",

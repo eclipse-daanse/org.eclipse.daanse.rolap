@@ -653,7 +653,7 @@ public class SqlStatement implements ISqlStatement {
 
   public static long mdxStatementIdOf(LocusImpl locus) {
     if (locus.getExecution() != null) {
-      final org.eclipse.daanse.olap.api.Statement statement = locus.getExecution().getMondrianStatement();
+      final org.eclipse.daanse.olap.api.Statement statement = locus.getExecution().getDaanseStatement();
       if (statement != null) {
         return statement.getId();
       }

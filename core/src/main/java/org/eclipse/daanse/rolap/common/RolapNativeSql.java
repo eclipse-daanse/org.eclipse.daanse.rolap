@@ -46,7 +46,7 @@ import org.eclipse.daanse.olap.api.query.component.MemberExpression;
 import org.eclipse.daanse.olap.api.type.MemberType;
 import org.eclipse.daanse.olap.api.type.StringType;
 import org.eclipse.daanse.olap.common.ExpCacheDescriptorImpl;
-import org.eclipse.daanse.olap.fun.MondrianEvaluationException;
+import org.eclipse.daanse.olap.fun.DaanseEvaluationException;
 import org.eclipse.daanse.olap.query.component.HierarchyExpressionImpl;
 import org.eclipse.daanse.olap.query.component.ResolvedFunCallImpl;
 import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;
@@ -175,7 +175,7 @@ public class RolapNativeSql {
             Literal literal = (Literal) exp;
             String expr = String.valueOf(literal.getValue());
             if (!DECIMAL.matcher(expr).matches()) {
-                throw new MondrianEvaluationException(
+                throw new DaanseEvaluationException(
                     new StringBuilder("Expected to get decimal, but got ").append(expr).toString());
             }
 
@@ -244,7 +244,7 @@ public class RolapNativeSql {
                 }
             } else {
             	RolapSqlExpression defExp =
-                    measure.getMondrianDefExpression();
+                    measure.getDaanseDefExpression();
                 exprInner = (defExp == null)
                     ? "*" : getExpression(defExp, sqlQuery);
             }

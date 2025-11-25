@@ -866,7 +866,7 @@ public class CacheControlImpl implements CacheControl {
         if (prop) {
             throw new IllegalArgumentException(
                 new StringBuilder("Member cache control operations are not allowed unless ")
-                .append("property ").append("mondrian.rolap.EnableRolapCubeMemberCache").append(" is false").toString());
+                .append("property ").append("daanse.rolap.EnableRolapCubeMemberCache").append(" is false").toString());
         }
         synchronized (MEMBER_CACHE_LOCK) {
             // Make sure that a Locus is in the Execution stack,
@@ -924,7 +924,7 @@ public class CacheControlImpl implements CacheControl {
                                     {
                                         if (me.getMessage()
                                             .matches(
-                                                "^Mondrian Error:Member '\\[.*\\]' not found$"))
+                                                "^Daanse Error:Member '\\[.*\\]' not found$"))
                                         {
                                             continue;
                                         }
@@ -934,7 +934,7 @@ public class CacheControlImpl implements CacheControl {
                             } catch (OlapRuntimeException e) {
                                 if (e.getMessage()
                                     .matches(
-                                        "^Mondrian Error:Member '\\[.*\\]' not found$"))
+                                        "^Daanse Error:Member '\\[.*\\]' not found$"))
                                 {
                                     continue;
                                 }

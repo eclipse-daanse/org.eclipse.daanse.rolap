@@ -148,7 +148,7 @@ class RolapCatalogTest {
         try {
             createSchema().createUnionRole(role);
         } catch (OlapRuntimeException ex) {
-            assertMondrianException(
+            assertDaanseException(
                 new RoleUnionGrantsException(), ex);
             return;
         }
@@ -167,7 +167,7 @@ class RolapCatalogTest {
         try {
             createSchema().createUnionRole(role);
         } catch (OlapRuntimeException ex) {
-            assertMondrianException(
+            assertDaanseException(
                 new UnknownRoleException(roleName), ex);
             return;
         }
@@ -495,7 +495,7 @@ class RolapCatalogTest {
         return answer;
     }
 
-    private void assertMondrianException(
+    private void assertDaanseException(
         Exception expected,
         Exception actual)
     {

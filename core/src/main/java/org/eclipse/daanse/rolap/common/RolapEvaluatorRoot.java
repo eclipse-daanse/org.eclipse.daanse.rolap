@@ -105,7 +105,7 @@ public RolapEvaluatorRoot( Statement statement ) {
   }
 
   public RolapEvaluatorRoot( Execution execution ) {
-    this( execution.getMondrianStatement(), execution );
+    this( execution.getDaanseStatement(), execution );
   }
 
   private RolapEvaluatorRoot( Statement statement, Execution execution ) {
@@ -113,7 +113,7 @@ public RolapEvaluatorRoot( Statement statement ) {
     this.statement = statement;
     this.query = statement.getQuery();
     this.cube = (RolapCube) query.getCube();
-    this.connection = statement.getMondrianConnection();
+    this.connection = statement.getDaanseConnection();
     this.solveOrderMode =
         Util.lookup( SolveOrderMode.class, connection.getContext()
                 .getConfigValue(ConfigConstants.SOLVE_ORDER_MODE, ConfigConstants.SOLVE_ORDER_MODE_DEFAULT_VALUE, String.class)

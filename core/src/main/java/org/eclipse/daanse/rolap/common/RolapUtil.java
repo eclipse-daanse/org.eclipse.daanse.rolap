@@ -88,10 +88,10 @@ public class RolapUtil {
         // constructor
     }
 
-    public static final Logger MDX_LOGGER = LoggerFactory.getLogger("mondrian.mdx");
-    public static final Logger SQL_LOGGER = LoggerFactory.getLogger("mondrian.sql");
+    public static final Logger MDX_LOGGER = LoggerFactory.getLogger("daanse.mdx");
+    public static final Logger SQL_LOGGER = LoggerFactory.getLogger("daanse.sql");
     public static final Logger MONITOR_LOGGER =
-        LoggerFactory.getLogger("mondrian.server.monitor");
+        LoggerFactory.getLogger("daanse.server.monitor");
 
     static final Logger LOGGER = LoggerFactory.getLogger(RolapUtil.class);
 
@@ -376,10 +376,10 @@ public class RolapUtil {
                 try {
                     ClassResolver.INSTANCE.forName(jdbcDriver, true);
                     LOGGER.info(
-                        "Mondrian: JDBC driver {} loaded successfully", jdbcDriver);
+                        "Daanse: JDBC driver {} loaded successfully", jdbcDriver);
                 } catch (ClassNotFoundException e) {
                     LOGGER.warn(
-                        "Mondrian: Warning: JDBC driver {} not found", jdbcDriver);
+                        "Daanse: Warning: JDBC driver {} not found", jdbcDriver);
                 }
             }
         }

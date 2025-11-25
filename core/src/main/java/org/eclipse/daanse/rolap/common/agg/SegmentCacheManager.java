@@ -298,10 +298,10 @@ public class SegmentCacheManager implements ISegmentCacheManager {
     LoggerFactory.getLogger( AggregationManager.class );
   private final RolapContext context;
     private final static String sqlQueryLimitReached = """
-    The number of concurrent SQL statements which can be used simultaneously by this Mondrian server instance has been reached. Set ''mondrian.rolap.maxSqlThreads'' to change the current limit.
+    The number of concurrent SQL statements which can be used simultaneously by this Daanse server instance has been reached. Set ''daanse.rolap.maxSqlThreads'' to change the current limit.
     """;
     private final static String segmentCacheLimitReached = """
-    The number of concurrent segment cache operations which can be run simultaneously by this Mondrian server instance has been reached. Set ''mondrian.rolap.maxCacheThreads'' to change the current limit.
+    The number of concurrent segment cache operations which can be run simultaneously by this Daanse server instance has been reached. Set ''daanse.rolap.maxCacheThreads'' to change the current limit.
     """;
 
     public SegmentCacheManager( RolapContext context ) {
@@ -310,7 +310,7 @@ public class SegmentCacheManager implements ISegmentCacheManager {
     this.cacheExecutor = createCacheExecutor(context);
     actor = new Actor();
     thread = new Thread(
-      actor, "mondrian.rolap.agg.SegmentCacheManager$ACTOR" );
+      actor, "daanse.rolap.agg.SegmentCacheManager$ACTOR" );
     thread.setDaemon( true );
     thread.start();
 
@@ -357,7 +357,7 @@ public class SegmentCacheManager implements ISegmentCacheManager {
             context.getConfigValue(ConfigConstants.SEGMENT_CACHE_MANAGER_NUMBER_CACHE_THREADS, ConfigConstants.SEGMENT_CACHE_MANAGER_NUMBER_CACHE_THREADS_DEFAULT_VALUE, Integer.class),
             context.getConfigValue(ConfigConstants.SEGMENT_CACHE_MANAGER_NUMBER_CACHE_THREADS, ConfigConstants.SEGMENT_CACHE_MANAGER_NUMBER_CACHE_THREADS_DEFAULT_VALUE, Integer.class),
             1,
-            "mondrian.rolap.agg.SegmentCacheManager$cacheExecutor",
+            "daanse.rolap.agg.SegmentCacheManager$cacheExecutor",
             ( r, executor ) -> {
                 throw new OlapRuntimeException(segmentCacheLimitReached);
             } );
@@ -375,7 +375,7 @@ public class SegmentCacheManager implements ISegmentCacheManager {
             getConfigValue(ConfigConstants.SEGMENT_CACHE_MANAGER_NUMBER_SQL_THREADS,
                     ConfigConstants.SEGMENT_CACHE_MANAGER_NUMBER_SQL_THREADS_DEFAULT_VALUE, Integer.class),
             1,
-            "mondrian.rolap.agg.SegmentCacheManager$sqlExecutor",
+            "daanse.rolap.agg.SegmentCacheManager$sqlExecutor",
             ( r, executor ) -> {
                 throw new OlapRuntimeException(sqlQueryLimitReached);
             } );
@@ -451,9 +451,9 @@ public class SegmentCacheManager implements ISegmentCacheManager {
     	Instant.now(),
         locus.getContext().getMonitor(),
         locus.getContext().getName(),
-        locus.getExecution().getMondrianStatement()
-          .getMondrianConnection().getId(),
-        locus.getExecution().getMondrianStatement().getId(),
+        locus.getExecution().getDaanseStatement()
+          .getDaanseConnection().getId(),
+        locus.getExecution().getDaanseStatement().getId(),
         locus.getExecution().getId(),
         star,
         header,
@@ -480,9 +480,9 @@ public class SegmentCacheManager implements ISegmentCacheManager {
         System.currentTimeMillis(),
         locus.getContext().getMonitor(),
         locus.getContext().getName(),
-        locus.getExecution().getMondrianStatement()
-          .getMondrianConnection().getId(),
-        locus.getExecution().getMondrianStatement().getId(),
+        locus.getExecution().getDaanseStatement()
+          .getDaanseConnection().getId(),
+        locus.getExecution().getDaanseStatement().getId(),
         locus.getExecution().getId(),
         star,
         header,
@@ -508,9 +508,9 @@ public class SegmentCacheManager implements ISegmentCacheManager {
 	    Instant.now(),
         locus.getContext().getMonitor(),
         locus.getContext().getName(),
-        locus.getExecution().getMondrianStatement()
-          .getMondrianConnection().getId(),
-        locus.getExecution().getMondrianStatement().getId(),
+        locus.getExecution().getDaanseStatement()
+          .getDaanseConnection().getId(),
+        locus.getExecution().getDaanseStatement().getId(),
         locus.getExecution().getId(),
         this,
         star,

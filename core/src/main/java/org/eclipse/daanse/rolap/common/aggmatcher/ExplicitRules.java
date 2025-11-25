@@ -119,7 +119,7 @@ public class ExplicitRules {
     public static class Group {
 
         private final static String cubeRelationNotTable =
-            "The Cube ''{0}'' relation is not a MondrianDef.Table but rather ''{1}''.";
+            "The Cube ''{0}'' relation is not a DaanseDef.Table but rather ''{1}''.";
 
         /**
          * Make an ExplicitRules.Group for a given RolapCube given the

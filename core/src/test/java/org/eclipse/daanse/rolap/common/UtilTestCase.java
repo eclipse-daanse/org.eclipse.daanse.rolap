@@ -64,7 +64,7 @@ import org.junit.jupiter.api.Test;
                 Arrays.asList(
                     // Usually on the list, but not guaranteed:
                     // "sun.jdbc.odbc.JdbcOdbcDriver",
-                    "mondrian.olap4j.MondrianOlap4jDriver"));
+                    "daanse.olap4j.MondrianOlap4jDriver"));
         for (Class<Driver> driverClass : list) {
             expectedClassNames.remove(driverClass.getName());
         }

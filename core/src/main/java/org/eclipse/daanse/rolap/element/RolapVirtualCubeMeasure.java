@@ -83,8 +83,8 @@ public class RolapVirtualCubeMeasure
     }
 
     @Override
-	public RolapSqlExpression getMondrianDefExpression() {
-        return cubeMeasure.getMondrianDefExpression();
+	public RolapSqlExpression getDaanseDefExpression() {
+        return cubeMeasure.getDaanseDefExpression();
     }
 
     @Override

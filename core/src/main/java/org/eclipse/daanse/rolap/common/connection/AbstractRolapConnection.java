@@ -269,7 +269,7 @@ public Result execute( Query query ) {
   }
 
   private Result executeInternal( final Execution execution ) {
-    final Statement statement = execution.getMondrianStatement();
+    final Statement statement = execution.getDaanseStatement();
     // Cleanup any previous executions still running
     synchronized ( statement ) {
       final Execution previousExecution =

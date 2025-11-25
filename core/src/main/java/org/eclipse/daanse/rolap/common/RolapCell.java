@@ -187,7 +187,7 @@ public class RolapCell implements Cell {
         boolean extendedContext,
         int maxRowCount)
     {
-        if (!result.getExecution().getMondrianStatement().getMondrianConnection().getContext()
+        if (!result.getExecution().getDaanseStatement().getDaanseConnection().getContext()
                 .getConfigValue(ConfigConstants.ENABLE_DRILL_THROUGH, ConfigConstants.ENABLE_DRILL_THROUGH_DEFAULT_VALUE, Boolean.class))
         {
             throw new OlapRuntimeException(MessageFormat.format(
@@ -213,8 +213,8 @@ public class RolapCell implements Cell {
         }
         cellRequest.setMaxRowCount(maxRowCount);
         final Connection connection =
-            result.getExecution().getMondrianStatement()
-                .getMondrianConnection();
+            result.getExecution().getDaanseStatement()
+                .getDaanseConnection();
         AbstractBasicContext abc = (AbstractBasicContext) connection.getContext();
         final RolapAggregationManager aggMgr =
             (RolapAggregationManager)abc.getAggregationManager();
@@ -245,8 +245,8 @@ public class RolapCell implements Cell {
             return -1;
         }
         final Connection connection =
-            result.getExecution().getMondrianStatement()
-                .getMondrianConnection();
+            result.getExecution().getDaanseStatement()
+                .getDaanseConnection();
         AbstractBasicContext abc = (AbstractBasicContext)  connection.getContext();
         final RolapAggregationManager aggMgr =
                 (RolapAggregationManager)abc.getAggregationManager();
@@ -420,7 +420,7 @@ public class RolapCell implements Cell {
      */
     @Override
 	public boolean canDrillThrough() {
-        if (!((Context<?>)(result.getExecution().getMondrianStatement().getMondrianConnection().getContext()))
+        if (!((Context<?>)(result.getExecution().getDaanseStatement().getDaanseConnection().getContext()))
                 .getConfigValue(ConfigConstants.ENABLE_DRILL_THROUGH, ConfigConstants.ENABLE_DRILL_THROUGH_DEFAULT_VALUE, Boolean.class))
         {
             return false;
@@ -572,14 +572,14 @@ public class RolapCell implements Cell {
         // offset row, it is useful that the cursor is scrollable, but not
         // essential.
         final Statement statement =
-            result.getExecution().getMondrianStatement();
+            result.getExecution().getDaanseStatement();
         final ExecutionImpl execution = new ExecutionImpl(statement, ExecuteDurationUtil.executeDurationValue(statement.getConnection().getContext()));
 
-        final Connection connection = statement.getMondrianConnection();
+        final Connection connection = statement.getDaanseConnection();
         int resultSetType = ResultSet.TYPE_SCROLL_INSENSITIVE;
         int resultSetConcurrency = ResultSet.CONCUR_READ_ONLY;
 
-        Dialect dialect = execution.getMondrianStatement().getMondrianConnection().getContext().getDialect();
+        Dialect dialect = execution.getDaanseStatement().getDaanseConnection().getContext().getDialect();
         if (!dialect.supportsResultSetConcurrency(
                 resultSetType, resultSetConcurrency)
             || firstRowOrdinal <= 1)
@@ -749,8 +749,8 @@ public class RolapCell implements Cell {
         }
         double doubleNewValue = ((Number) newValue).doubleValue();
         scenario.setCellValue(
-            result.getExecution().getMondrianStatement()
-                .getMondrianConnection(),
+            result.getExecution().getDaanseStatement()
+                .getDaanseConnection(),
             Arrays.asList(members),
             doubleNewValue,
             doubleCurrentValue,

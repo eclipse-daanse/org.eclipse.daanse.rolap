@@ -41,7 +41,7 @@ public class InternalStatement extends org.eclipse.daanse.olap.impl.StatementImp
   }
 
   @Override
-	public Connection getMondrianConnection() {
+	public Connection getDaanseConnection() {
     return this.getConnection();
   }
 }

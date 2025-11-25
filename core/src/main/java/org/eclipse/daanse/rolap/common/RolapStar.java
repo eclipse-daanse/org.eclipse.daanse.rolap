@@ -152,7 +152,7 @@ public class RolapStar {
 
     private final RolapStatisticsCache statisticsCache;
     private final static String illegalLeftDeepJoin =
-        "Left side of join must not be a join; mondrian only supports right-deep joins.";
+        "Left side of join must not be a join; daanse only supports right-deep joins.";
 
     /**
      * Creates a RolapStar. Please use
@@ -1117,8 +1117,8 @@ public class RolapStar {
             // is unfortunate, and we will fix it some day. For now, create
             // a fake column with all of the information needed by the toSql
             // method, and a copy of the predicate wrapping that fake column.
-            if (!Bug.BugMondrian313Fixed
-                || !Bug.BugMondrian314Fixed
+            if (!Bug.Bug313Fixed
+                || !Bug.Bug314Fixed
                 && predicate.getConstrainedColumn() == null)
             {
                 Column column = new Column(datatype) {
@@ -1505,7 +1505,7 @@ public class RolapStar {
                 measure.getCube().getName(),
                 measure.getAggregator(),
                 this,
-                measure.getMondrianDefExpression(),
+                measure.getDaanseDefExpression(),
                 measure.getDatatype());
 
             measure.setStarMeasure(starMeasure); // reverse mapping

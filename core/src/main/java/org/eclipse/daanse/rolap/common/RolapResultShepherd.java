@@ -76,7 +76,7 @@ public class RolapResultShepherd implements ResultShepherd {
         new CopyOnWriteArrayList<>();
 
     private final Timer timer =
-    		new Timer("mondrian.rolap.RolapResultShepherd#timer", true);
+    		new Timer("daanse.rolap.RolapResultShepherd#timer", true);
 
     public RolapResultShepherd(final long rolapConnectionShepherdThreadPollingInterval, TimeUnit rolapConnectionShepherdThreadPollingIntervalUnit, final int rolapConnectionShepherdNbThreads) {
 
@@ -89,10 +89,10 @@ public class RolapResultShepherd implements ResultShepherd {
                 maximumPoolSize,
                 maximumPoolSize,
                 1000000,
-                "mondrian.rolap.RolapResultShepherd$executor",
+                "daanse.rolap.RolapResultShepherd$executor",
                 new RejectedExecutionHandler() {
                     private final static String queryLimitReached = """
-                    The number of concurrent MDX statements that can be processed simultaneously by this Mondrian server instance ({0,number}) has been reached. To change the limit, set the ''{1}'' property.
+                    The number of concurrent MDX statements that can be processed simultaneously by this Daanse server instance ({0,number}) has been reached. To change the limit, set the ''{1}'' property.
                     """;
 
                     @Override

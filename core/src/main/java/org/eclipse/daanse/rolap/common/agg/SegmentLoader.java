@@ -183,10 +183,10 @@ public class SegmentLoader {
 	public Map<Segment, SegmentWithData> call() throws Exception {
       LocusImpl.push( locus );
       try {
-          boolean useAggregates = locus.getExecution().getMondrianStatement().getMondrianConnection().getContext().getConfigValue(ConfigConstants.USE_AGGREGATES, ConfigConstants.USE_AGGREGATES_DEFAULT_VALUE ,Boolean.class);
+          boolean useAggregates = locus.getExecution().getDaanseStatement().getDaanseConnection().getContext().getConfigValue(ConfigConstants.USE_AGGREGATES, ConfigConstants.USE_AGGREGATES_DEFAULT_VALUE ,Boolean.class);
         return segmentLoader.loadImpl( cellRequestCount, groupingSets, compoundPredicateList, useAggregates,
-            locus.getExecution().getMondrianStatement().getMondrianConnection().getContext().getConfigValue(ConfigConstants.SPARSE_SEGMENT_COUNT_THRESHOLD, ConfigConstants.SPARSE_SEGMENT_COUNT_THRESHOLD_DEFAULT_VALUE ,Integer.class),
-            locus.getExecution().getMondrianStatement().getMondrianConnection().getContext().getConfigValue(ConfigConstants.SPARSE_SEGMENT_DENSITY_THRESHOLD, ConfigConstants.SPARSE_SEGMENT_DENSITY_THRESHOLD_DEFAULT_VALUE ,Double.class));
+            locus.getExecution().getDaanseStatement().getDaanseConnection().getContext().getConfigValue(ConfigConstants.SPARSE_SEGMENT_COUNT_THRESHOLD, ConfigConstants.SPARSE_SEGMENT_COUNT_THRESHOLD_DEFAULT_VALUE ,Integer.class),
+            locus.getExecution().getDaanseStatement().getDaanseConnection().getContext().getConfigValue(ConfigConstants.SPARSE_SEGMENT_DENSITY_THRESHOLD, ConfigConstants.SPARSE_SEGMENT_DENSITY_THRESHOLD_DEFAULT_VALUE ,Double.class));
       } finally {
         LocusImpl.pop( locus );
       }

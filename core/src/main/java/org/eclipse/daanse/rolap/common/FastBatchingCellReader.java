@@ -135,7 +135,7 @@ public class FastBatchingCellReader implements CellReader {
         }
         this.cube = cube;
         this.aggMgr = (AggregationManager)aggMgr;
-        cacheMgr = (SegmentCacheManager)aggMgr.getCacheMgr(execution.getMondrianStatement().getMondrianConnection());
+        cacheMgr = (SegmentCacheManager)aggMgr.getCacheMgr(execution.getDaanseStatement().getDaanseConnection());
         pinnedSegments = this.aggMgr.createPinSet();
         cacheEnabled = !cube.getCatalog().getInternalConnection().getContext().getConfigValue(ConfigConstants.DISABLE_CACHING, ConfigConstants.DISABLE_CACHING_DEFAULT_VALUE, Boolean.class);
         Integer cellBatchSize = cube.getCatalog().getInternalConnection().getContext()
@@ -574,7 +574,7 @@ public class FastBatchingCellReader implements CellReader {
         if (star != null) {
             return star.getSqlQueryDialect();
         } else {
-            return execution.getMondrianStatement().getMondrianConnection().getContext().getDialect();
+            return execution.getDaanseStatement().getDaanseConnection().getContext().getDialect();
         }
     }
 

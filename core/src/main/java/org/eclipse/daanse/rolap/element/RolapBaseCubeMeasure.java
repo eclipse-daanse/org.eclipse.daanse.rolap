@@ -159,7 +159,7 @@ public class RolapBaseCubeMeasure
     }
 
     @Override
-	public RolapSqlExpression getMondrianDefExpression() {
+	public RolapSqlExpression getDaanseDefExpression() {
         return expression;
     }
 

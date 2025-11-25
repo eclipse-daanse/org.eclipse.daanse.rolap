@@ -71,7 +71,7 @@ class SqlStatementTest {
     when(rolapConnection.getContext()).thenReturn(context);
 
     statMock = mock(StatementImpl.class);
-    when(statMock.getMondrianConnection()).thenReturn(rolapConnection);
+    when(statMock.getDaanseConnection()).thenReturn(rolapConnection);
 
     execution = new ExecutionImpl(statMock, Optional.empty());
     execution = spy(execution);
