@@ -23,10 +23,8 @@
  */
 package org.eclipse.daanse.rolap.util;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,7 +43,7 @@ class FilteredIterableTest{
     }
 
     @Test
-    void testEmptyList() throws Exception {
+    void emptyList() throws Exception {
         final List<Integer> base = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
             base.add(i);
@@ -66,7 +64,7 @@ class FilteredIterableTest{
     }
 
     @Test
-    void testGetter() throws Exception {
+    void getter() throws Exception {
         final List<Integer> base = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
             base.add(i);
@@ -82,7 +80,7 @@ class FilteredIterableTest{
                     }
                 });
         for (int i = 0; i < 2; i++) {
-            assertEquals(Integer.valueOf(i), empty.get(i));
+            assertThat(empty.get(i)).isEqualTo(Integer.valueOf(i));
         }
     }
 
@@ -102,11 +100,11 @@ class FilteredIterableTest{
                         return true;
                     }
                 });
-        assertFalse(identical.isEmpty());
-        assertNotNull(identical.get(0));
+        assertThat(identical.isEmpty()).isFalse();
+        assertThat(identical.get(0)).isNotNull();
         int k = 0;
         for (final Integer i : identical) {
-            assertEquals(i, identical.get(k));
+            assertThat(identical.get(k)).isEqualTo(i);
             k++;
         }
     }

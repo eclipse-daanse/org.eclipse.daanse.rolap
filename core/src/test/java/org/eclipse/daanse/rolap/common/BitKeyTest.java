@@ -219,9 +219,9 @@ class BitKeyTest {
             for (int i2 = 0; i2 < bitKeys.length; i2++) {
                 BitKey bitKey2 = bitKeys[i2];
                 String s = "(" + i1 + ", " + i2 + ")";
-                org.junit.jupiter.api.Assertions.assertEquals(bitKey1, bitKey2, s);
-                org.junit.jupiter.api.Assertions.assertEquals(bitKey1.hashCode(), bitKey2.hashCode(), s);
-                org.junit.jupiter.api.Assertions.assertEquals(0, bitKey1.compareTo(bitKey2), s);
+                assertThat((Object)bitKey2).as(s).isEqualTo(bitKey1);
+                assertThat(bitKey2.hashCode()).as(s).isEqualTo(bitKey1.hashCode());
+                assertThat(bitKey1.compareTo(bitKey2)).as(s).isEqualTo(0);
             }
         }
     }
@@ -322,18 +322,18 @@ class BitKeyTest {
     }
 
 	@Test
-    void testNewBitKeyIsTheSameAsAClearedBitKey() {
+    void newBitKeyIsTheSameAsAClearedBitKey() {
         BitKey bitKey = BitKey.Factory.makeBitKey(8);
         bitKey.set(1);
-        org.junit.jupiter.api.Assertions.assertNotEquals(BitKey.Factory.makeBitKey(8), bitKey);
+        assertThat((Object)bitKey).isNotEqualTo(BitKey.Factory.makeBitKey(8));
         bitKey.clear();
-        org.junit.jupiter.api.Assertions.assertEquals(BitKey.Factory.makeBitKey(8), bitKey);
+        assertThat((Object)bitKey).isEqualTo(BitKey.Factory.makeBitKey(8));
     }
 
 	@Test
-    void testEmptyCopyCreatesBitKeyOfTheSameSize() {
+    void emptyCopyCreatesBitKeyOfTheSameSize() {
         BitKey bitKey = BitKey.Factory.makeBitKey(8);
-        org.junit.jupiter.api.Assertions.assertEquals(bitKey, bitKey.emptyCopy());
+        assertThat((Object)(bitKey.emptyCopy())).isEqualTo(bitKey);
     }
 
     /**

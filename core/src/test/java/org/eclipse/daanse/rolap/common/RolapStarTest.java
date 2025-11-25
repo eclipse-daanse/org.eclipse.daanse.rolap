@@ -23,11 +23,11 @@
  */
 package org.eclipse.daanse.rolap.common;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.assertj.core.api.Assertions;
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.connection.Connection;
 import org.eclipse.daanse.rolap.common.RolapStar.Column;
@@ -78,33 +78,33 @@ class RolapStarTest {
 
    //Below there are tests for mondrian.rolap.RolapStar.ColumnComparator
    @Test
-   void testTwoColumnsWithDifferentNamesNotEquals() {
+   void twoColumnsWithDifferentNamesNotEquals() {
      RolapStar.ColumnComparator colComparator =
          RolapStar.ColumnComparator.instance;
      Column column1 = getColumnMock("Column1", "Table1");
      Column column2 = getColumnMock("Column2", "Table1");
-     assertNotSame(column1, column2);
-     assertEquals(-1, colComparator.compare(column1, column2));
+       Assertions.assertThat(column2).isNotSameAs(column1);
+       assertThat(colComparator.compare(column1, column2)).isEqualTo(-1);
    }
 
    @Test
-   void testTwoColumnsWithEqualsNamesButDifferentTablesNotEquals() {
+   void twoColumnsWithEqualsNamesButDifferentTablesNotEquals() {
      RolapStar.ColumnComparator colComparator =
          RolapStar.ColumnComparator.instance;
      Column column1 = getColumnMock("Column1", "Table1");
      Column column2 = getColumnMock("Column1", "Table2");
-     assertNotSame(column1, column2);
-     assertEquals(-1, colComparator.compare(column1, column2));
+       Assertions.assertThat(column2).isNotSameAs(column1);
+       assertThat(colComparator.compare(column1, column2)).isEqualTo(-1);
    }
 
    @Test
-   void testTwoColumnsEquals() {
+   void twoColumnsEquals() {
      RolapStar.ColumnComparator colComparator =
          RolapStar.ColumnComparator.instance;
      Column column1 = getColumnMock("Column1", "Table1");
      Column column2 = getColumnMock("Column1", "Table1");
-     assertNotSame(column1, column2);
-     assertEquals(0, colComparator.compare(column1, column2));
+       Assertions.assertThat(column2).isNotSameAs(column1);
+       assertThat(colComparator.compare(column1, column2)).isEqualTo(0);
    }
 
    private static Column getColumnMock(

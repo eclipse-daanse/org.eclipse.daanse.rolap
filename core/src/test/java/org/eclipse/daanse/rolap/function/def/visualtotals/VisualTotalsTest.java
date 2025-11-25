@@ -24,7 +24,7 @@
 
 package org.eclipse.daanse.rolap.function.def.visualtotals;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
@@ -36,50 +36,50 @@ import org.junit.jupiter.api.Test;
  */
 class VisualTotalsTest {
 	@Test
-    void testSubstituteEmpty() {
+    void substituteEmpty() {
         final String actual = VisualTotalsCalc.substitute("", "anything");
         final String expected = "";
-        assertEquals(expected, actual);
+        assertThat(actual).isEqualTo(expected);
     }
 
 	@Test
-    void testSubstituteOneStarOnly() {
+    void substituteOneStarOnly() {
         final String actual = VisualTotalsCalc.substitute("*", "anything");
         final String expected = "anything";
-        assertEquals(expected, actual);
+        assertThat(actual).isEqualTo(expected);
     }
 
 	@Test
-    void testSubstituteOneStarBegin() {
+    void substituteOneStarBegin() {
         final String actual =
         VisualTotalsCalc.substitute("* is the word.", "Grease");
         final String expected = "Grease is the word.";
-        assertEquals(expected, actual);
+        assertThat(actual).isEqualTo(expected);
     }
 
 	@Test
-    void testSubstituteOneStarEnd() {
+    void substituteOneStarEnd() {
         final String actual =
             VisualTotalsCalc.substitute(
                 "Lies, damned lies, and *!", "statistics");
         final String expected = "Lies, damned lies, and statistics!";
-        assertEquals(expected, actual);
+        assertThat(actual).isEqualTo(expected);
     }
 
 	@Test
-    void testSubstituteTwoStars() {
+    void substituteTwoStars() {
         final String actual = VisualTotalsCalc.substitute("**", "anything");
         final String expected = "*";
-        assertEquals(expected, actual);
+        assertThat(actual).isEqualTo(expected);
     }
 
 	@Test
-    void testSubstituteCombined() {
+    void substituteCombined() {
         final String actual =
             VisualTotalsCalc.substitute(
                 "*: see small print**** for *", "disclaimer");
         final String expected = "disclaimer: see small print** for disclaimer";
-        assertEquals(expected, actual);
+        assertThat(actual).isEqualTo(expected);
     }
 
 }

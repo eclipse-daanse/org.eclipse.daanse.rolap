@@ -23,7 +23,7 @@
  */
 package org.eclipse.daanse.rolap.util;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -44,11 +44,11 @@ class PrimeFinderTest{
         PrintWriter pw = new PrintWriter(sw);
         PrimeFinder.statistics(from, to, pw);
         pw.flush();
-        assertEquals(expected, sw.toString());
+        assertThat(sw.toString()).isEqualTo(expected);
     }
 
     @Test
-    void testOne() {
+    void one() {
         assertStatistics(
             1000,
             1000,
@@ -59,7 +59,7 @@ class PrimeFinderTest{
     }
 
     @Test
-    void testTwo() {
+    void two() {
         assertStatistics(
             200,
             1000,
@@ -70,7 +70,7 @@ class PrimeFinderTest{
     }
 
     @Test
-    void testThree() {
+    void three() {
         assertStatistics(
             16,
             1000,
@@ -88,7 +88,7 @@ class PrimeFinderTest{
     // disabled because it takes a LONG time
     @Test
     @Disabled
-    void testFour() {
+    void four() {
         assertStatistics(1000, Integer.MAX_VALUE, "");
     }
 }

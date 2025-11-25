@@ -23,7 +23,8 @@
  */
 package org.eclipse.daanse.rolap.util;
 
-import org.junit.jupiter.api.Assertions;
+import static org.assertj.core.api.Assertions.fail;
+
 import org.junit.jupiter.api.Test;
 
 /**
@@ -47,7 +48,7 @@ class MemoryMonitorTest {
     protected boolean enabled = false;
 
     @Test
-    void testDeltaUsage() throws Exception {
+    void deltaUsage() throws Exception {
         if (!enabled) {
             return;
         }
@@ -82,7 +83,7 @@ class MemoryMonitorTest {
                 }
             }
             if (! listener.wasNotified) {
-                Assertions.fail("Listener callback not called");
+                fail("Listener callback not called");
             }
         } finally {
             mm.removeListener(listener);

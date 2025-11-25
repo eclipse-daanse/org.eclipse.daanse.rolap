@@ -23,12 +23,8 @@
 package org.eclipse.daanse.rolap.common.agg;
 
 import static java.util.Arrays.asList;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.eclipse.daanse.olap.util.Pair.of;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.BitSet;
 import java.util.Collections;
@@ -53,40 +49,34 @@ abstract class DenseSegmentBodyTestBase<T extends AbstractSegmentBody, V>
   final V nonNull = createNonNullValue();
   final V nullValue = createNullValue();
 
-  @Test
-  public void testGetObject_NonNull() {
+    @Test void getObjectNonNull() {
     T body = withOutAxes(nonNull);
-    assertEquals(nonNull, body.getObject(0));
+        assertThat(body.getObject(0)).isEqualTo(nonNull);
   }
 
-  @Test
-  public void testGetObject_Null() {
+    @Test void getObjectNull() {
     T body = withOutAxes(nullValue);
-    assertNull(body.getObject(0));
+        assertThat(body.getObject(0)).isNull();
   }
 
-  @Test
-  public void testGetSize_NoNulls() {
+    @Test void getSizeNoNulls() {
     T body = withOutAxes(nonNull, nonNull, nonNull);
-    assertEquals(body.getSize(), body.getEffectiveSize());
+        assertThat(body.getEffectiveSize()).isEqualTo(body.getSize());
   }
 
-  @Test
-  public void testGetSize_HasNulls() {
+    @Test void getSizeHasNulls() {
     T body = withOutAxes(nonNull, nullValue, nonNull);
-    assertEquals(3, body.getSize());
-    assertEquals(2, body.getEffectiveSize());
+        assertThat(body.getSize()).isEqualTo(3);
+        assertThat(body.getEffectiveSize()).isEqualTo(2);
   }
 
-  @Test
-  public void testGetSize_OnlyNulls() {
+    @Test void getSizeOnlyNulls() {
     T body = withOutAxes(nullValue, nullValue, nullValue);
-    assertEquals(3, body.getSize());
-    assertEquals(0, body.getEffectiveSize());
+        assertThat(body.getSize()).isEqualTo(3);
+        assertThat(body.getEffectiveSize()).isEqualTo(0);
   }
 
-  @Test
-  public void testGetValueMap_NoNullCells_NoNullAxes() {
+    @Test void getValueMapNoNullCellsNoNullAxes() {
     SortedSet<Comparable> axis1 = new TreeSet<>(asList(1, 2));
     SortedSet<Comparable> axis2 = new TreeSet<>(asList(3));
     List<Pair<SortedSet<Comparable>, Boolean>> axes = asList(
@@ -95,8 +85,7 @@ abstract class DenseSegmentBodyTestBase<T extends AbstractSegmentBody, V>
     assertValuesMapIsCorrect(body, 3);
   }
 
-  @Test
-  public void testGetValueMap_NoNullCells_HasNullAxes() {
+    @Test void getValueMapNoNullCellsHasNullAxes() {
     SortedSet<Comparable> axis1 = new TreeSet<>(asList(1, 2));
     SortedSet<Comparable> axis2 = new TreeSet<>(asList(3));
     List<Pair<SortedSet<Comparable>, Boolean>> axes = asList(
@@ -105,8 +94,7 @@ abstract class DenseSegmentBodyTestBase<T extends AbstractSegmentBody, V>
     assertValuesMapIsCorrect(body, 4);
   }
 
-  @Test
-  public void testGetValueMap_HasNullCells_NoNullAxes() {
+    @Test void getValueMapHasNullCellsNoNullAxes() {
     SortedSet<Comparable> axis1 = new TreeSet<>(asList(1, 2));
     SortedSet<Comparable> axis2 = new TreeSet<>(asList(3));
     List<Pair<SortedSet<Comparable>, Boolean>> axes = asList(
@@ -115,8 +103,7 @@ abstract class DenseSegmentBodyTestBase<T extends AbstractSegmentBody, V>
     assertValuesMapIsCorrect(body, 3);
   }
 
-  @Test
-  public void testGetValueMap_HasNullCells_HasNullAxes() {
+    @Test void getValueMapHasNullCellsHasNullAxes() {
     SortedSet<Comparable> axis1 = new TreeSet<>(asList(1, 2));
     SortedSet<Comparable> axis2 = new TreeSet<>(asList(3));
     List<Pair<SortedSet<Comparable>, Boolean>> axes = asList(
@@ -126,8 +113,7 @@ abstract class DenseSegmentBodyTestBase<T extends AbstractSegmentBody, V>
     assertValuesMapIsCorrect(body, 4);
   }
 
-  @Test
-  public void testGetValueMap_OnlyNullCells_NoNullAxes() {
+    @Test void getValueMapOnlyNullCellsNoNullAxes() {
     SortedSet<Comparable> axis1 = new TreeSet<>(asList(1, 2));
     SortedSet<Comparable> axis2 = new TreeSet<>(asList(3));
     List<Pair<SortedSet<Comparable>, Boolean>> axes = asList(
@@ -136,8 +122,7 @@ abstract class DenseSegmentBodyTestBase<T extends AbstractSegmentBody, V>
     assertValuesMapIsCorrect(body, 0);
   }
 
-  @Test
-  public void testGetValueMap_OnlyNullCells_HasNullAxes() {
+    @Test void getValueMapOnlyNullCellsHasNullAxes() {
     SortedSet<Comparable> axis1 = new TreeSet<>(asList(1, 2));
     SortedSet<Comparable> axis2 = new TreeSet<>(asList(3));
     List<Pair<SortedSet<Comparable>, Boolean>> axes = asList(
@@ -149,19 +134,19 @@ abstract class DenseSegmentBodyTestBase<T extends AbstractSegmentBody, V>
   private void assertValuesMapIsCorrect(T body, int expectedSize) {
     Map<CellKey, Object> valueMap = body.getValueMap();
 
-    assertEquals(expectedSize, valueMap.size());
-    assertEquals(expectedSize, valueMap.keySet().size());
-    assertEquals(expectedSize, valueMap.values().size());
-    assertEquals(expectedSize, valueMap.entrySet().size());
+      assertThat(valueMap.size()).isEqualTo(expectedSize);
+      assertThat(valueMap.keySet().size()).isEqualTo(expectedSize);
+      assertThat(valueMap.values().size()).isEqualTo(expectedSize);
+      assertThat(valueMap.entrySet().size()).isEqualTo(expectedSize);
 
     int i = 0;
     Iterator<Map.Entry<CellKey, Object>> it = valueMap.entrySet().iterator();
     while (i < expectedSize) {
-      assertTrue(it.hasNext(), Integer.toString(i));
-      assertNotNull(it.next());
+        assertThat(it.hasNext()).as(Integer.toString(i)).isTrue();
+        assertThat(it.next()).isNotNull();
       i++;
     }
-    assertFalse(it.hasNext());
+      assertThat(it.hasNext()).isFalse();
   }
 
   abstract V createNullValue();

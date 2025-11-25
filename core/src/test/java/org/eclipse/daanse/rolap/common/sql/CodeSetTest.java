@@ -24,8 +24,8 @@
  */
 package org.eclipse.daanse.rolap.common.sql;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -61,7 +61,7 @@ class CodeSetTest {
    * @throws Exception
    */
   @Test
-  void testSucces_CodeSetContainsOnlyCodeForPostgresDialect()
+  void succesCodeSetContainsOnlyCodeForPostgresDialect()
     throws Exception
     {
     Dialect postgreSqlDialect =  mock(Dialect.class);
@@ -71,11 +71,10 @@ class CodeSetTest {
     codeSet.put(POSTGRES_DIALECT, SQL_CODE_FOR_POSTGRES_DIALECT);
     try {
       String chooseQuery = codeSet.chooseQuery(postgreSqlDialect);
-      assertEquals(SQL_CODE_FOR_POSTGRES_DIALECT, chooseQuery);
+        assertThat(chooseQuery).isEqualTo(SQL_CODE_FOR_POSTGRES_DIALECT);
     } catch (OlapRuntimeException mExc) {
-      fail(
-          "Not expected any MondrianException but it occured: "
-          + mExc.getLocalizedMessage());
+        fail("Not expected any MondrianException but it occured: "
+            + mExc.getLocalizedMessage());
     }
   }
 
@@ -87,7 +86,7 @@ class CodeSetTest {
    * @throws Exception
    */
   @Test
-  void testSucces_CodeSetContainsCodeForBothPostgresAndGenericDialects()
+  void succesCodeSetContainsCodeForBothPostgresAndGenericDialects()
     throws Exception
     {
       Dialect postgreSqlDialect =  mock(Dialect.class);
@@ -98,25 +97,23 @@ class CodeSetTest {
     codeSet.put(GENERIC_DIALECT, SQL_CODE_FOR_GENERIC_DIALECT);
     try {
       String chooseQuery = codeSet.chooseQuery(postgreSqlDialect);
-      assertEquals(SQL_CODE_FOR_POSTGRES_DIALECT, chooseQuery);
+        assertThat(chooseQuery).isEqualTo(SQL_CODE_FOR_POSTGRES_DIALECT);
     } catch (OlapRuntimeException mExc) {
-      fail(
-          "Not expected any MondrianException but it occured: "
-          + mExc.getLocalizedMessage());
+        fail("Not expected any MondrianException but it occured: "
+            + mExc.getLocalizedMessage());
     }
   }
 
-  /**
-   * ISSUE MONDRIAN-2335 If SqlQuery.CodeSet contains sql code
-   * for both dialect="postgres" and dialect="postgresql",
-   * the code for dialect="postgres"should be chosen. No error should be thrown
-   *
-   * @throws Exception
+    /**
+     * ISSUE MONDRIAN-2335 If SqlQuery.CodeSet contains sql code
+     * for both dialect="postgres" and dialect="postgresql",
+     * the code for dialect="postgres"should be chosen. No error should be thrown
+     *
+     * @throws Exception
    */
-  @Test
-  public void
-    testSucces_CodeSetContainsCodeForBothPostgresAndPostgresqlDialects()
-      throws Exception
+    @Test void
+        succesCodeSetContainsCodeForBothPostgresAndPostgresqlDialects()
+        throws Exception
       {
 	  Dialect postgreSqlDialect =  mock(Dialect.class);
       when(postgreSqlDialect.getDialectName()).thenReturn(
@@ -126,11 +123,10 @@ class CodeSetTest {
     codeSet.put(POSTGRESQL_DIALECT, SQL_CODE_FOR_POSTGRESQL_DIALECT);
     try {
       String chooseQuery = codeSet.chooseQuery(postgreSqlDialect);
-      assertEquals(SQL_CODE_FOR_POSTGRES_DIALECT, chooseQuery);
+        assertThat(chooseQuery).isEqualTo(SQL_CODE_FOR_POSTGRES_DIALECT);
     } catch (OlapRuntimeException mExc) {
-      fail(
-          "Not expected any MondrianException but it occured: "
-          + mExc.getLocalizedMessage());
+        fail("Not expected any MondrianException but it occured: "
+            + mExc.getLocalizedMessage());
     }
   }
 
@@ -141,7 +137,7 @@ class CodeSetTest {
    * @throws Exception
    */
   @Test
-  void testSucces_CodeSetContainsOnlyCodeForGenericlDialect()
+  void succesCodeSetContainsOnlyCodeForGenericlDialect()
     throws Exception
     {
 	  Dialect postgreSqlDialect =  mock(Dialect.class);
@@ -149,11 +145,10 @@ class CodeSetTest {
     codeSet.put(GENERIC_DIALECT, SQL_CODE_FOR_GENERIC_DIALECT);
     try {
       String chooseQuery = codeSet.chooseQuery(postgreSqlDialect);
-      assertEquals(SQL_CODE_FOR_GENERIC_DIALECT, chooseQuery);
+        assertThat(chooseQuery).isEqualTo(SQL_CODE_FOR_GENERIC_DIALECT);
     } catch (OlapRuntimeException mExc) {
-      fail(
-          "Not expected any MondrianException but it occured: "
-          + mExc.getLocalizedMessage());
+        fail("Not expected any MondrianException but it occured: "
+            + mExc.getLocalizedMessage());
     }
   }
 
@@ -164,20 +159,17 @@ class CodeSetTest {
    * @throws Exception
    */
   @Test
-  void testMondrianExceptionThrown_WhenCodeSetContainsNOCodeForDialect()
+  void mondrianExceptionThrownWhenCodeSetContainsNOCodeForDialect()
     throws Exception
     {
 	Dialect postgreSqlDialect =  mock(Dialect.class);
     codeSet = new SqlQuery.CodeSet();
     try {
       String chooseQuery = codeSet.chooseQuery(postgreSqlDialect);
-      fail(
-          "Expected MondrianException but not occured");
-      assertEquals(SQL_CODE_FOR_GENERIC_DIALECT, chooseQuery);
+        fail("Expected MondrianException but not occured");
+        assertThat(chooseQuery).isEqualTo(SQL_CODE_FOR_GENERIC_DIALECT);
     } catch (OlapRuntimeException mExc) {
-      assertEquals(
-          MONDRIAN_ERROR_NO_GENERIC_VARIANT,
-          mExc.getLocalizedMessage());
+        assertThat(mExc.getLocalizedMessage()).isEqualTo(MONDRIAN_ERROR_NO_GENERIC_VARIANT);
     }
   }
 }

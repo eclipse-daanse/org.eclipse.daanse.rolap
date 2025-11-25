@@ -24,7 +24,7 @@
  */
 package org.eclipse.daanse.rolap.common.sql;
 
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -61,8 +61,7 @@ class SqlStatementTest {
   private LocusImpl locus;
   private SqlStatement statement;
 
-  @BeforeEach
-  public void beforeEach() {
+    @BeforeEach void beforeEach() {
     monitor = mock(EventBus.class);
 
     context = mock(Context.class);
@@ -86,7 +85,7 @@ class SqlStatementTest {
   }
 
   @Test
-  void testPrintingNilDurationIfCancelledBeforeStart() throws Exception {
+  void printingNilDurationIfCancelledBeforeStart() throws Exception {
     try {
       statement.execute();
     } catch (Exception e) {
@@ -94,7 +93,7 @@ class SqlStatementTest {
       if (!(cause instanceof QueryCanceledException)) {
         String message = "Expected QueryCanceledException but caught "
           + ((cause == null) ? null : cause.getClass().getSimpleName());
-        fail(message);
+          fail(message);
       }
     }
 

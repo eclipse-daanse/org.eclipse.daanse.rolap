@@ -27,10 +27,7 @@
 
 package org.eclipse.daanse.rolap.common.agg;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -59,8 +56,7 @@ class GroupingSetsListTest {
   private static RolapStar.Column col1, col2, col3, col4;
   private static RolapStar.Column[] columns;
 
-  @BeforeAll
-  public static void beforeAll() throws Exception {
+    @BeforeAll static void beforeAll() throws Exception {
     //Get star mock - just to allow creating Segment
     starMock = getStarMock();
     //Columns mocks
@@ -74,29 +70,23 @@ class GroupingSetsListTest {
   }
 
   @Test
-  void testNewGroupingSetsList_RollupColumnsFoundCorrectly() {
+  void newGroupingSetsListRollupColumnsFoundCorrectly() {
     testObject = new GroupingSetsList(groupingSetList);
-    assertNotNull(testObject);
-    assertSame(groupingSetList, testObject.getGroupingSets());
-    assertTrue(testObject.useGroupingSets());
-    // verify count of grouping sets for columns
-    assertEquals(
-        expectedGroupingSetsColumns().size(),
-        testObject.getGroupingSetsColumns().size());
+      assertThat(testObject).isNotNull();
+      assertThat(testObject.getGroupingSets()).isSameAs(groupingSetList);
+      assertThat(testObject.useGroupingSets()).isTrue();
+      // verify count of grouping sets for columns
+      assertThat(testObject.getGroupingSetsColumns().size()).isEqualTo(expectedGroupingSetsColumns().size());
     // verify columns in each of groups
     for (int i = 0; i < expectedGroupingSetsColumns().size(); i++) {
-      assertEquals(
-          expectedGroupingSetsColumns().get(i).length,
-          testObject.getGroupingSetsColumns().get(i).length);
+        assertThat(testObject.getGroupingSetsColumns().get(i).length).isEqualTo(expectedGroupingSetsColumns().get(i).length);
       for (int j = 0; j < expectedGroupingSetsColumns().get(i).length; j++) {
-        assertEquals(
-            expectedGroupingSetsColumns().get(i)[j],
-            testObject.getGroupingSetsColumns().get(i)[j]);
+          assertThat(testObject.getGroupingSetsColumns().get(i)[j]).isEqualTo(expectedGroupingSetsColumns().get(i)[j]);
       }
     }
-    assertEquals(2, testObject.getRollupColumns().size());
-    assertEquals(Arrays.asList(col3, col4), testObject.getRollupColumns());
-    assertEquals(5, testObject.getGroupingBitKeyIndex());
+      assertThat(testObject.getRollupColumns().size()).isEqualTo(2);
+      assertThat(testObject.getRollupColumns()).isEqualTo(Arrays.asList(col3, col4));
+      assertThat(testObject.getGroupingBitKeyIndex()).isEqualTo(5);
   }
 
   private List<RolapStar.Column[]> expectedGroupingSetsColumns() {
