@@ -24,7 +24,7 @@
 
 package org.eclipse.daanse.rolap.common;
 
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -53,24 +53,21 @@ import org.junit.jupiter.api.Test;
 class TopCountNativeEvaluatorTest {
 
     @Test
-    void testNonNative_WhenExplicitlyDisabled() throws Exception {
+    void nonNativeWhenExplicitlyDisabled() throws Exception {
         RolapNativeTopCount nativeTopCount = new RolapNativeTopCount(false);
 
-        assertNull(
-                nativeTopCount.createEvaluator(null, null, null, true),
-                "Native evaluator should not be created when "
-                        + "'mondrian.native.topcount.enable' is 'false'");
+        assertThat(nativeTopCount.createEvaluator(null, null, null, true)).as("Native evaluator should not be created when "
+            + "'mondrian.native.topcount.enable' is 'false'").isNull();
     }
 
     @Test
-    void testNonNative_WhenContextIsInvalid() throws Exception {
+    void nonNativeWhenContextIsInvalid() throws Exception {
         RolapNativeTopCount nativeTopCount = createTopCountSpy();
         doReturn(false).when(nativeTopCount)
             .isValidContext(any(RolapEvaluator.class));
 
-        assertNull(
-            nativeTopCount.createEvaluator(null, null, null, true), "Native evaluator should not be created when "
-                        + "evaluation context is invalid");
+        assertThat(nativeTopCount.createEvaluator(null, null, null, true)).as("Native evaluator should not be created when "
+            + "evaluation context is invalid").isNull();
     }
 
     /**
@@ -83,7 +80,7 @@ class TopCountNativeEvaluatorTest {
      * @see <a href="http://jira.pentaho.com/browse/MONDRIAN-2394">MONDRIAN-2394</a>
      */
     @Test
-    void testNonNative_WhenTwoParametersArePassed() throws Exception {
+    void nonNativeWhenTwoParametersArePassed() throws Exception {
         RolapNativeTopCount nativeTopCount = createTopCountSpy();
         doReturn(true).when(nativeTopCount)
             .isValidContext(any(RolapEvaluator.class));
@@ -93,10 +90,9 @@ class TopCountNativeEvaluatorTest {
             NumericLiteralImpl.create(BigDecimal.ONE)
         };
 
-        assertNull(
-            nativeTopCount.createEvaluator(
-                null, mockFunctionDef(), arguments, true),  "Native evaluator should not be created when "
-                        + "two parameters are passed");
+        assertThat(nativeTopCount.createEvaluator(
+            null, mockFunctionDef(), arguments, true)).as("Native evaluator should not be created when "
+            + "two parameters are passed").isNull();
     }
 
     private RolapNativeTopCount createTopCountSpy() {

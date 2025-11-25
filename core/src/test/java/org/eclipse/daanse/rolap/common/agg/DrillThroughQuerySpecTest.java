@@ -56,8 +56,7 @@ class DrillThroughQuerySpecTest {
   private static RolapStar.Column includedColumn;
   private static RolapStar.Column excludedColumn;
 
-  @BeforeEach
-  public void beforeAll() throws Exception {
+    @BeforeEach void beforeAll() throws Exception {
 
     requestMock = mock(DrillThroughCellRequest.class);
     starPredicateMock = mock(StarPredicate.class);
@@ -84,7 +83,7 @@ class DrillThroughQuerySpecTest {
   }
 
   @Test
-  void testEmptyColumns() {
+  void emptyColumns() {
     List<RolapStar.Column> columns = Collections.emptyList();
     when(starPredicateMock.getConstrainedColumnList())
       .thenReturn(columns);
@@ -94,14 +93,14 @@ class DrillThroughQuerySpecTest {
   }
 
   @Test
-  void testOneColumnExists() {
+  void oneColumnExists() {
     drillThroughQuerySpec.extraPredicates(sqlQueryMock);
     verify(sqlQueryMock, times(1))
       .addSelect(isNull(), isNull(), anyString());
   }
 
   @Test
-  void testTwoColumnsExist() {
+  void twoColumnsExist() {
     when(starPredicateMock.getConstrainedColumnList())
       .thenReturn(Arrays.asList(includedColumn, excludedColumn));
     drillThroughQuerySpec.extraPredicates(sqlQueryMock);
@@ -110,7 +109,7 @@ class DrillThroughQuerySpecTest {
   }
 
   @Test
-  void testColumnsNotIncludedInSelect() {
+  void columnsNotIncludedInSelect() {
     when(requestMock.includeInSelect(includedColumn)).thenReturn(false);
     drillThroughQuerySpec.extraPredicates(sqlQueryMock);
     verify(sqlQueryMock, times(0))
@@ -123,7 +122,7 @@ class DrillThroughQuerySpecTest {
   }
 
   @Test
-  void testColumnsPartiallyIncludedInSelect() {
+  void columnsPartiallyIncludedInSelect() {
     when(requestMock.includeInSelect(excludedColumn)).thenReturn(false);
     when(requestMock.includeInSelect(includedColumn)).thenReturn(true);
     when(starPredicateMock.getConstrainedColumnList())

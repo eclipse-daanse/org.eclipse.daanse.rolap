@@ -25,9 +25,7 @@
 
 package org.eclipse.daanse.rolap.util;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -58,7 +56,7 @@ class ConcatenableListTest{
      * whether or not there are intervening empty lists.
      */
     @Test
-    void testBasicIteration() {
+    void basicIteration() {
         List<String> testList = new ConcatenableList<>();
         testList.addAll(Arrays.asList(VALUE_1));
         testList.addAll(new ArrayList<String>());
@@ -71,20 +69,19 @@ class ConcatenableListTest{
         testList.addAll(Arrays.asList(VALUE_5, VALUE_6));
 
         Iterator<String> iterator = testList.iterator();
-        assertTrue(iterator.hasNext(), "iterator.hasNext() should be true");
-        assertEquals(VALUE_1, iterator.next(),"first value should be A");
-        assertTrue(iterator.hasNext(), "iterator.hasNext() should be true");
-        assertEquals(VALUE_2, iterator.next(),"first value should be B");
-        assertTrue(iterator.hasNext(), "iterator.hasNext() should be true");
-        assertEquals(VALUE_3, iterator.next(),"first value should be C");
-        assertTrue(iterator.hasNext(), "iterator.hasNext() should be true");
-        assertEquals(VALUE_4, iterator.next(),"first value should be D");
-        assertTrue(iterator.hasNext(), "iterator.hasNext() should be true");
-        assertEquals(VALUE_5, iterator.next(),"first value should be E");
-        assertTrue(iterator.hasNext(), "iterator.hasNext() should be true");
-        assertEquals(VALUE_6, iterator.next(),"first value should be F");
-        assertFalse(iterator.hasNext(),
-            "iterator.hasNext() should be false, since there are no more values");
+        assertThat(iterator.hasNext()).as("iterator.hasNext() should be true").isTrue();
+        assertThat(iterator.next()).as("first value should be A").isEqualTo(VALUE_1);
+        assertThat(iterator.hasNext()).as("iterator.hasNext() should be true").isTrue();
+        assertThat(iterator.next()).as("first value should be B").isEqualTo(VALUE_2);
+        assertThat(iterator.hasNext()).as("iterator.hasNext() should be true").isTrue();
+        assertThat(iterator.next()).as("first value should be C").isEqualTo(VALUE_3);
+        assertThat(iterator.hasNext()).as("iterator.hasNext() should be true").isTrue();
+        assertThat(iterator.next()).as("first value should be D").isEqualTo(VALUE_4);
+        assertThat(iterator.hasNext()).as("iterator.hasNext() should be true").isTrue();
+        assertThat(iterator.next()).as("first value should be E").isEqualTo(VALUE_5);
+        assertThat(iterator.hasNext()).as("iterator.hasNext() should be true").isTrue();
+        assertThat(iterator.next()).as("first value should be F").isEqualTo(VALUE_6);
+        assertThat(iterator.hasNext()).as("iterator.hasNext() should be false, since there are no more values").isFalse();
     }
 
     /**
@@ -94,7 +91,7 @@ class ConcatenableListTest{
      * if hasNext() wasn't called first.)
      */
     @Test
-    void testIteratorNextWithoutHasNext() {
+    void iteratorNextWithoutHasNext() {
         List<String> testList = new ConcatenableList<>();
         testList.addAll(Arrays.asList(VALUE_1));
         testList.addAll(new ArrayList<String>());
@@ -107,14 +104,13 @@ class ConcatenableListTest{
         testList.addAll(Arrays.asList(VALUE_5, VALUE_6));
 
         Iterator<String> iterator = testList.iterator();
-        assertEquals(VALUE_1, iterator.next(), "first value should be A");
-        assertEquals(VALUE_2, iterator.next(), "first value should be B");
-        assertEquals(VALUE_3, iterator.next(), "first value should be C");
-        assertEquals(VALUE_4, iterator.next(), "first value should be D");
-        assertEquals(VALUE_5, iterator.next(), "first value should be E");
-        assertEquals(VALUE_6, iterator.next(), "first value should be F");
-        assertFalse(iterator.hasNext(),
-            "iterator.hasNext() should be false, since there are no more values");
+        assertThat(iterator.next()).as("first value should be A").isEqualTo(VALUE_1);
+        assertThat(iterator.next()).as("first value should be B").isEqualTo(VALUE_2);
+        assertThat(iterator.next()).as("first value should be C").isEqualTo(VALUE_3);
+        assertThat(iterator.next()).as("first value should be D").isEqualTo(VALUE_4);
+        assertThat(iterator.next()).as("first value should be E").isEqualTo(VALUE_5);
+        assertThat(iterator.next()).as("first value should be F").isEqualTo(VALUE_6);
+        assertThat(iterator.hasNext()).as("iterator.hasNext() should be false, since there are no more values").isFalse();
     }
 
     /**
@@ -125,17 +121,15 @@ class ConcatenableListTest{
      * backing lists included two consecutive empty lists.)
      */
     @Test
-    void testGetZeroWithMultipleEmptyLists() {
+    void getZeroWithMultipleEmptyLists() {
         List<String> testList = new ConcatenableList<>();
 
         testList.addAll(new ArrayList<String>());
         testList.addAll(new ArrayList<String>());
         testList.addAll(Arrays.asList(NON_EMPTY_MARKER));
 
-        assertFalse(testList.isEmpty(),
-            "ConcatenableList testList should not be empty");
+        assertThat(testList.isEmpty()).as("ConcatenableList testList should not be empty").isFalse();
 
-        assertEquals(NON_EMPTY_MARKER,
-            testList.get(0),"testList.get(0) should return NON_EMPTY_MARKER");
+        assertThat(testList.get(0)).as("testList.get(0) should return NON_EMPTY_MARKER").isEqualTo(NON_EMPTY_MARKER);
     }
 }

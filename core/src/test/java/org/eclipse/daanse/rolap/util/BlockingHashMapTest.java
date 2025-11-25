@@ -25,8 +25,7 @@
 
 package org.eclipse.daanse.rolap.util;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.security.SecureRandom;
 import java.util.Random;
@@ -56,7 +55,7 @@ class BlockingHashMapTest{
      *
      */
     @Test
-    void testBlockingHashMap() throws InterruptedException {
+    void blockingHashMap() throws Exception {
         BlockingHashMap<Integer, Integer> map =
             new BlockingHashMap<>(100);
 
@@ -70,7 +69,7 @@ class BlockingHashMapTest{
             exec.shutdown();
             boolean finished = exec.awaitTermination(
                 2, TimeUnit.SECONDS);
-            assertTrue(finished);
+            assertThat(finished).isTrue();
         }
     }
 
@@ -115,7 +114,7 @@ class BlockingHashMapTest{
                 Thread.sleep(random.nextInt(SLEEP_TIME));
                 Integer val = map.get(key);
                 // System.out.println("getting key: " + key);
-                assertEquals(key, val);
+                assertThat(val).isEqualTo(key);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

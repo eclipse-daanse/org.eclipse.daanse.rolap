@@ -26,7 +26,7 @@
 
 package org.eclipse.daanse.rolap.common;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
@@ -82,24 +82,24 @@ class RolapCubeDimensionTest {
   }
 
   @Test
-  void testLookupCube_null() {
+  void lookupCubeNull() {
     RolapCubeDimension rcd = stubRolapCubeDimension(false);
     org.eclipse.daanse.rolap.mapping.model.DimensionConnector dimConnector = RolapMappingFactory.eINSTANCE.createDimensionConnector();
-    assertEquals(null, rcd.lookupFactCube(dimConnector, null));
+      assertThat(rcd.lookupFactCube(dimConnector, null)).isNull();
   }
 
   @Test
-  void testLookupCube_notVirtual() {
+  void lookupCubeNotVirtual() {
     RolapCubeDimension rcd = stubRolapCubeDimension(false);
     org.eclipse.daanse.rolap.mapping.model.DimensionConnector cubeDim = RolapMappingFactory.eINSTANCE.createDimensionConnector();
     RolapCatalog schema = mock(RolapCatalog.class);
 
-    assertEquals(null, rcd.lookupFactCube(cubeDim, schema));
+      assertThat(rcd.lookupFactCube(cubeDim, schema)).isNull();
     verify(schema, times(0)).lookupCube(anyString());
   }
 
   @Test
-  void testLookupCube_noSuchCube() {
+  void lookupCubeNoSuchCube() {
     RolapCubeDimension rcd = stubRolapCubeDimension(false);
     RolapCatalog schema = mock(RolapCatalog.class);
     final String cubeName = "TheCubeName";
@@ -111,12 +111,12 @@ class RolapCubeDimensionTest {
     // explicit doReturn - just to make it evident
     doReturn(null).when(schema).lookupCube(any(org.eclipse.daanse.rolap.mapping.model.Cube.class));
 
-    assertEquals(null, rcd.lookupFactCube(dimCon, schema));
+      assertThat(rcd.lookupFactCube(dimCon, schema)).isNull();
     Mockito.verify(schema).lookupCube(cube);
   }
 
   @Test
-  void testLookupCube_found() {
+  void lookupCubeFound() {
     RolapCubeDimension rcd = stubRolapCubeDimension(false);
     final String cubeName = "TheCubeName";
     PhysicalCube cube = RolapMappingFactory.eINSTANCE.createPhysicalCube();
@@ -128,6 +128,6 @@ class RolapCubeDimensionTest {
     RolapCube factCube = mock(RolapCube.class);
     doReturn(factCube).when(schema).lookupCube(cube);
 
-    assertEquals(factCube, rcd.lookupFactCube(cubeCon, schema));
+      assertThat(rcd.lookupFactCube(cubeCon, schema)).isEqualTo(factCube);
   }
 }

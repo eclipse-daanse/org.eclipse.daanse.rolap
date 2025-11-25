@@ -24,7 +24,7 @@
 
 package org.eclipse.daanse.rolap.common;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Arrays;
 import java.util.List;
@@ -42,7 +42,7 @@ import org.junit.jupiter.api.Test;
 class RolapAxisTest {
 
     @Test
-    void testMemberArrayList() {
+    void memberArrayList() {
         TupleList list = TupleCollections.createList(3);
         list.add(
             Arrays.<Member>asList(
@@ -74,11 +74,11 @@ class RolapAxisTest {
         }
         String s = buf.toString();
         String e = "{a,b,c},{d,e,f},{g,h,i}";
-        assertEquals(s, e);
+        assertThat(e).isEqualTo(s);
 
         positions = axis.getPositions();
         int size = positions.size();
-        assertEquals(size, 3);
+        assertThat(size).isEqualTo(3);
 
         buf.setLength(0);
         for (int i = 0; i < size; i++) {
@@ -90,7 +90,7 @@ class RolapAxisTest {
         }
         s = buf.toString();
         e = "{a,b,c},{d,e,f},{g,h,i}";
-        assertEquals(s, e);
+        assertThat(e).isEqualTo(s);
     }
 
     protected String toString(List<Member> position) {

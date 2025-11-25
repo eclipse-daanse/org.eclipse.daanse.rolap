@@ -32,7 +32,7 @@ import org.junit.jupiter.api.Test;
 
 class SegmentCacheIndexImplTest {
 	@Test
-    void testNoHeaderOnLoad() {
+    void noHeaderOnLoad() {
         final SegmentCacheIndexImpl index =
             new SegmentCacheIndexImpl(Thread.currentThread());
 

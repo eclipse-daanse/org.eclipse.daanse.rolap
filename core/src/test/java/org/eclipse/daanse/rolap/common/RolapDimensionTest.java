@@ -23,9 +23,7 @@
 
 package org.eclipse.daanse.rolap.common;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 
@@ -44,7 +42,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 
-
 class RolapDimensionTest {
 
   private RolapCatalog schema;
@@ -54,8 +51,7 @@ class RolapDimensionTest {
   private org.eclipse.daanse.rolap.mapping.model.ExplicitHierarchy hierarchy;
 
 
-  @BeforeEach
-  public void beforeEach() {
+    @BeforeEach void beforeEach() {
 
     schema = Mockito.mock(RolapCatalog.class);
     cube = Mockito.mock(RolapCube.class);
@@ -88,21 +84,20 @@ class RolapDimensionTest {
 
   }
 
-  @AfterEach
-  public void afterEach() {
+    @AfterEach void afterEach() {
     SystemWideProperties.instance().populateInitial();
   }
 
   @Disabled("disabled for CI build") //disabled for CI build
   @Test
-  void testHierarchyRelation() {
+  void hierarchyRelation() {
 	  org.eclipse.daanse.rolap.mapping.model.Query hierarchyTable = (org.eclipse.daanse.rolap.mapping.model.Query) Mockito
             .mock(org.eclipse.daanse.rolap.mapping.model.RelationalQuery.class);
     hierarchy.setQuery(hierarchyTable);
 
     new RolapDimension(schema, cube, xmlDimension, xmlCubeDimension);
-    assertNotNull(hierarchy);
-    assertEquals(hierarchyTable, hierarchy.getQuery());
+      assertThat(hierarchy).isNotNull();
+      assertThat(hierarchy.getQuery()).isEqualTo(hierarchyTable);
   }
 
   /**
@@ -110,11 +105,11 @@ class RolapDimensionTest {
    */
   @Disabled("disabled for CI build") //disabled for CI build
   @Test
-  void testHierarchyRelationNotSet() {
+  void hierarchyRelationNotSet() {
     new RolapDimension(schema, cube, xmlDimension, xmlCubeDimension);
 
-    assertNotNull(hierarchy);
-    assertNull(hierarchy.getQuery());
+      assertThat(hierarchy).isNotNull();
+      assertThat(hierarchy.getQuery()).isNull();
   }
 
 }

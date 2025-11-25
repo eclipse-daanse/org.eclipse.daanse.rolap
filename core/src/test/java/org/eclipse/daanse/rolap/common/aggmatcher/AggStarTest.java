@@ -25,7 +25,7 @@
 
 package org.eclipse.daanse.rolap.common.aggmatcher;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
 import org.eclipse.daanse.rolap.common.RolapStar;
@@ -43,8 +43,7 @@ class AggStarTest {
   private static final Long BIG_NUMBER = Integer.MAX_VALUE + 1L;
 
 
-  @BeforeEach
-  public void beforeEach() {
+    @BeforeEach void beforeEach() {
     star = mock(RolapStar.class);
     table = mock(JdbcSchema.Table.class);
     messageRecorder = mock(MessageRecorder.class);
@@ -60,12 +59,12 @@ class AggStarTest {
   }
 
   @Test
-  void testSizeIntegerOverflow() {
-    assertEquals(BIG_NUMBER.longValue(), aggStar.getSize(false));
+  void sizeIntegerOverflow() {
+      assertThat(aggStar.getSize(false)).isEqualTo(BIG_NUMBER.longValue());
   }
 
   @Test
-  void testVolumeIntegerOverflow() {
-    assertEquals(BIG_NUMBER.longValue(), aggStar.getSize(true));
+  void volumeIntegerOverflow() {
+      assertThat(aggStar.getSize(true)).isEqualTo(BIG_NUMBER.longValue());
   }
 }

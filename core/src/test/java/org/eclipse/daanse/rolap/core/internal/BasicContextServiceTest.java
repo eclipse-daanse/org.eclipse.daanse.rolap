@@ -101,15 +101,13 @@ class BasicContextServiceTest {
     @Mock
     SqlGuardFactory sqlGuardFactory;
 
-    @BeforeEach
-    public void setup() throws SQLException {
+    @BeforeEach void setup() throws SQLException {
 
     }
 
-    @Test
-    public void serviceExists(
-            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = BASIC_CONTEXT_PID, name = "name1")) Configuration c,
-            @InjectService(cardinality = 0) ServiceAware<Context> saContext) throws Exception {
+    @Test void serviceExists(
+        @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = BASIC_CONTEXT_PID, name = "name1")) Configuration c,
+        @InjectService(cardinality = 0) ServiceAware<Context> saContext) throws Exception {
 
         when(dataSource.getConnection()).thenReturn(connection);
         when(dialectFactory.createDialect(connection)).thenReturn(dialect);

@@ -23,11 +23,8 @@
 
 package org.eclipse.daanse.rolap.common;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -96,14 +93,12 @@ class RolapCatalogTest {
   private static RolapStar rlStarMock = mock(RolapStar.class);
   private static AbstractRolapContext contextMock;
 
-    @BeforeEach
-    public void beforeEach() {
+    @BeforeEach void beforeEach() {
 
         schemaSpy = spy(createSchema());
     }
 
-    @AfterEach
-    public void afterEach() {
+    @AfterEach void afterEach() {
         SystemWideProperties.instance().populateInitial();
     }
 
@@ -145,7 +140,7 @@ class RolapCatalogTest {
     }
 
     @Test
-    void testCreateUnionRole_ThrowsException_WhenSchemaGrantsExist() {
+    void createUnionRoleThrowsExceptionWhenSchemaGrantsExist() {
     	org.eclipse.daanse.rolap.mapping.model.AccessRole role = RolapMappingFactory.eINSTANCE.createAccessRole();
     	org.eclipse.daanse.rolap.mapping.model.AccessCatalogGrant accessCatalogGrant = RolapMappingFactory.eINSTANCE.createAccessCatalogGrant();
     	role.getAccessCatalogGrants().add(accessCatalogGrant);
@@ -161,7 +156,7 @@ class RolapCatalogTest {
     }
 
     @Test
-    void testCreateUnionRole_ThrowsException_WhenRoleNameIsUnknown() {
+    void createUnionRoleThrowsExceptionWhenRoleNameIsUnknown() {
         final String roleName = "non-existing role name";
         org.eclipse.daanse.rolap.mapping.model.AccessRole usage = RolapMappingFactory.eINSTANCE.createAccessRole();
         usage.setName(roleName);
@@ -181,7 +176,7 @@ class RolapCatalogTest {
 
 
     @Test
-    void testHandleSchemaGrant() {
+    void handleSchemaGrant() {
         RolapCatalog schema = createSchema();
         schema = spy(schema);
         doNothing().when(schema)
@@ -199,14 +194,14 @@ class RolapCatalogTest {
         org.eclipse.daanse.olap.access.RoleImpl role = new org.eclipse.daanse.olap.access.RoleImpl();
 
         schema.handleCatalogGrant(role, grant);
-        assertEquals(org.eclipse.daanse.olap.api.access.AccessCatalog.CUSTOM, role.getAccess(schema));
+        assertThat(role.getAccess(schema)).isEqualTo(org.eclipse.daanse.olap.api.access.AccessCatalog.CUSTOM);
         verify(schema, times(2))
             .handleCubeGrant(eq(role), any(AccessCubeGrant.class));
     }
 
 
     @Test
-    void testHandleCubeGrant_ThrowsException_WhenCubeIsUnknown() {
+    void handleCubeGrantThrowsExceptionWhenCubeIsUnknown() {
         RolapCatalog schema = createSchema();
         schema = spy(schema);
         doReturn(null).when(schema).lookupCube(anyString());
@@ -221,14 +216,14 @@ class RolapCatalogTest {
             schema.handleCubeGrant(new org.eclipse.daanse.olap.access.RoleImpl(), grant);
         } catch (OlapRuntimeException e) {
             String message = e.getMessage();
-            assertTrue(message.contains(grant.getCube().getName()), message);
+            assertThat(message.contains(grant.getCube().getName())).as(message).isTrue();
             return;
         }
         fail("Should fail if cube is unknown");
     }
 
     @Test
-    void testHandleCubeGrant_GrantsCubeDimensionsAndHierarchies() {
+    void handleCubeGrantGrantsCubeDimensionsAndHierarchies() {
         RolapCatalog schema = createSchema();
         schema = spy(schema);
         doNothing().when(schema)
@@ -269,8 +264,8 @@ class RolapCatalogTest {
 
         schema.handleCubeGrant(role, grant);
 
-        assertEquals(org.eclipse.daanse.olap.api.access.AccessCube.CUSTOM, role.getAccess(cube));
-        assertEquals(org.eclipse.daanse.olap.api.access.AccessDimension.NONE, role.getAccess(dimension));
+        assertThat(role.getAccess(cube)).isEqualTo(org.eclipse.daanse.olap.api.access.AccessCube.CUSTOM);
+        assertThat(role.getAccess(dimension)).isEqualTo(org.eclipse.daanse.olap.api.access.AccessDimension.NONE);
         verify(schema, times(1))
             .handleHierarchyGrant(
                 eq(role),
@@ -280,26 +275,26 @@ class RolapCatalogTest {
     }
 
     @Test
-    void testHandleHierarchyGrant_ValidMembers() {
+    void handleHierarchyGrantValidMembers() {
         doTestHandleHierarchyGrant(org.eclipse.daanse.olap.api.access.AccessHierarchy.CUSTOM, org.eclipse.daanse.olap.api.access.AccessMember.ALL);
     }
 
     @Test
-    void testHandleHierarchyGrant_NoValidMembers() {
+    void handleHierarchyGrantNoValidMembers() {
         doTestHandleHierarchyGrant(org.eclipse.daanse.olap.api.access.AccessHierarchy.NONE, null);
     }
 
     @Test
-    void testEmptyRolapStarRegistryCreatedForTheNewSchema()
+    void emptyRolapStarRegistryCreatedForTheNewSchema()
         throws Exception {
       RolapCatalog schema = createSchema();
       RolapStarRegistry rolapStarRegistry = schema.getRolapStarRegistry();
-      assertNotNull(rolapStarRegistry);
-      assertTrue(rolapStarRegistry.getStars().isEmpty());
+        assertThat(rolapStarRegistry).isNotNull();
+        assertThat(rolapStarRegistry.getStars().isEmpty()).isTrue();
     }
 
     @Test
-    void testGetOrCreateStar_StarCreatedAndUsed()
+    void getOrCreateStarStarCreatedAndUsed()
         throws Exception {
       //Create the test fact
     	PhysicalTable table = RolapMappingFactory.eINSTANCE.createPhysicalTable();
@@ -323,21 +318,21 @@ class RolapCatalogTest {
 
       //Test that a new rolap star has created and put to the registry
       RolapStar actualStar = rolapStarRegistry.getOrCreateStar(fact);
-      assertSame(expectedStar, actualStar);
-      assertEquals(1, rolapStarRegistry.getStars().size());
-      assertEquals(expectedStar, rolapStarRegistry.getStar(rolapStarKey));
+        assertThat(actualStar).isSameAs(expectedStar);
+        assertThat(rolapStarRegistry.getStars().size()).isEqualTo(1);
+        assertThat(rolapStarRegistry.getStar(rolapStarKey)).isEqualTo(expectedStar);
       verify(rolapStarRegistry, times(1)).makeRolapStar(fact);
       //test that no new rolap star has created,
       //but extracted already existing one from the registry
       RolapStar actualStar2 = rolapStarRegistry.getOrCreateStar(fact);
       verify(rolapStarRegistry, times(1)).makeRolapStar(fact);
-      assertSame(expectedStar, actualStar2);
-      assertEquals(1, rolapStarRegistry.getStars().size());
-      assertEquals(expectedStar, rolapStarRegistry.getStar(rolapStarKey));
+        assertThat(actualStar2).isSameAs(expectedStar);
+        assertThat(rolapStarRegistry.getStars().size()).isEqualTo(1);
+        assertThat(rolapStarRegistry.getStar(rolapStarKey)).isEqualTo(expectedStar);
     }
 
     @Test
-    void testGetStarFromRegistryByStarKey() throws Exception {
+    void getStarFromRegistryByStarKey() throws Exception {
       //Create the test fact
     	
     	PhysicalTable table = RolapMappingFactory.eINSTANCE.createPhysicalTable();
@@ -360,11 +355,11 @@ class RolapCatalogTest {
       rolapStarRegistry.getOrCreateStar(fact);
 
       RolapStar actualStar = rolapStarRegistry.getStar(rolapStarKey);
-      assertSame(rlStarMock, actualStar);
+        assertThat(actualStar).isSameAs(rlStarMock);
     }
 
     @Test
-    void testGetStarFromRegistryByFactTableName() throws Exception {
+    void getStarFromRegistryByFactTableName() throws Exception {
       //Create the test fact
     	
     	PhysicalTable table = RolapMappingFactory.eINSTANCE.createPhysicalTable();
@@ -380,8 +375,8 @@ class RolapCatalogTest {
       //Put rolap star to the registry
       RolapStar actualStar = rolapStarRegistry.getOrCreateStar(fact);
 
-      //RolapStar actualStar = schemaSpy.getRolapStarRegistry().getStar(RelationUtil.getAlias(fact));
-      assertSame(rlStarMock, actualStar);
+        //RolapStar actualStar = schemaSpy.getRolapStarRegistry().getStar(RelationUtil.getAlias(fact));
+        assertThat(actualStar).isSameAs(rlStarMock);
     }
 
     private static RolapStarRegistry getStarRegistryLinkedToRolapCatalogSpy(
@@ -482,9 +477,9 @@ class RolapCatalogTest {
         }
 
         schema.handleHierarchyGrant(role, cube, reader, grant);
-        assertEquals(expectedHierarchyAccess, role.getAccess(hierarchy));
+        assertThat(role.getAccess(hierarchy)).isEqualTo(expectedHierarchyAccess);
         if (expectedMemberAccess != null) {
-            assertEquals(expectedMemberAccess, role.getAccess(member));
+            assertThat(role.getAccess(member)).isEqualTo(expectedMemberAccess);
         }
     }
 
@@ -504,6 +499,6 @@ class RolapCatalogTest {
         Exception expected,
         Exception actual)
     {
-        assertEquals(expected.getMessage(), actual.getMessage());
+        assertThat(actual.getMessage()).isEqualTo(expected.getMessage());
     }
 }

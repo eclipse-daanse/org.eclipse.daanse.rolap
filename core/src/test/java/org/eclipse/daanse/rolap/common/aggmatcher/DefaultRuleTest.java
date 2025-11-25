@@ -24,7 +24,7 @@
 
 package org.eclipse.daanse.rolap.common.aggmatcher;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Iterator;
 import java.util.List;
@@ -63,8 +63,7 @@ class DefaultRuleTest {
         return rules.getAggRule(tag);
     }
 
-    @BeforeAll
-    public static void beforeAll() throws Exception {
+    @BeforeAll static void beforeAll() throws Exception {
 
         rules = prepareRules();
 
@@ -338,7 +337,7 @@ class DefaultRuleTest {
     //
 
     @Test
-    void testTableNameDefault() {
+    void tableNameDefault() {
         final String tag = "default";
         final String factTableName = "FACT_TABLE";
 
@@ -361,7 +360,7 @@ class DefaultRuleTest {
     }
 
     @Test
-    void testTableNameBBBB() {
+    void tableNameBBBB() {
         final String tag = "bbbb";
         final String factTableName = "FACT_TABLE";
 
@@ -378,7 +377,7 @@ class DefaultRuleTest {
     }
 
     @Test
-    void testTableNameCCCCBAD() {
+    void tableNameCCCCBAD() {
         final String tag = "cccc";
         final String basename = "WAREHOUSE";
         final String factTableName = "RF_" + basename + "_TABLE";
@@ -399,7 +398,7 @@ class DefaultRuleTest {
     }
 
     @Test
-    void testTableNameCCCCGOOD() {
+    void tableNameCCCCGOOD() {
         final String tag = "cccc";
         final String basename = "WAREHOUSE";
         final String factTableName = "RF_" + basename + "_TABLE";
@@ -417,7 +416,7 @@ class DefaultRuleTest {
     }
 
     @Test
-    void testFactCountDefault() {
+    void factCountDefault() {
         final String tag = "default";
         Recognizer.Matcher matcher = getFactCountMatcher(tag);
 
@@ -433,7 +432,7 @@ class DefaultRuleTest {
     }
 
     @Test
-    void testFactCountBBBB() {
+    void factCountBBBB() {
         final String tag = "bbbb";
         Recognizer.Matcher matcher = getFactCountMatcher(tag);
 
@@ -449,7 +448,7 @@ class DefaultRuleTest {
     }
 
     @Test
-    void testFactCountCCCC() {
+    void factCountCCCC() {
         final String tag = "cccc";
         Recognizer.Matcher matcher = getFactCountMatcher(tag);
 
@@ -465,7 +464,7 @@ class DefaultRuleTest {
     }
 
     @Test
-    void testForeignKeyDefault() {
+    void foreignKeyDefault() {
         final String tag = "default";
         final String foreignKeyName = "foo_key";
         Recognizer.Matcher matcher = getForeignKeyMatcher(tag, foreignKeyName);
@@ -478,7 +477,7 @@ class DefaultRuleTest {
     }
 
     @Test
-    void testForeignKeyBBBB() {
+    void foreignKeyBBBB() {
         final String tag = "bbbb";
         final String foreignKeyName = "fk_ham_n_eggs";
         Recognizer.Matcher matcher = getForeignKeyMatcher(tag, foreignKeyName);
@@ -497,7 +496,7 @@ class DefaultRuleTest {
                 charcase="exact" />
 */
     @Test
-    void testForeignKeyCCCC() {
+    void foreignKeyCCCC() {
         final String tag = "cccc";
         final String foreignKeyName1 = "fk_toast";
         final String foreignKeyName2 = "FK_TOAST";
@@ -523,7 +522,7 @@ class DefaultRuleTest {
     }
 
     @Test
-    void testLevelDefaultOne() {
+    void levelDefaultOne() {
         final String tag = "default";
         final String usagePrefix = null;
         final String hierarchyName = "Time";
@@ -541,7 +540,7 @@ class DefaultRuleTest {
     }
 
     @Test
-    void testLevelDefaultTwo() {
+    void levelDefaultTwo() {
         final String tag = "default";
         final String usagePrefix = "boo_";
         final String hierarchyName = "Time";
@@ -562,7 +561,7 @@ class DefaultRuleTest {
     }
 
     @Test
-    void testLevelBBBB() {
+    void levelBBBB() {
         final String tag = "bbbb";
         final String usagePrefix = "boo_";
         final String hierarchyName = "Time.Period";
@@ -575,7 +574,7 @@ class DefaultRuleTest {
     }
 
     @Test
-    void testMeasureDefault() {
+    void measureDefault() {
         final String tag = "default";
         final String measureName = "Total Sales";
         final String measureColumnName = "sales";
@@ -601,11 +600,11 @@ class DefaultRuleTest {
     //
     //
     private void doMatch(Recognizer.Matcher matcher, String s) {
-        assertTrue(matcher.matches(s), "Recognizer.Matcher: " + s);
+        assertThat(matcher.matches(s)).as("Recognizer.Matcher: " + s).isTrue();
     }
 
     private void doNotMatch(Recognizer.Matcher matcher, String s) {
-        assertTrue(!matcher.matches(s), "Recognizer.Matcher: " + s);
+        assertThat(matcher.matches(s)).as("Recognizer.Matcher: " + s).isFalse();
     }
     //
     //////////////////////////////////////////////////////////////////////////

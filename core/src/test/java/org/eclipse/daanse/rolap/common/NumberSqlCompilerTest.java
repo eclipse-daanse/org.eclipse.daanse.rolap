@@ -24,9 +24,8 @@
 
 package org.eclipse.daanse.rolap.common;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -51,8 +50,7 @@ class NumberSqlCompilerTest {
 
     private static RolapNativeSql.NumberSqlCompiler compiler;
 
-    @BeforeAll
-    public static void beforeAll() throws Exception {
+    @BeforeAll static void beforeAll() throws Exception {
         Dialect dialect = mock(Dialect.class);
         when(dialect.getDialectName())
             .thenReturn("mysql");
@@ -76,76 +74,75 @@ class NumberSqlCompilerTest {
         compiler = sql.new NumberSqlCompiler();
     }
 
-    @AfterAll
-    public static void afterAll() throws Exception {
+    @AfterAll static void afterAll() throws Exception {
         compiler = null;
     }
 
     @Test
-    void testRejectsNonLiteral() {
+    void rejectsNonLiteral() {
         Expression exp = new TypeWrapperExp(NullType.INSTANCE);
-        assertNull(compiler.compile(exp));
+        assertThat(compiler.compile(exp)).isNull();
     }
 
     @Test
-    void testAcceptsNumeric() {
+    void acceptsNumeric() {
         Expression exp = NumericLiteralImpl.create(BigDecimal.ONE);
-        assertNotNull(compiler.compile(exp));
+        assertThat(compiler.compile(exp)).isNotNull();
     }
 
     @Test
-    void testAcceptsString_Int() {
+    void acceptsStringInt() {
         checkAcceptsString("1");
     }
 
     @Test
-    void testAcceptsString_Negative() {
+    void acceptsStringNegative() {
         checkAcceptsString("-1");
     }
 
     @Test
-    void testAcceptsString_ExplicitlyPositive() {
+    void acceptsStringExplicitlyPositive() {
         checkAcceptsString("+1.01");
     }
 
     @Test
-    void testAcceptsString_NoIntegerPart() {
+    void acceptsStringNoIntegerPart() {
         checkAcceptsString("-.00001");
     }
 
     private void checkAcceptsString(String value) {
         Expression exp = StringLiteralImpl.create(value);
-        assertNotNull(value, compiler.compile(exp).toString());
+        assertThat(value).as(compiler.compile(exp).toString()).isNotNull();
     }
 
 
     @Test
-    void testRejectsString_SelectStatement() {
+    void rejectsStringSelectStatement() {
         checkRejectsString("(select 100)");
     }
 
     @Test
-    void testRejectsString_NaN() {
+    void rejectsStringNaN() {
         checkRejectsString("NaN");
     }
 
     @Test
-    void testRejectsString_Infinity() {
+    void rejectsStringInfinity() {
         checkRejectsString("Infinity");
     }
 
     @Test
-    void testRejectsString_TwoDots() {
+    void rejectsStringTwoDots() {
         checkRejectsString("1.0.");
     }
 
     @Test
-    void testRejectsString_OnlyDot() {
+    void rejectsStringOnlyDot() {
         checkRejectsString(".");
     }
 
     @Test
-    void testRejectsString_DoubleNegation() {
+    void rejectsStringDoubleNegation() {
         checkRejectsString("--1.0");
     }
 

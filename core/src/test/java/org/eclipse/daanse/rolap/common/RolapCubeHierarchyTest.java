@@ -25,7 +25,7 @@
 
 package org.eclipse.daanse.rolap.common;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
@@ -51,7 +51,7 @@ import org.junit.jupiter.api.Test;
 class RolapCubeHierarchyTest {
 
   @Test
-  void testInit_NoFactCube() {
+  void initNoFactCube() {
     RolapCubeDimension cubeDimension = mock(RolapCubeDimension.class);
     RolapCube cubeDimension_cube = mock(RolapVirtualCube.class);
     String cubeDimension_uniqueName = "TheDimUniqueName";
@@ -95,15 +95,15 @@ class RolapCubeHierarchyTest {
 
     RolapCubeHierarchy rch = new RolapCubeHierarchy(
         cubeDimension, cubeDim, rolapHierarchy, subName, ordinal, factCube);
-    assertEquals(true, rch.isUsingCubeFact(), "If factCube is null");
+      assertThat(rch.isUsingCubeFact()).as("If factCube is null").isTrue();
 
     rch = new RolapCubeHierarchy(
         cubeDimension, cubeDim, rolapHierarchy, subName, ordinal);
-    assertEquals(true, rch.isUsingCubeFact(), "If factCube is not specified");
+      assertThat(rch.isUsingCubeFact()).as("If factCube is not specified").isTrue();
   }
 
   @Test
-  void testInit_FactCube_NoFactTable() {
+  void initFactCubeNoFactTable() {
     RolapCubeDimension cubeDimension = mock(RolapCubeDimension.class);
     RolapCube cubeDimension_cube = mock(RolapVirtualCube.class);
     String cubeDimension_uniqueName = "TheDimUniqueName";
@@ -149,11 +149,11 @@ class RolapCubeHierarchyTest {
 
     RolapCubeHierarchy rch = new RolapCubeHierarchy(
         cubeDimension, cubeDim, rolapHierarchy, subName, ordinal, factCube);
-    assertEquals(true, rch.isUsingCubeFact());
+      assertThat(rch.isUsingCubeFact()).isTrue();
   }
 
   @Test
-  void testInit_FactCube_FactTableDiffers() {
+  void initFactCubeFactTableDiffers() {
     RolapCubeDimension cubeDimension = mock(RolapCubeDimension.class);
     RolapCube cubeDimension_cube = mock(RolapVirtualCube.class);
     String cubeDimension_uniqueName = "TheDimUniqueName";
@@ -183,11 +183,9 @@ class RolapCubeHierarchyTest {
     org.eclipse.daanse.rolap.mapping.model.Query factCube_Fact = mock(org.eclipse.daanse.rolap.mapping.model.TableQuery.class);
     boolean factCube_Fact_equals = false;
 
-    // check
-    assertEquals(
-        factCube_Fact_equals, factCube_Fact.equals(rolapHierarchy_relation));
-    assertEquals(
-        factCube_Fact_equals, rolapHierarchy_relation.equals(factCube_Fact));
+      // check
+      assertThat(factCube_Fact.equals(rolapHierarchy_relation)).isEqualTo(factCube_Fact_equals);
+      assertThat(rolapHierarchy_relation.equals(factCube_Fact)).isEqualTo(factCube_Fact_equals);
 
     doReturn(cubeDimension_cube).when(cubeDimension).getCube();
     doReturn(dimName).when(cubeDimension).getName();
@@ -207,11 +205,11 @@ class RolapCubeHierarchyTest {
 
     RolapCubeHierarchy rch = new RolapCubeHierarchy(
         cubeDimension, cubeDim, rolapHierarchy, subName, ordinal, factCube);
-    assertEquals(false, rch.isUsingCubeFact());
+      assertThat(rch.isUsingCubeFact()).isFalse();
   }
 
   @Test
-  void testInit_FactCube_FactTableEquals() {
+  void initFactCubeFactTableEquals() {
     RolapCubeDimension cubeDimension = mock(RolapCubeDimension.class);
     RolapCube cubeDimension_cube = mock(RolapVirtualCube.class);
     String cubeDimension_uniqueName = "TheDimUniqueName";
@@ -243,11 +241,9 @@ class RolapCubeHierarchyTest {
     org.eclipse.daanse.rolap.mapping.model.Query factCube_Fact = rolapHierarchy_relation;
     boolean factCube_Fact_equals = true;
 
-    // check
-    assertEquals(
-        factCube_Fact_equals, factCube_Fact.equals(rolapHierarchy_relation));
-    assertEquals(
-        factCube_Fact_equals, rolapHierarchy_relation.equals(factCube_Fact));
+      // check
+      assertThat(factCube_Fact.equals(rolapHierarchy_relation)).isEqualTo(factCube_Fact_equals);
+      assertThat(rolapHierarchy_relation.equals(factCube_Fact)).isEqualTo(factCube_Fact_equals);
 
     doReturn(cubeDimension_cube).when(cubeDimension).getCube();
     doReturn(dimName).when(cubeDimension).getName();
@@ -267,7 +263,7 @@ class RolapCubeHierarchyTest {
 
     RolapCubeHierarchy rch = new RolapCubeHierarchy(
         cubeDimension, cubeDim, rolapHierarchy, subName, ordinal, factCube);
-    assertEquals(true, rch.isUsingCubeFact());
+      assertThat(rch.isUsingCubeFact()).isTrue();
   }
 
 }

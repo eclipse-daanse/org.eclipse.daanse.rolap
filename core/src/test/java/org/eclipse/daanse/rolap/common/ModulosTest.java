@@ -24,7 +24,7 @@
 
 package org.eclipse.daanse.rolap.common;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -43,7 +43,7 @@ import org.junit.jupiter.api.Test;
 class ModulosTest {
 
 	@Test
-    void testMany() {
+    void many() {
         Axis[] axes = new Axis[3];
         TupleList positions = newPositionList(4);
         axes[0] = new RolapAxis(positions);
@@ -56,14 +56,14 @@ class ModulosTest {
         int ordinal = 23;
 
         int[] pos = modulos.getCellPos(ordinal);
-        assertTrue(pos.length == 3, "Pos length equals 3");
-        assertTrue(pos[0] == 3, "Pos[0] length equals 3");
-        assertTrue(pos[1] == 2, "Pos[1] length equals 2");
-        assertTrue(pos[2] == 1, "Pos[2] length equals 1");
+        assertThat(pos.length).as("Pos length equals 3").isEqualTo(3);
+        assertThat(pos[0]).as("Pos[0] length equals 3").isEqualTo(3);
+        assertThat(pos[1]).as("Pos[1] length equals 2").isEqualTo(2);
+        assertThat(pos[2]).as("Pos[2] length equals 1").isEqualTo(1);
     }
 
 	@Test
-    void testOne() {
+    void one() {
         Axis[] axes = new Axis[1];
         TupleList positions = newPositionList(53);
         axes[0] = new RolapAxis(positions);
@@ -74,37 +74,37 @@ class ModulosTest {
 
         int[] posMany = modulosMany.getCellPos(ordinal);
         int[] pos = modulos.getCellPos(ordinal);
-        assertTrue(Arrays.equals(posMany, pos), "Pos are not equal");
+        assertThat(Arrays.equals(posMany, pos)).as("Pos are not equal").isTrue();
 
         ordinal = 23;
         posMany = modulosMany.getCellPos(ordinal);
         pos = modulos.getCellPos(ordinal);
-        assertTrue(Arrays.equals(posMany, pos), "Pos are not equal");
+        assertThat(Arrays.equals(posMany, pos)).as("Pos are not equal").isTrue();
 
         ordinal = 7;
         posMany = modulosMany.getCellPos(ordinal);
         pos = modulos.getCellPos(ordinal);
-        assertTrue(Arrays.equals(posMany, pos), "Pos are not equal");
+        assertThat(Arrays.equals(posMany, pos)).as("Pos are not equal").isTrue();
 
         pos[0] = 23;
 
         int oMany = modulosMany.getCellOrdinal(pos);
         int o = modulos.getCellOrdinal(pos);
-        assertTrue(oMany == o, "Ordinals are not equal");
+        assertThat(o).as("Ordinals are not equal").isEqualTo(oMany);
 
         pos[0] = 11;
         oMany = modulosMany.getCellOrdinal(pos);
         o = modulos.getCellOrdinal(pos);
-        assertTrue(oMany == o, "Ordinals are not equal");
+        assertThat(o).as("Ordinals are not equal").isEqualTo(oMany);
 
         pos[0] = 7;
         oMany = modulosMany.getCellOrdinal(pos);
         o = modulos.getCellOrdinal(pos);
-        assertTrue(oMany == o, "Ordinals are not equal");
+        assertThat(o).as("Ordinals are not equal").isEqualTo(oMany);
     }
 
 	@Test
-    void testTwo() {
+    void two() {
         Axis[] axes = new Axis[2];
         TupleList positions = newPositionList(23);
         axes[0] = new RolapAxis(positions);
@@ -117,38 +117,38 @@ class ModulosTest {
 
         int[] posMany = modulosMany.getCellPos(ordinal);
         int[] pos = modulos.getCellPos(ordinal);
-        assertTrue(Arrays.equals(posMany, pos), "Pos are not equal");
+        assertThat(Arrays.equals(posMany, pos)).as("Pos are not equal").isTrue();
 
         ordinal = 11;
         posMany = modulosMany.getCellPos(ordinal);
         pos = modulos.getCellPos(ordinal);
-        assertTrue(Arrays.equals(posMany, pos), "Pos are not equal");
+        assertThat(Arrays.equals(posMany, pos)).as("Pos are not equal").isTrue();
 
         ordinal = 7;
         posMany = modulosMany.getCellPos(ordinal);
         pos = modulos.getCellPos(ordinal);
-        assertTrue(Arrays.equals(posMany, pos), "Pos are not equal");
+        assertThat(Arrays.equals(posMany, pos)).as("Pos are not equal").isTrue();
 
         pos[0] = 3;
         pos[1] = 2;
 
         int oMany = modulosMany.getCellOrdinal(pos);
         int o = modulos.getCellOrdinal(pos);
-        assertTrue(oMany == o, "Ordinals are not equal");
+        assertThat(o).as("Ordinals are not equal").isEqualTo(oMany);
 
         pos[0] = 2;
         oMany = modulosMany.getCellOrdinal(pos);
         o = modulos.getCellOrdinal(pos);
-        assertTrue(oMany == o, "Ordinals are not equal");
+        assertThat(o).as("Ordinals are not equal").isEqualTo(oMany);
 
         pos[0] = 1;
         oMany = modulosMany.getCellOrdinal(pos);
         o = modulos.getCellOrdinal(pos);
-        assertTrue(oMany == o, "Ordinals are not equal");
+        assertThat(o).as("Ordinals are not equal").isEqualTo(oMany);
     }
 
 	@Test
-    void testThree() {
+    void three() {
         Axis[] axes = new Axis[3];
         TupleList positions = newPositionList(4);
         axes[0] = new RolapAxis(positions);
@@ -163,17 +163,17 @@ class ModulosTest {
 
         int[] posMany = modulosMany.getCellPos(ordinal);
         int[] pos = modulos.getCellPos(ordinal);
-        assertTrue(Arrays.equals(posMany, pos), "Pos are not equal");
+        assertThat(Arrays.equals(posMany, pos)).as("Pos are not equal").isTrue();
 
         ordinal = 11;
         posMany = modulosMany.getCellPos(ordinal);
         pos = modulos.getCellPos(ordinal);
-        assertTrue(Arrays.equals(posMany, pos), "Pos are not equal");
+        assertThat(Arrays.equals(posMany, pos)).as("Pos are not equal").isTrue();
 
         ordinal = 7;
         posMany = modulosMany.getCellPos(ordinal);
         pos = modulos.getCellPos(ordinal);
-        assertTrue(Arrays.equals(posMany, pos), "Pos are not equal");
+        assertThat(Arrays.equals(posMany, pos)).as("Pos are not equal").isTrue();
 
         pos[0] = 3;
         pos[1] = 2;
@@ -181,17 +181,17 @@ class ModulosTest {
 
         int oMany = modulosMany.getCellOrdinal(pos);
         int o = modulos.getCellOrdinal(pos);
-        assertTrue(oMany == o, "Ordinals are not equal");
+        assertThat(o).as("Ordinals are not equal").isEqualTo(oMany);
 
         pos[0] = 2;
         oMany = modulosMany.getCellOrdinal(pos);
         o = modulos.getCellOrdinal(pos);
-        assertTrue(oMany == o, "Ordinals are not equal");
+        assertThat(o).as("Ordinals are not equal").isEqualTo(oMany);
 
         pos[0] = 1;
         oMany = modulosMany.getCellOrdinal(pos);
         o = modulos.getCellOrdinal(pos);
-        assertTrue(oMany == o, "Ordinals are not equal");
+        assertThat(o).as("Ordinals are not equal").isEqualTo(oMany);
     }
 
     TupleList newPositionList(int size) {

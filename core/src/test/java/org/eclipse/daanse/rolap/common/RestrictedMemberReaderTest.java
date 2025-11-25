@@ -23,16 +23,14 @@
 
 package org.eclipse.daanse.rolap.common;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotSame;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import org.assertj.core.api.Assertions;
 import org.eclipse.daanse.olap.api.access.AccessMember;
 import org.eclipse.daanse.olap.api.access.HierarchyAccess;
 import org.eclipse.daanse.olap.api.access.Role;
@@ -63,7 +61,7 @@ class RestrictedMemberReaderTest {
   }
 
   @Test
-  void testGetHierarchy_allAccess() {
+  void getHierarchyAllAccess() {
     Catalog schema = Mockito.mock(Catalog.class);
     Dimension dimension = Mockito.mock(Dimension.class);
     RolapHierarchy hierarchy = Mockito.mock(RolapHierarchy.class);
@@ -84,11 +82,11 @@ class RestrictedMemberReaderTest {
 
     rmr = new RestrictedMemberReader(delegateMemberReader, role);
 
-    assertSame(hierarchy, rmr.getHierarchy());
+      assertThat(rmr.getHierarchy()).isSameAs(hierarchy);
   }
 
   @Test
-  void testGetHierarchy_roleAccess() {
+  void getHierarchyRoleAccess() {
     RolapHierarchy hierarchy = Mockito.mock(RolapHierarchy.class);
     MemberReader delegateMemberReader = Mockito.mock(MemberReader.class);
     HierarchyAccess roleAccess = Mockito.mock(HierarchyAccess.class);
@@ -100,11 +98,11 @@ class RestrictedMemberReaderTest {
 
     rmr = new RestrictedMemberReader(delegateMemberReader, role);
 
-    assertSame(hierarchy, rmr.getHierarchy());
+      assertThat(rmr.getHierarchy()).isSameAs(hierarchy);
   }
 
   @Test
-  void testDefaultMember_allAccess() {
+  void defaultMemberAllAccess() {
     Catalog schema = Mockito.mock(Catalog.class);
     Dimension dimension = Mockito.mock(Dimension.class);
     RolapHierarchy hierarchy = Mockito.mock(RolapHierarchy.class);
@@ -128,11 +126,11 @@ class RestrictedMemberReaderTest {
 
     rmr = new RestrictedMemberReader(delegateMemberReader, role);
 
-    assertSame(hDefaultMember, rmr.getDefaultMember());
+      assertThat(rmr.getDefaultMember()).isSameAs(hDefaultMember);
   }
 
   @Test
-  void testDefaultMember_roleAccess() {
+  void defaultMemberRoleAccess() {
     RolapHierarchy hierarchy = Mockito.mock(RolapHierarchy.class);
     MemberReader delegateMemberReader = Mockito.mock(MemberReader.class);
     HierarchyAccess roleAccess = Mockito.mock(HierarchyAccess.class);
@@ -151,24 +149,23 @@ class RestrictedMemberReaderTest {
     Mockito.doReturn(rootMembers).when(rmr).getRootMembers();
 
     Mockito.doReturn(null).when(roleAccess).getAccess(anyRolapMember());
-    assertSame(hierDefaultMember, rmr.getDefaultMember(), "on Access is null");
+      assertThat(rmr.getDefaultMember()).as("on Access is null").isSameAs(hierDefaultMember);
 
     Mockito.doReturn(AccessMember.ALL).when(roleAccess).getAccess(anyRolapMember());
-    assertSame(hierDefaultMember, rmr.getDefaultMember(), "on Access.ALL");
+      assertThat(rmr.getDefaultMember()).as("on Access.ALL").isSameAs(hierDefaultMember);
 
     Mockito.doReturn(AccessMember.CUSTOM).when(roleAccess)
         .getAccess(anyRolapMember());
-    assertSame(hierDefaultMember, rmr.getDefaultMember(), "on Access.CUSTOM");
+      assertThat(rmr.getDefaultMember()).as("on Access.CUSTOM").isSameAs(hierDefaultMember);
 
     Mockito.doReturn(AccessMember.NONE).when(roleAccess).getAccess(anyRolapMember());
 
-    assertNotSame(hierDefaultMember, rmr.getDefaultMember(), "on Access.NONE");
-    assertTrue(
-        rmr.getDefaultMember() instanceof MultiCardinalityDefaultMember);
+      Assertions.assertThat(rmr.getDefaultMember()).withFailMessage("on Access.NONE").isNotSameAs(hierDefaultMember);
+      assertThat(rmr.getDefaultMember()).isInstanceOf(MultiCardinalityDefaultMember.class);
   }
 
   @Test
-  void testDefaultMember_noDefaultMember_roleAccess() {
+  void defaultMemberNoDefaultMemberRoleAccess() {
     RolapHierarchy hierarchy = Mockito.mock(RolapHierarchy.class);
     MemberReader delegateMemberReader = Mockito.mock(MemberReader.class);
     HierarchyAccess roleAccess = Mockito.mock(HierarchyAccess.class);
@@ -187,24 +184,23 @@ class RestrictedMemberReaderTest {
     Mockito.doReturn(rootMembers).when(rmr).getRootMembers();
 
     Mockito.doReturn(null).when(roleAccess).getAccess(anyRolapMember());
-    assertSame(member0, rmr.getDefaultMember(), "on Access is null");
+      assertThat(rmr.getDefaultMember()).as("on Access is null").isSameAs(member0);
 
     Mockito.doReturn(AccessMember.ALL).when(roleAccess).getAccess(anyRolapMember());
-    assertSame(member0, rmr.getDefaultMember(), "on Access.ALL");
+      assertThat(rmr.getDefaultMember()).as("on Access.ALL").isSameAs(member0);
 
     Mockito.doReturn(AccessMember.CUSTOM).when(roleAccess)
         .getAccess(anyRolapMember());
-    assertSame(member0, rmr.getDefaultMember(), "on Access.CUSTOM");
+      assertThat(rmr.getDefaultMember()).as("on Access.CUSTOM").isSameAs(member0);
 
     Mockito.doReturn(AccessMember.NONE).when(roleAccess).getAccess(anyRolapMember());
 
-    assertNotSame(member0, rmr.getDefaultMember(), "on Access.NONE");
-    assertTrue(
-        rmr.getDefaultMember() instanceof MultiCardinalityDefaultMember);
+      Assertions.assertThat(rmr.getDefaultMember()).withFailMessage("on Access.NONE").isNotSameAs(member0);
+      assertThat(rmr.getDefaultMember()).isInstanceOf(MultiCardinalityDefaultMember.class);
   }
 
   @Test
-  void testDefaultMember_multiRoot() {
+  void defaultMemberMultiRoot() {
     RolapHierarchy hierarchy = Mockito.mock(RolapHierarchy.class);
     MemberReader delegateMemberReader = Mockito.mock(MemberReader.class);
     HierarchyAccess roleAccess = Mockito.mock(HierarchyAccess.class);
@@ -228,29 +224,29 @@ class RestrictedMemberReaderTest {
     Mockito.doReturn(AccessMember.CUSTOM).when(roleAccess).getAccess(member0);
     Mockito.doReturn(AccessMember.NONE).when(roleAccess).getAccess(member1);
     Mockito.doReturn(AccessMember.NONE).when(roleAccess).getAccess(member2);
-    assertSame(member0, rmr.getDefaultMember(), "on Access C-N-N");
+      assertThat(rmr.getDefaultMember()).as("on Access C-N-N").isSameAs(member0);
 
     Mockito.doReturn(AccessMember.NONE).when(roleAccess).getAccess(member0);
     Mockito.doReturn(AccessMember.NONE).when(roleAccess).getAccess(member1);
     Mockito.doReturn(AccessMember.CUSTOM).when(roleAccess).getAccess(member2);
-    assertSame(member2, rmr.getDefaultMember(), "on Access N-N-C");
+      assertThat(rmr.getDefaultMember()).as("on Access N-N-C").isSameAs(member2);
 
     Mockito.doReturn(AccessMember.CUSTOM).when(roleAccess).getAccess(member0);
     Mockito.doReturn(AccessMember.CUSTOM).when(roleAccess).getAccess(member1);
     Mockito.doReturn(AccessMember.CUSTOM).when(roleAccess).getAccess(member2);
-    assertSame(hierDefaultMember, rmr.getDefaultMember(), "on Access C-C-C");
+      assertThat(rmr.getDefaultMember()).as("on Access C-C-C").isSameAs(hierDefaultMember);
 
     Mockito.doReturn(AccessMember.CUSTOM).when(roleAccess).getAccess(member0);
     Mockito.doReturn(AccessMember.NONE).when(roleAccess).getAccess(member1);
     Mockito.doReturn(AccessMember.CUSTOM).when(roleAccess).getAccess(member2);
-    assertTrue(rmr.getDefaultMember() instanceof MultiCardinalityDefaultMember, "on Access C-N-C");
+      assertThat(rmr.getDefaultMember()).as("on Access C-N-C").isInstanceOf(MultiCardinalityDefaultMember.class);
 
     Mockito.doReturn(AccessMember.NONE).when(roleAccess).getAccess(anyRolapMember());
-    assertTrue(rmr.getDefaultMember() instanceof MultiCardinalityDefaultMember, "on Access C-N-C");
+      assertThat(rmr.getDefaultMember()).as("on Access C-N-C").isInstanceOf(MultiCardinalityDefaultMember.class);
   }
 
   @Test
-  void testDefaultMember_multiRootMeasure() {
+  void defaultMemberMultiRootMeasure() {
     RolapHierarchy hierarchy = Mockito.mock(RolapHierarchy.class);
     MemberReader delegateMemberReader = Mockito.mock(MemberReader.class);
     HierarchyAccess roleAccess = Mockito.mock(HierarchyAccess.class);
@@ -278,25 +274,25 @@ class RestrictedMemberReaderTest {
     Mockito.doReturn(AccessMember.CUSTOM).when(roleAccess).getAccess(member0);
     Mockito.doReturn(AccessMember.NONE).when(roleAccess).getAccess(member1);
     Mockito.doReturn(AccessMember.NONE).when(roleAccess).getAccess(member2);
-    assertSame(member0, rmr.getDefaultMember(), "on Access C-N-N");
+      assertThat(rmr.getDefaultMember()).as("on Access C-N-N").isSameAs(member0);
 
     Mockito.doReturn(AccessMember.NONE).when(roleAccess).getAccess(member0);
     Mockito.doReturn(AccessMember.NONE).when(roleAccess).getAccess(member1);
     Mockito.doReturn(AccessMember.CUSTOM).when(roleAccess).getAccess(member2);
-    assertSame(member2, rmr.getDefaultMember(), "on Access N-N-C");
+      assertThat(rmr.getDefaultMember()).as("on Access N-N-C").isSameAs(member2);
 
     Mockito.doReturn(AccessMember.CUSTOM).when(roleAccess).getAccess(member0);
     Mockito.doReturn(AccessMember.CUSTOM).when(roleAccess).getAccess(member1);
     Mockito.doReturn(AccessMember.CUSTOM).when(roleAccess).getAccess(member2);
-    assertSame(hierDefaultMember, rmr.getDefaultMember(), "on Access C-C-C");
+      assertThat(rmr.getDefaultMember()).as("on Access C-C-C").isSameAs(hierDefaultMember);
 
     Mockito.doReturn(AccessMember.CUSTOM).when(roleAccess).getAccess(member0);
     Mockito.doReturn(AccessMember.NONE).when(roleAccess).getAccess(member1);
     Mockito.doReturn(AccessMember.CUSTOM).when(roleAccess).getAccess(member2);
-    assertSame(member0, rmr.getDefaultMember(), "on Access C-N-C");
+      assertThat(rmr.getDefaultMember()).as("on Access C-N-C").isSameAs(member0);
 
     Mockito.doReturn(AccessMember.NONE).when(roleAccess).getAccess(anyRolapMember());
-    assertTrue(rmr.getDefaultMember() instanceof MultiCardinalityDefaultMember, "on Access.NONE");
+      assertThat(rmr.getDefaultMember()).as("on Access.NONE").isInstanceOf(MultiCardinalityDefaultMember.class);
   }
 
   private Cube findCubeByName(Cube[] cc, String cn) {
@@ -309,7 +305,7 @@ class RestrictedMemberReaderTest {
   }
 
   @Test
-  void testProcessMemberChildren() {
+  void processMemberChildren() {
 
       MemberReader delegateMemberReader = Mockito.mock(MemberReader.class);
       MemberChildrenConstraint constraint = Mockito.mock(MemberChildrenConstraint.class);
@@ -337,7 +333,7 @@ class RestrictedMemberReaderTest {
       rmr = new RestrictedMemberReader(delegateMemberReader, role);
       final Map<RolapMember, AccessMember> testResult = rmr.processMemberChildren(fullChildren, children, constraint);
 
-      assertEquals(2, testResult.size());
-      assertTrue(testResult.containsValue(AccessMember.ALL));
+      assertThat(testResult.size()).isEqualTo(2);
+      assertThat(testResult.containsValue(AccessMember.ALL)).isTrue();
   }
 }

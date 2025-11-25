@@ -25,10 +25,8 @@
 
 package org.eclipse.daanse.rolap.common;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -72,8 +70,7 @@ class RolapMemberBaseTest {
     private RolapLevel level;
     private MemberPropertyFormatter propertyFormatter;
 
-    @BeforeEach
-    public void beforeEach() {
+    @BeforeEach void beforeEach() {
         level = mock(RolapLevel.class);
         propertyFormatter = mock(MemberPropertyFormatter.class);
         memberKey = Integer.MAX_VALUE;
@@ -99,7 +96,7 @@ class RolapMemberBaseTest {
      * then property formatter should be used to return the value.
      */
     @Test
-    void testShouldUsePropertyFormatterWhenPropertyValuesAreRequested() {
+    void shouldUsePropertyFormatterWhenPropertyValuesAreRequested() {
         RolapProperty property1 = mock(TestPublicRolapProperty.class);
         RolapProperty property2 = mock(TestPublicRolapProperty.class);
         when(property1.getName()).thenReturn(PROPERTY_NAME_1);
@@ -122,9 +119,9 @@ class RolapMemberBaseTest {
         String formatted3 =
                 rolapMemberBase.getPropertyFormattedValue(PROPERTY_NAME_3);
 
-        assertEquals(FORMATTED_PROPERTY_VALUE, formatted1); // formatted
-        assertEquals(PROPERTY_VALUE_TO_FORMAT, formatted2); // unformatted
-        assertEquals(null, formatted3);                     // not found
+        assertThat(formatted1).isEqualTo(FORMATTED_PROPERTY_VALUE); // formatted
+        assertThat(formatted2).isEqualTo(PROPERTY_VALUE_TO_FORMAT); // unformatted
+        assertThat(formatted3).isNull();                     // not found
     }
 
     /**
@@ -136,7 +133,7 @@ class RolapMemberBaseTest {
      * to return the formatted caption value.
      */
     @Test
-    void testShouldUseMemberFormatterForCaption() {
+    void shouldUseMemberFormatterForCaption() {
         MemberFormatter memberFormatter = mock(MemberFormatter.class);
         when(level.getMemberFormatter()).thenReturn(memberFormatter);
         when(memberFormatter.format(rolapMemberBase))
@@ -144,7 +141,7 @@ class RolapMemberBaseTest {
 
         String caption = rolapMemberBase.getCaption();
 
-        assertEquals(FORMATTED_CAPTION, caption);
+        assertThat(caption).isEqualTo(FORMATTED_CAPTION);
     }
 
     /**
@@ -156,10 +153,10 @@ class RolapMemberBaseTest {
      * then member key should be returned.
      */
     @Test
-    void testShouldNotFailIfMemberFormatterIsNotPresent() {
+    void shouldNotFailIfMemberFormatterIsNotPresent() {
         String caption = rolapMemberBase.getCaption();
 
-        assertEquals(String.valueOf(Integer.MAX_VALUE), caption);
+        assertThat(caption).isEqualTo(String.valueOf(Integer.MAX_VALUE));
     }
 
     /**
@@ -170,11 +167,11 @@ class RolapMemberBaseTest {
      * then member key should be returned.
      */
     @Test
-    void testShouldReturnMemberKeyIfNoCaptionValueAndNoNamePresent() {
+    void shouldReturnMemberKeyIfNoCaptionValueAndNoNamePresent() {
         Object captionValue = rolapMemberBase.getCaptionValue();
 
-        assertNotNull(captionValue);
-        assertEquals(memberKey, captionValue);
+        assertThat(captionValue).isNotNull();
+        assertThat(captionValue).isEqualTo(memberKey);
     }
 
     /**
@@ -185,13 +182,13 @@ class RolapMemberBaseTest {
      * then member name should be returned.
      */
     @Test
-    void testShouldReturnMemberNameIfCaptionValueIsNotPresent() {
+    void shouldReturnMemberNameIfCaptionValueIsNotPresent() {
         rolapMemberBase.setProperty(StandardProperty.NAME.getName(), MEMBER_NAME);
 
         Object captionValue = rolapMemberBase.getCaptionValue();
 
-        assertNotNull(captionValue);
-        assertEquals(MEMBER_NAME, captionValue);
+        assertThat(captionValue).isNotNull();
+        assertThat(captionValue).isEqualTo(MEMBER_NAME);
     }
 
     /**
@@ -202,12 +199,12 @@ class RolapMemberBaseTest {
      * then the caption value should be returned.
      */
     @Test
-    void testShouldReturnCaptionValueIfPresent() {
+    void shouldReturnCaptionValueIfPresent() {
         rolapMemberBase.setCaptionValue(Integer.MIN_VALUE);
 
         Object captionValue = rolapMemberBase.getCaptionValue();
 
-        assertNotNull(captionValue);
-        assertEquals(Integer.MIN_VALUE, captionValue);
+        assertThat(captionValue).isNotNull();
+        assertThat(captionValue).isEqualTo(Integer.MIN_VALUE);
     }
 }

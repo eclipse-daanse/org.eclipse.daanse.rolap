@@ -12,8 +12,7 @@
 */
 package org.eclipse.daanse.rolap.common.agg;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.eclipse.daanse.rolap.common.agg.SegmentAxis;
 import org.junit.jupiter.api.Test;
@@ -21,12 +20,12 @@ import org.junit.jupiter.api.Test;
 class SegmentAxisTest {
 
     @Test
-    void testIsTested() {
-        assertTrue(SegmentAxis.isSorted(new Integer[] { 1, 2, 3, 4 }));
-        assertFalse(SegmentAxis.isSorted(new Integer[] { 1, 2, 5, 4 }));
+    void isTested() {
+        assertThat(SegmentAxis.isSorted(new Integer[]{1, 2, 3, 4})).isTrue();
+        assertThat(SegmentAxis.isSorted(new Integer[]{1, 2, 5, 4})).isFalse();
 
-        assertTrue(SegmentAxis.isSorted(new String[] { "a", "b", "c", "d" }));
-        assertFalse(SegmentAxis.isSorted(new String[] { "a", "b", "d", "c" }));
+        assertThat(SegmentAxis.isSorted(new String[]{"a", "b", "c", "d"})).isTrue();
+        assertThat(SegmentAxis.isSorted(new String[]{"a", "b", "d", "c"})).isFalse();
 
     }
 }

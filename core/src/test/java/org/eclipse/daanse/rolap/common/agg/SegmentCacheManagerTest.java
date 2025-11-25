@@ -25,8 +25,7 @@
 
 package org.eclipse.daanse.rolap.common.agg;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
@@ -57,8 +56,7 @@ class SegmentCacheManagerTest {
   private Locus locus = new LocusImpl( new ExecutionImpl( null, Optional.empty() ), "component", "message" );
   private ExecutorService executor = Executors.newFixedThreadPool( 15 );
 
-  @BeforeEach
-  public void beforeEach() throws Exception {
+    @BeforeEach void beforeEach() throws Exception {
     MockitoAnnotations.openMocks( this );
     //when(context.getConfig()).thenReturn(new TestConfig());
     when(context.
@@ -70,17 +68,17 @@ class SegmentCacheManagerTest {
   }
 
   @Test
-  void testCommandExecution() throws InterruptedException {
+  void commandExecution() throws Exception {
     CountDownLatch latch = new CountDownLatch( 1 );
     SegmentCacheManager man = new SegmentCacheManager( context );
     man.execute( new MockCommand( latch::countDown ) );
 
     latch.await( 2000, TimeUnit.MILLISECONDS );
-    assertEquals( latch.getCount(), 0 );
+      assertThat(latch.getCount()).isEqualTo(0);
   }
 
   @Test
-  void testShutdownEndOfQueue() throws InterruptedException {
+  void shutdownEndOfQueue() throws Exception {
     BlockingQueue execResults = new ArrayBlockingQueue( 10 );
     SegmentCacheManager man = new SegmentCacheManager( context );
     // add 10 commands to the exec queue
@@ -91,15 +89,15 @@ class SegmentCacheManagerTest {
     // collect the results.  All should have completed successfully with "done".
     for ( int i = 0; i < 10; i++ ) {
       Object val = execResults.poll( 200, TimeUnit.MILLISECONDS );
-      assertEquals( "done", val );
+        assertThat(val).isEqualTo("done");
       results.add( val );
     }
-    assertEquals( 10, results.size() );
+      assertThat(results.size()).isEqualTo(10);
 
   }
 
   @Test
-  void testShutdownMiddleOfQueue() throws InterruptedException {
+  void shutdownMiddleOfQueue() throws Exception {
     BlockingQueue<Object> execResults = new ArrayBlockingQueue( 20 );
 
     SegmentCacheManager man = new SegmentCacheManager( context );
@@ -115,9 +113,9 @@ class SegmentCacheManagerTest {
     for ( int i = 0; i < 20; i++ ) {
       results.add( execResults.poll( 2000, TimeUnit.MILLISECONDS ) );
     }
-    assertEquals( 20, results.size() );
-    assertEquals( "done", results.get( 0 ) );
-    assertTrue( results.get( 19 ) instanceof OlapRuntimeException );
+      assertThat(results.size()).isEqualTo(20);
+      assertThat(results.get(0)).isEqualTo("done");
+      assertThat(results.get(19)).isInstanceOf(OlapRuntimeException.class);
   }
 
   private void executeNtimes( BlockingQueue<Object> queue, SegmentCacheManager man, int n ) {

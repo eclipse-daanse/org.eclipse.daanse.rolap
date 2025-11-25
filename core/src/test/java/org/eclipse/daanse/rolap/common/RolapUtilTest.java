@@ -25,10 +25,8 @@
 
 package org.eclipse.daanse.rolap.common;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -51,33 +49,25 @@ class RolapUtilTest {
   private TableQuery fact;
 
   @Test
-  void testMakeRolapStarKeyUnmodifiable() throws Exception {
-    try {
-      //fact = SchemaUtil.parse(getFactTableWithSQLFilter(), TableQueryMappingImpl.class);
-      PhysicalTable t = RolapMappingFactory.eINSTANCE.createPhysicalTable();
-      t.setName("getFactTable())");
-      SqlStatement sqlStatement = RolapMappingFactory.eINSTANCE.createSqlStatement();
-      sqlStatement.getDialects().add("mysql");
-      sqlStatement.setSql("`TableAlias`.`promotion_id` = 112");
-      
-      fact = RolapMappingFactory.eINSTANCE.createTableQuery();
-      fact.setTable(t);
-      fact.setAlias("TableAlias");
-      fact.setSqlWhereExpression(sqlStatement);
-      
-      List<String> polapStarKey = RolapStarRegistry.makeRolapStarKey(FACT_NAME);
-      assertNotNull(polapStarKey);
-      polapStarKey.add("OneMore");
-      fail(
-          "It should not be allowed to change the rolap star key."
-          + "UnsupportedOperationException expected but was not  been appeared.");
-      } catch (UnsupportedOperationException e) {
-      assertTrue(true);
-    }
+  void makeRolapStarKeyUnmodifiable() throws Exception {
+      assertThatThrownBy(() -> {
+          PhysicalTable t = RolapMappingFactory.eINSTANCE.createPhysicalTable();
+          t.setName("getFactTable())");
+          SqlStatement sqlStatement = RolapMappingFactory.eINSTANCE.createSqlStatement();
+          sqlStatement.getDialects().add("mysql");
+          sqlStatement.setSql("`TableAlias`.`promotion_id` = 112");
+          fact = RolapMappingFactory.eINSTANCE.createTableQuery();
+          fact.setTable(t);
+          fact.setAlias("TableAlias");
+          fact.setSqlWhereExpression(sqlStatement);
+          List<String> polapStarKey = RolapStarRegistry.makeRolapStarKey(FACT_NAME);
+          assertThat(polapStarKey).isNotNull();
+          polapStarKey.add("OneMore");
+      }).isInstanceOf(UnsupportedOperationException.class);
   }
 
   @Test
-  void testMakeRolapStarKey_ByFactTableName() throws Exception {
+  void makeRolapStarKeyByFactTableName() throws Exception {
     //fact = SchemaUtil.parse(getFactTableWithSQLFilter(), TableQueryMappingImpl.class);
       PhysicalTable t = RolapMappingFactory.eINSTANCE.createPhysicalTable();
       t.setName("getFactTable())");
@@ -91,13 +81,13 @@ class RolapUtilTest {
       fact.setSqlWhereExpression(sqlStatement);
 
     List<String> polapStarKey = RolapStarRegistry.makeRolapStarKey(FACT_NAME);
-    assertNotNull(polapStarKey);
-    assertEquals(1, polapStarKey.size());
-    assertEquals(FACT_NAME, polapStarKey.get(0));
+      assertThat(polapStarKey).isNotNull();
+      assertThat(polapStarKey.size()).isEqualTo(1);
+      assertThat(polapStarKey.get(0)).isEqualTo(FACT_NAME);
   }
 
   @Test
-  void testMakeRolapStarKey_FactTableWithSQLFilter() throws Exception {
+  void makeRolapStarKeyFactTableWithSQLFilter() throws Exception {
     //fact = SchemaUtil.parse(getFactTableWithSQLFilter(), TableQueryMappingImpl.class);
       PhysicalTable t = RolapMappingFactory.eINSTANCE.createPhysicalTable();
       t.setName("getFactTable())");
@@ -111,15 +101,15 @@ class RolapUtilTest {
       fact.setSqlWhereExpression(sqlStatement);
 
     List<String> polapStarKey = RolapUtil.makeRolapStarKey(fact);
-    assertNotNull(polapStarKey);
-    assertEquals(3, polapStarKey.size());
-    assertEquals(TABLE_ALIAS, polapStarKey.get(0));
-    assertEquals(FILTER_DIALECT, polapStarKey.get(1));
-    assertEquals(FILTER_QUERY, polapStarKey.get(2));
+      assertThat(polapStarKey).isNotNull();
+      assertThat(polapStarKey.size()).isEqualTo(3);
+      assertThat(polapStarKey.get(0)).isEqualTo(TABLE_ALIAS);
+      assertThat(polapStarKey.get(1)).isEqualTo(FILTER_DIALECT);
+      assertThat(polapStarKey.get(2)).isEqualTo(FILTER_QUERY);
   }
 
   @Test
-  void testMakeRolapStarKey_FactTableWithEmptyFilter()
+  void makeRolapStarKeyFactTableWithEmptyFilter()
       throws Exception {
     //fact = SchemaUtil.parse(getFactTableWithEmptySQLFilter(), TableQueryMappingImpl.class);
       PhysicalTable t = RolapMappingFactory.eINSTANCE.createPhysicalTable();
@@ -134,13 +124,13 @@ class RolapUtilTest {
 
 
     List<String> polapStarKey = RolapUtil.makeRolapStarKey(fact);
-    assertNotNull(polapStarKey);
-    assertEquals(1, polapStarKey.size());
-    assertEquals(TABLE_ALIAS, polapStarKey.get(0));
+      assertThat(polapStarKey).isNotNull();
+      assertThat(polapStarKey.size()).isEqualTo(1);
+      assertThat(polapStarKey.get(0)).isEqualTo(TABLE_ALIAS);
   }
 
   @Test
-  void testMakeRolapStarKey_FactTableWithoutSQLFilter()
+  void makeRolapStarKeyFactTableWithoutSQLFilter()
       throws Exception {
     //fact = SchemaUtil.parse(getFactTableWithoutSQLFilter(), TableQueryMappingImpl.class);
       PhysicalTable t = RolapMappingFactory.eINSTANCE.createPhysicalTable();
@@ -151,18 +141,18 @@ class RolapUtilTest {
       fact.setAlias("TableAlias");
 
     List<String> polapStarKey = RolapUtil.makeRolapStarKey(fact);
-    assertNotNull(polapStarKey);
-    assertEquals(1, polapStarKey.size());
-    assertEquals(TABLE_ALIAS, polapStarKey.get(0));
+      assertThat(polapStarKey).isNotNull();
+      assertThat(polapStarKey.size()).isEqualTo(1);
+      assertThat(polapStarKey.get(0)).isEqualTo(TABLE_ALIAS);
   }
 
   @Test
-  void testMakeRolapStarKey_FactRelation() throws Exception {
+  void makeRolapStarKeyFactRelation() throws Exception {
     List<String> polapStarKey = RolapUtil.makeRolapStarKey(
         getFactRelationMock());
-    assertNotNull(polapStarKey);
-    assertEquals(1, polapStarKey.size());
-    assertEquals(RELATION_ALIAS, polapStarKey.get(0));
+      assertThat(polapStarKey).isNotNull();
+      assertThat(polapStarKey.size()).isEqualTo(1);
+      assertThat(polapStarKey.get(0)).isEqualTo(RELATION_ALIAS);
   }
 
   private static org.eclipse.daanse.rolap.mapping.model.RelationalQuery getFactRelationMock() throws Exception {

@@ -26,8 +26,7 @@
 
 package org.eclipse.daanse.rolap.common;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.olap.key.CellKey;
@@ -42,27 +41,25 @@ import org.junit.jupiter.api.Test;
  */
 class CellKeyTest  {
 
-    @BeforeEach
-    public void beforeEach() {
+    @BeforeEach void beforeEach() {
     }
 
-    @AfterEach
-    public void afterEach() {
+    @AfterEach void afterEach() {
         SystemWideProperties.instance().populateInitial();
     }
 
     @Test
-    void testMany() {
+    void many() {
         CellKey key = CellKey.Generator.newManyCellKey(5);
 
-        assertTrue(key.size() == 5, "CellKey size");
+        assertThat(key.size()).as("CellKey size").isEqualTo(5);
 
         CellKey copy = key.copy();
-        assertTrue(key.equals(copy), "CellKey equals");
+        assertThat(copy).as("CellKey equals").isEqualTo(key);
 
         int[] ordinals = key.getOrdinals();
         copy = CellKey.Generator.newCellKey(ordinals);
-        assertTrue(key.equals(copy), "CellKey equals");
+        assertThat(copy).as("CellKey equals").isEqualTo(key);
 
         boolean gotException = false;
         try {
@@ -70,7 +67,7 @@ class CellKeyTest  {
         } catch (Exception ex) {
             gotException = true;
         }
-        assertTrue(gotException, "CellKey axis too big");
+        assertThat(gotException).as("CellKey axis too big").isTrue();
 
         gotException = false;
         try {
@@ -78,7 +75,7 @@ class CellKeyTest  {
         } catch (Exception ex) {
             gotException = true;
         }
-        assertTrue(gotException, "CellKey array too big");
+        assertThat(gotException).as("CellKey array too big").isTrue();
 
         gotException = false;
         try {
@@ -86,32 +83,32 @@ class CellKeyTest  {
         } catch (Exception ex) {
             gotException = true;
         }
-        assertTrue(gotException, "CellKey array too small");
+        assertThat(gotException).as("CellKey array too small").isTrue();
 
         key.setAxis(0, 1);
         key.setAxis(1, 3);
         key.setAxis(2, 5);
         key.setAxis(3, 7);
         key.setAxis(4, 13);
-        assertTrue(!key.equals(copy), "CellKey not equals");
+        assertThat(copy).as("CellKey not equals").isNotEqualTo(key);
 
         copy = key.copy();
-        assertTrue(key.equals(copy), "CellKey equals");
+        assertThat(copy).as("CellKey equals").isEqualTo(key);
 
         ordinals = key.getOrdinals();
         copy = CellKey.Generator.newCellKey(ordinals);
-        assertTrue(key.equals(copy), "CellKey equals");
+        assertThat(copy).as("CellKey equals").isEqualTo(key);
     }
 
     @Test
-    void testZero() {
+    void zero() {
         CellKey key = CellKey.Generator.newCellKey(new int[0]);
         CellKey key2 = CellKey.Generator.newCellKey(new int[0]);
-        assertTrue(key == key2); // all 0-dimensional keys have same singleton
-        assertEquals(0, key.size());
+        assertThat(key2).isSameAs(key); // all 0-dimensional keys have same singleton
+        assertThat(key.size()).isEqualTo(0);
 
         CellKey copy = key.copy();
-        assertEquals(copy, key);
+        assertThat(key).isEqualTo(copy);
 
         boolean gotException = false;
         try {
@@ -119,25 +116,25 @@ class CellKeyTest  {
         } catch (Exception ex) {
             gotException = true;
         }
-        assertTrue(gotException, "CellKey axis too big");
+        assertThat(gotException).as("CellKey axis too big").isTrue();
 
         int[] ordinals = key.getOrdinals();
-        assertEquals(ordinals.length, 0);
+        assertThat(ordinals.length).isEqualTo(0);
         copy = CellKey.Generator.newCellKey(ordinals);
-        assertTrue(key.equals(copy), "CellKey equals");
+        assertThat(copy).as("CellKey equals").isEqualTo(key);
     }
 
     @Test
-    void testOne() {
+    void one() {
         CellKey key = CellKey.Generator.newCellKey(1);
-        assertTrue(key.size() == 1, "CellKey size");
+        assertThat(key.size()).as("CellKey size").isEqualTo(1);
 
         CellKey copy = key.copy();
-        assertTrue(key.equals(copy), "CellKey equals");
+        assertThat(copy).as("CellKey equals").isEqualTo(key);
 
         int[] ordinals = key.getOrdinals();
         copy = CellKey.Generator.newCellKey(ordinals);
-        assertTrue(key.equals(copy), "CellKey equals");
+        assertThat(copy).as("CellKey equals").isEqualTo(key);
 
         boolean gotException = false;
         try {
@@ -145,7 +142,7 @@ class CellKeyTest  {
         } catch (Exception ex) {
             gotException = true;
         }
-        assertTrue(gotException, "CellKey axis too big");
+        assertThat(gotException).as("CellKey axis too big").isTrue();
 
         gotException = false;
         try {
@@ -153,7 +150,7 @@ class CellKeyTest  {
         } catch (Exception ex) {
             gotException = true;
         }
-        assertTrue(gotException, "CellKey array too big");
+        assertThat(gotException).as("CellKey array too big").isTrue();
 
         gotException = false;
         try {
@@ -161,30 +158,30 @@ class CellKeyTest  {
         } catch (Exception ex) {
             gotException = true;
         }
-        assertTrue(gotException, "CellKey array too small");
+        assertThat(gotException).as("CellKey array too small").isTrue();
 
         key.setAxis(0, 1);
 
         copy = key.copy();
-        assertTrue(key.equals(copy), "CellKey equals");
+        assertThat(copy).as("CellKey equals").isEqualTo(key);
 
         ordinals = key.getOrdinals();
         copy = CellKey.Generator.newCellKey(ordinals);
-        assertTrue(key.equals(copy), "CellKey equals");
+        assertThat(copy).as("CellKey equals").isEqualTo(key);
     }
 
     @Test
-    void testTwo() {
+    void two() {
         CellKey key = CellKey.Generator.newCellKey(2);
 
-        assertTrue(key.size() == 2, "CellKey size");
+        assertThat(key.size()).as("CellKey size").isEqualTo(2);
 
         CellKey copy = key.copy();
-        assertTrue(key.equals(copy), "CellKey equals");
+        assertThat(copy).as("CellKey equals").isEqualTo(key);
 
         int[] ordinals = key.getOrdinals();
         copy = CellKey.Generator.newCellKey(ordinals);
-        assertTrue(key.equals(copy), "CellKey equals");
+        assertThat(copy).as("CellKey equals").isEqualTo(key);
 
         boolean gotException = false;
         try {
@@ -192,7 +189,7 @@ class CellKeyTest  {
         } catch (Exception ex) {
             gotException = true;
         }
-        assertTrue(gotException, "CellKey axis too big");
+        assertThat(gotException).as("CellKey axis too big").isTrue();
 
         gotException = false;
         try {
@@ -200,7 +197,7 @@ class CellKeyTest  {
         } catch (Exception ex) {
             gotException = true;
         }
-        assertTrue(gotException, "CellKey array too big");
+        assertThat(gotException).as("CellKey array too big").isTrue();
 
         gotException = false;
         try {
@@ -208,31 +205,31 @@ class CellKeyTest  {
         } catch (Exception ex) {
             gotException = true;
         }
-        assertTrue(gotException, "CellKey array too small");
+        assertThat(gotException).as("CellKey array too small").isTrue();
 
         key.setAxis(0, 1);
         key.setAxis(1, 3);
 
         copy = key.copy();
-        assertTrue(key.equals(copy), "CellKey equals");
+        assertThat(copy).as("CellKey equals").isEqualTo(key);
 
         ordinals = key.getOrdinals();
         copy = CellKey.Generator.newCellKey(ordinals);
-        assertTrue(key.equals(copy), "CellKey equals");
+        assertThat(copy).as("CellKey equals").isEqualTo(key);
     }
 
     @Test
-    void testThree() {
+    void three() {
         CellKey key = CellKey.Generator.newCellKey(3);
 
-        assertTrue(key.size() == 3, "CellKey size");
+        assertThat(key.size()).as("CellKey size").isEqualTo(3);
 
         CellKey copy = key.copy();
-        assertTrue(key.equals(copy), "CellKey equals");
+        assertThat(copy).as("CellKey equals").isEqualTo(key);
 
         int[] ordinals = key.getOrdinals();
         copy = CellKey.Generator.newCellKey(ordinals);
-        assertTrue(key.equals(copy), "CellKey equals");
+        assertThat(copy).as("CellKey equals").isEqualTo(key);
 
         boolean gotException = false;
         try {
@@ -240,7 +237,7 @@ class CellKeyTest  {
         } catch (Exception ex) {
             gotException = true;
         }
-        assertTrue(gotException, "CellKey axis too big");
+        assertThat(gotException).as("CellKey axis too big").isTrue();
 
         gotException = false;
         try {
@@ -248,7 +245,7 @@ class CellKeyTest  {
         } catch (Exception ex) {
             gotException = true;
         }
-        assertTrue(gotException, "CellKey array too big");
+        assertThat(gotException).as("CellKey array too big").isTrue();
 
         gotException = false;
         try {
@@ -256,32 +253,32 @@ class CellKeyTest  {
         } catch (Exception ex) {
             gotException = true;
         }
-        assertTrue(gotException, "CellKey array too small");
+        assertThat(gotException).as("CellKey array too small").isTrue();
 
         key.setAxis(0, 1);
         key.setAxis(1, 3);
         key.setAxis(2, 5);
 
         copy = key.copy();
-        assertTrue(key.equals(copy), "CellKey array too small");
+        assertThat(copy).as("CellKey array too small").isEqualTo(key);
 
         ordinals = key.getOrdinals();
         copy = CellKey.Generator.newCellKey(ordinals);
-        assertTrue(key.equals(copy), "CellKey equals");
+        assertThat(copy).as("CellKey equals").isEqualTo(key);
     }
 
     @Test
-    void testFour() {
+    void four() {
         CellKey key = CellKey.Generator.newCellKey(4);
 
-        assertTrue(key.size() == 4, "CellKey size");
+        assertThat(key.size()).as("CellKey size").isEqualTo(4);
 
         CellKey copy = key.copy();
-        assertTrue(key.equals(copy), "CellKey equals");
+        assertThat(copy).as("CellKey equals").isEqualTo(key);
 
         int[] ordinals = key.getOrdinals();
         copy = CellKey.Generator.newCellKey(ordinals);
-        assertTrue(key.equals(copy), "CellKey equals");
+        assertThat(copy).as("CellKey equals").isEqualTo(key);
 
         boolean gotException = false;
         try {
@@ -289,7 +286,7 @@ class CellKeyTest  {
         } catch (Exception ex) {
             gotException = true;
         }
-        assertTrue(gotException, "CellKey axis too big");
+        assertThat(gotException).as("CellKey axis too big").isTrue();
 
         gotException = false;
         try {
@@ -297,7 +294,7 @@ class CellKeyTest  {
         } catch (Exception ex) {
             gotException = true;
         }
-        assertTrue(gotException, "CellKey array too big");
+        assertThat(gotException).as("CellKey array too big").isTrue();
 
         gotException = false;
         try {
@@ -305,7 +302,7 @@ class CellKeyTest  {
         } catch (Exception ex) {
             gotException = true;
         }
-        assertTrue(gotException, "CellKey array too small");
+        assertThat(gotException).as("CellKey array too small").isTrue();
 
         key.setAxis(0, 1);
         key.setAxis(1, 3);
@@ -313,11 +310,11 @@ class CellKeyTest  {
         key.setAxis(3, 7);
 
         copy = key.copy();
-        assertTrue(key.equals(copy), "CellKey equals");
+        assertThat(copy).as("CellKey equals").isEqualTo(key);
 
         ordinals = key.getOrdinals();
         copy = CellKey.Generator.newCellKey(ordinals);
-        assertTrue(key.equals(copy), "CellKey equals");
+        assertThat(copy).as("CellKey equals").isEqualTo(key);
     }
 
 }

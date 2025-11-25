@@ -26,9 +26,8 @@ package org.eclipse.daanse.rolap.common.agg;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonMap;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.eclipse.daanse.olap.util.Pair.of;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -63,14 +62,13 @@ class SegmentBuilderTest {
 
     public static final double MOCK_CELL_VALUE = 123.123;
 
-    @AfterEach
-    public void afterEach() {
+    @AfterEach void afterEach() {
         SystemWideProperties.instance().populateInitial();
         RolapUtil.setHook(null);
     }
 
     @Test
-    void testRollupWithNullAxisVals() {
+    void rollupWithNullAxisVals() {
         // Perform two rollups.  One with two columns each containing 3 values.
         // The second with two columns containing 2 values + null.
         // The rolled up values should be equal in the two cases.
@@ -91,16 +89,14 @@ class SegmentBuilderTest {
         assertArraysAreEqual(
                 (double[]) rollupNoNulls.getValue().getValueArray(),
                 (double[]) rollupWithNullMembers.getValue().getValueArray());
-        assertTrue(
-                rollupWithNullMembers.getValue().getNullAxisFlags().length == 1
-                        && rollupWithNullMembers.getValue().getNullAxisFlags()[0], "Rolled up column should have nullAxisFlag set.");
-        assertEquals(
-                rollupWithNullMembers.getKey().getConstrainedColumns()
-                        .get(0).columnExpression, "col2");
+        assertThat(rollupWithNullMembers.getValue().getNullAxisFlags().length == 1
+            && rollupWithNullMembers.getValue().getNullAxisFlags()[0]).as("Rolled up column should have nullAxisFlag set.").isTrue();
+        assertThat(rollupWithNullMembers.getKey().getConstrainedColumns()
+            .get(0).columnExpression).isEqualTo("col2");
     }
 
     @Test
-    void testRollupWithMixOfNullAxisValues() {
+    void rollupWithMixOfNullAxisValues() {
         // constructed segment has 3 columns:
         //    2 values in the first
         //    2 values + null in the second and third
@@ -119,17 +115,14 @@ class SegmentBuilderTest {
         assertArraysAreEqual(
                 new double[]{expectedVal, expectedVal, expectedVal},
                 (double[]) rollup.getValue().getValueArray());
-        assertTrue(
-                rollup.getValue().getNullAxisFlags().length == 1
-                        && rollup.getValue().getNullAxisFlags()[0], "Rolled up column should have nullAxisFlag set.");
-        assertEquals(
-                "col2",
-                rollup.getKey().getConstrainedColumns()
-                        .get(0).columnExpression);
+        assertThat(rollup.getValue().getNullAxisFlags().length == 1
+            && rollup.getValue().getNullAxisFlags()[0]).as("Rolled up column should have nullAxisFlag set.").isTrue();
+        assertThat(rollup.getKey().getConstrainedColumns()
+            .get(0).columnExpression).isEqualTo("col2");
     }
 
     @Test
-    void testRollup2ColumnsWithMixOfNullAxisValues() {
+    void rollup2ColumnsWithMixOfNullAxisValues() {
         // constructed segment has 3 columns:
         //    2 values in the first
         //    2 values + null in the second and third
@@ -149,24 +142,18 @@ class SegmentBuilderTest {
                 new double[]{expectedVal, expectedVal, expectedVal,
                         expectedVal, expectedVal, expectedVal},
                 (double[]) rollup.getValue().getValueArray());
-        assertTrue(
-                rollup.getValue().getNullAxisFlags().length == 2
-                        && !rollup.getValue().getNullAxisFlags()[0]
-                        && rollup.getValue().getNullAxisFlags()[1],
-                "Rolled up column should have nullAxisFlag set to false for "
-                        + "the first column, true for second column.");
-        assertEquals(
-                "col1",
-                rollup.getKey().getConstrainedColumns()
-                        .get(0).columnExpression);
-        assertEquals(
-                "col2",
-                rollup.getKey().getConstrainedColumns()
-                        .get(1).columnExpression);
+        assertThat(rollup.getValue().getNullAxisFlags().length == 2
+            && !rollup.getValue().getNullAxisFlags()[0]
+            && rollup.getValue().getNullAxisFlags()[1]).as("Rolled up column should have nullAxisFlag set to false for "
+            + "the first column, true for second column.").isTrue();
+        assertThat(rollup.getKey().getConstrainedColumns()
+            .get(0).columnExpression).isEqualTo("col1");
+        assertThat(rollup.getKey().getConstrainedColumns()
+            .get(1).columnExpression).isEqualTo("col2");
     }
 
     @Test
-    void testMultiSegRollupWithMixOfNullAxisValues() {
+    void multiSegRollupWithMixOfNullAxisValues() {
         // rolls up 2 segments.
         // Segment 1 has 3 columns:
         //    2 values in the first
@@ -202,26 +189,19 @@ class SegmentBuilderTest {
         assertArraysAreEqual(
                 new double[]{expectedVal, expectedVal},
                 (double[]) rollup.getValue().getValueArray());
-        assertTrue(
-                rollup.getValue().getNullAxisFlags().length == 1
-                        && rollup.getValue().getNullAxisFlags()[0],
-                "Rolled up column should have nullAxisFlag set to true for "
-                        + "a single column.");
-        assertEquals(
-                "col2",
-                rollup.getKey().getConstrainedColumns()
-                        .get(0).columnExpression);
+        assertThat(rollup.getValue().getNullAxisFlags().length == 1
+            && rollup.getValue().getNullAxisFlags()[0]).as("Rolled up column should have nullAxisFlag set to true for "
+            + "a single column.").isTrue();
+        assertThat(rollup.getKey().getConstrainedColumns()
+            .get(0).columnExpression).isEqualTo("col2");
     }
 
 
     private void assertArraysAreEqual(double[] expected, double[] actual) {
-        assertTrue(
-                doubleArraysEqual(actual, expected),
-                "Expected double array:  "
-                        + Arrays.toString(expected)
-                        + ", but got "
-                        + Arrays.toString(actual)
-        );
+        assertThat(doubleArraysEqual(actual, expected)).as("Expected double array:  "
+            + Arrays.toString(expected)
+            + ", but got "
+            + Arrays.toString(actual)).isTrue();
     }
 
     private boolean doubleArraysEqual(
@@ -239,7 +219,7 @@ class SegmentBuilderTest {
     }
 
     @Test
-    void testSegmentBodyIterator() {
+    void segmentBodyIterator() {
         // checks that cell key coordinates are generated correctly
         // when a null member is present.
         List<Pair<SortedSet<Comparable>, Boolean>> axes =
@@ -254,21 +234,19 @@ class SegmentBuilderTest {
                 new BitSet(), new int[]{1, 2, 3, 4, 5, 6, 7, 8, 9},
                 axes);
         Map valueMap = testBody.getValueMap();
-        assertEquals(
-                "{(0, 0)=1, "
-                        + "(0, 1)=2, "
-                        + "(0, 2)=3, "
-                        + "(1, 0)=4, "
-                        + "(1, 1)=5, "
-                        + "(1, 2)=6, "
-                        + "(2, 0)=7, "
-                        + "(2, 1)=8, "
-                        + "(2, 2)=9}",
-                valueMap.toString());
+        assertThat(valueMap.toString()).isEqualTo("{(0, 0)=1, "
+            + "(0, 1)=2, "
+            + "(0, 2)=3, "
+            + "(1, 0)=4, "
+            + "(1, 1)=5, "
+            + "(1, 2)=6, "
+            + "(2, 0)=7, "
+            + "(2, 1)=8, "
+            + "(2, 2)=9}");
     }
 
     @Test
-    void testRollupWithIntOverflowPossibility() {
+    void rollupWithIntOverflowPossibility() {
         // rolling up a segment that would cause int overflow if
         // rolled up to a dense segment
         // MONDRIAN-1377
@@ -284,11 +262,11 @@ class SegmentBuilderTest {
                         new HashSet<>(Arrays.asList("col1", "col2")),
                         null, SumAggregator.INSTANCE, Datatype.NUMERIC,
                         1000, 0.5);
-        assertTrue(rollup.right instanceof SparseSegmentBody);
+        assertThat(rollup.right).isInstanceOf(SparseSegmentBody.class);
     }
 
     @Test
-    void testRollupWithOOMPossibility() {
+    void rollupWithOOMPossibility() {
         // rolling up a segment that would cause OOM if
         // rolled up to a dense segment
         // MONDRIAN-1377
@@ -303,11 +281,11 @@ class SegmentBuilderTest {
                         new HashSet<>(Arrays.asList("col1", "col2")),
                         null, SumAggregator.INSTANCE, Datatype.NUMERIC,
                         1000, 0.5);
-        assertTrue(rollup.right instanceof SparseSegmentBody);
+        assertThat(rollup.right).isInstanceOf(SparseSegmentBody.class);
     }
 
     @Test
-    void testRollupShouldBeDense() {
+    void rollupShouldBeDense() {
         // Fewer than 1000 column values in rolled up segment.
         Pair<SegmentHeader, SegmentBody> rollup =
                 SegmentBuilder.rollup(
@@ -317,7 +295,7 @@ class SegmentBuilderTest {
                         new HashSet<>(Arrays.asList("col1", "col2")),
                         null, SumAggregator.INSTANCE, Datatype.NUMERIC,
                         1000, 0.5);
-        assertTrue(rollup.right instanceof DenseDoubleSegmentBody);
+        assertThat(rollup.right).isInstanceOf(DenseDoubleSegmentBody.class);
 
         // greater than 1K col vals, above density ratio
         rollup =
@@ -329,11 +307,11 @@ class SegmentBuilderTest {
                         new HashSet<>(Arrays.asList("col1", "col2", "col3")),
                         null, SumAggregator.INSTANCE, Datatype.NUMERIC,
                         1000, 0.5);
-        assertTrue(rollup.right instanceof DenseDoubleSegmentBody);
+        assertThat(rollup.right).isInstanceOf(DenseDoubleSegmentBody.class);
     }
 
     @Test
-    void testRollupWithDenseIntBody() {
+    void rollupWithDenseIntBody() {
         //
         //  We have the following data:
         //
@@ -378,13 +356,11 @@ class SegmentBuilderTest {
 
         double[] result = (double[]) rollup.right.getValueArray();
         double[] expected = {3, 2, 1};
-        assertEquals(expected.length, result.length);
+        assertThat(result.length).isEqualTo(expected.length);
         for (int i = 0; i < expected.length; i++) {
             double exp = expected[i];
             double act = result[i];
-            assertTrue(
-                    Math.abs(exp - act) < 1e-6,
-                    String.format("%d %f %f", i, exp, act));
+            assertThat(Math.abs(exp - act) < 1e-6).as(String.format("%d %f %f", i, exp, act)).isTrue();
         }
     }
 

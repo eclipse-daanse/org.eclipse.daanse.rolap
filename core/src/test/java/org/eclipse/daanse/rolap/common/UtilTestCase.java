@@ -26,9 +26,7 @@
 
 package org.eclipse.daanse.rolap.common;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.sql.Driver;
 import java.util.ArrayList;
@@ -52,11 +50,11 @@ import org.junit.jupiter.api.Test;
      */
     @Test
     @Disabled("Use Serviceloader directly - this is pre java 8 and non-osgi")
-     void testServiceDiscovery() {
+     void serviceDiscovery() {
         final ServiceDiscovery<Driver>
             serviceDiscovery = ServiceDiscovery.forClass(Driver.class);
         final List<Class<Driver>> list = serviceDiscovery.getImplementor();
-        assertFalse(list.isEmpty());
+        assertThat(list.isEmpty()).isFalse();
 
         // Check that discovered classes include AT LEAST:
         // JdbcOdbcDriver (in the JDK),
@@ -70,7 +68,7 @@ import org.junit.jupiter.api.Test;
         for (Class<Driver> driverClass : list) {
             expectedClassNames.remove(driverClass.getName());
         }
-        assertTrue( expectedClassNames.isEmpty(),expectedClassNames.toString());
+        assertThat(expectedClassNames.isEmpty()).as(expectedClassNames.toString()).isTrue();
     }
 
 
@@ -78,7 +76,7 @@ import org.junit.jupiter.api.Test;
      * Unit test for {@link Composite#of(Iterable[])}.
      */
     @Test
-     void testCompositeIterable() {
+     void compositeIterable() {
         final Iterable<String> beatles =
             Arrays.asList("john", "paul", "george", "ringo");
         final Iterable<String> stones =
@@ -89,40 +87,30 @@ import org.junit.jupiter.api.Test;
         for (String s : Composite.of(beatles, stones)) {
             buf.append(s).append(";");
         }
-        assertEquals(
-            "john;paul;george;ringo;mick;keef;brian;bill;charlie;",
-            buf.toString());
+        assertThat(buf.toString()).isEqualTo("john;paul;george;ringo;mick;keef;brian;bill;charlie;");
 
         buf.setLength(0);
         for (String s : Composite.of(empty, stones)) {
             buf.append(s).append(";");
         }
-        assertEquals(
-            "mick;keef;brian;bill;charlie;",
-            buf.toString());
+        assertThat(buf.toString()).isEqualTo("mick;keef;brian;bill;charlie;");
 
         buf.setLength(0);
         for (String s : Composite.of(stones, empty)) {
             buf.append(s).append(";");
         }
-        assertEquals(
-            "mick;keef;brian;bill;charlie;",
-            buf.toString());
+        assertThat(buf.toString()).isEqualTo("mick;keef;brian;bill;charlie;");
 
         buf.setLength(0);
         for (String s : Composite.of(empty)) {
             buf.append(s).append(";");
         }
-        assertEquals(
-            "",
-            buf.toString());
+        assertThat(buf.toString()).isEqualTo("");
 
         buf.setLength(0);
         for (String s : Composite.of(empty, empty, beatles, empty, empty)) {
             buf.append(s).append(";");
         }
-        assertEquals(
-            "john;paul;george;ringo;",
-            buf.toString());
+        assertThat(buf.toString()).isEqualTo("john;paul;george;ringo;");
     }
 }

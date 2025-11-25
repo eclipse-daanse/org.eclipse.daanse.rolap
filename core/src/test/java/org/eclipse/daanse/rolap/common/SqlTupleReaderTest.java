@@ -70,7 +70,7 @@ class SqlTupleReaderTest {
 
   @Test
   @Disabled
-  void testAddLevelMemberSql() throws Exception {
+  void addLevelMemberSql() throws Exception {
     TupleConstraint constraint = mock( TupleConstraint.class );
     SqlQuery sqlQuery = mock( SqlQuery.class, Answers.RETURNS_MOCKS );
     RolapCube baseCube = mock( RolapCube.class );

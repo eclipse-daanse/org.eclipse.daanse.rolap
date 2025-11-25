@@ -24,7 +24,7 @@
 
 package org.eclipse.daanse.rolap.common;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -62,13 +62,12 @@ class MemberCacheHelperTest {
 
     private MemberCacheHelper cacheHelper = new MemberCacheHelper(null);
 
-    @BeforeEach
-    public void beforeEach() {
+    @BeforeEach void beforeEach() {
         MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    void testRoundtripChildrenUsingChildByNameConstraint() {
+    void roundtripChildrenUsingChildByNameConstraint() {
         List<String> childNames = fillChildren(children, 3);
         when(childByNameConstraint.getChildNames()).thenReturn(childNames);
 
@@ -78,11 +77,11 @@ class MemberCacheHelperTest {
             cacheHelper.getChildrenFromCache(
                 parentMember, childByNameConstraint);
 
-        assertEquals(children, retrievedChildren);
+        assertThat(retrievedChildren).isEqualTo(children);
     }
 
     @Test
-    void testCachedByDefaultConstraint() {
+    void cachedByDefaultConstraint() {
         List<String> childNames = fillChildren(children, 5);
         when(childByNameConstraint.getChildNames()).thenReturn(childNames);
 
@@ -97,11 +96,11 @@ class MemberCacheHelperTest {
                 parentMember,
                 childByNameConstraint);
 
-        assertEquals(children, retrievedChildren);
+        assertThat(retrievedChildren).isEqualTo(children);
     }
 
     @Test
-    void testOnlyRequestedChildrenRetrieved() {
+    void onlyRequestedChildrenRetrieved() {
         // tests retrieval of a subset of children from
         // the cache with keyed with DefaultMemberChildrenConstraint
         List<String> childNames = fillChildren(children, 5);
@@ -123,18 +122,16 @@ class MemberCacheHelperTest {
                 parentMember,
                 childByNameConstraint);
 
-        assertEquals(
-            children.subList(FROM, TO), retrievedChildren,
-            "Expected children were not retrieved from cache.");
+        assertThat(retrievedChildren).as("Expected children were not retrieved from cache.").isEqualTo(children.subList(FROM, TO));
     }
 
     @Test
-    void testMissingChildrenNotRetrievedDefaultConst() {
+    void missingChildrenNotRetrievedDefaultConst() {
         runMissingChildrenNotRetrievedTest(defMemChildrenConstraint);
     }
 
     @Test
-    void testMissingChildrenNotRetrievedChildByName() {
+    void missingChildrenNotRetrievedChildByName() {
         runMissingChildrenNotRetrievedTest(childByNameConstraint);
     }
 
@@ -152,14 +149,12 @@ class MemberCacheHelperTest {
             cacheHelper.getChildrenFromCache(
                 parentMember, childByNameConstraint);
 
-        assertEquals(
-            null, retrievedChildren,
-            "Not expecting to retrieve anything from cache");
+        assertThat(retrievedChildren).as("Not expecting to retrieve anything from cache").isNull();
     }
 
 
     @Test
-    void testRemoveChildMemberPresentInNamedChildrenMap() {
+    void removeChildMemberPresentInNamedChildrenMap() {
         List<String> childNames = fillChildren(children, 3);
         when(childByNameConstraint.getChildNames()).thenReturn(
             childNames.subList(1, 3));
@@ -180,9 +175,7 @@ class MemberCacheHelperTest {
             cacheHelper.getChildrenFromCache(
                 parentMember, childByNameConstraint);
 
-        assertEquals(
-            children.subList(1, 3), members,
-            "Retrieved children should not include the removed member");
+        assertThat(members).as("Retrieved children should not include the removed member").isEqualTo(children.subList(1, 3));
     }
 
     private MemberKey mockMemberKey() {
