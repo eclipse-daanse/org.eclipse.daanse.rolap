@@ -29,7 +29,6 @@ package org.eclipse.daanse.rolap.element;
 
 import org.eclipse.daanse.olap.api.element.Measure;
 import org.eclipse.daanse.rolap.common.RolapResult;
-import org.eclipse.daanse.rolap.common.RolapResult.ValueFormatter;
 
 /**
  * Interface implemented by all measures (both stored and calculated).
