@@ -33,7 +33,7 @@ import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.olap.api.CacheCommand;
 import org.eclipse.daanse.olap.api.ConfigConstants;
 import org.eclipse.daanse.olap.api.ISegmentCacheManager;
-import org.eclipse.daanse.olap.api.Locus;
+import org.eclipse.daanse.olap.api.execution.ExecutionContext;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.key.BitKey;
 import org.eclipse.daanse.olap.spi.SegmentBody;
@@ -69,7 +69,7 @@ public class BatchLoader {
     private static final Logger LOGGER =
         LoggerFactory.getLogger(BatchLoader.class);
 
-    private final Locus locus;
+    private final ExecutionContext executionContext;
     private final SegmentCacheManager cacheMgr;
     private final Dialect dialect;
     private final RolapCube cube;
@@ -91,12 +91,12 @@ public class BatchLoader {
         new HashMap<>();
 
     public BatchLoader(
-        Locus locus,
+        ExecutionContext executionContext,
         ISegmentCacheManager cacheMgr,
         Dialect dialect,
         RolapCube cube)
     {
-        this.locus = locus;
+        this.executionContext = executionContext;
         this.cacheMgr = (SegmentCacheManager)cacheMgr;
         this.dialect = dialect;
         this.cube = cube;
@@ -184,7 +184,7 @@ public class BatchLoader {
         if (!headersInCache.isEmpty()) {
             for (SegmentHeader headerInCache : headersInCache) {
                 final Future<SegmentBody> future =
-                    index.getFuture(locus.getExecution(), headerInCache);
+                    index.getFuture(executionContext.getExecution(), headerInCache);
 
                 if (future != null) {
                     // Segment header is in cache, body is being loaded.
@@ -388,8 +388,8 @@ public class BatchLoader {
     LoadBatchResponse load(List<CellRequest> cellRequests) {
         // Check for cancel/timeout. The request might have been on the queue
         // for a while.
-        if (locus.getExecution() != null) {
-            locus.getExecution().checkCancelOrTimeout();
+        if (executionContext.getExecution() != null) {
+            executionContext.getExecution().checkCancelOrTimeout();
         }
 
         final long t1 = System.currentTimeMillis();
@@ -508,20 +508,20 @@ public class BatchLoader {
      */
     public static class LoadBatchCommand implements CacheCommand<LoadBatchResponse>
     {
-        private final Locus locus;
+        private final ExecutionContext executionContext;
         private final SegmentCacheManager cacheMgr;
         private final Dialect dialect;
         private final RolapCube cube;
         private final List<CellRequest> cellRequests;
 
         public LoadBatchCommand(
-            Locus locus,
+            ExecutionContext executionContext,
             SegmentCacheManager cacheMgr,
             Dialect dialect,
             RolapCube cube,
             List<CellRequest> cellRequests)
         {
-            this.locus = locus;
+            this.executionContext = executionContext;
             this.cacheMgr = cacheMgr;
             this.dialect = dialect;
             this.cube = cube;
@@ -530,13 +530,13 @@ public class BatchLoader {
 
         @Override
         public LoadBatchResponse call() {
-            return new BatchLoader(locus, cacheMgr, dialect, cube)
+            return new BatchLoader(executionContext, cacheMgr, dialect, cube)
                 .load(cellRequests);
         }
 
         @Override
-        public Locus getLocus() {
-            return locus;
+        public ExecutionContext getExecutionContext() {
+            return executionContext;
         }
     }
 

@@ -45,8 +45,8 @@ import java.util.function.Consumer;
 import org.eclipse.daanse.jdbc.db.dialect.api.BestFitColumnType;
 import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.olap.api.Context;
-import org.eclipse.daanse.olap.api.Execution;
 import org.eclipse.daanse.olap.api.ISqlStatement;
+import org.eclipse.daanse.olap.api.execution.ExecutionContext;
 import org.eclipse.daanse.olap.api.monitor.event.EventCommon;
 import org.eclipse.daanse.olap.api.monitor.event.SqlStatementEndEvent;
 import org.eclipse.daanse.olap.api.monitor.event.SqlStatementEvent;
@@ -55,7 +55,6 @@ import org.eclipse.daanse.olap.api.monitor.event.SqlStatementEventCommon;
 import org.eclipse.daanse.olap.api.monitor.event.SqlStatementExecuteEvent;
 import org.eclipse.daanse.olap.api.monitor.event.SqlStatementStartEvent;
 import org.eclipse.daanse.olap.common.Util;
-import org.eclipse.daanse.olap.server.LocusImpl;
 import org.eclipse.daanse.rolap.util.Counters;
 import org.eclipse.daanse.rolap.util.DelegatingInvocationHandler;
 
@@ -99,7 +98,7 @@ public class SqlStatement implements ISqlStatement {
   private final List<BestFitColumnType> types;
   private final int maxRows;
   private final int firstRowOrdinal;
-  private final LocusImpl locus;
+  private final ExecutionContext executionContext;
   private final int resultSetType;
   private final int resultSetConcurrency;
   private boolean haveSemaphore;
@@ -120,7 +119,7 @@ public class SqlStatement implements ISqlStatement {
    *                             column; each not-null entry overrides deduced JDBC type of the column
    * @param maxRows              Maximum rows; less or = 0 means no maximum
    * @param firstRowOrdinal      Ordinal of first row to skip to; less or = 0 do not skip
-   * @param locus                Execution context of this statement
+   * @param executionContext                Execution context of this statement
    * @param resultSetType        Result set type
    * @param resultSetConcurrency Result set concurrency
    */
@@ -130,7 +129,7 @@ public class SqlStatement implements ISqlStatement {
     List<BestFitColumnType> types,
     int maxRows,
     int firstRowOrdinal,
-    LocusImpl locus,
+    ExecutionContext executionContext,
     int resultSetType,
     int resultSetConcurrency,
     Consumer<Statement>  callback ) {
@@ -141,7 +140,7 @@ public class SqlStatement implements ISqlStatement {
     this.types = types;
     this.maxRows = maxRows;
     this.firstRowOrdinal = firstRowOrdinal;
-    this.locus = locus;
+    this.executionContext = executionContext;
     this.resultSetType = resultSetType;
     this.resultSetConcurrency = resultSetConcurrency;
   }
@@ -160,7 +159,7 @@ public class SqlStatement implements ISqlStatement {
     Statement statement = null;
     try {
       // Check execution state
-      locus.getExecution().checkCancelOrTimeout();
+      executionContext.getExecution().checkCancelOrTimeout();
 
       this.jdbcConnection = context.getDataSource().getConnection();
       context.getQueryLimitSemaphore().acquire();
@@ -170,7 +169,7 @@ public class SqlStatement implements ISqlStatement {
         StringBuilder sqllog = new StringBuilder();
         sqllog.append( id )
           .append( ": " )
-          .append( locus.component )
+          .append( "SqlStatement" )
           .append( ": executing sql [" );
         if ( sql.indexOf( '\n' ) >= 0 ) {
           // SQL appears to be formatted as multiple lines. Make it
@@ -189,7 +188,7 @@ public class SqlStatement implements ISqlStatement {
       }
 
       // Check execution state
-      locus.getExecution().checkCancelOrTimeout();
+      executionContext.getExecution().checkCancelOrTimeout();
 
       startTimeNanos = System.nanoTime();
       startTime = Instant.now();
@@ -207,23 +206,23 @@ public class SqlStatement implements ISqlStatement {
 
       // First make sure to register with the execution instance.
       if ( getPurpose() != Purpose.CELL_SEGMENT ) {
-        locus.getExecution().registerStatement( locus, statement );
+        executionContext.registerStatement(statement);
       } else {
         if ( callback != null ) {
           callback.accept(statement);
         }
       }
 
-    long mdxStatementId = mdxStatementIdOf(locus);
+    long mdxStatementId = mdxStatementIdOf(executionContext);
     SqlStatementStartEvent event = new SqlStatementStartEvent(//
         new SqlStatementEventCommon(new EventCommon(startTime), id, mdxStatementId, sql, getPurpose()),
         getCellRequestCount());
-    locus.getContext().getMonitor().accept(event);
+    executionContext.getExecution().getDaanseStatement().getDaanseConnection().getContext().getMonitor().accept(event);
 
 //        new SqlStatementStartEvent(
 //          startTimeMillis,
 //          id,
-//          locus,
+//          executionContext,
 //          sql,
 //          getPurpose(),
 //          getCellRequestCount() )
@@ -259,12 +258,12 @@ public class SqlStatement implements ISqlStatement {
         new SqlStatementEventCommon(new EventCommon(timeMillis), id, mdxStatementId, sql, getPurpose()),
         executeNanos);
 
-    locus.getContext().getMonitor().accept(execEvent);
+    executionContext.getExecution().getDaanseStatement().getDaanseConnection().getContext().getMonitor().accept(execEvent);
 
 //      new SqlStatementExecuteEvent(
 //          timeMillis,
 //          id,
-//          locus,
+//          executionContext,
 //          sql,
 //          getPurpose(),
 //          executeNanos )
@@ -295,7 +294,7 @@ public class SqlStatement implements ISqlStatement {
 
       if ( RolapUtil.LOGGER.isDebugEnabled() ) {
         RolapUtil.LOGGER.debug(
-            new StringBuilder(locus.component).append(": executing sql [")
+            new StringBuilder("SqlStatement").append(": executing sql [")
                 .append(sql).append("]").append(status).toString() );
       }
     }
@@ -333,7 +332,7 @@ public class SqlStatement implements ISqlStatement {
     if ( ex != null ) {
       throw Util.newError(
         ex,
-          new StringBuilder(locus.message).append("; sql=[").append(sql).append("]").toString() );
+          new StringBuilder("executing SQL").append("; sql=[").append(sql).append("]").toString() );
     }
 
   Instant endTime = Instant.now();
@@ -346,8 +345,8 @@ public class SqlStatement implements ISqlStatement {
   }
     String status = formatTimingStatus( duration, rowCount );
 
-    locus.getExecution().getQueryTiming().markFull(
-      TIMING_NAME + locus.component, duration );
+    executionContext.getExecution().getQueryTiming().markFull(
+      TIMING_NAME + "SqlStatement", duration );
     String msg  = new StringBuilder().append(id).append(": ").append(status).toString();
     RolapUtil.SQL_LOGGER.debug( msg );
 
@@ -359,7 +358,7 @@ public class SqlStatement implements ISqlStatement {
 
     if ( RolapUtil.LOGGER.isDebugEnabled() ) {
       RolapUtil.LOGGER.debug(
-          new StringBuilder(locus.component).append(": done executing sql [").append(sql).append("]")
+          new StringBuilder("SqlStatement").append(": done executing sql [").append(sql).append("]")
           .append(status).toString() );
     }
 
@@ -368,17 +367,17 @@ public class SqlStatement implements ISqlStatement {
         "SqlStatement closed that was never executed: " + id );
     }
 
-  long mdxStatementId = mdxStatementIdOf(locus);
+  long mdxStatementId = mdxStatementIdOf(executionContext);
   SqlStatementEndEvent endEvent = new SqlStatementEndEvent(//
       new SqlStatementEventCommon(new EventCommon(endTime), id, mdxStatementId, sql, getPurpose()), rowCount,
       false, null);
 
-  locus.getContext().getMonitor().accept(endEvent);
+  executionContext.getExecution().getDaanseStatement().getDaanseConnection().getContext().getMonitor().accept(endEvent);
 
 //      new SqlStatementEndEvent(
 //        endTime,
 //        id,
-//        locus,
+//        executionContext,
 //        sql,
 //        getPurpose(),
 //        rowCount,
@@ -405,7 +404,7 @@ public class SqlStatement implements ISqlStatement {
    */
   public RuntimeException handle( Throwable e ) {
     RuntimeException runtimeException =
-      Util.newError( e, new StringBuilder(locus.message).append("; sql=[").append(sql).append("]").toString() );
+      Util.newError( e, new StringBuilder("executing SQL").append("; sql=[").append(sql).append("]").toString() );
     try {
       close();
     } catch ( Exception t ) {
@@ -527,19 +526,13 @@ public class SqlStatement implements ISqlStatement {
   }
 
   private SqlStatementEvent.Purpose getPurpose() {
-    if ( locus instanceof StatementLocus statementLocus) {
-      return statementLocus.purpose;
-    } else {
-      return SqlStatementEvent.Purpose.OTHER;
-    }
+    return executionContext.metadata().purpose() != null
+        ? executionContext.metadata().purpose()
+        : SqlStatementEvent.Purpose.OTHER;
   }
 
   private int getCellRequestCount() {
-    if ( locus instanceof StatementLocus statementLocus) {
-      return statementLocus.cellRequestCount;
-    } else {
-      return 0;
-    }
+    return executionContext.metadata().cellRequestCount();
   }
 
   /**
@@ -628,32 +621,13 @@ public class SqlStatement implements ISqlStatement {
     CLOSED
   }
 
-  public static class StatementLocus extends LocusImpl {
-    private final SqlStatementEvent.Purpose purpose;
-    private final int cellRequestCount;
-
-    public StatementLocus(
-      Execution execution,
-      String component,
-      String message,
-      SqlStatementEvent.Purpose purpose,
-      int cellRequestCount ) {
-      super(
-        execution,
-        component,
-        message );
-      this.purpose = purpose;
-      this.cellRequestCount = cellRequestCount;
-    }
-  }
-
   public Context getContext() {
         return context;
   }
 
-  public static long mdxStatementIdOf(LocusImpl locus) {
-    if (locus.getExecution() != null) {
-      final org.eclipse.daanse.olap.api.Statement statement = locus.getExecution().getDaanseStatement();
+  public static long mdxStatementIdOf(ExecutionContext executionContext) {
+    if (executionContext.getExecution() != null) {
+      final org.eclipse.daanse.olap.api.Statement statement = executionContext.getExecution().getDaanseStatement();
       if (statement != null) {
         return statement.getId();
       }

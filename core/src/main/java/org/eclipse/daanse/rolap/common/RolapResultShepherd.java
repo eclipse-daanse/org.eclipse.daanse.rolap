@@ -38,9 +38,9 @@ import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import org.eclipse.daanse.olap.api.Execution;
 import org.eclipse.daanse.olap.api.ResultShepherd;
 import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
+import org.eclipse.daanse.olap.api.execution.Execution;
 import org.eclipse.daanse.olap.api.result.Result;
 import org.eclipse.daanse.olap.common.QueryCanceledException;
 import org.eclipse.daanse.olap.common.QueryTimeoutException;

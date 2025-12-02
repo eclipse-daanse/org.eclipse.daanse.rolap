@@ -60,22 +60,21 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 
 import org.eclipse.daanse.olap.api.CacheControl;
-import org.eclipse.daanse.olap.api.connection.Connection;
-import org.eclipse.daanse.olap.api.Execution;
 import org.eclipse.daanse.olap.api.ISegmentCacheManager;
-import org.eclipse.daanse.olap.api.Locus;
+import org.eclipse.daanse.olap.api.connection.Connection;
 import org.eclipse.daanse.olap.api.element.Cube;
 import org.eclipse.daanse.olap.api.element.Dimension;
 import org.eclipse.daanse.olap.api.element.Level;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
+import org.eclipse.daanse.olap.api.execution.Execution;
+import org.eclipse.daanse.olap.api.execution.ExecutionContext;
 import org.eclipse.daanse.olap.common.ExecuteDurationUtil;
 import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.core.AbstractBasicContext;
+import org.eclipse.daanse.olap.execution.ExecutionImpl;
 import org.eclipse.daanse.olap.query.component.IdImpl;
-import  org.eclipse.daanse.olap.server.ExecutionImpl;
-import  org.eclipse.daanse.olap.server.LocusImpl;
 import org.eclipse.daanse.olap.spi.SegmentColumn;
 import org.eclipse.daanse.olap.util.ArraySortedSet;
 import org.eclipse.daanse.rolap.common.connection.AbstractRolapConnection;
@@ -245,16 +244,14 @@ public class CacheControlImpl implements CacheControl {
 
     @Override
 	public void flush(final CellRegion region) {
-        LocusImpl.execute(
-            connection,
-            "Flush",
-            new LocusImpl.Action<Void>() {
-                @Override
-				public Void execute() {
-                    flushInternal(region);
-                    return null;
-                }
-            });
+        // Create ExecutionImpl for flush operation
+        final org.eclipse.daanse.olap.api.Statement statement = connection.getInternalStatement();
+        final ExecutionImpl execution = new ExecutionImpl(statement,
+            ExecuteDurationUtil.executeDurationValue(connection.getContext()));
+
+        ExecutionContext.where(execution.asContext(), () -> {
+            flushInternal(region);
+        });
     }
 
     private void flushInternal(CellRegion region) {
@@ -606,16 +603,15 @@ public class CacheControlImpl implements CacheControl {
 		AbstractBasicContext abc = (AbstractBasicContext) connection.getContext();
         final ISegmentCacheManager manager =
                 abc.getAggregationManager().getCacheMgr(this.connection);
-        LocusImpl.execute(
-            connection,
-            "CacheControlImpl.printCacheState",
-            new LocusImpl.Action<Void>() {
-                @Override
-				public Void execute() {
-                    manager.printCacheState(region, pw, LocusImpl.peek());
-                    return null;
-                }
-            });
+
+        // Create ExecutionImpl for printCacheState operation
+        final org.eclipse.daanse.olap.api.Statement statement = connection.getInternalStatement();
+        final ExecutionImpl execution = new ExecutionImpl(statement,
+            ExecuteDurationUtil.executeDurationValue(connection.getContext()));
+
+        ExecutionContext.where(execution.asContext(), () -> {
+            manager.printCacheState(region, pw, ExecutionContext.current());
+        });
     }
 
     @Override
@@ -874,19 +870,17 @@ public class CacheControlImpl implements CacheControl {
             Execution execution;
             try {
                 execution =
-                    LocusImpl.peek().getExecution();
+                    ExecutionContext.current().getExecution();
             } catch (EmptyStackException e) {
                 if (connection == null) {
                     throw new IllegalArgumentException("Connection required");
                 }
                 execution = new ExecutionImpl(connection.getInternalStatement(), ExecuteDurationUtil.executeDurationValue(connection.getContext()));
             }
-            final Locus locus = new LocusImpl(
-                execution,
-                "CacheControlImpl.execute",
-                "when modifying the member cache.");
-            LocusImpl.push(locus);
-            try {
+
+            // Use ExecutionContext.where() instead of push/pop
+            final Execution finalExecution = execution;
+            ExecutionContext.where(finalExecution.asContext(), () -> {
                 // Execute the command
                 final List<CellRegion> cellRegionList =
                     new ArrayList<>();
@@ -945,9 +939,7 @@ public class CacheControlImpl implements CacheControl {
                 }
                 // Apply it all.
                 ((MemberEditCommandPlus) cmd).commit();
-            } finally {
-                LocusImpl.pop(locus);
-            }
+            });
         }
     }
 

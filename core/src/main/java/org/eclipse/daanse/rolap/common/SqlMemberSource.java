@@ -40,12 +40,13 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+import org.eclipse.daanse.olap.api.execution.ExecutionMetadata;
+
 import org.eclipse.daanse.jdbc.db.dialect.api.BestFitColumnType;
 import org.eclipse.daanse.jdbc.db.dialect.api.Datatype;
 import org.eclipse.daanse.olap.api.ConfigConstants;
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.Evaluator;
-import org.eclipse.daanse.olap.api.Execution;
 import org.eclipse.daanse.olap.api.Segment;
 import org.eclipse.daanse.olap.api.SqlExpression;
 import org.eclipse.daanse.olap.api.access.AccessMember;
@@ -53,12 +54,12 @@ import org.eclipse.daanse.olap.api.calc.todo.TupleList;
 import org.eclipse.daanse.olap.api.element.Level;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.element.Property;
-import org.eclipse.daanse.olap.api.monitor.event.SqlStatementEvent;
+import org.eclipse.daanse.olap.api.execution.Execution;
+import org.eclipse.daanse.olap.api.execution.ExecutionContext;
 import org.eclipse.daanse.olap.common.ResourceLimitExceededException;
 import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.key.BitKey;
-import  org.eclipse.daanse.olap.server.LocusImpl;
 import  org.eclipse.daanse.olap.util.CancellationChecker;
 import  org.eclipse.daanse.olap.util.Pair;
 import org.eclipse.daanse.rolap.common.TupleReader.MemberBuilder;
@@ -200,14 +201,18 @@ public class SqlMemberSource
     private int getMemberCount(RolapLevel level, Context context) {
         boolean[] mustCount = new boolean[1];
         String sql = makeLevelMemberCountSql(level, context, mustCount);
+        ExecutionMetadata metadata = ExecutionMetadata.of(
+            "SqlMemberSource.getMemberCount",
+            "while counting members",
+            org.eclipse.daanse.olap.api.monitor.event.SqlStatementEvent.Purpose.TUPLES,
+            0
+        );
+        ExecutionContext execContext = ExecutionContext.current().createChild(metadata, Optional.empty());
         final SqlStatement stmt =
             RolapUtil.executeQuery(
                     context,
                 sql,
-                new LocusImpl(
-                    LocusImpl.peek().getExecution(),
-                    "SqlMemberSource.getLevelMemberCount",
-                    "while counting members of level '" + level));
+                execContext);
         try {
             ResultSet resultSet = stmt.getResultSet();
             int count;
@@ -374,14 +379,17 @@ public class SqlMemberSource
         final String sql = pair.left;
         List<BestFitColumnType> types = pair.right;
         List<RolapLevel> levels = (List<RolapLevel>) hierarchy.getLevels();
+        ExecutionMetadata metadata = ExecutionMetadata.of(
+            "SqlMemberSource.getMembers",
+            "while building member cache",
+            org.eclipse.daanse.olap.api.monitor.event.SqlStatementEvent.Purpose.TUPLES,
+            0
+        );
+        ExecutionContext execContext = ExecutionContext.current().createChild(metadata, Optional.empty());
         SqlStatement stmt =
             RolapUtil.executeQuery(
                 context, sql, types, 0, 0,
-                new SqlStatement.StatementLocus(
-                    null,
-                    "SqlMemberSource.getMembers",
-                    "while building member cache",
-                    SqlStatementEvent.Purpose.TUPLES, 0),
+                execContext,
                 -1, -1, null);
         try {
             final List<SqlStatement.Accessor> accessors = stmt.getAccessors();
@@ -396,7 +404,7 @@ public class SqlMemberSource
 
             int limit = SystemWideProperties.instance().ResultLimit;
             ResultSet resultSet = stmt.getResultSet();
-            Execution execution = LocusImpl.peek().getExecution();
+            Execution execution = ExecutionContext.current().getExecution();
             while (resultSet.next()) {
                 // Check if the MDX query was canceled.
                 CancellationChecker.checkCancelOrTimeout(
@@ -1011,7 +1019,7 @@ RME is this right
         List<RolapMember> children,
         MemberChildrenConstraint constraint)
     {
-        Execution execution = LocusImpl.peek().getExecution();
+        Execution execution = ExecutionContext.current().getExecution();
         execution.checkCancelOrTimeout();
 
         Pair<String, List<BestFitColumnType>> pair;
@@ -1047,14 +1055,17 @@ RME is this right
         HashMap<RolapMember, Object> rolapToOrdinalMap = new HashMap<>();
 
         final List<BestFitColumnType> types = pair.right;
+        ExecutionMetadata metadata = ExecutionMetadata.of(
+            "SqlMemberSource.getMemberChildren",
+            "while building member cache",
+            org.eclipse.daanse.olap.api.monitor.event.SqlStatementEvent.Purpose.TUPLES,
+            0
+        );
+        ExecutionContext execContext = ExecutionContext.current().createChild(metadata, Optional.empty());
         SqlStatement stmt =
             RolapUtil.executeQuery(
                     context, sql, types, 0, 0,
-                new SqlStatement.StatementLocus(
-                    LocusImpl.peek().getExecution(),
-                    "SqlMemberSource.getMemberChildren",
-                    "while building member cache",
-                    SqlStatementEvent.Purpose.TUPLES, 0),
+                execContext,
                 -1, -1, null);
         try {
             int limit = SystemWideProperties.instance().ResultLimit;

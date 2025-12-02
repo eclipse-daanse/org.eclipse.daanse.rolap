@@ -40,13 +40,12 @@ import java.util.concurrent.Future;
 import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.olap.api.CacheCommand;
 import org.eclipse.daanse.olap.api.ConfigConstants;
-import org.eclipse.daanse.olap.api.Execution;
 import org.eclipse.daanse.olap.api.IAggregationManager;
-import org.eclipse.daanse.olap.api.Locus;
 import org.eclipse.daanse.olap.api.exception.CellRequestQuantumExceededException;
+import org.eclipse.daanse.olap.api.execution.Execution;
+import org.eclipse.daanse.olap.api.execution.ExecutionContext;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.key.BitKey;
-import  org.eclipse.daanse.olap.server.LocusImpl;
 import org.eclipse.daanse.olap.spi.SegmentBody;
 import org.eclipse.daanse.olap.spi.SegmentHeader;
 import  org.eclipse.daanse.olap.util.Pair;
@@ -282,7 +281,7 @@ public class FastBatchingCellReader implements CellReader {
             final BatchLoader.LoadBatchResponse response =
                 cacheMgr.execute(
                     new BatchLoader.LoadBatchCommand(
-                        LocusImpl.peek(),
+                        ExecutionContext.current(),
                         cacheMgr,
                         getDialect(),
                         cube,
@@ -375,7 +374,7 @@ public class FastBatchingCellReader implements CellReader {
                 // This has to be done on the SegmentCacheManager's
                 // Actor thread to ensure thread safety.
                 if (!cacheMgr.getContext().getConfigValue(ConfigConstants.DISABLE_CACHING, ConfigConstants.DISABLE_CACHING_DEFAULT_VALUE, Boolean.class)) {
-                    final Locus locus = LocusImpl.peek();
+                    final ExecutionContext executionContext = ExecutionContext.current();
                     cacheMgr.execute(
                         new CacheCommand<Void>() {
                             @Override
@@ -395,8 +394,8 @@ public class FastBatchingCellReader implements CellReader {
                                 return null;
                             }
                             @Override
-							public Locus getLocus() {
-                                return locus;
+							public ExecutionContext getExecutionContext() {
+                                return executionContext;
                             }
                         });
                 }

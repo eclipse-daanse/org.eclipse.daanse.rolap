@@ -34,6 +34,7 @@ import java.util.Map;
 import org.eclipse.daanse.olap.api.CatalogReader;
 import org.eclipse.daanse.olap.api.NameSegment;
 import org.eclipse.daanse.olap.api.calc.Calc;
+import org.eclipse.daanse.olap.api.connection.Connection;
 import org.eclipse.daanse.olap.api.element.Catalog;
 import org.eclipse.daanse.olap.api.element.Dimension;
 import org.eclipse.daanse.olap.api.element.DimensionType;
@@ -43,15 +44,18 @@ import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.element.MetaData;
 import org.eclipse.daanse.olap.api.element.OlapElement;
 import org.eclipse.daanse.olap.api.element.Property;
+import org.eclipse.daanse.olap.api.execution.ExecutionContext;
 import org.eclipse.daanse.olap.api.formatter.MemberPropertyFormatter;
 import org.eclipse.daanse.olap.api.query.component.Expression;
-import org.eclipse.daanse.olap.element.MemberBase;
+import org.eclipse.daanse.olap.common.ExecuteDurationUtil;
 import org.eclipse.daanse.olap.common.StandardProperty;
 import org.eclipse.daanse.olap.common.Util;
+import org.eclipse.daanse.olap.element.MemberBase;
 import org.eclipse.daanse.olap.element.OlapMetaData;
+import org.eclipse.daanse.olap.execution.ExecutionImpl;
 import org.eclipse.daanse.olap.function.def.aggregate.AggregateFunDef;
+import org.eclipse.daanse.olap.impl.StatementImpl;
 import org.eclipse.daanse.olap.query.component.ResolvedFunCallImpl;
-import  org.eclipse.daanse.olap.server.LocusImpl;
 import  org.eclipse.daanse.olap.util.Bug;
 import org.eclipse.daanse.rolap.common.HierarchyUsage;
 import org.eclipse.daanse.rolap.common.RolapEvaluator;
@@ -440,27 +444,24 @@ public class RolapMemberBase
                 return getOrdinal();
 
             }else if(property==  StandardProperty.CHILDREN_CARDINALITY){
-                return LocusImpl.execute(
-                    ((RolapCatalog) level.getDimension().getCatalog())
-                        .getInternalConnection(),
-                    "Member.CHILDREN_CARDINALITY",
-                    new LocusImpl.Action<Integer>() {
-                        @Override
-						public Integer execute() {
-                            if (isAll() && childLevelHasApproxRowCount()) {
-                                return getLevel().getChildLevel()
-                                    .getApproxRowCount();
-                            } else {
-                                ArrayList<RolapMember> list =
-                                    new ArrayList<>();
-                                getHierarchy().getMemberReader()
-                                    .getMemberChildren(
-                                        RolapMemberBase.this, list);
-                                return list.size();
-                            }
-                        }
+                Connection conn = ((RolapCatalog) level.getDimension().getCatalog())
+                        .getInternalConnection();
+                StatementImpl statement = (StatementImpl) conn.getInternalStatement();
+                ExecutionImpl execution = new ExecutionImpl(statement,
+                        ExecuteDurationUtil.executeDurationValue(conn.getContext()));
+                return ExecutionContext.where(execution.asContext(), () -> {
+                    if (isAll() && childLevelHasApproxRowCount()) {
+                        return getLevel().getChildLevel()
+                            .getApproxRowCount();
+                    } else {
+                        ArrayList<RolapMember> memberList =
+                            new ArrayList<>();
+                        getHierarchy().getMemberReader()
+                            .getMemberChildren(
+                                RolapMemberBase.this, memberList);
+                        return memberList.size();
                     }
-                );
+                });
 
             }else if(property==  StandardProperty.PARENT_LEVEL){
                 parentMember = getParentMember();

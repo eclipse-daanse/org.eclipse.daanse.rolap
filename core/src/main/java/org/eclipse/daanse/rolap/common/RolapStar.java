@@ -67,12 +67,12 @@ import org.eclipse.daanse.olap.api.SqlExpression;
 import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
-import org.eclipse.daanse.olap.element.AbstractProperty;
+import org.eclipse.daanse.olap.api.execution.ExecutionContext;
 import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.core.AbstractBasicContext;
+import org.eclipse.daanse.olap.element.AbstractProperty;
 import org.eclipse.daanse.olap.key.BitKey;
-import  org.eclipse.daanse.olap.server.LocusImpl;
 import org.eclipse.daanse.olap.util.Bug;
 import org.eclipse.daanse.rolap.common.agg.Aggregation;
 import org.eclipse.daanse.rolap.common.agg.AggregationKey;
@@ -241,7 +241,7 @@ public class RolapStar {
     }
 
     private Object getCellFromExternalCache(CellRequest request, org.eclipse.daanse.olap.api.connection.Connection rolapConnection) {
-    	AbstractBasicContext abc = (AbstractBasicContext) LocusImpl.peek().getContext();
+    	AbstractBasicContext abc = (AbstractBasicContext) ExecutionContext.current().getExecution().getDaanseStatement().getDaanseConnection().getContext();
     	final ISegmentCacheManager segmentCacheManager = abc.getAggregationManager()
                 .getCacheMgr(rolapConnection);
         final SegmentWithData segment = ((SegmentCacheManager)segmentCacheManager).peek(request);

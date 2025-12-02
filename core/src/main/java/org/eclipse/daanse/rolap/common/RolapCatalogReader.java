@@ -861,7 +861,7 @@ ElevatorSimplifyer.simplifyEvaluator(calc, evaluator);
 
     @Override
 	public CatalogReader withLocus() {
-        return Util.locusCatalogReader(
+        return Util.executionCatalogReader(
             catalog.getInternalConnection(),
             this);
     }

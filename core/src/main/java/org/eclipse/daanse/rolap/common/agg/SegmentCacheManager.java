@@ -46,13 +46,13 @@ import org.eclipse.daanse.olap.api.CacheCommand;
 import org.eclipse.daanse.olap.api.CacheControl.CellRegion;
 import org.eclipse.daanse.olap.api.ConfigConstants;
 import org.eclipse.daanse.olap.api.Context;
-import org.eclipse.daanse.olap.api.Execution;
 import org.eclipse.daanse.olap.api.ISegmentCacheIndex;
 import org.eclipse.daanse.olap.api.ISegmentCacheManager;
-import org.eclipse.daanse.olap.api.Locus;
 import org.eclipse.daanse.olap.api.Message;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
+import org.eclipse.daanse.olap.api.execution.Execution;
+import org.eclipse.daanse.olap.api.execution.ExecutionContext;
 import org.eclipse.daanse.olap.api.monitor.EventBus;
 import org.eclipse.daanse.olap.api.monitor.event.CellCacheEvent;
 import org.eclipse.daanse.olap.api.monitor.event.CellCacheEventCommon;
@@ -64,8 +64,6 @@ import org.eclipse.daanse.olap.api.monitor.event.ExecutionEventCommon;
 import org.eclipse.daanse.olap.api.monitor.event.MdxStatementEventCommon;
 import org.eclipse.daanse.olap.api.monitor.event.ServertEventCommon;
 import org.eclipse.daanse.olap.common.Util;
-import  org.eclipse.daanse.olap.server.ExecutionImpl;
-import  org.eclipse.daanse.olap.server.LocusImpl;
 import org.eclipse.daanse.olap.spi.SegmentBody;
 import org.eclipse.daanse.olap.spi.SegmentCache;
 import org.eclipse.daanse.olap.spi.SegmentColumn;
@@ -73,15 +71,15 @@ import org.eclipse.daanse.olap.spi.SegmentHeader;
 import  org.eclipse.daanse.olap.util.Pair;
 import org.eclipse.daanse.rolap.api.RolapContext;
 import org.eclipse.daanse.rolap.common.CacheControlImpl;
-import org.eclipse.daanse.rolap.common.RolapCatalogKey;
 import org.eclipse.daanse.rolap.common.RolapCatalogCache;
+import org.eclipse.daanse.rolap.common.RolapCatalogKey;
 import org.eclipse.daanse.rolap.common.RolapStar;
-import org.eclipse.daanse.rolap.element.RolapStoredMeasure;
 import org.eclipse.daanse.rolap.common.RolapUtil;
 import org.eclipse.daanse.rolap.common.cache.MemorySegmentCache;
 import org.eclipse.daanse.rolap.common.cache.SegmentCacheIndex;
 import org.eclipse.daanse.rolap.common.cache.SegmentCacheIndexImpl;
 import org.eclipse.daanse.rolap.element.RolapCatalog;
+import org.eclipse.daanse.rolap.element.RolapStoredMeasure;
 import org.eclipse.daanse.rolap.util.BlockingHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -444,17 +442,17 @@ public class SegmentCacheManager implements ISegmentCacheManager {
     RolapStar star,
     SegmentHeader header,
     SegmentBody body ) {
-    final Locus locus = LocusImpl.peek();
+    final ExecutionContext executionContext = ExecutionContext.current();
     actor.event(
       handler,
       new SegmentLoadSucceededEvent(
     	Instant.now(),
-        locus.getContext().getMonitor(),
-        locus.getContext().getName(),
-        locus.getExecution().getDaanseStatement()
+        executionContext.getExecution().getDaanseStatement().getDaanseConnection().getContext().getMonitor(),
+        executionContext.getExecution().getDaanseStatement().getDaanseConnection().getContext().getName(),
+        executionContext.getExecution().getDaanseStatement()
           .getDaanseConnection().getId(),
-        locus.getExecution().getDaanseStatement().getId(),
-        locus.getExecution().getId(),
+        executionContext.getExecution().getDaanseStatement().getId(),
+        executionContext.getExecution().getId(),
         star,
         header,
         body ) );
@@ -473,17 +471,17 @@ public class SegmentCacheManager implements ISegmentCacheManager {
     RolapStar star,
     SegmentHeader header,
     Throwable throwable ) {
-    final Locus locus = LocusImpl.peek();
+    final ExecutionContext executionContext = ExecutionContext.current();
     actor.event(
       handler,
       new SegmentLoadFailedEvent(
         System.currentTimeMillis(),
-        locus.getContext().getMonitor(),
-        locus.getContext().getName(),
-        locus.getExecution().getDaanseStatement()
+        executionContext.getExecution().getDaanseStatement().getDaanseConnection().getContext().getMonitor(),
+        executionContext.getExecution().getDaanseStatement().getDaanseConnection().getContext().getName(),
+        executionContext.getExecution().getDaanseStatement()
           .getDaanseConnection().getId(),
-        locus.getExecution().getDaanseStatement().getId(),
-        locus.getExecution().getId(),
+        executionContext.getExecution().getDaanseStatement().getId(),
+        executionContext.getExecution().getId(),
         star,
         header,
         throwable ) );
@@ -501,17 +499,17 @@ public class SegmentCacheManager implements ISegmentCacheManager {
   public void remove(
     RolapStar star,
     SegmentHeader header ) {
-    final Locus locus = LocusImpl.peek();
+    final ExecutionContext executionContext = ExecutionContext.current();
     actor.event(
       handler,
       new SegmentRemoveEvent(
 	    Instant.now(),
-        locus.getContext().getMonitor(),
-        locus.getContext().getName(),
-        locus.getExecution().getDaanseStatement()
+        executionContext.getExecution().getDaanseStatement().getDaanseConnection().getContext().getMonitor(),
+        executionContext.getExecution().getDaanseStatement().getDaanseConnection().getContext().getName(),
+        executionContext.getExecution().getDaanseStatement()
           .getDaanseConnection().getId(),
-        locus.getExecution().getDaanseStatement().getId(),
-        locus.getExecution().getId(),
+        executionContext.getExecution().getDaanseStatement().getId(),
+        executionContext.getExecution().getId(),
         this,
         star,
         header ) );
@@ -567,10 +565,10 @@ public class SegmentCacheManager implements ISegmentCacheManager {
   public void printCacheState(
     CellRegion region,
     PrintWriter pw,
-    Locus locus ) {
+    ExecutionContext executionContext ) {
     actor.execute(
       handler,
-      new PrintCacheStateCommand( region, pw, locus ) );
+      new PrintCacheStateCommand( region, pw, executionContext) );
   }
 
   /**
@@ -614,16 +612,16 @@ public class SegmentCacheManager implements ISegmentCacheManager {
    * @return Segment with data, or null if not in cache
    */
   public SegmentWithData peek( final CellRequest request ) {
-    Locus locus = null;
+    ExecutionContext executionContext = null;
 //    try {
-        locus = LocusImpl.peek();
+        executionContext = ExecutionContext.current();
 //    } catch (Exception e) {
-//        locus = new LocusImpl( new ExecutionImpl(getContext().getConnection().getInternalStatement(), getContext().getConfig().executeDurationValue()), null, "Loading cells" );
-//        LocusImpl.push( locus );
+//        executionContext = new ExecutionImpl( ... );
+//        ExecutionContext.push( executionContext );
 //    }
     final SegmentCacheManager.PeekResponse response =
       execute(
-        new PeekCommand( request, locus ) );
+        new PeekCommand( request, executionContext) );
     for ( SegmentHeader header : response.headerMap.keySet() ) {
       final SegmentBody body = compositeCache.get( header );
       if ( body != null ) {
@@ -857,23 +855,23 @@ public class SegmentCacheManager implements ISegmentCacheManager {
   public static final class FlushCommand implements CacheCommand<FlushResult> {
     private final CellRegion region;
     private final CacheControlImpl cacheControlImpl;
-    private final Locus locus;
+    private final ExecutionContext executionContext;
     private final SegmentCacheManager cacheMgr;
 
     public FlushCommand(
-      Locus locus,
+      ExecutionContext executionContext,
       SegmentCacheManager mgr,
       CellRegion region,
       CacheControlImpl cacheControlImpl ) {
-      this.locus = locus;
+      this.executionContext = executionContext;
       this.cacheMgr = mgr;
       this.region = region;
       this.cacheControlImpl = cacheControlImpl;
     }
 
     @Override
-	public Locus getLocus() {
-      return locus;
+	public ExecutionContext getExecutionContext() {
+      return executionContext;
     }
 
     @Override
@@ -1017,16 +1015,16 @@ public class SegmentCacheManager implements ISegmentCacheManager {
 
   private class PrintCacheStateCommand implements CacheCommand<Void> {
     private final PrintWriter pw;
-    private final Locus locus;
+    private final ExecutionContext executionContext;
     private final CellRegion region;
 
     public PrintCacheStateCommand(
       CellRegion region,
       PrintWriter pw,
-      Locus locus ) {
+      ExecutionContext executionContext ) {
       this.region = region;
       this.pw = pw;
-      this.locus = locus;
+      this.executionContext = executionContext;
     }
 
     @Override
@@ -1042,8 +1040,8 @@ public class SegmentCacheManager implements ISegmentCacheManager {
     }
 
     @Override
-	public Locus getLocus() {
-      return locus;
+	public ExecutionContext getExecutionContext() {
+      return executionContext;
     }
   }
 
@@ -1075,7 +1073,7 @@ public class SegmentCacheManager implements ISegmentCacheManager {
     }
 
     @Override
-	public Locus getLocus() {
+	public ExecutionContext getExecutionContext() {
       return null;
     }
   }
@@ -1119,8 +1117,9 @@ public class SegmentCacheManager implements ISegmentCacheManager {
             // the caller.
             if ( message instanceof CacheCommand<?> command ) {
               try {
-                LocusImpl.push( command.getLocus() );
-                Object result = command.call();
+                Object result = ExecutionContext.where(command.getExecutionContext(), () -> {
+                  return command.call();
+                });
                 responseMap.put(
                   command,
                   Pair.of( result, null ) );
@@ -1131,8 +1130,6 @@ public class SegmentCacheManager implements ISegmentCacheManager {
                 responseMap.put(
                   command,
                   Pair.of( null, e ) );
-              } finally {
-                LocusImpl.pop( command.getLocus() );
               }
             } else {
               Event event = (Event) message;
@@ -1432,54 +1429,49 @@ public class SegmentCacheManager implements ISegmentCacheManager {
       if ( e.isLocal() ) {
         return;
       }
-      LocusImpl.execute(
-        ExecutionImpl.NONE,
-        "AsyncCacheListener.handle",
-        () -> {
-          final CacheCommand<Void> command;
-          final Locus locus = LocusImpl.peek();
-          switch ( e.getEventType() ) {
-            case ENTRY_CREATED:
-              command =
-                new CacheCommand<>() {
-                  @Override
-				public Void call() {
-                    cacheMgr.externalSegmentCreated(
-                      e.getSource(),
-                      context );
-                    return null;
-                  }
+      // TODO: Async cache handler - may need ExecutionContext handling
+      final CacheCommand<Void> command;
+      final ExecutionContext executionContext = ExecutionContext.current();
+      switch ( e.getEventType() ) {
+        case ENTRY_CREATED:
+          command =
+            new CacheCommand<>() {
+              @Override
+              public Void call() {
+                cacheMgr.externalSegmentCreated(
+                  e.getSource(),
+                  context );
+                return null;
+              }
 
-                  @Override
-				public Locus getLocus() {
-                    return locus;
-                  }
-                };
-              break;
-            case ENTRY_DELETED:
-              command =
-                new CacheCommand<>() {
-                  @Override
-				public Void call() {
-                    cacheMgr.externalSegmentDeleted(
-                      e.getSource(),
-                      context );
-                    return null;
-                  }
+              @Override
+              public ExecutionContext getExecutionContext() {
+                return executionContext;
+              }
+            };
+          break;
+        case ENTRY_DELETED:
+          command =
+            new CacheCommand<>() {
+              @Override
+              public Void call() {
+                cacheMgr.externalSegmentDeleted(
+                  e.getSource(),
+                  context );
+                return null;
+              }
 
-                  @Override
-				public Locus getLocus() {
-                    return locus;
-                  }
-                };
-              break;
-            default:
-              throw new UnsupportedOperationException();
-          }
-          cacheMgr.execute( command );
-          return null;
-        } );
-    }
+              @Override
+              public ExecutionContext getExecutionContext() {
+                return executionContext;
+              }
+            };
+          break;
+        default:
+          throw new UnsupportedOperationException();
+      }
+      cacheMgr.execute( command );
+  }
   }
 
   /**
@@ -1607,19 +1599,19 @@ public class SegmentCacheManager implements ISegmentCacheManager {
    */
   private class PeekCommand implements CacheCommand<PeekResponse> {
     private final CellRequest request;
-    private final Locus locus;
+    private final ExecutionContext executionContext;
 
     /**
      * Creates a PeekCommand.
      *
      * @param request Cell request
-     * @param locus   Locus
+     * @param executionContext   ExecutionContext
      */
     public PeekCommand(
       CellRequest request,
-      Locus locus ) {
+      ExecutionContext executionContext ) {
       this.request = request;
-      this.locus = locus;
+      this.executionContext = executionContext;
     }
 
     @Override
@@ -1650,7 +1642,7 @@ public class SegmentCacheManager implements ISegmentCacheManager {
       for ( final SegmentHeader header : headers ) {
         final Future<SegmentBody> bodyFuture =
           indexRegistry.getIndex( star )
-            .getFuture( locus.getExecution(), header );
+            .getFuture( executionContext.getExecution(), header );
         if ( bodyFuture != null ) {
           converterMap.put(
             SegmentCacheIndexImpl.makeConverterKey( header ),
@@ -1664,8 +1656,8 @@ public class SegmentCacheManager implements ISegmentCacheManager {
     }
 
     @Override
-	public Locus getLocus() {
-      return locus;
+	public ExecutionContext getExecutionContext() {
+      return executionContext;
     }
   }
 

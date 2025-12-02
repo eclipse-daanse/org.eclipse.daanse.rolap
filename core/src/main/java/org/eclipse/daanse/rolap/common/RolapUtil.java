@@ -52,13 +52,13 @@ import org.eclipse.daanse.olap.api.Quoting;
 import org.eclipse.daanse.olap.api.Segment;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
+import org.eclipse.daanse.olap.api.execution.ExecutionContext;
 import org.eclipse.daanse.olap.common.NativeEvaluationUnsupportedException;
 import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.exceptions.MdxCantFindMemberException;
 import org.eclipse.daanse.olap.fun.FunUtil;
 import org.eclipse.daanse.olap.key.BitKey;
-import  org.eclipse.daanse.olap.server.LocusImpl;
 import org.eclipse.daanse.rolap.common.connection.AbstractRolapConnection;
 import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.element.RolapCubeLevel;
@@ -101,8 +101,8 @@ public class RolapUtil {
      */
     private static ExecuteQueryHook queryHook = null;
 
-    public static Consumer<java.sql.Statement> getDefaultCallback(final LocusImpl locus) {
-        return stmt -> locus.getExecution().registerStatement(locus, stmt);
+    public static Consumer<java.sql.Statement> getDefaultCallback(final ExecutionContext executionContext) {
+        return stmt -> executionContext.registerStatement(stmt);
     }
 
     /**
@@ -271,11 +271,11 @@ public class RolapUtil {
     public static SqlStatement executeQuery(
         Context context,
         String sql,
-        LocusImpl locus)
+        ExecutionContext executionContext)
     {
         return executeQuery(
-                context, sql, null, 0, 0, locus, -1, -1,
-            getDefaultCallback(locus));
+                context, sql, null, 0, 0, executionContext, -1, -1,
+            getDefaultCallback(executionContext));
     }
 
     /**
@@ -309,17 +309,17 @@ public class RolapUtil {
         List<BestFitColumnType> types,
         int maxRowCount,
         int firstRowOrdinal,
-        LocusImpl locus,
+        ExecutionContext executionContext,
         int resultSetType,
         int resultSetConcurrency,
         Consumer<java.sql.Statement> callback)
     {
         SqlStatement stmt =
             new SqlStatement(
-                    context, sql, types, maxRowCount, firstRowOrdinal, locus,
+                    context, sql, types, maxRowCount, firstRowOrdinal, executionContext,
                 resultSetType, resultSetConcurrency,
                 callback == null
-                    ? getDefaultCallback(locus)
+                    ? getDefaultCallback(executionContext)
                     : callback);
         stmt.execute();
         return stmt;

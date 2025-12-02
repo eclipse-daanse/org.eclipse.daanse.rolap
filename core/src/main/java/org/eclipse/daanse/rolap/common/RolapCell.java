@@ -36,22 +36,25 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+
+import org.eclipse.daanse.olap.api.execution.ExecutionMetadata;
 
 import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.olap.api.ConfigConstants;
-import org.eclipse.daanse.olap.api.connection.Connection;
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.Evaluator;
 import org.eclipse.daanse.olap.api.ISqlStatement;
 import org.eclipse.daanse.olap.api.Statement;
+import org.eclipse.daanse.olap.api.connection.Connection;
 import org.eclipse.daanse.olap.api.element.Cube;
 import org.eclipse.daanse.olap.api.element.Hierarchy;
 import org.eclipse.daanse.olap.api.element.Level;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.element.OlapElement;
 import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
+import org.eclipse.daanse.olap.api.execution.ExecutionContext;
 import org.eclipse.daanse.olap.api.function.FunctionDefinition;
-import org.eclipse.daanse.olap.api.monitor.event.SqlStatementEvent;
 import org.eclipse.daanse.olap.api.query.component.DimensionExpression;
 import org.eclipse.daanse.olap.api.query.component.Expression;
 import org.eclipse.daanse.olap.api.query.component.Formula;
@@ -74,12 +77,11 @@ import org.eclipse.daanse.olap.common.StandardProperty;
 import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.core.AbstractBasicContext;
+import org.eclipse.daanse.olap.execution.ExecutionImpl;
 import org.eclipse.daanse.olap.function.def.aggregate.AggregateFunDef;
 import org.eclipse.daanse.olap.function.def.set.SetFunDef;
 import org.eclipse.daanse.olap.query.component.MdxVisitorImpl;
 import org.eclipse.daanse.olap.query.component.ResolvedFunCallImpl;
-import  org.eclipse.daanse.olap.server.ExecutionImpl;
-import  org.eclipse.daanse.olap.server.LocusImpl;
 import org.eclipse.daanse.rolap.common.agg.AndPredicate;
 import org.eclipse.daanse.rolap.common.agg.DrillThroughCellRequest;
 import org.eclipse.daanse.rolap.common.agg.MemberColumnPredicate;
@@ -257,14 +259,19 @@ public class RolapCell implements Cell {
                 new ArrayList<OlapElement>(),
                 true);
 
+        ExecutionImpl execution = new ExecutionImpl(connection.getInternalStatement(), ExecuteDurationUtil.executeDurationValue(connection.getContext()));
+        ExecutionMetadata metadata = ExecutionMetadata.of(
+            "RolapCell.getCellValue",
+            "Error getting cell value",
+            org.eclipse.daanse.olap.api.monitor.event.SqlStatementEvent.Purpose.OTHER,
+            0
+        );
+        ExecutionContext execContext = execution.asContext().createChild(metadata, Optional.empty());
         final SqlStatement stmt =
             RolapUtil.executeQuery(
                 connection.getContext(),
                 sql,
-                new LocusImpl(
-                    new ExecutionImpl(connection.getInternalStatement(), ExecuteDurationUtil.executeDurationValue(connection.getContext())),
-                    "RolapCell.getDrillThroughCount",
-                    "Error while counting drill-through"));
+                execContext);
         try {
             ResultSet rs = stmt.getResultSet();
             assert rs.getMetaData().getColumnCount() == 1;
@@ -589,6 +596,13 @@ public class RolapCell implements Cell {
             resultSetType = ResultSet.TYPE_FORWARD_ONLY;
         }
         Context context= connection.getContext();
+        ExecutionMetadata metadata = ExecutionMetadata.of(
+            "RolapCell.drillThrough",
+            "Error in drill through",
+            org.eclipse.daanse.olap.api.monitor.event.SqlStatementEvent.Purpose.DRILL_THROUGH,
+            0
+        );
+        ExecutionContext execContext = execution.asContext().createChild(metadata, Optional.empty());
         return
             RolapUtil.executeQuery(
                 context,
@@ -596,11 +610,7 @@ public class RolapCell implements Cell {
                 null,
                 maxRowCount,
                 firstRowOrdinal,
-                new SqlStatement.StatementLocus(
-                    execution,
-                    "RolapCell.drillThrough",
-                    "Error in drill through",
-                    SqlStatementEvent.Purpose.DRILL_THROUGH, 0),
+                execContext,
                 resultSetType,
                 resultSetConcurrency,
                 null);

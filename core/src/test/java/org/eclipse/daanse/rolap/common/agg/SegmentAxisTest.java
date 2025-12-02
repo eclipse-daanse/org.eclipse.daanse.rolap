@@ -14,7 +14,6 @@ package org.eclipse.daanse.rolap.common.agg;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.eclipse.daanse.rolap.common.agg.SegmentAxis;
 import org.junit.jupiter.api.Test;
 
 class SegmentAxisTest {

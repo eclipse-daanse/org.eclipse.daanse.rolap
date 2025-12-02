@@ -40,10 +40,9 @@ import java.util.concurrent.TimeUnit;
 
 import org.eclipse.daanse.olap.api.CacheCommand;
 import org.eclipse.daanse.olap.api.ConfigConstants;
-import org.eclipse.daanse.olap.api.Locus;
 import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
-import org.eclipse.daanse.olap.server.ExecutionImpl;
-import org.eclipse.daanse.olap.server.LocusImpl;
+import org.eclipse.daanse.olap.api.execution.ExecutionContext;
+import org.eclipse.daanse.olap.execution.ExecutionImpl;
 import org.eclipse.daanse.rolap.api.RolapContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -53,7 +52,7 @@ import org.mockito.MockitoAnnotations;
 class SegmentCacheManagerTest {
 
   @Mock private RolapContext context;
-  private Locus locus = new LocusImpl( new ExecutionImpl( null, Optional.empty() ), "component", "message" );
+  private ExecutionContext executionContext = new ExecutionImpl( null, Optional.empty() ).asContext();
   private ExecutorService executor = Executors.newFixedThreadPool( 15 );
 
     @BeforeEach void beforeEach() throws Exception {
@@ -157,8 +156,8 @@ class SegmentCacheManagerTest {
       this.runnable = runnable;
     }
 
-    @Override public Locus getLocus() {
-      return locus;
+    @Override public ExecutionContext getExecutionContext() {
+      return executionContext;
     }
 
     @Override public Object call() {

@@ -48,8 +48,6 @@ import org.eclipse.daanse.olap.api.CatalogReader;
 import org.eclipse.daanse.olap.api.Command;
 import org.eclipse.daanse.olap.api.ConfigConstants;
 import org.eclipse.daanse.olap.api.Context;
-import org.eclipse.daanse.olap.api.Execution;
-import org.eclipse.daanse.olap.api.Locus;
 import org.eclipse.daanse.olap.api.Statement;
 import org.eclipse.daanse.olap.api.access.Role;
 import org.eclipse.daanse.olap.api.calc.todo.TupleCursor;
@@ -57,6 +55,8 @@ import org.eclipse.daanse.olap.api.calc.todo.TupleList;
 import org.eclipse.daanse.olap.api.connection.Connection;
 import org.eclipse.daanse.olap.api.connection.ConnectionProps;
 import org.eclipse.daanse.olap.api.element.Member;
+import org.eclipse.daanse.olap.api.execution.Execution;
+import org.eclipse.daanse.olap.api.execution.ExecutionContext;
 import org.eclipse.daanse.olap.api.query.component.Expression;
 import org.eclipse.daanse.olap.api.query.component.Query;
 import org.eclipse.daanse.olap.api.query.component.QueryAxis;
@@ -76,10 +76,9 @@ import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.connection.ConnectionBase;
 import org.eclipse.daanse.olap.core.AbstractBasicContext;
 import org.eclipse.daanse.olap.exceptions.FailedToParseQueryException;
+import org.eclipse.daanse.olap.execution.ExecutionImpl;
 import org.eclipse.daanse.olap.query.component.QueryImpl;
 import org.eclipse.daanse.olap.query.component.TransactionCommandImpl;
-import  org.eclipse.daanse.olap.server.ExecutionImpl;
-import  org.eclipse.daanse.olap.server.LocusImpl;
 import org.eclipse.daanse.rolap.api.RolapContext;
 import org.eclipse.daanse.rolap.common.RolapAxis;
 import org.eclipse.daanse.rolap.common.RolapCatalogCache;
@@ -141,24 +140,16 @@ public abstract class AbstractRolapConnection extends ConnectionBase {
         // Register this connection before we register its internal statement.
         context.addConnection( this );
         if ( catalog == null ) {
-        Statement bootstrapStatement = createInternalStatement( false, this);
-        final Locus locus =
-          new LocusImpl(
-            new ExecutionImpl( bootstrapStatement, ExecuteDurationUtil.executeDurationValue(context) ),
-            null,
-            "Initializing connection" );
-        LocusImpl.push( locus );
-        try {
-            // TODO: switch from schemareader to catalogreader;
-        	org.eclipse.daanse.rolap.mapping.model.Catalog catalogMapping = context.getCatalogMapping();
-            catalog = ((RolapCatalogCache) context.getCatalogCache()).getOrCreateCatalog(catalogMapping, connectionProps);
+            Statement bootstrapStatement = createInternalStatement( false, this);
+            final ExecutionImpl execution = new ExecutionImpl( bootstrapStatement, ExecuteDurationUtil.executeDurationValue(context) );
 
-        } finally {
-          LocusImpl.pop( locus );
-          bootstrapStatement.close();
-        }
-        internalStatement =
-          catalog.getInternalConnection().getInternalStatement();
+            catalog = ExecutionContext.where(execution.asContext(), () -> {
+                // TODO: switch from schemareader to catalogreader;
+                org.eclipse.daanse.rolap.mapping.model.Catalog catalogMapping = context.getCatalogMapping();
+                return ((RolapCatalogCache) context.getCatalogCache()).getOrCreateCatalog(catalogMapping, connectionProps);
+            });
+            bootstrapStatement.close();
+            this.internalStatement = catalog.getInternalConnection().getInternalStatement();
         } else {
             this.internalStatement = createInternalStatement( true,this);
         }
@@ -314,25 +305,21 @@ public Result execute( Query query ) {
             .append(": ").append(Util.unparse( query )).toString() );
       }
 
-      final Locus locus = new LocusImpl( execution, null, "Loading cells" );
-      LocusImpl.push( locus );
-      Result result;
-      try {
+      Result result = ExecutionContext.where(execution.asContext(), () -> {
         statement.start( execution );
         ( (RolapCube) query.getCube() ).clearCachedAggregations( true );
         RolapResult  rolapResult = new RolapResult( execution, true );
-        result = rolapResult;
+        Result res = rolapResult;
         int i = 0;
         for ( QueryAxis axis : query.getAxes() ) {
           if ( axis.isNonEmpty() ) {
-              result = new NonEmptyResult( result, execution, i );
+              res = new NonEmptyResult( res, execution, i );
           }
           ++i;
         }
-      } finally {
-        LocusImpl.pop( locus );
         ( (RolapCube) query.getCube() ).clearCachedAggregations( true );
-      }
+        return res;
+      });
       statement.end( execution );
       return result;
     } catch ( ResultLimitExceededException e ) {
@@ -397,13 +384,9 @@ public Role getRole() {
   @Override
 public QueryComponent parseStatement(String query ) {
     Statement statement = createInternalStatement( false ,this);
-    final Locus locus =
-      new LocusImpl(
-        new ExecutionImpl( statement, ExecuteDurationUtil.executeDurationValue(statement.getConnection().getContext()) ),
-        "Parse/validate MDX statement",
-        null );
-    LocusImpl.push( locus );
-    try {
+    final ExecutionImpl execution = new ExecutionImpl( statement, ExecuteDurationUtil.executeDurationValue(statement.getConnection().getContext()) );
+
+    return ExecutionContext.where(execution.asContext(), () -> {
       QueryComponent queryPart;
         //TODO migrate to parser
         if ("BEGIN TRANSACTION".equalsIgnoreCase(query)) {
@@ -418,15 +401,13 @@ public QueryComponent parseStatement(String query ) {
         }
       if ( queryPart instanceof QueryImpl q) {
           q.setOwnStatement( true );
-        statement = null;
+      } else {
+        if ( statement != null ) {
+          statement.close();
+        }
       }
       return queryPart;
-    } finally {
-      LocusImpl.pop( locus );
-      if ( statement != null ) {
-        statement.close();
-      }
-    }
+    });
   }
 
   @Override

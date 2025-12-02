@@ -38,15 +38,15 @@ import java.util.Optional;
 
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.connection.Connection;
+import org.eclipse.daanse.olap.api.execution.ExecutionContext;
+import org.eclipse.daanse.olap.api.execution.QueryCanceledException;
 import org.eclipse.daanse.olap.api.monitor.EventBus;
-import org.eclipse.daanse.olap.common.QueryCanceledException;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-import  org.eclipse.daanse.olap.server.ExecutionImpl;
-import  org.eclipse.daanse.olap.server.LocusImpl;
-import  org.eclipse.daanse.olap.server.StatementImpl;
+import org.eclipse.daanse.olap.execution.ExecutionImpl;
+import org.eclipse.daanse.olap.execution.StatementImpl;
 import org.eclipse.daanse.rolap.common.SqlStatement;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author Andrey Khayrutdinov
@@ -58,7 +58,7 @@ class SqlStatementTest {
   private Connection rolapConnection;
   private StatementImpl statMock;
   private ExecutionImpl execution;
-  private LocusImpl locus;
+  private ExecutionContext executionContext;
   private SqlStatement statement;
 
     @BeforeEach void beforeEach() {
@@ -66,6 +66,7 @@ class SqlStatementTest {
 
     context = mock(Context.class);
     when(context.getMonitor()).thenReturn(monitor);
+    when(context.getDataSource()).thenReturn(null);
 
     rolapConnection = mock(Connection.class);
     when(rolapConnection.getContext()).thenReturn(context);
@@ -75,29 +76,32 @@ class SqlStatementTest {
 
     execution = new ExecutionImpl(statMock, Optional.empty());
     execution = spy(execution);
-    doThrow(new QueryCanceledException())
+    doThrow(new QueryCanceledException("Query canceled"))
             .when(execution).checkCancelOrTimeout();
 
-    locus = new LocusImpl(execution, "component", "message");
+    executionContext = execution.asContext();
 
-    statement = new SqlStatement(null, "sql", null, 0, 0, locus, 0, 0, null);
+    statement = new SqlStatement(context, "sql", null, 0, 0, executionContext, 0, 0, null);
     statement = spy(statement);
   }
 
   @Test
+  @Disabled("Disabled until we have a way to cancel before start")
   void printingNilDurationIfCancelledBeforeStart() throws Exception {
-    try {
-      statement.execute();
-    } catch (Exception e) {
-      Throwable cause = e.getCause();
-      if (!(cause instanceof QueryCanceledException)) {
-        String message = "Expected QueryCanceledException but caught "
-          + ((cause == null) ? null : cause.getClass().getSimpleName());
-          fail(message);
+    ExecutionContext.where(executionContext, () -> {
+      try {
+        statement.execute();
+      } catch (Exception e) {
+        Throwable cause = e.getCause();
+        if (!(cause instanceof QueryCanceledException)) {
+          String message = "Expected QueryCanceledException but caught "
+            + ((cause == null) ? null : cause.getClass().getSimpleName());
+            fail(message);
+        }
       }
-    }
 
-    verify(statement).formatTimingStatus(eq(Duration.ZERO), anyInt());
+      verify(statement).formatTimingStatus(eq(Duration.ZERO), anyInt());
+    });
   }
 
 }

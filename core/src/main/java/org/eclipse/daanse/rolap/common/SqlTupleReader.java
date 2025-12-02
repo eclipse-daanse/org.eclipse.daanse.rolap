@@ -43,20 +43,23 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
+
+import org.eclipse.daanse.olap.api.execution.ExecutionMetadata;
 
 import org.eclipse.daanse.jdbc.db.dialect.api.BestFitColumnType;
 import org.eclipse.daanse.olap.api.ConfigConstants;
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.Evaluator;
-import org.eclipse.daanse.olap.api.Execution;
 import org.eclipse.daanse.olap.api.SqlExpression;
 import org.eclipse.daanse.olap.api.Statement;
 import org.eclipse.daanse.olap.api.calc.todo.TupleList;
 import org.eclipse.daanse.olap.api.element.Level;
 import org.eclipse.daanse.olap.api.element.Member;
-import org.eclipse.daanse.olap.api.monitor.event.SqlStatementEvent;
+import org.eclipse.daanse.olap.api.execution.Execution;
+import org.eclipse.daanse.olap.api.execution.ExecutionContext;
 import org.eclipse.daanse.olap.api.query.component.Query;
 import org.eclipse.daanse.olap.calc.base.type.tuplebase.ArrayTupleList;
 import org.eclipse.daanse.olap.calc.base.type.tuplebase.ListTupleList;
@@ -66,10 +69,9 @@ import org.eclipse.daanse.olap.common.ExecuteDurationUtil;
 import org.eclipse.daanse.olap.common.ResourceLimitExceededException;
 import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.olap.common.Util;
+import org.eclipse.daanse.olap.execution.ExecutionImpl;
 import org.eclipse.daanse.olap.function.def.crossjoin.CrossJoinFunDef;
 import org.eclipse.daanse.olap.key.BitKey;
-import  org.eclipse.daanse.olap.server.ExecutionImpl;
-import  org.eclipse.daanse.olap.server.LocusImpl;
 import  org.eclipse.daanse.olap.util.CancellationChecker;
 import  org.eclipse.daanse.olap.util.Pair;
 import org.eclipse.daanse.rolap.common.agg.AggregationManager;
@@ -508,13 +510,16 @@ public Object getCacheKey() {
         String sql = pair.left;
         List<BestFitColumnType> types = pair.right;
         assert sql != null && !sql.equals( "" );
+        ExecutionMetadata metadata = ExecutionMetadata.of(
+          "SqlTupleReader.readTuples " + partialTargets,
+          message,
+          org.eclipse.daanse.olap.api.monitor.event.SqlStatementEvent.Purpose.TUPLES,
+          0
+        );
+        ExecutionContext execContext = getExecution(context).asContext().createChild(metadata, Optional.empty());
         stmt = RolapUtil.executeQuery(
           context, sql, types, maxRows, 0,
-          new SqlStatement.StatementLocus(
-        	getExecution(context),
-            "SqlTupleReader.readTuples " + partialTargets,
-            message,
-            SqlStatementEvent.Purpose.TUPLES, 0 ),
+          execContext,
           -1, -1, null );
         resultSet = stmt.getResultSet();
       } else {
@@ -616,12 +621,12 @@ public Object getCacheKey() {
   }
 
     private Execution getExecution(Context context) {
-        if (LocusImpl.isEmpty()) {
+        if (ExecutionContext.current() == null) {
             //need for virtual cubes need investigate
             final Statement statement = context.getConnectionWithDefaultRole().getInternalStatement();
             return new ExecutionImpl(statement, ExecuteDurationUtil.executeDurationValue(context));
         } else {
-            return LocusImpl.peek().getExecution();
+            return ExecutionContext.current().getExecution();
         }
     }
 
