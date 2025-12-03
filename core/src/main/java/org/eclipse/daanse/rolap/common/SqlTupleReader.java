@@ -621,12 +621,13 @@ public Object getCacheKey() {
   }
 
     private Execution getExecution(Context context) {
-        if (ExecutionContext.current() == null) {
+        ExecutionContext executionContext = ExecutionContext.currentOrNull();
+        if (executionContext == null) {
             //need for virtual cubes need investigate
             final Statement statement = context.getConnectionWithDefaultRole().getInternalStatement();
             return new ExecutionImpl(statement, ExecuteDurationUtil.executeDurationValue(context));
         } else {
-            return ExecutionContext.current().getExecution();
+            return executionContext.getExecution();
         }
     }
 

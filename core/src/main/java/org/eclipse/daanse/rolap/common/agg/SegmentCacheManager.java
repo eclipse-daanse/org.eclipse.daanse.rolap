@@ -612,13 +612,9 @@ public class SegmentCacheManager implements ISegmentCacheManager {
    * @return Segment with data, or null if not in cache
    */
   public SegmentWithData peek( final CellRequest request ) {
-    ExecutionContext executionContext = null;
-//    try {
-        executionContext = ExecutionContext.current();
-//    } catch (Exception e) {
-//        executionContext = new ExecutionImpl( ... );
-//        ExecutionContext.push( executionContext );
-//    }
+    // Use currentOrNull() as peek may be called from contexts without execution context
+    // (e.g., virtual cubes, background cache operations)
+    ExecutionContext executionContext = ExecutionContext.currentOrNull();
     final SegmentCacheManager.PeekResponse response =
       execute(
         new PeekCommand( request, executionContext) );
@@ -1117,9 +1113,16 @@ public class SegmentCacheManager implements ISegmentCacheManager {
             // the caller.
             if ( message instanceof CacheCommand<?> command ) {
               try {
-                Object result = ExecutionContext.where(command.getExecutionContext(), () -> {
-                  return command.call();
-                });
+                Object result;
+                ExecutionContext ctx = command.getExecutionContext();
+                if (ctx != null) {
+                  result = ExecutionContext.where(ctx, () -> {
+                    return command.call();
+                  });
+                } else {
+                  // No execution context available - execute directly
+                  result = command.call();
+                }
                 responseMap.put(
                   command,
                   Pair.of( result, null ) );
@@ -1429,9 +1432,9 @@ public class SegmentCacheManager implements ISegmentCacheManager {
       if ( e.isLocal() ) {
         return;
       }
-      // TODO: Async cache handler - may need ExecutionContext handling
+      // Async cache handlers may run in background threads without an execution context
       final CacheCommand<Void> command;
-      final ExecutionContext executionContext = ExecutionContext.current();
+      final ExecutionContext executionContext = ExecutionContext.currentOrNull();
       switch ( e.getEventType() ) {
         case ENTRY_CREATED:
           command =
@@ -1639,16 +1642,19 @@ public class SegmentCacheManager implements ISegmentCacheManager {
 
       // Is there a pending segment? (A segment that has been created and
       // is loading via SQL.)
-      for ( final SegmentHeader header : headers ) {
-        final Future<SegmentBody> bodyFuture =
-          indexRegistry.getIndex( star )
-            .getFuture( executionContext.getExecution(), header );
-        if ( bodyFuture != null ) {
-          converterMap.put(
-            SegmentCacheIndexImpl.makeConverterKey( header ),
-            getConverter( star, header ) );
-          headerMap.put(
-            header, bodyFuture );
+      // Only check for pending segments if we have an execution context
+      if (executionContext != null) {
+        for ( final SegmentHeader header : headers ) {
+          final Future<SegmentBody> bodyFuture =
+            indexRegistry.getIndex( star )
+              .getFuture( executionContext.getExecution(), header );
+          if ( bodyFuture != null ) {
+            converterMap.put(
+              SegmentCacheIndexImpl.makeConverterKey( header ),
+              getConverter( star, header ) );
+            headerMap.put(
+              header, bodyFuture );
+          }
         }
       }
 

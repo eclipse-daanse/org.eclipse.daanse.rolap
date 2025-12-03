@@ -49,7 +49,7 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.EmptyStackException;
+import org.eclipse.daanse.olap.api.execution.NoExecutionContextException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -865,13 +865,13 @@ public class CacheControlImpl implements CacheControl {
                 .append("property ").append("daanse.rolap.EnableRolapCubeMemberCache").append(" is false").toString());
         }
         synchronized (MEMBER_CACHE_LOCK) {
-            // Make sure that a Locus is in the Execution stack,
+            // Make sure that an ExecutionContext is bound,
             // since some operations might require DB access.
             Execution execution;
             try {
                 execution =
                     ExecutionContext.current().getExecution();
-            } catch (EmptyStackException e) {
+            } catch (NoExecutionContextException e) {
                 if (connection == null) {
                     throw new IllegalArgumentException("Connection required");
                 }
