@@ -94,6 +94,8 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
     @Reference(name = BASIC_CONTEXT_REF_NAME_CATALOG_MAPPING_SUPPLIER, target = UNRESOLVABLE_FILTER)
     private CatalogMappingSupplier catalogMappingSupplier;
 
+    private volatile org.eclipse.daanse.rolap.mapping.model.Catalog cachedCatalogMapping;
+
     @Reference(name = BASIC_CONTEXT_REF_NAME_EXPRESSION_COMPILER_FACTORY)
     private ExpressionCompilerFactory expressionCompilerFactory;
 
@@ -187,7 +189,10 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
 
     @Override
     public org.eclipse.daanse.rolap.mapping.model.Catalog getCatalogMapping() {
-        return catalogMappingSupplier.get();
+        if (cachedCatalogMapping == null) {
+            cachedCatalogMapping = catalogMappingSupplier.get();
+        }
+        return cachedCatalogMapping;
     }
 
 //
