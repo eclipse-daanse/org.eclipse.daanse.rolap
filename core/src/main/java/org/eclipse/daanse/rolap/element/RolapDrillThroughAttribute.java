@@ -26,12 +26,11 @@
 
 package org.eclipse.daanse.rolap.element;
 
-import org.eclipse.daanse.olap.api.element.DrillThroughColumn;
 import org.eclipse.daanse.olap.api.element.Dimension;
+import org.eclipse.daanse.olap.api.element.DrillThroughColumn;
 import org.eclipse.daanse.olap.api.element.Hierarchy;
 import org.eclipse.daanse.olap.api.element.Level;
 import org.eclipse.daanse.olap.api.element.OlapElement;
-import org.eclipse.daanse.rolap.element.RolapProperty;
 
 public class RolapDrillThroughAttribute implements DrillThroughColumn {
     private final Dimension dimension;

@@ -47,9 +47,7 @@ import org.eclipse.daanse.olap.api.CatalogReader;
 import org.eclipse.daanse.olap.api.ConfigConstants;
 import org.eclipse.daanse.olap.api.DataType;
 import org.eclipse.daanse.olap.api.Evaluator;
-import org.eclipse.daanse.olap.api.Execution;
 import org.eclipse.daanse.olap.api.IAggregationManager;
-import org.eclipse.daanse.olap.api.Locus;
 import org.eclipse.daanse.olap.api.NameSegment;
 import org.eclipse.daanse.olap.api.Parameter;
 import org.eclipse.daanse.olap.api.access.HierarchyAccess;
@@ -67,6 +65,8 @@ import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.element.NamedSet;
 import org.eclipse.daanse.olap.api.exception.CellRequestQuantumExceededException;
 import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
+import org.eclipse.daanse.olap.api.execution.Execution;
+import org.eclipse.daanse.olap.api.execution.ExecutionContext;
 import org.eclipse.daanse.olap.api.formatter.CellFormatter;
 import org.eclipse.daanse.olap.api.function.FunctionMetaData;
 import org.eclipse.daanse.olap.api.query.component.DimensionExpression;
@@ -106,7 +106,6 @@ import org.eclipse.daanse.olap.function.def.aggregate.AggregateCalc;
 import org.eclipse.daanse.olap.key.CellKey;
 import org.eclipse.daanse.olap.query.component.MdxVisitorImpl;
 import org.eclipse.daanse.olap.query.component.ResolvedFunCallImpl;
-import  org.eclipse.daanse.olap.server.LocusImpl;
 import  org.eclipse.daanse.olap.util.CancellationChecker;
 import  org.eclipse.daanse.olap.util.Format;
 import org.eclipse.daanse.rolap.aggregator.DistinctCountAggregator;
@@ -673,13 +672,11 @@ public class RolapResult extends ResultBase {
               && ((NameSegment)
               org.eclipse.daanse.olap.common.Util.parseIdentifier(cellProperties[0].toString()).get(0)).getName().equalsIgnoreCase(
             		  StandardProperty.CELL_ORDINAL.getName()    ))) {
-        final Locus locus = new LocusImpl( execution, null, "Loading cells" );
-        LocusImpl.push( locus );
-        try {
-          executeBody( internalSlicerEvaluator, query, new int[axes.length] );
-        } finally {
-          Util.explain( evaluator.root.statement.getProfileHandler(), "QueryBody:", null, evaluator.getTiming() );LocusImpl.pop( locus );
-        }
+        final RolapEvaluator finalInternalSlicerEvaluator = internalSlicerEvaluator;
+        ExecutionContext.where(execution.asContext(), () -> {
+          executeBody( finalInternalSlicerEvaluator, query, new int[axes.length] );
+          Util.explain( evaluator.root.statement.getProfileHandler(), "QueryBody:", null, evaluator.getTiming() );
+        });
       }
 
       // If you are very close to running out of memory due to
@@ -1052,13 +1049,9 @@ public Cell getCell( int[] pos ) {
 
     for ( int i = 0; i < pos.length; i++ ) {
       if ( positionsHighCardinality.containsKey(i) && Boolean.TRUE.equals( positionsHighCardinality.get( i ) ) ) {
-        final Locus locus = new LocusImpl( execution, null, "Loading cells" );
-        LocusImpl.push( locus );
-        try {
+        ExecutionContext.where(execution.asContext(), () -> {
           executeBody( evaluator, statement.getQuery(), pos );
-        } finally {
-          LocusImpl.pop( locus );
-        }
+        });
         break;
       }
     }
@@ -1600,7 +1593,7 @@ public Cell getCell( int[] pos ) {
 
     private void mergeTupleIter( TupleCursor cursor ) {
       int currentIteration = 0;
-      Execution execution = LocusImpl.peek().getExecution();
+      Execution execution = ExecutionContext.current().getExecution();
       while ( cursor.forward() ) {
         CancellationChecker.checkCancelOrTimeout( currentIteration++, execution );
         mergeTuple( cursor );

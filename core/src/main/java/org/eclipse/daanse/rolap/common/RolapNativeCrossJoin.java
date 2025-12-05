@@ -40,6 +40,7 @@ import org.eclipse.daanse.olap.api.function.FunctionDefinition;
 import org.eclipse.daanse.olap.api.query.component.Expression;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.function.def.nonemptycrossjoin.NonEmptyCrossJoinFunDef;
+import org.eclipse.daanse.rolap.common.connection.AbstractRolapConnection;
 import org.eclipse.daanse.rolap.common.sql.CrossJoinArg;
 import org.eclipse.daanse.rolap.common.sql.MemberListCrossJoinArg;
 import org.eclipse.daanse.rolap.common.sql.TupleConstraint;

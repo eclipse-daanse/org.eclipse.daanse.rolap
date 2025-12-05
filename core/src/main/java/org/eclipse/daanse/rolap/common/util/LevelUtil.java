@@ -16,8 +16,8 @@ package org.eclipse.daanse.rolap.common.util;
 import java.util.Objects;
 
 import org.eclipse.daanse.olap.api.SqlExpression;
-import org.eclipse.daanse.rolap.element.RolapColumn;
 import org.eclipse.daanse.rolap.common.RolapSqlExpression;
+import org.eclipse.daanse.rolap.element.RolapColumn;
 
 public class LevelUtil {
 

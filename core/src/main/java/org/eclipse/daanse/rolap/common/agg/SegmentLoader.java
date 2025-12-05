@@ -43,24 +43,25 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
+import org.eclipse.daanse.olap.api.execution.ExecutionMetadata;
+
 import org.eclipse.daanse.jdbc.db.dialect.api.BestFitColumnType;
 import org.eclipse.daanse.olap.api.CacheCommand;
 import org.eclipse.daanse.olap.api.ConfigConstants;
-import org.eclipse.daanse.olap.api.Execution;
-import org.eclipse.daanse.olap.api.Locus;
 import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
-import org.eclipse.daanse.olap.api.monitor.event.SqlStatementEvent;
+import org.eclipse.daanse.olap.api.execution.Execution;
+import org.eclipse.daanse.olap.api.execution.ExecutionContext;
 import org.eclipse.daanse.olap.common.ResourceLimitExceededException;
 import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.key.BitKey;
-import  org.eclipse.daanse.olap.server.LocusImpl;
 import org.eclipse.daanse.olap.spi.SegmentBody;
 import org.eclipse.daanse.olap.spi.SegmentColumn;
 import org.eclipse.daanse.olap.spi.SegmentHeader;
@@ -151,12 +152,12 @@ public class SegmentLoader {
               compoundPredicateList ), true );
           // Make sure that we are registered as a client of
           // the segment by invoking getFuture.
-          index.getFuture( LocusImpl.peek().getExecution(), segment.getHeader() ) ;
+          index.getFuture( ExecutionContext.current().getExecution(), segment.getHeader() ) ;
         }
       }
     }
     try {
-      segmentFutures.add( cacheMgr.sqlExecutor.submit( new SegmentLoadCommand( LocusImpl.peek(), this, cellRequestCount,
+      segmentFutures.add( cacheMgr.sqlExecutor.submit( new SegmentLoadCommand( ExecutionContext.current(), this, cellRequestCount,
           groupingSets, compoundPredicateList ) ) );
     } catch ( Exception e ) {
       throw new OlapRuntimeException( e );
@@ -164,15 +165,15 @@ public class SegmentLoader {
   }
 
   private static class SegmentLoadCommand implements Callable<Map<Segment, SegmentWithData>> {
-    private final Locus locus;
+    private final ExecutionContext executionContext;
     private final SegmentLoader segmentLoader;
     private final int cellRequestCount;
     private final List<GroupingSet> groupingSets;
     private final List<StarPredicate> compoundPredicateList;
 
-    public SegmentLoadCommand( Locus locus, SegmentLoader segmentLoader, int cellRequestCount,
+    public SegmentLoadCommand( ExecutionContext executionContext, SegmentLoader segmentLoader, int cellRequestCount,
         List<GroupingSet> groupingSets, List<StarPredicate> compoundPredicateList ) {
-      this.locus = locus;
+      this.executionContext = executionContext;
       this.segmentLoader = segmentLoader;
       this.cellRequestCount = cellRequestCount;
       this.groupingSets = groupingSets;
@@ -181,15 +182,12 @@ public class SegmentLoader {
 
     @Override
 	public Map<Segment, SegmentWithData> call() throws Exception {
-      LocusImpl.push( locus );
-      try {
-          boolean useAggregates = locus.getExecution().getDaanseStatement().getDaanseConnection().getContext().getConfigValue(ConfigConstants.USE_AGGREGATES, ConfigConstants.USE_AGGREGATES_DEFAULT_VALUE ,Boolean.class);
+      return ExecutionContext.where(executionContext, () -> {
+          boolean useAggregates = executionContext.getExecution().getDaanseStatement().getDaanseConnection().getContext().getConfigValue(ConfigConstants.USE_AGGREGATES, ConfigConstants.USE_AGGREGATES_DEFAULT_VALUE ,Boolean.class);
         return segmentLoader.loadImpl( cellRequestCount, groupingSets, compoundPredicateList, useAggregates,
-            locus.getExecution().getDaanseStatement().getDaanseConnection().getContext().getConfigValue(ConfigConstants.SPARSE_SEGMENT_COUNT_THRESHOLD, ConfigConstants.SPARSE_SEGMENT_COUNT_THRESHOLD_DEFAULT_VALUE ,Integer.class),
-            locus.getExecution().getDaanseStatement().getDaanseConnection().getContext().getConfigValue(ConfigConstants.SPARSE_SEGMENT_DENSITY_THRESHOLD, ConfigConstants.SPARSE_SEGMENT_DENSITY_THRESHOLD_DEFAULT_VALUE ,Double.class));
-      } finally {
-        LocusImpl.pop( locus );
-      }
+            executionContext.getExecution().getDaanseStatement().getDaanseConnection().getContext().getConfigValue(ConfigConstants.SPARSE_SEGMENT_COUNT_THRESHOLD, ConfigConstants.SPARSE_SEGMENT_COUNT_THRESHOLD_DEFAULT_VALUE ,Integer.class),
+            executionContext.getExecution().getDaanseStatement().getDaanseConnection().getContext().getConfigValue(ConfigConstants.SPARSE_SEGMENT_DENSITY_THRESHOLD, ConfigConstants.SPARSE_SEGMENT_DENSITY_THRESHOLD_DEFAULT_VALUE ,Double.class));
+      });
     }
   }
 
@@ -485,9 +483,13 @@ public class SegmentLoader {
     RolapStar star = groupingSetsList.getStar();
     Pair<String, List<BestFitColumnType>> pair =
         AggregationManager.generateSql( groupingSetsList, compoundPredicateList, useAggregates );
-    final LocusImpl locus =
-        new SqlStatement.StatementLocus( LocusImpl.peek().getExecution(), "Segment.load", "Error while loading segment",
-            SqlStatementEvent.Purpose.CELL_SEGMENT, cellRequestCount );
+    ExecutionMetadata metadata = ExecutionMetadata.of(
+        "Segment.load",
+        "Error while loading segment",
+        org.eclipse.daanse.olap.api.monitor.event.SqlStatementEvent.Purpose.CELL_SEGMENT,
+        cellRequestCount
+    );
+    final ExecutionContext executionContext = ExecutionContext.current().createChild(metadata, Optional.empty());
 
     // When caching is enabled, we must register the SQL statement
     // in the index. We don't want to cancel SQL statements that are shared
@@ -520,8 +522,8 @@ public class SegmentLoader {
           }
 
           @Override
-		public Locus getLocus() {
-            return locus;
+		public ExecutionContext getExecutionContext() {
+            return executionContext;
           }
         } );
       }
@@ -532,12 +534,12 @@ public class SegmentLoader {
     final Consumer<Statement> callbackNoCaching = new Consumer<>() {
         @Override
 		public void accept(final Statement stmt) {
-            locus.getExecution().registerStatement(locus, stmt);
+            executionContext.registerStatement(stmt);
         }
     };
 
     try {
-      return RolapUtil.executeQuery( star.getContext(), pair.left, pair.right, 0, 0, locus, -1, -1,
+      return RolapUtil.executeQuery( star.getContext(), pair.left, pair.right, 0, 0, executionContext, -1, -1,
           // Only one of the two callbacks are required, depending if we
           // cache the segments or not.
           cacheMgr.getContext().getConfigValue(ConfigConstants.DISABLE_CACHING, ConfigConstants.DISABLE_CACHING_DEFAULT_VALUE, Boolean.class) ? callbackNoCaching : callbackWithCaching );
@@ -572,7 +574,7 @@ public class SegmentLoader {
     }
     final RowList processedRows = new RowList( processedTypes, 100 );
 
-    Execution execution = LocusImpl.peek().getExecution();
+    Execution execution = ExecutionContext.current().getExecution();
     while ( rawRows.next() ) {
       // Check if the MDX query was canceled.
       CancellationChecker.checkCancelOrTimeout( ++stmt.rowCount, execution );

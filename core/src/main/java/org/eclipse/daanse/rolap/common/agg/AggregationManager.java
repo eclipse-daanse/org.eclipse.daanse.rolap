@@ -40,13 +40,13 @@ import java.util.concurrent.Future;
 import org.eclipse.daanse.jdbc.db.dialect.api.BestFitColumnType;
 import org.eclipse.daanse.olap.api.CacheControl;
 import org.eclipse.daanse.olap.api.ConfigConstants;
-import org.eclipse.daanse.olap.api.connection.Connection;
 import org.eclipse.daanse.olap.api.IAggregationManager;
 import org.eclipse.daanse.olap.api.ISegmentCacheManager;
+import org.eclipse.daanse.olap.api.connection.Connection;
 import org.eclipse.daanse.olap.api.element.OlapElement;
+import org.eclipse.daanse.olap.api.execution.ExecutionContext;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.key.BitKey;
-import  org.eclipse.daanse.olap.server.LocusImpl;
 import  org.eclipse.daanse.olap.util.Pair;
 import org.eclipse.daanse.rolap.api.RolapContext;
 import org.eclipse.daanse.rolap.common.CacheControlImpl;
@@ -150,7 +150,7 @@ public class AggregationManager extends RolapAggregationManager implements IAggr
                 final SegmentCacheManager.FlushResult result =
                     segmentCacheManager.execute(
                         new SegmentCacheManager.FlushCommand(
-                            LocusImpl.peek(),
+                            ExecutionContext.current(),
                             segmentCacheManager,
                             region,
                             this));

@@ -28,9 +28,6 @@
 package org.eclipse.daanse.rolap.element;
 
 import org.eclipse.daanse.olap.common.Util;
-import org.eclipse.daanse.rolap.element.RolapCubeLevel;
-import org.eclipse.daanse.rolap.element.RolapCubeMember;
-import org.eclipse.daanse.rolap.element.RolapMember;
 
 /**
  * The 'All' member of a {@link org.eclipse.daanse.rolap.element.RolapCubeHierarchy}.

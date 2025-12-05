@@ -52,11 +52,9 @@ import org.eclipse.daanse.olap.api.connection.ConnectionProps;
 import org.eclipse.daanse.olap.api.function.FunctionService;
 import org.eclipse.daanse.olap.common.ExecuteDurationUtil;
 import org.eclipse.daanse.olap.core.LoggingEventBus;
-import org.eclipse.daanse.olap.server.ExecutionImpl;
+import org.eclipse.daanse.olap.execution.ExecutionImpl;
 import org.eclipse.daanse.rolap.api.RolapContext;
 import org.eclipse.daanse.rolap.common.AbstractRolapContext;
-import org.eclipse.daanse.rolap.common.connection.ExternalRolapConnection;
-import org.eclipse.daanse.rolap.common.connection.InternalRolapConnection;
 import org.eclipse.daanse.rolap.common.RolapCatalogCache;
 import org.eclipse.daanse.rolap.common.RolapDependencyTestingEvaluator;
 import org.eclipse.daanse.rolap.common.RolapEvaluator;
@@ -66,6 +64,8 @@ import org.eclipse.daanse.rolap.common.RolapResult;
 import org.eclipse.daanse.rolap.common.RolapResultShepherd;
 import org.eclipse.daanse.rolap.common.agg.AggregationManager;
 import org.eclipse.daanse.rolap.common.aggregator.AggregationFactoryImpl;
+import org.eclipse.daanse.rolap.common.connection.ExternalRolapConnection;
+import org.eclipse.daanse.rolap.common.connection.InternalRolapConnection;
 import org.eclipse.daanse.rolap.core.api.BasicContextOCD;
 import org.eclipse.daanse.rolap.mapping.model.provider.CatalogMappingSupplier;
 import org.eclipse.daanse.sql.guard.api.SqlGuardFactory;
@@ -93,6 +93,8 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
 
     @Reference(name = BASIC_CONTEXT_REF_NAME_CATALOG_MAPPING_SUPPLIER, target = UNRESOLVABLE_FILTER)
     private CatalogMappingSupplier catalogMappingSupplier;
+
+    private volatile org.eclipse.daanse.rolap.mapping.model.Catalog cachedCatalogMapping;
 
     @Reference(name = BASIC_CONTEXT_REF_NAME_EXPRESSION_COMPILER_FACTORY)
     private ExpressionCompilerFactory expressionCompilerFactory;
@@ -187,7 +189,10 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
 
     @Override
     public org.eclipse.daanse.rolap.mapping.model.Catalog getCatalogMapping() {
-        return catalogMappingSupplier.get();
+        if (cachedCatalogMapping == null) {
+            cachedCatalogMapping = catalogMappingSupplier.get();
+        }
+        return cachedCatalogMapping;
     }
 
 //

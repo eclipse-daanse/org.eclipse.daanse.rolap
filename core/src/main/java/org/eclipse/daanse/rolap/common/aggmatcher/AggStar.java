@@ -43,7 +43,10 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+
+import org.eclipse.daanse.olap.api.execution.ExecutionMetadata;
 
 import org.eclipse.daanse.jdbc.db.dialect.api.BestFitColumnType;
 import org.eclipse.daanse.jdbc.db.dialect.api.Datatype;
@@ -51,11 +54,11 @@ import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.SqlExpression;
 import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
+import org.eclipse.daanse.olap.api.execution.ExecutionContext;
 import org.eclipse.daanse.olap.common.ExecuteDurationUtil;
 import org.eclipse.daanse.olap.common.Util;
+import org.eclipse.daanse.olap.execution.ExecutionImpl;
 import org.eclipse.daanse.olap.key.BitKey;
-import  org.eclipse.daanse.olap.server.ExecutionImpl;
-import  org.eclipse.daanse.olap.server.LocusImpl;
 import org.eclipse.daanse.rolap.aggregator.countbased.AbstractFactCountBasedAggregator;
 import org.eclipse.daanse.rolap.common.RolapSqlExpression;
 import org.eclipse.daanse.rolap.common.RolapStar;
@@ -1561,17 +1564,21 @@ public class AggStar {
             query.addSelect("count(*)", null);
             query.addFrom(getRelation(), getName(), false);
             Context context = getAggStar().getStar().getContext();
+            ExecutionImpl execution = new ExecutionImpl(
+                star.getCatalog().getInternalConnection().getInternalStatement(),
+                ExecuteDurationUtil.executeDurationValue(star.getCatalog().getInternalConnection().getContext()));
+            ExecutionMetadata metadata = ExecutionMetadata.of(
+                "AggStar.DimTable.makeNumberOfRows",
+                "Getting row count for aggregate table " + getName(),
+                org.eclipse.daanse.olap.api.monitor.event.SqlStatementEvent.Purpose.OTHER,
+                0
+            );
+            ExecutionContext execContext = execution.asContext().createChild(metadata, Optional.empty());
             SqlStatement stmt =
                 RolapUtil.executeQuery(
                         context,
                     query.toString(),
-                    new LocusImpl(
-                        new ExecutionImpl(
-                            star.getCatalog().getInternalConnection()
-                                .getInternalStatement(),
-                            ExecuteDurationUtil.executeDurationValue(star.getCatalog().getInternalConnection().getContext())),
-                        "AggStar.FactTable.makeNumberOfRows",
-                        "Counting rows in aggregate table"));
+                    execContext);
             try {
                 ResultSet resultSet = stmt.getResultSet();
                 if (resultSet.next()) {

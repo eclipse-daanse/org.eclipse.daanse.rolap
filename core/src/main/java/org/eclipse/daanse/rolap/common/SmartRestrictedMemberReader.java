@@ -37,8 +37,8 @@ import org.eclipse.daanse.olap.api.access.AccessMember;
 import org.eclipse.daanse.olap.api.access.Role;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.rolap.common.sql.MemberChildrenConstraint;
-import org.eclipse.daanse.rolap.element.RolapMember;
 import org.eclipse.daanse.rolap.element.RolapHierarchy.LimitedRollupMember;
+import org.eclipse.daanse.rolap.element.RolapMember;
 
 /**
  * A {@link SmartRestrictedMemberReader} is a subclass of

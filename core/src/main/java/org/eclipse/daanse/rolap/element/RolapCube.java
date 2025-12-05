@@ -84,6 +84,7 @@ import org.eclipse.daanse.olap.api.element.NamedSet;
 import org.eclipse.daanse.olap.api.element.OlapElement;
 import org.eclipse.daanse.olap.api.element.Property;
 import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
+import org.eclipse.daanse.olap.api.execution.ExecutionContext;
 import org.eclipse.daanse.olap.api.function.FunctionMetaData;
 import org.eclipse.daanse.olap.api.query.component.CellProperty;
 import org.eclipse.daanse.olap.api.query.component.Expression;
@@ -92,22 +93,24 @@ import org.eclipse.daanse.olap.api.query.component.MemberProperty;
 import org.eclipse.daanse.olap.api.query.component.Query;
 import org.eclipse.daanse.olap.api.query.component.ResolvedFunCall;
 import org.eclipse.daanse.olap.api.result.AllocationPolicy;
+import org.eclipse.daanse.olap.common.ExecuteDurationUtil;
 import org.eclipse.daanse.olap.common.StandardProperty;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.element.CubeBase;
 import org.eclipse.daanse.olap.element.OlapMetaData;
 import org.eclipse.daanse.olap.element.SetBase;
 import org.eclipse.daanse.olap.exceptions.CalcMemberNotUniqueException;
+import org.eclipse.daanse.olap.execution.ExecutionImpl;
 import org.eclipse.daanse.olap.function.core.FunctionMetaDataR;
 import org.eclipse.daanse.olap.function.core.FunctionParameterR;
 import org.eclipse.daanse.olap.function.def.AbstractFunctionDefinition;
+import org.eclipse.daanse.olap.impl.StatementImpl;
 import org.eclipse.daanse.olap.key.BitKey;
 import org.eclipse.daanse.olap.query.component.FormulaImpl;
 import org.eclipse.daanse.olap.query.component.IdImpl;
 import org.eclipse.daanse.olap.query.component.QueryAxisImpl;
 import org.eclipse.daanse.olap.query.component.QueryImpl;
 import org.eclipse.daanse.olap.query.component.ResolvedFunCallImpl;
-import  org.eclipse.daanse.olap.server.LocusImpl;
 import org.eclipse.daanse.rolap.common.AbstractRolapAction;
 import org.eclipse.daanse.rolap.common.EnumConvertor;
 import org.eclipse.daanse.rolap.common.HierarchyUsage;
@@ -609,18 +612,14 @@ public abstract class RolapCube extends CubeBase {
         final String queryString = buf.toString();
         try {
             final Connection conn = catalog.getInternalConnection();
-            return LocusImpl.execute(
-                conn,
-                "RolapCube.resolveCalcMembers",
-                new LocusImpl.Action<Query>() {
-                    @Override
-					public Query execute() {
-                        final Query queryExp =
-                            conn.parseQuery(queryString);
-                        queryExp.resolve();
-                        return queryExp;
-                    }
-                });
+            StatementImpl statement = (StatementImpl) conn.getInternalStatement();
+            ExecutionImpl execution = new ExecutionImpl(statement,
+                    ExecuteDurationUtil.executeDurationValue(conn.getContext()));
+            return ExecutionContext.where(execution.asContext(), () -> {
+                final Query queryExp = conn.parseQuery(queryString);
+                queryExp.resolve();
+                return queryExp;
+            });
         } catch (Exception e) {
             throw new OlapRuntimeException(MessageFormat.format(unknownNamedSetHasBadFormula, getName()), e);
         }
