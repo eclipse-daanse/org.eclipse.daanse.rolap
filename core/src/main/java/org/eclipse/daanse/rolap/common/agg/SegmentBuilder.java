@@ -46,7 +46,6 @@ import org.eclipse.daanse.jdbc.db.dialect.api.Datatype;
 import org.eclipse.daanse.olap.api.ConfigConstants;
 import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.olap.common.Util;
-import org.eclipse.daanse.olap.impl.UnmodifiableArrayList;
 import org.eclipse.daanse.olap.key.BitKey;
 import org.eclipse.daanse.olap.key.CellKey;
 import org.eclipse.daanse.olap.spi.SegmentBody;
@@ -252,7 +251,7 @@ public class SegmentBuilder {
         // store the map values in a list to assure the first header
         // loaded here is consistent w/ the first segment processed below.
         List<Map.Entry<SegmentHeader, SegmentBody>>  segments =
-            UnmodifiableArrayList.of(map.entrySet());
+            List.copyOf(map.entrySet());
         final SegmentHeader firstHeader = segments.get(0).getKey();
         final List<AxisInfo> axes = new ArrayList<>(keepColumns.size());
         int z = 0, j = 0;
