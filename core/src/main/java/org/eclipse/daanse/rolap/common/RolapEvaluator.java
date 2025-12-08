@@ -28,6 +28,7 @@
  */
 package org.eclipse.daanse.rolap.common;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -445,7 +446,7 @@ public final CatalogReader getCatalogReader() {
   }
 
   @Override
-public Date getQueryStartTime() {
+public LocalDateTime getQueryStartTime() {
     return root.getQueryStartTime();
   }
 

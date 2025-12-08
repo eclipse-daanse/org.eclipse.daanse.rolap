@@ -23,8 +23,8 @@
  */
 package org.eclipse.daanse.rolap.common;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -68,7 +68,7 @@ public class RolapEvaluatorRoot {
   final Map<CompiledExpKey, Calc> compiledExps = new HashMap<>();
   final Statement statement;
   final Query query;
-  private final Date queryStartTime;
+  private final LocalDateTime queryStartTime;
 
   int expResultCacheHitCount;
   int expResultCacheMissCount;
@@ -119,7 +119,7 @@ public RolapEvaluatorRoot( Statement statement ) {
                 .toUpperCase(),
             SolveOrderMode.ABSOLUTE );
     this.schemaReader = query.getCatalogReader( true );
-    this.queryStartTime = new Date();
+    this.queryStartTime = LocalDateTime.now();
     List<RolapMember> list = new ArrayList<>();
     nonAllPositions = new int[cube.getHierarchies().size()];
     nonAllPositionCount = 0;
@@ -312,7 +312,7 @@ public RolapEvaluatorRoot( Statement statement ) {
    *
    * @return the query start time
    */
-  public Date getQueryStartTime() {
+  public LocalDateTime getQueryStartTime() {
     return queryStartTime;
   }
 }
