@@ -265,7 +265,7 @@ public class RolapUtil {
      *
      * @param context context
      * @param sql SQL string
-     * @param locus Locus of execution
+     * @param executionContext Execution Context
      * @return SqlStatement
      */
     public static SqlStatement executeQuery(
@@ -297,7 +297,7 @@ public class RolapUtil {
      * @param maxRowCount Maximum number of rows to retrieve, less or = 0 if unlimited
      * @param firstRowOrdinal Ordinal of row to skip to (1-based), or 0 to
      *   start from beginning
-     * @param locus Execution context of this statement
+     * @param executionContext Execution context of this statement
      * @param resultSetType Result set type, or -1 to use default
      * @param resultSetConcurrency Result set concurrency, or -1 to use default
      * @param callback callback
