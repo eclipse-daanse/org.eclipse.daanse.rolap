@@ -11,7 +11,7 @@
 *   SmartCity Jena - initial
 *   Stefan Bischof (bipolis.org) - initial
 */
-package org.eclipse.daanse.rolap.core.internal;
+package org.eclipse.daanse.rolap.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_PID;
