@@ -723,13 +723,16 @@ public class JdbcSchema {
          */
         private final String tableType;
 
+        private final org.eclipse.daanse.rolap.mapping.model.Table modelTable; 
+        
         // mondriandef stuff
         public org.eclipse.daanse.rolap.mapping.model.TableQuery table;
 
-        private Table(final String name, String tableType, List<? extends org.eclipse.daanse.rolap.mapping.model.Column> list) {
+        private Table(final String name, String tableType, List<? extends org.eclipse.daanse.rolap.mapping.model.Column> list, org.eclipse.daanse.rolap.mapping.model.Table modelTable) {
             this.name = name;
             this.tableUsageType = TableUsageType.UNKNOWN;
             this.tableType = tableType;
+            this.modelTable = modelTable;
 
 			for (org.eclipse.daanse.rolap.mapping.model.Column rdbColumn : list) {
 
@@ -891,6 +894,10 @@ public class JdbcSchema {
             return tableType;
         }
 
+        public org.eclipse.daanse.rolap.mapping.model.Table getModelTable() {
+            return modelTable;
+        }
+
         @Override
 		public String toString() {
             StringWriter sw = new StringWriter(256);
@@ -1008,7 +1015,7 @@ public class JdbcSchema {
 		for (org.eclipse.daanse.rolap.mapping.model.Table rdbTable : databaseSchema.getTables()) {
 			if (rdbTable instanceof org.eclipse.daanse.rolap.mapping.model.PhysicalTable || rdbTable instanceof org.eclipse.daanse.rolap.mapping.model.ViewTable || rdbTable instanceof org.eclipse.daanse.rolap.mapping.model.SystemTable) {
 
-			Table table = new Table(rdbTable.getName(), rdbTable.getClass().getSimpleName(),rdbTable.getColumns());
+			Table table = new Table(rdbTable.getName(), rdbTable.getClass().getSimpleName(),rdbTable.getColumns(), rdbTable);
 				getLogger().debug("Adding table {}", rdbTable.getName());
 				tables.put(table.getName(), table);
 			}
