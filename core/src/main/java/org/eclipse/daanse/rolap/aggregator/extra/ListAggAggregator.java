@@ -10,7 +10,7 @@
 * Contributors:
 *   SmartCity Jena - initial
 */
-package org.eclipse.daanse.rolap.aggregator.experimental;
+package org.eclipse.daanse.rolap.aggregator.extra;
 
 import java.util.List;
 

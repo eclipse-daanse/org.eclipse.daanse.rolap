@@ -10,7 +10,9 @@
 * Contributors:
 *   SmartCity Jena - initial
 */
-package org.eclipse.daanse.rolap.aggregator.experimental;
+package org.eclipse.daanse.rolap.aggregator.extra;
+
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.eclipse.daanse.olap.api.DataTypeJdbc;
 import org.eclipse.daanse.olap.api.Evaluator;
@@ -18,26 +20,26 @@ import org.eclipse.daanse.olap.api.calc.Calc;
 import org.eclipse.daanse.olap.api.calc.todo.TupleList;
 import org.eclipse.daanse.rolap.aggregator.AbstractAggregator;
 
-public class NoneAggregator extends AbstractAggregator {
+public class IppAggregator extends AbstractAggregator {
 
-    public static NoneAggregator INSTANCE = new NoneAggregator();
+    public static IppAggregator INSTANCE = new IppAggregator();
 
-    public NoneAggregator() {
-        super("None", false);
+    private AtomicLong i = new AtomicLong(0);
+
+    public IppAggregator() {
+        super("Ipp", false);
     }
 
     public Object aggregate(Evaluator evaluator, TupleList members, Calc<?> calc) {
-
-        final Evaluator eval = evaluator.pushAggregation(members);
-        eval.setNonEmpty(false);
-        return eval.evaluateCurrent(); // never calc and cache always value from db.
+        return i.incrementAndGet();
     }
 
     public String getExpression(String operand) {
-        return operand;
+        return "" + i.incrementAndGet();
     }
 
     public boolean supportsFastAggregates(DataTypeJdbc dataType) {
-        return false;
+        return true;
     }
+
 }

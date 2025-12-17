@@ -10,9 +10,9 @@
 * Contributors:
 *   SmartCity Jena - initial
 */
-package org.eclipse.daanse.rolap.aggregator.experimental;
+package org.eclipse.daanse.rolap.aggregator.extra;
 
-import java.util.concurrent.atomic.AtomicLong;
+import java.security.SecureRandom;
 
 import org.eclipse.daanse.olap.api.DataTypeJdbc;
 import org.eclipse.daanse.olap.api.Evaluator;
@@ -20,26 +20,26 @@ import org.eclipse.daanse.olap.api.calc.Calc;
 import org.eclipse.daanse.olap.api.calc.todo.TupleList;
 import org.eclipse.daanse.rolap.aggregator.AbstractAggregator;
 
-public class IppAggregator extends AbstractAggregator {
+public class RndAggregator extends AbstractAggregator {
 
-    public static IppAggregator INSTANCE = new IppAggregator();
+    public static RndAggregator INSTANCE = new RndAggregator();
 
-    private AtomicLong i = new AtomicLong(0);
+    private SecureRandom secureRandom = new SecureRandom();
 
-    public IppAggregator() {
-        super("Ipp", false);
+    public RndAggregator() {
+        super("Rnd", false);
     }
 
     public Object aggregate(Evaluator evaluator, TupleList members, Calc<?> calc) {
-        return i.incrementAndGet();
+
+        return secureRandom.nextLong();
     }
 
     public String getExpression(String operand) {
-        return "" + i.incrementAndGet();
+        return secureRandom.nextLong() + "";
     }
 
     public boolean supportsFastAggregates(DataTypeJdbc dataType) {
         return true;
     }
-
 }

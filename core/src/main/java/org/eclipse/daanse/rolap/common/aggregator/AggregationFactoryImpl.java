@@ -25,11 +25,11 @@ import org.eclipse.daanse.rolap.aggregator.DistinctCountAggregator;
 import org.eclipse.daanse.rolap.aggregator.MaxAggregator;
 import org.eclipse.daanse.rolap.aggregator.MinAggregator;
 import org.eclipse.daanse.rolap.aggregator.SumAggregator;
-import org.eclipse.daanse.rolap.aggregator.experimental.BitAggAggregator;
-import org.eclipse.daanse.rolap.aggregator.experimental.ListAggAggregator;
-import org.eclipse.daanse.rolap.aggregator.experimental.NoneAggregator;
-import org.eclipse.daanse.rolap.aggregator.experimental.NthValueAggregator;
-import org.eclipse.daanse.rolap.aggregator.experimental.PercentileAggregator;
+import org.eclipse.daanse.rolap.aggregator.extra.BitAggAggregator;
+import org.eclipse.daanse.rolap.aggregator.extra.ListAggAggregator;
+import org.eclipse.daanse.rolap.aggregator.extra.NoneAggregator;
+import org.eclipse.daanse.rolap.aggregator.extra.NthValueAggregator;
+import org.eclipse.daanse.rolap.aggregator.extra.PercentileAggregator;
 import org.eclipse.daanse.rolap.common.RolapOrderedColumn;
 import org.eclipse.daanse.rolap.element.RolapColumn;
 
