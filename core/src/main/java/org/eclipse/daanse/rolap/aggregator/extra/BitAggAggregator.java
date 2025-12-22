@@ -15,6 +15,7 @@ package org.eclipse.daanse.rolap.aggregator.extra;
 import java.util.List;
 
 import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
+import org.eclipse.daanse.jdbc.db.dialect.api.generator.BitOperation;
 import org.eclipse.daanse.olap.api.DataTypeJdbc;
 import org.eclipse.daanse.olap.api.Evaluator;
 import org.eclipse.daanse.olap.api.aggregator.Aggregator;
@@ -59,27 +60,15 @@ public class BitAggAggregator implements Aggregator {
     }
 
     private StringBuilder and(CharSequence operand) {
-        if (not) {
-            return dialect.generateNAndBitAggregation(operand);
-        } else {
-            return dialect.generateAndBitAggregation(operand);
-        }
+        return dialect.generateBitAggregation(not ? BitOperation.NAND : BitOperation.AND, operand);
     }
 
     private StringBuilder or(CharSequence operand) {
-        if (not) {
-            return dialect.generateNOrBitAggregation(operand);
-        } else {
-            return dialect.generateOrBitAggregation(operand);
-        }
+        return dialect.generateBitAggregation(not ? BitOperation.NOR : BitOperation.OR, operand);
     }
 
     private StringBuilder xor(CharSequence operand) {
-        if (not) {
-            return dialect.generateNXorBitAggregation(operand);
-        } else {
-            return dialect.generateXorBitAggregation(operand);
-        }
+        return dialect.generateBitAggregation(not ? BitOperation.NXOR : BitOperation.XOR, operand);
     }
 
     @Override

@@ -34,8 +34,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.BestFitColumnType;
-import org.eclipse.daanse.jdbc.db.dialect.api.Datatype;
+import org.eclipse.daanse.jdbc.db.dialect.api.type.BestFitColumnType;
+import org.eclipse.daanse.jdbc.db.dialect.api.type.Datatype;
 import org.eclipse.daanse.olap.api.CatalogReader;
 import org.eclipse.daanse.olap.api.MatchType;
 import org.eclipse.daanse.olap.api.NameSegment;
@@ -531,11 +531,11 @@ public class RolapLevel extends LevelBase {
     private static Datatype getType(org.eclipse.daanse.rolap.mapping.model.Level mappingLevel) {
         if (mappingLevel.getColumnType() != null && !ColumnInternalDataType.UNDEFINED.equals(mappingLevel.getColumnType()) ) {
             if (ColumnInternalDataType.STRING.equals(mappingLevel.getColumnType())) {
-                return org.eclipse.daanse.jdbc.db.dialect.api.Datatype.VARCHAR;
+                return org.eclipse.daanse.jdbc.db.dialect.api.type.Datatype.VARCHAR;
             }
-            return org.eclipse.daanse.jdbc.db.dialect.api.Datatype.fromValue(mappingLevel.getColumnType().getLiteral());
+            return org.eclipse.daanse.jdbc.db.dialect.api.type.Datatype.fromValue(mappingLevel.getColumnType().getLiteral());
         }
-        return org.eclipse.daanse.jdbc.db.dialect.api.Datatype.fromValue(mappingLevel.getColumn().getType().getLiteral());
+        return org.eclipse.daanse.jdbc.db.dialect.api.type.Datatype.fromValue(mappingLevel.getColumn().getType().getLiteral());
     }
 
     private void setLevelInProperties() {

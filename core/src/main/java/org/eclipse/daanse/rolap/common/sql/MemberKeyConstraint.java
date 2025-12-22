@@ -25,7 +25,7 @@ package org.eclipse.daanse.rolap.common.sql;
 
 import java.util.List;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.Datatype;
+import org.eclipse.daanse.jdbc.db.dialect.api.type.Datatype;
 import org.eclipse.daanse.olap.api.Evaluator;
 import org.eclipse.daanse.olap.api.SqlExpression;
 import  org.eclipse.daanse.olap.util.Pair;

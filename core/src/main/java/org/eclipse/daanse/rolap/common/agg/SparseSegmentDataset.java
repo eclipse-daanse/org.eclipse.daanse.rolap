@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.BestFitColumnType;
+import org.eclipse.daanse.jdbc.db.dialect.api.type.BestFitColumnType;
 import org.eclipse.daanse.olap.key.CellKey;
 import org.eclipse.daanse.olap.spi.SegmentBody;
 import  org.eclipse.daanse.olap.util.Pair;

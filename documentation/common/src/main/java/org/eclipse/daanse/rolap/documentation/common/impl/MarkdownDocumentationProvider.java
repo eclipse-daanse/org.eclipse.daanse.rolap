@@ -268,8 +268,8 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
         if (oIndexInfo.isPresent()) {
             if (oIndexInfo.get().indexInfoItems() != null) {
                 for (IndexInfoItem indexInfoItem : oIndexInfo.get().indexInfoItems()) {
-                    final int type = indexInfoItem.type();
-                    final int cardinality = indexInfoItem.cardinalityColumn();
+                    final int type = indexInfoItem.type().getValue();
+                    final long cardinality = indexInfoItem.cardinality();
                     final boolean unique = !indexInfoItem.unique();
                     if (type != DatabaseMetaData.tableIndexStatistic) {
                         return cardinality;

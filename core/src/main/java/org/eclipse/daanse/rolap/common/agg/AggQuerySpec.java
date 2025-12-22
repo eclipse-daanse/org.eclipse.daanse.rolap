@@ -31,7 +31,7 @@ package org.eclipse.daanse.rolap.common.agg;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.BestFitColumnType;
+import org.eclipse.daanse.jdbc.db.dialect.api.type.BestFitColumnType;
 import  org.eclipse.daanse.olap.util.Pair;
 import org.eclipse.daanse.rolap.common.RolapStar;
 import org.eclipse.daanse.rolap.common.StarColumnPredicate;

@@ -42,8 +42,8 @@ import java.util.Optional;
 
 import org.eclipse.daanse.olap.api.execution.ExecutionMetadata;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.BestFitColumnType;
-import org.eclipse.daanse.jdbc.db.dialect.api.Datatype;
+import org.eclipse.daanse.jdbc.db.dialect.api.type.BestFitColumnType;
+import org.eclipse.daanse.jdbc.db.dialect.api.type.Datatype;
 import org.eclipse.daanse.olap.api.ConfigConstants;
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.Evaluator;

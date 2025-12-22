@@ -42,7 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.BestFitColumnType;
+import org.eclipse.daanse.jdbc.db.dialect.api.type.BestFitColumnType;
 import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.olap.api.ConfigConstants;
 import org.eclipse.daanse.olap.api.Context;
@@ -662,7 +662,7 @@ public class SqlQuery {
     }
 
     public void addOrderBy(String expr, String alias, boolean ascending, boolean prepend, String nullParentValue,
-            org.eclipse.daanse.jdbc.db.dialect.api.Datatype type, boolean collateNullsLast) {
+            org.eclipse.daanse.jdbc.db.dialect.api.type.Datatype type, boolean collateNullsLast) {
         String orderExpr =
                 dialect.generateOrderItemForOrderValue(
                     dialect.requiresOrderByAlias() && alias != null

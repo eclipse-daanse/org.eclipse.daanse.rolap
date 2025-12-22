@@ -15,7 +15,8 @@ package org.eclipse.daanse.rolap.aggregator.extra;
 import java.util.List;
 
 import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
-import org.eclipse.daanse.jdbc.db.dialect.api.OrderedColumn;
+import org.eclipse.daanse.jdbc.db.dialect.api.order.OrderedColumn;
+import org.eclipse.daanse.jdbc.db.dialect.api.order.SortDirection;
 import org.eclipse.daanse.olap.api.DataTypeJdbc;
 import org.eclipse.daanse.olap.api.Evaluator;
 import org.eclipse.daanse.olap.api.aggregator.Aggregator;
@@ -49,10 +50,12 @@ public class NthValueAggregator implements Aggregator {
     public StringBuilder getExpression(CharSequence operand) {
         List<OrderedColumn> columnsList = List.of();
         if (rolapOrderedColumnList != null) {
-            columnsList = rolapOrderedColumnList.stream().map(c -> new OrderedColumn(c.getColumn().getName(), c.getColumn().getTable(), c.isAscend())).toList();
+            columnsList = rolapOrderedColumnList.stream()
+                .map(c -> new OrderedColumn(c.getColumn().getName(), c.getColumn().getTable(),
+                    c.isAscend() ? SortDirection.ASC : SortDirection.DESC))
+                .toList();
         }
-        return dialect.generateNthValueAgg(operand, ignoreNulls, n,
-            columnsList);
+        return dialect.generateNthValueAgg(operand, ignoreNulls, n, columnsList);
     }
 
     @Override
