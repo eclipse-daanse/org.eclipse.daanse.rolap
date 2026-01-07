@@ -796,7 +796,7 @@ public class RolapLevel extends LevelBase {
 
         List<Member> levelMembers = schemaReader.getLevelMembers(this, true);
         if (levelMembers.size() > 0) {
-            Member parent = levelMembers.get(0).getParentMember();
+            Member parent = levelMembers.getFirst().getParentMember();
             return
                 RolapUtil.findBestMemberMatch(
                     levelMembers,

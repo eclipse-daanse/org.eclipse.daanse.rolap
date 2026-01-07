@@ -115,7 +115,7 @@ public class RolapDependencyTestingEvaluator extends RolapEvaluator {
         if (calc.getResultStyle() == ResultStyle.MUTABLE_LIST) {
             List<Object> list = (List) result;
             if (list.size() > 0) {
-                final Object zeroth = list.get(0);
+                final Object zeroth = list.getFirst();
                 list.set(0, zeroth);
             }
         }

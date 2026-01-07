@@ -28,6 +28,7 @@ import static org.osgi.service.component.annotations.ReferencePolicy.DYNAMIC;
 import static org.osgi.service.component.annotations.ServiceScope.SINGLETON;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -142,7 +143,7 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
         try (Connection connection = dataSource.getConnection()) {
             dialect = dialectFactory.createDialect(connection);
             aggregationFactory = new AggregationFactoryImpl(dialect, this.getCustomAggregators());
-        } catch (Exception e) {
+        } catch (SQLException e) {
             LOGGER.error(ERR_MSG_DIALECT_INIT, e);
         }
 

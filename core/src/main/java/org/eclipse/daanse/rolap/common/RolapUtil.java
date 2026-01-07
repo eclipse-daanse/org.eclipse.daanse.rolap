@@ -209,7 +209,7 @@ public class RolapUtil {
         // '[Gender].[F]'.
         final List<RolapMember> rootMembers = reader.getRootMembers();
         if (rootMembers.size() == 1) {
-            final RolapMember rootMember = rootMembers.get(0);
+            final RolapMember rootMember = rootMembers.getFirst();
             if (rootMember.isAll()) {
                 member =
                     lookupMemberInternal(
@@ -413,9 +413,9 @@ public class RolapUtil {
         }
         switch (matchType) {
         case FIRST:
-            return members.get(0);
+            return members.getFirst();
         case LAST:
-            return members.get(members.size() - 1);
+            return members.getLast();
         default:
             // fall through
         }
@@ -589,7 +589,7 @@ public class RolapUtil {
 
                     assert !lowestMembers.isEmpty();
 
-                    Member lowMember = lowestMembers.get(0);
+                    Member lowMember = lowestMembers.getFirst();
 
                     while (true) {
                         RolapStar.Column curColumn =

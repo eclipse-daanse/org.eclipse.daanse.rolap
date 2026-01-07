@@ -276,7 +276,7 @@ public abstract class AbstractMemoryMonitor
         // notifyNewLowThreshold method that it should set the value to zero.
         return listeners.isEmpty()
                ? Long.MAX_VALUE
-               : listeners.get(0).threshold;
+               : listeners.getFirst().threshold;
     }
 
 

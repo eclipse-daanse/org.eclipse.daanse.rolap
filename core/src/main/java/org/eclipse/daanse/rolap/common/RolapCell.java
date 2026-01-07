@@ -467,7 +467,7 @@ public class RolapCell implements Cell {
                     cubes.add(measure.getCube());
                 }
             }
-            defaultCube = cubes.get(0);
+            defaultCube = cubes.getFirst();
             assert defaultCube instanceof RolapPhysicalCube;
         }
         final DrillThroughVisitor visitor =
@@ -815,27 +815,24 @@ public class RolapCell implements Cell {
         }
 
         public void handleMember(Member member) {
-            if (member instanceof RolapStoredMeasure) {
-                // If this member is in a different cube that previous members
-                // we've seen, we cannot drill through.
-                final RolapCube cube = ((RolapStoredMeasure) member).getCube();
-                if (this.cube == null) {
-                    this.cube = cube;
-                } else if (this.cube != cube) {
-                    // this measure lives in a different cube than previous
-                    // measures we have seen
-                    throw bomb;
+            switch (member) {
+                case RolapStoredMeasure storedMeasure -> {
+                    // If this member is in a different cube that previous members
+                    // we've seen, we cannot drill through.
+                    final RolapCube memberCube = storedMeasure.getCube();
+                    if (this.cube == null) {
+                        this.cube = memberCube;
+                    } else if (this.cube != memberCube) {
+                        // this measure lives in a different cube than previous
+                        // measures we have seen
+                        throw bomb;
+                    }
                 }
-            } else if (member instanceof RolapCubeMember) {
-                handleMember(((RolapCubeMember) member).member);
-            } else if (member instanceof RolapHierarchy.RolapCalculatedMeasure measure)
-            {
-                measure.getFormula().getExpression().accept(this);
-            } else if (member instanceof RolapMember) {
-                // regular RolapMember - fine
-            } else {
-                // don't know what this is!
-                throw bomb;
+                case RolapCubeMember cubeMember -> handleMember(cubeMember.member);
+                case RolapHierarchy.RolapCalculatedMeasure measure ->
+                    measure.getFormula().getExpression().accept(this);
+                case RolapMember ignored -> { } // regular RolapMember - fine
+                default -> throw bomb; // don't know what this is!
             }
         }
 

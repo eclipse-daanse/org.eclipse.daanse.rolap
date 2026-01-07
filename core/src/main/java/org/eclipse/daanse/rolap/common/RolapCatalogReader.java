@@ -417,7 +417,7 @@ public class RolapCatalogReader
         } else {
             MemberChildrenConstraint constraint =
                 sqlConstraintFactory.getMemberChildrenConstraint(context);
-            final Hierarchy hierarchy = members.get(0).getHierarchy();
+            final Hierarchy hierarchy = members.getFirst().getHierarchy();
             final MemberReader memberReader = getMemberReader(hierarchy);
             final List<RolapMember> rolapMemberList = Util.cast(members);
             final List<RolapMember> children = new ArrayList<>();
@@ -582,7 +582,7 @@ public class RolapCatalogReader
                     RolapUtil.findBestMemberMatch(
                         children,
                         (RolapMember) parent,
-                        children.get(0).getLevel(),
+                        children.getFirst().getLevel(),
                         childName,
                         matchType);
             }
@@ -630,10 +630,10 @@ public class RolapCatalogReader
         if (nameParts.size() != 1) {
             return null;
         }
-        if (!(nameParts.get(0) instanceof NameSegment)) {
+        if (!(nameParts.getFirst() instanceof NameSegment)) {
             return null;
         }
-        final String name = ((NameSegment) nameParts.get(0)).getName();
+        final String name = ((NameSegment) nameParts.getFirst()).getName();
         return catalog.getNamedSet(name);
     }
 

@@ -52,9 +52,6 @@ class MemberCacheHelperTest {
     @Mock
     private TestPublicChildByNameConstraint childByNameConstraint;
 
-    @Mock
-    private TestPublicMemberKey memberKey;
-
     private MemberChildrenConstraint defMemChildrenConstraint =
         DefaultMemberChildrenConstraint.instance();
 
@@ -158,18 +155,19 @@ class MemberCacheHelperTest {
         List<String> childNames = fillChildren(children, 3);
         when(childByNameConstraint.getChildNames()).thenReturn(
             childNames.subList(1, 3));
-        List<MemberKey> childKeys = new ArrayList<>();
+        List<MemberKeyR> childKeys = new ArrayList<>();
 
         for (RolapMember member : children) {
             when(member.getParentMember()).thenReturn(parentMember);
-            MemberKey key = mockMemberKey();
+            MemberKeyR key = mockMemberKey();
             childKeys.add(key);
             cacheHelper.putMember(key, member);
         }
-        cacheHelper.putMember(memberKey, parentMember);
+        MemberKeyR parentKey = new MemberKeyR(null, "parentValue");
+        cacheHelper.putMember(parentKey, parentMember);
         cacheHelper.putChildren(parentMember, childByNameConstraint, children);
 
-        cacheHelper.removeMember(childKeys.get(0));
+        cacheHelper.removeMember(childKeys.getFirst());
 
         List<RolapMember> members =
             cacheHelper.getChildrenFromCache(
@@ -178,10 +176,14 @@ class MemberCacheHelperTest {
         assertThat(members).as("Retrieved children should not include the removed member").isEqualTo(children.subList(1, 3));
     }
 
-    private MemberKey mockMemberKey() {
-        MemberKey mock = mock(TestPublicMemberKey.class);
-        when(mock.getLevel()).thenReturn(mock(RolapLevel.class));
-        return mock;
+    private static int keyCounter = 0;
+
+    private MemberKeyR mockMemberKey() {
+        RolapMember parent = mock(RolapMember.class);
+        RolapLevel mockLevel = mock(RolapLevel.class);
+        when(mockLevel.isParentChild()).thenReturn(true);
+        when(parent.getLevel()).thenReturn(mockLevel);
+        return new MemberKeyR(parent, "key-" + (keyCounter++));
     }
 
     private List<String> fillChildren(List<RolapMember> children, int count) {

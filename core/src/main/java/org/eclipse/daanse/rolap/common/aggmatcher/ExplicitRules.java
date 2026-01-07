@@ -810,12 +810,12 @@ public class ExplicitRules {
                                 msgRecorder.reportError(
                                     MessageFormat.format(unknownHierarchyName,
                                         msgRecorder.getContext(),
-                                        names.get(0).toString()));
+                                        names.getFirst().toString()));
                             } else {
                                 msgRecorder.reportError(
                                     MessageFormat.format(unknownLevelName,
                                         msgRecorder.getContext(),
-                                        names.get(0).toString(),
+                                        names.getFirst().toString(),
                                         names.get(1).toString()));
                             }
                         }
@@ -1007,14 +1007,14 @@ public class ExplicitRules {
                             false,
                             DataType.MEMBER);
                         if (member == null) {
-                            if (!(names.get(0) instanceof NameSegment nameSegment
+                            if (!(names.getFirst() instanceof NameSegment nameSegment
                                     && nameSegment.getName()
                                         .equals("Measures")))
                             {
                                 msgRecorder.reportError(
                                     MessageFormat.format(badMeasures,
                                         msgRecorder.getContext(),
-                                        names.get(0).toString()));
+                                        names.getFirst().toString()));
                             } else {
                                 msgRecorder.reportError(
                                     MessageFormat.format(unknownMeasureName,

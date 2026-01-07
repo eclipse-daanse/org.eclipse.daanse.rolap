@@ -407,8 +407,8 @@ public class SqlStatement implements ISqlStatement {
       Util.newError( e, new StringBuilder("executing SQL").append("; sql=[").append(sql).append("]").toString() );
     try {
       close();
-    } catch ( Exception t ) {
-      // ignore
+    } catch (RuntimeException ignored) {
+      // Ignoring cleanup exception during error handling
     }
     return runtimeException;
   }

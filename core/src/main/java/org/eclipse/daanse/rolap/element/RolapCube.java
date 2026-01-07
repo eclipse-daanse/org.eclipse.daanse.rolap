@@ -2053,7 +2053,7 @@ public abstract class RolapCube extends CubeBase {
 
     @Override
 	public List<Member> getMeasures() {
-        Level measuresLevel = dimensions.getFirst().getHierarchies().getFirst().getLevels().get(0);
+        Level measuresLevel = dimensions.getFirst().getHierarchies().getFirst().getLevels().getFirst();
         return getCatalogReader().getLevelMembers(measuresLevel, true);
     }
 

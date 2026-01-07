@@ -135,7 +135,7 @@ public class ScenarioImpl implements Scenario {
         // calculated members, compound members, parent-child hierarchies,
         // hierarchies whose default member is not the 'all' member, and so
         // forth.
-        final RolapStoredMeasure measure = (RolapStoredMeasure) members.get(0);
+        final RolapStoredMeasure measure = (RolapStoredMeasure) members.getFirst();
         final RolapCube baseCube = measure.getCube();
         final RolapStar.Measure starMeasure =
             (RolapStar.Measure) measure.getStarMeasure();

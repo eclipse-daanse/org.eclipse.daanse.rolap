@@ -198,7 +198,7 @@ public final class GroupingSetsList {
     }
 
     protected GroupingSet getDefaultGroupingSet() {
-        return groupingSets.get(0);
+        return groupingSets.getFirst();
     }
 
     public RolapStar.Column[] getDefaultColumns() {

@@ -418,12 +418,12 @@ public class CrossJoinArgFactory {
 
             if (allArgsOneInput == null
                 || allArgsOneInput.isEmpty()
-                || allArgsOneInput.get(0) == null)
+                || allArgsOneInput.getFirst() == null)
             {
                 cjArgsBothInputs[i] = expandNonNative(evaluator, args[i]);
             } else {
                 // Collect CJ CrossJoinArg
-                cjArgsBothInputs[i] = allArgsOneInput.get(0);
+                cjArgsBothInputs[i] = allArgsOneInput.getFirst();
             }
             if (returnAny) {
                 continue;
@@ -743,11 +743,11 @@ public class CrossJoinArgFactory {
         List<CrossJoinArg[]> allArgs =
             checkCrossJoinArg(evaluator, filterArgs[0], enableNativeFilter);
 
-        if (allArgs == null || allArgs.isEmpty() || allArgs.get(0) == null) {
+        if (allArgs == null || allArgs.isEmpty() || allArgs.getFirst() == null) {
             return null;
         }
 
-        final CrossJoinArg[] cjArgs = allArgs.get(0);
+        final CrossJoinArg[] cjArgs = allArgs.getFirst();
         if (cjArgs == null) {
             return null;
         }

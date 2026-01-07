@@ -68,12 +68,12 @@ public class ExpressionUtil {
                     return element.getSql();
                 }
             }
-            return expression.getSqls().get(0).getSql();
+            return expression.getSqls().getFirst().getSql();
     }
 
     public static String toString(RolapSqlExpression expression) {
     	if (expression != null && expression.getSqls() != null && !expression.getSqls().isEmpty()) {
-    		return expression.getSqls().get(0).getSql();
+    		return expression.getSqls().getFirst().getSql();
     	}
     	return null;
     }

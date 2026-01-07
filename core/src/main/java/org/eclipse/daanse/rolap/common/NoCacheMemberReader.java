@@ -110,7 +110,7 @@ public class NoCacheMemberReader implements MemberReader, MemberCache {
     @Override
 	public Object makeKey(final RolapMember parent, final Object key) {
         LOGGER.debug("Entering makeKey");
-        return new MemberKey(parent, key);
+        return new MemberKeyR(parent, key);
     }
 
     @Override
@@ -508,7 +508,7 @@ public class NoCacheMemberReader implements MemberReader, MemberCache {
         if (defaultMember != null) {
             return defaultMember;
         }
-        return getRootMembers().get(0);
+        return getRootMembers().getFirst();
     }
 
     @Override

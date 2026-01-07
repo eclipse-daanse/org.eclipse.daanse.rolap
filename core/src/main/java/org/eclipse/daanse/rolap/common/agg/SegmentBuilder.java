@@ -252,7 +252,7 @@ public class SegmentBuilder {
         // loaded here is consistent w/ the first segment processed below.
         List<Map.Entry<SegmentHeader, SegmentBody>>  segments =
             List.copyOf(map.entrySet());
-        final SegmentHeader firstHeader = segments.get(0).getKey();
+        final SegmentHeader firstHeader = segments.getFirst().getKey();
         final List<AxisInfo> axes = new ArrayList<>(keepColumns.size());
         int z = 0, j = 0;
         List<SegmentColumn> firstHeaderConstrainedColumns =

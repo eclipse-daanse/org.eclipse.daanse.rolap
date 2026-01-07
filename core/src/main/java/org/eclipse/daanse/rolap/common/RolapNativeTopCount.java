@@ -217,14 +217,14 @@ public class RolapNativeTopCount extends RolapNativeSet {
         // array is the CrossJoin dimensions.  The second array, if any,
         // contains additional constraints on the dimensions. If either the list
         // or the first array is null, then native cross join is not feasible.
-        if (allArgs == null || allArgs.isEmpty() || allArgs.get(0) == null) {
+        if (allArgs == null || allArgs.isEmpty() || allArgs.getFirst() == null) {
             alertNonNativeTopCount(
                 "Set in 1st argument does not support native eval.",
                 evaluator.getCatalogReader().getContext().getConfigValue(ConfigConstants.ALERT_NATIVE_EVALUATION_UNSUPPORTED, ConfigConstants.ALERT_NATIVE_EVALUATION_UNSUPPORTED_DEFAULT_VALUE, String.class));
             return null;
         }
 
-        CrossJoinArg[] cjArgs = allArgs.get(0);
+        CrossJoinArg[] cjArgs = allArgs.getFirst();
         if (isPreferInterpreter(cjArgs, false)) {
             alertNonNativeTopCount(
                 "One or more args prefer non-native.",

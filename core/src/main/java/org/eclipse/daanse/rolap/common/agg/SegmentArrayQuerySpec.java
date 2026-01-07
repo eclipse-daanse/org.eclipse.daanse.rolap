@@ -67,7 +67,7 @@ class SegmentArrayQuerySpec extends AbstractQuerySpec {
     {
         super(groupingSetsList.getStar(), false);
         this.segments = groupingSetsList.getDefaultSegments();
-        this.segment0 = segments.get(0);
+        this.segment0 = segments.getFirst();
         this.groupingSetsList = groupingSetsList;
         this.compoundPredicateList = compoundPredicateList;
         assert isValid(true);

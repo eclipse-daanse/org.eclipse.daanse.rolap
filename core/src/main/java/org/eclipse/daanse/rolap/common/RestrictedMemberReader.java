@@ -322,7 +322,7 @@ public class RestrictedMemberReader extends DelegatingMemberReader {
         {
             return firstAvailableRootMember;
         }
-        return new MultiCardinalityDefaultMember(rootMembers.get(0));
+        return new MultiCardinalityDefaultMember(rootMembers.getFirst());
     }
 
     

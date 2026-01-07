@@ -83,7 +83,7 @@ class RolapUtilTest {
     List<String> polapStarKey = RolapStarRegistry.makeRolapStarKey(FACT_NAME);
       assertThat(polapStarKey).isNotNull();
       assertThat(polapStarKey.size()).isEqualTo(1);
-      assertThat(polapStarKey.get(0)).isEqualTo(FACT_NAME);
+      assertThat(polapStarKey.getFirst()).isEqualTo(FACT_NAME);
   }
 
   @Test
@@ -103,7 +103,7 @@ class RolapUtilTest {
     List<String> polapStarKey = RolapUtil.makeRolapStarKey(fact);
       assertThat(polapStarKey).isNotNull();
       assertThat(polapStarKey.size()).isEqualTo(3);
-      assertThat(polapStarKey.get(0)).isEqualTo(TABLE_ALIAS);
+      assertThat(polapStarKey.getFirst()).isEqualTo(TABLE_ALIAS);
       assertThat(polapStarKey.get(1)).isEqualTo(FILTER_DIALECT);
       assertThat(polapStarKey.get(2)).isEqualTo(FILTER_QUERY);
   }
@@ -126,7 +126,7 @@ class RolapUtilTest {
     List<String> polapStarKey = RolapUtil.makeRolapStarKey(fact);
       assertThat(polapStarKey).isNotNull();
       assertThat(polapStarKey.size()).isEqualTo(1);
-      assertThat(polapStarKey.get(0)).isEqualTo(TABLE_ALIAS);
+      assertThat(polapStarKey.getFirst()).isEqualTo(TABLE_ALIAS);
   }
 
   @Test
@@ -143,7 +143,7 @@ class RolapUtilTest {
     List<String> polapStarKey = RolapUtil.makeRolapStarKey(fact);
       assertThat(polapStarKey).isNotNull();
       assertThat(polapStarKey.size()).isEqualTo(1);
-      assertThat(polapStarKey.get(0)).isEqualTo(TABLE_ALIAS);
+      assertThat(polapStarKey.getFirst()).isEqualTo(TABLE_ALIAS);
   }
 
   @Test
@@ -152,7 +152,7 @@ class RolapUtilTest {
         getFactRelationMock());
       assertThat(polapStarKey).isNotNull();
       assertThat(polapStarKey.size()).isEqualTo(1);
-      assertThat(polapStarKey.get(0)).isEqualTo(RELATION_ALIAS);
+      assertThat(polapStarKey.getFirst()).isEqualTo(RELATION_ALIAS);
   }
 
   private static org.eclipse.daanse.rolap.mapping.model.RelationalQuery getFactRelationMock() throws Exception {

@@ -101,7 +101,7 @@ class FilteredIterableTest{
                     }
                 });
         assertThat(identical.isEmpty()).isFalse();
-        assertThat(identical.get(0)).isNotNull();
+        assertThat(identical.getFirst()).isNotNull();
         int k = 0;
         for (final Integer i : identical) {
             assertThat(identical.get(k)).isEqualTo(i);

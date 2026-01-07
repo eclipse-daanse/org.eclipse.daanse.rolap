@@ -65,7 +65,7 @@ class AggQuerySpec {
     {
         this.aggStar = aggStar;
         this.segments = groupingSetsList.getDefaultSegments();
-        this.segment0 = segments.get(0);
+        this.segment0 = segments.getFirst();
         this.rollup = rollup;
         this.groupingSetsList = groupingSetsList;
     }

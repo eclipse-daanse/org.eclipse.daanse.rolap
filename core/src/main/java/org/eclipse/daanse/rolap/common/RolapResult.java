@@ -670,7 +670,7 @@ public class RolapResult extends ResultBase {
       QueryComponent[] cellProperties = query.getCellProperties();
       if(!(cellProperties.length == 1
               && ((NameSegment)
-              org.eclipse.daanse.olap.common.Util.parseIdentifier(cellProperties[0].toString()).get(0)).getName().equalsIgnoreCase(
+              org.eclipse.daanse.olap.common.Util.parseIdentifier(cellProperties[0].toString()).getFirst()).getName().equalsIgnoreCase(
             		  StandardProperty.CELL_ORDINAL.getName()    ))) {
         final RolapEvaluator finalInternalSlicerEvaluator = internalSlicerEvaluator;
         ExecutionContext.where(execution.asContext(), () -> {
@@ -1414,22 +1414,17 @@ public Cell getCell( int[] pos ) {
   }
 
   private static void processMemberExpr( Object o, List<Member> exprMembers ) {
-    if ( o instanceof Member member && o instanceof RolapCubeMember ) {
-      exprMembers.add( member );
-    } else if ( o instanceof VisualTotalMember member ) {
-      Expression exp = member.getExpression();
-      processMemberExpr( exp, exprMembers );
-    } else if ( o instanceof Expression exp && !( o instanceof MemberExpression) ) {
-      ResolvedFunCallImpl funCall = (ResolvedFunCallImpl) exp;
-      Expression[] exps = funCall.getArgs();
-      processMemberExpr( exps, exprMembers );
-    } else if ( o instanceof Expression[] exps ) {
-      for ( Expression exp : exps ) {
-        processMemberExpr( exp, exprMembers );
+    switch (o) {
+      case RolapCubeMember member -> exprMembers.add(member);
+      case VisualTotalMember member -> processMemberExpr(member.getExpression(), exprMembers);
+      case MemberExpression memberExp -> processMemberExpr(memberExp.getMember(), exprMembers);
+      case ResolvedFunCallImpl funCall -> processMemberExpr(funCall.getArgs(), exprMembers);
+      case Expression[] exps -> {
+        for (Expression exp : exps) {
+          processMemberExpr(exp, exprMembers);
+        }
       }
-    } else if ( o instanceof MemberExpression memberExp ) {
-      Member member = memberExp.getMember();
-      processMemberExpr( member, exprMembers );
+      default -> { }
     }
   }
 

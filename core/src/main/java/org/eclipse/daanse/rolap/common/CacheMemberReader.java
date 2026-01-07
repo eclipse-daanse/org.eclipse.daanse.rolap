@@ -57,7 +57,7 @@ import org.eclipse.daanse.rolap.element.RolapMemberBase;
 public class CacheMemberReader implements MemberReader, MemberCache {
     private final MemberSource source;
     private final List<RolapMember> members;
-    /** Maps a {@link MemberKey} to a {@link RolapMember}. */
+    /** Maps a {@link MemberKeyR} to a {@link RolapMember}. */
     private final Map<Object, RolapMember> mapKeyToMember;
 
     public CacheMemberReader(MemberSource source) {
@@ -103,7 +103,7 @@ public class CacheMemberReader implements MemberReader, MemberCache {
         RolapLevel level, List<Comparable> keyValues)
     {
         assert keyValues.size() == 1;
-        return mapKeyToMember.get(keyValues.get(0));
+        return mapKeyToMember.get(keyValues.getFirst());
     }
 
     // implement MemberReader
@@ -115,7 +115,7 @@ public class CacheMemberReader implements MemberReader, MemberCache {
     // implement MemberCache
     @Override
 	public Object makeKey(RolapMember parent, Object key) {
-        return new MemberKey(parent, key);
+        return new MemberKeyR(parent, key);
     }
 
     // implement MemberCache
@@ -373,7 +373,7 @@ public class CacheMemberReader implements MemberReader, MemberCache {
         if (defaultMember != null) {
             return defaultMember;
         }
-        return getRootMembers().get(0);
+        return getRootMembers().getFirst();
     }
 
     @Override

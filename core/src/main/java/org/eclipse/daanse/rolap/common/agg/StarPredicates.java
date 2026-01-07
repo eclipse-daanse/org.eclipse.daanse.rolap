@@ -47,7 +47,7 @@ public class StarPredicates {
                 return new LiteralStarPredicate(
                     predicate.getConstrainedColumn(), false);
             case 1:
-                return listColumnPredicate.getPredicates().get(0);
+                return listColumnPredicate.getPredicates().getFirst();
             default:
                 return listColumnPredicate;
             }

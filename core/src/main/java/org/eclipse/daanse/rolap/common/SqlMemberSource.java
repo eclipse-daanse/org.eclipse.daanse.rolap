@@ -175,7 +175,7 @@ public class SqlMemberSource
                     keyValues));
         return switch (list.size()) {
         case 0 -> null;
-        case 1 -> list.get(0);
+        case 1 -> list.getFirst();
         default -> throw Util.newError(
             new StringBuilder("More than one member in level ").append(level).append(" with key ")
             .append(keyValues).toString());
@@ -394,7 +394,7 @@ public class SqlMemberSource
         try {
             final List<SqlStatement.Accessor> accessors = stmt.getAccessors();
             List<RolapMember> list = new ArrayList<>();
-            Map<MemberKey, RolapMember> map =
+            Map<MemberKeyR, RolapMember> map =
                 new HashMap<>();
             RolapMember root = null;
             if (hierarchy.hasAll()) {
@@ -427,7 +427,7 @@ public class SqlMemberSource
                         value = Util.sqlNullValue;
                     }
                     RolapMember parent = member;
-                    MemberKey key = new MemberKey(parent, value);
+                    MemberKeyR key = new MemberKeyR(parent, value);
                     member = map.get(key);
                     if (member == null) {
                         RolapMemberBase memberBase =
@@ -1084,7 +1084,7 @@ RME is this right
                     throw new ResourceLimitExceededException(limit);
                 }
 
-                Object value = accessors.get(0).get();
+                Object value = accessors.getFirst().get();
                 if (value == null) {
                     value = Util.sqlNullValue;
                 }

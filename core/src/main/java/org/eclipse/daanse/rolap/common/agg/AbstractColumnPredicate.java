@@ -96,7 +96,7 @@ public abstract class AbstractColumnPredicate implements StarColumnPredicate {
         if (valueList.size() != 1) {
             throw new IllegalArgumentException("valueList.size() should be 1");
         }
-        return evaluate(valueList.get(0));
+        return evaluate(valueList.getFirst());
     }
 
     @Override

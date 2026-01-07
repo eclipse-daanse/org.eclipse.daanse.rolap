@@ -906,7 +906,7 @@ public class SqlQuery {
                 // the first table was added before join, it has to be handled
                 // specially: Table.column = expression
                 if ((addedTables.size() == 1
-                     && addedTables.get(0).equals(joinOnClause.left)
+                     && addedTables.getFirst().equals(joinOnClause.left)
                      && joinOnClause.left.equals(joinOnClause.right))
                     || (alias.equals(joinOnClause.left)
                         && addedTables.contains(joinOnClause.right))

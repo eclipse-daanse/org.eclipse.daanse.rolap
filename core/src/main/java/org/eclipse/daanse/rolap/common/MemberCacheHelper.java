@@ -111,7 +111,7 @@ public class MemberCacheHelper implements MemberCache {
     // implement MemberCache
     @Override
 	public Object makeKey(RolapMember parent, Object key) {
-        return new MemberKey(parent, key);
+        return new MemberKeyR(parent, key);
     }
 
     // implement MemberCache
@@ -268,7 +268,7 @@ public class MemberCacheHelper implements MemberCache {
         // Flush entries from the level-to-members map
         // for member's level and all child levels.
         // Important: Do this even if the member is apparently not in the cache.
-        RolapLevel level = ((MemberKey) key).getLevel();
+        RolapLevel level = ((MemberKeyR) key).getLevel();
         if (level == null) {
             level = (RolapLevel) this.rolapHierarchy.getLevels().getFirst();
         }

@@ -186,7 +186,7 @@ public abstract class ListPredicate implements StarPredicate {
     @Override
 	public void toSql(SqlQuery sqlQuery, StringBuilder buf) {
         if (children.size() == 1) {
-            children.get(0).toSql(sqlQuery, buf);
+            children.getFirst().toSql(sqlQuery, buf);
         } else {
             int k = 0;
             buf.append("(");

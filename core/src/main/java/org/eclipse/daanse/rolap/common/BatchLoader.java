@@ -728,7 +728,7 @@ public class BatchLoader {
             if (!measuresList.contains(measure)) {
                 assert (measuresList.isEmpty())
                        || (measure.getStar()
-                           == (measuresList.get(0)).getStar())
+                           == (measuresList.getFirst()).getStar())
                     : "Measure must belong to same star as other measures";
                 measuresList.add(measure);
             }
@@ -743,7 +743,7 @@ public class BatchLoader {
          * @return the RolapStar associated with the Batch's first Measure
          */
         private RolapStar getStar() {
-            RolapStar.Measure measure = measuresList.get(0);
+            RolapStar.Measure measure = measuresList.getFirst();
             return measure.getStar();
         }
 
@@ -999,7 +999,7 @@ public class BatchLoader {
                     && measure.getExpression() instanceof
                     RolapSqlExpression measureExpr)
                 {
-                    org.eclipse.daanse.olap.api.SqlStatement measureSql = measureExpr.getSqls().get(0);
+                    org.eclipse.daanse.olap.api.SqlStatement measureSql = measureExpr.getSqls().getFirst();
                     // Checks if the SQL contains "SELECT" to detect the case a
                     // subquery is used to define the measure. This is not a
                     // perfect check, because a SQL expression on column names

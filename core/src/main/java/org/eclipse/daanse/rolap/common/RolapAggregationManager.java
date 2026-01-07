@@ -334,7 +334,7 @@ public abstract class RolapAggregationManager {
             {
                 measure = (RolapStoredMeasure) members[0];
             } else {
-                measure = (RolapStoredMeasure) cube.getMeasures().get(0);
+                measure = (RolapStoredMeasure) cube.getMeasures().getFirst();
             }
         } else {
             if (members.length > 0
@@ -476,39 +476,41 @@ public abstract class RolapAggregationManager {
         final RolapCube baseCube,
         final CellRequest request)
     {
-        RolapCubeLevel level;
-        if (member instanceof RolapCubeLevel) {
-            level = (RolapCubeLevel) member;
-        } else if (member instanceof RolapCubeHierarchy
-            || member instanceof RolapCubeDimension)
-        {
-            level = (RolapCubeLevel) member.getHierarchy().getLevels().getFirst();
-            if (level.isAll()) {
-                level = level.getChildLevel();
+        RolapCubeLevel level = switch (member) {
+            case RolapCubeLevel cubeLevel -> cubeLevel;
+            case RolapCubeHierarchy ignored -> {
+                RolapCubeLevel lvl = (RolapCubeLevel) member.getHierarchy().getLevels().getFirst();
+                yield lvl.isAll() ? lvl.getChildLevel() : lvl;
             }
-        } else if (member instanceof RolapProperty property) {
-            RolapStar.Column propertyColumn = property.getColumn();
-            if (propertyColumn != null) {
-                request.addConstrainedColumn(propertyColumn, null);
-                ((DrillThroughCellRequest)request).addDrillThroughColumn(propertyColumn);
+            case RolapCubeDimension ignored -> {
+                RolapCubeLevel lvl = (RolapCubeLevel) member.getHierarchy().getLevels().getFirst();
+                yield lvl.isAll() ? lvl.getChildLevel() : lvl;
             }
+            case RolapProperty property -> {
+                RolapStar.Column propertyColumn = property.getColumn();
+                if (propertyColumn != null) {
+                    request.addConstrainedColumn(propertyColumn, null);
+                    ((DrillThroughCellRequest) request).addDrillThroughColumn(propertyColumn);
+                }
+                yield null;
+            }
+            case RolapStar.Measure measure -> {
+                ((DrillThroughCellRequest) request).addDrillThroughMeasure(measure);
+                yield null;
+            }
+            case RolapBaseCubeMeasure baseCubeMeasure -> {
+                ((DrillThroughCellRequest) request)
+                    .addDrillThroughMeasure((RolapStar.Measure) baseCubeMeasure.getStarMeasure());
+                yield null;
+            }
+            case RolapHierarchy.RolapCalculatedMeasure ignored ->
+                throw new OlapRuntimeException(MessageFormat.format(drillthroughCalculatedMember,
+                    member.getUniqueName()));
+            default ->
+                throw new OlapRuntimeException("Unknown member type in DRILLTHROUGH operation.");
+        };
+        if (level == null) {
             return;
-        } else if (member instanceof RolapStar.Measure) {
-            ((DrillThroughCellRequest)request)
-                .addDrillThroughMeasure((RolapStar.Measure)member);
-            return;
-        } else if (member instanceof RolapBaseCubeMeasure) {
-            ((DrillThroughCellRequest)request)
-                .addDrillThroughMeasure(
-                    (RolapStar.Measure)
-                        ((RolapBaseCubeMeasure)member).getStarMeasure());
-            return;
-        } else if (member instanceof RolapHierarchy.RolapCalculatedMeasure) {
-            throw new OlapRuntimeException(MessageFormat.format(drillthroughCalculatedMember,
-                member.getUniqueName()));
-        } else {
-            throw new OlapRuntimeException(
-                "Unknown member type in DRILLTHROUGH operation.");
         }
         RolapStar.Column column = level.getBaseStarKeyColumn(baseCube);
         if (column != null) {
@@ -584,8 +586,8 @@ public abstract class RolapAggregationManager {
         for (List<RolapMember> aggregation : aggregationList) {
             boolean isTuple;
             if (aggregation.size() > 0
-                && (aggregation.get(0) instanceof RolapCubeMember
-                    || aggregation.get(0) instanceof VisualTotalMember))
+                && (aggregation.getFirst() instanceof RolapCubeMember
+                    || aggregation.getFirst() instanceof VisualTotalMember))
             {
                 isTuple = true;
             } else {
@@ -777,7 +779,7 @@ public abstract class RolapAggregationManager {
         if (compoundPredicateList.size() > 1) {
             compoundPredicate = new OrPredicate(compoundPredicateList);
         } else if (compoundPredicateList.size() == 1) {
-            compoundPredicate = compoundPredicateList.get(0);
+            compoundPredicate = compoundPredicateList.getFirst();
         }
 
         return compoundPredicate;

@@ -337,7 +337,7 @@ public class SmartMemberReader implements MemberReader {
         if (count == 0) {
             return true;
         }
-        RolapMember m1 = members.get(0);
+        RolapMember m1 = members.getFirst();
         if (m1 == null) {
             // Special case check for 0th element, just in case length == 1.
             return false;
@@ -598,7 +598,7 @@ public class SmartMemberReader implements MemberReader {
         if (defaultMember != null) {
             return defaultMember;
         }
-        return getRootMembers().get(0);
+        return getRootMembers().getFirst();
     }
 
     @Override

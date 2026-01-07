@@ -94,7 +94,7 @@ public class RolapCubeCatalogReader extends RolapCatalogReader
         @Override
         public NamedSet getNamedSet(List<Segment> segments) {
             if (segments.size() == 1) {
-                Segment segment = segments.get(0);
+                Segment segment = segments.getFirst();
                 for (Formula namedSet : rolapCube.getNamedSetList()) {
                     if (segment.matches(namedSet.getName())) {
                         return namedSet.getNamedSet();

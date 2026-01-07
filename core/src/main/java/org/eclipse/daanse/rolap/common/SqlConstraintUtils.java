@@ -149,7 +149,7 @@ public class SqlConstraintUtils {
       Member[] members = expandedSet.getMembersArray();
       if (members.length > 0
           && !(members[0] instanceof RolapStoredMeasure)) {
-          RolapStoredMeasure measure = (RolapStoredMeasure) baseCube.getMeasures().get(0);
+          RolapStoredMeasure measure = (RolapStoredMeasure) baseCube.getMeasures().getFirst();
           ArrayList<Member> memberList = new ArrayList<>(Arrays.asList(members));
           memberList.add(0, measure);
           members = memberList.toArray(new Member[0]);
@@ -219,8 +219,8 @@ public class SqlConstraintUtils {
 
                   if (!slicerMembers.isEmpty()) {
                       // get level
-                      final int levelIndex = slicerMembers.get(0).getHierarchy().getLevels().size() - 1;
-                      RolapLevel levelForWhere = (RolapLevel) slicerMembers.get(0).getHierarchy().getLevels().get(levelIndex);
+                      final int levelIndex = slicerMembers.getFirst().getHierarchy().getLevels().size() - 1;
+                      RolapLevel levelForWhere = (RolapLevel) slicerMembers.getFirst().getHierarchy().getLevels().get(levelIndex);
                       // build where constraint
                       final String where =
                           generateSingleValueInExpr(sqlQuery, baseCube, aggStar, slicerMembers, levelForWhere,

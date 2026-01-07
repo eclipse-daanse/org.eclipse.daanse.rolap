@@ -67,7 +67,7 @@ public class GroupingSet {
         RolapStar.Column[] columns)
     {
         this.segments = segments;
-        this.segment0 = segments.get(0);
+        this.segment0 = segments.getFirst();
         this.levelBitKey = levelBitKey;
         this.measureBitKey = measureBitKey;
         this.predicates = predicates;

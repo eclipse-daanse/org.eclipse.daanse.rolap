@@ -380,7 +380,7 @@ class SqlConstraintUtilsTest {
         // test
         assertThat(r).isNotNull();
         assertThat(r.size()).isEqualTo(1);
-        assertThat(r.get(0)).isSameAs(member);
+        assertThat(r.getFirst()).isSameAs(member);
     }
 
 
@@ -398,7 +398,7 @@ class SqlConstraintUtilsTest {
         // test
         assertThat(r).isNotNull();
         assertThat(r.size()).isEqualTo(1);
-        assertThat(r.get(0)).isSameAs(member);
+        assertThat(r.getFirst()).isSameAs(member);
     }
 
     @Test
@@ -416,7 +416,7 @@ class SqlConstraintUtilsTest {
         // test
         assertThat(r).isNotNull();
         assertThat(r.size()).isEqualTo(1);
-        assertThat(r.get(0)).isSameAs(resultMember);
+        assertThat(r.getFirst()).isSameAs(resultMember);
     }
 
     @Test
@@ -494,7 +494,7 @@ class SqlConstraintUtilsTest {
         // test
         assertThat(r).isNotNull();
         assertThat(r.size()).isEqualTo(1);
-        assertThat(r.get(0)).isSameAs(resultMember);
+        assertThat(r.getFirst()).isSameAs(resultMember);
     }
 
     @Test
@@ -572,9 +572,9 @@ class SqlConstraintUtilsTest {
 
         assertThat(arrayRes.size()).isEqualTo(4);
 
-        assertThat(arrayRes.get(0)).isEqualTo(listColumn1.get(0));
+        assertThat(arrayRes.getFirst()).isEqualTo(listColumn1.getFirst());
         assertThat(arrayRes.get(1)).isEqualTo(listColumn1.get(1));
-        assertThat(arrayRes.get(2)).isEqualTo(listColumn2.get(0));
+        assertThat(arrayRes.get(2)).isEqualTo(listColumn2.getFirst());
         assertThat(arrayRes.get(3)).isEqualTo(listColumn2.get(1));
     }
 
@@ -599,13 +599,13 @@ class SqlConstraintUtilsTest {
 
         TupleConstraintStruct res = getCalculatedMember(table, ARITY);
 
-        TupleList tuple = res.getDisjoinedTupleLists().get(0);
+        TupleList tuple = res.getDisjoinedTupleLists().getFirst();
 
         assertThat(res.getMembers().isEmpty()).isTrue(); // should be empty
         assertThat(ARITY).isEqualTo(tuple.getArity());
-        assertThat(listColumn1.get(0)).isEqualTo(tuple.get(0).get(0));
-        assertThat(listColumn1.get(1)).isEqualTo(tuple.get(0).get(1));
-        assertThat(listColumn2.get(0)).isEqualTo(tuple.get(1).get(0));
+        assertThat(listColumn1.getFirst()).isEqualTo(tuple.getFirst().getFirst());
+        assertThat(listColumn1.get(1)).isEqualTo(tuple.getFirst().get(1));
+        assertThat(listColumn2.getFirst()).isEqualTo(tuple.get(1).getFirst());
         assertThat(listColumn2.get(1)).isEqualTo(tuple.get(1).get(1));
     }
 
@@ -692,7 +692,7 @@ class SqlConstraintUtilsTest {
             .removeCalculatedAndDefaultMembers(members);
 
         assertThat(newMembers.size()).isEqualTo(4);
-        assertThat(newMembers.contains(members.get(0))).isTrue();
+        assertThat(newMembers.contains(members.getFirst())).isTrue();
         assertThat(newMembers.contains(members.get(2))).isTrue();
         assertThat(newMembers.contains(members.get(3))).isTrue();
         assertThat(newMembers.contains(members.get(5))).isTrue();

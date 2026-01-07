@@ -130,6 +130,6 @@ class ConcatenableListTest{
 
         assertThat(testList.isEmpty()).as("ConcatenableList testList should not be empty").isFalse();
 
-        assertThat(testList.get(0)).as("testList.get(0) should return NON_EMPTY_MARKER").isEqualTo(NON_EMPTY_MARKER);
+        assertThat(testList.getFirst()).as("testList.getFirst() should return NON_EMPTY_MARKER").isEqualTo(NON_EMPTY_MARKER);
     }
 }

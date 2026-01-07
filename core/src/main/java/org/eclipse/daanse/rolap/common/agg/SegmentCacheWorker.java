@@ -109,7 +109,7 @@ public final class SegmentCacheWorker {
         if (implementors.size() > 0) {
             // The contract is to use the first implementation found.
             SegmentCache cache =
-                instantiateCache(implementors.get(0).getName());
+                instantiateCache(implementors.getFirst().getName());
             if (cache != null) {
                 caches.add(cache);
             }
@@ -137,10 +137,8 @@ public final class SegmentCacheWorker {
             return ClassResolver.INSTANCE.instantiateSafe(cacheName);
         } catch (ClassCastException e) {
             throw new OlapRuntimeException(segmentCacheIsNotImplementingInterface);
-        } catch (Exception e) {
-            LOGGER.error(
-                    segmentCacheFailedToInstanciate,
-                e);
+        } catch (RuntimeException e) {
+            LOGGER.error(segmentCacheFailedToInstanciate, e);
             throw new SegmentCacheFailedToInstanciateException(e);
         }
     }

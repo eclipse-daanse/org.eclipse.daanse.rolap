@@ -92,7 +92,7 @@ class SegmentBuilderTest {
         assertThat(rollupWithNullMembers.getValue().getNullAxisFlags().length == 1
             && rollupWithNullMembers.getValue().getNullAxisFlags()[0]).as("Rolled up column should have nullAxisFlag set.").isTrue();
         assertThat(rollupWithNullMembers.getKey().getConstrainedColumns()
-            .get(0).columnExpression).isEqualTo("col2");
+            .getFirst().columnExpression).isEqualTo("col2");
     }
 
     @Test
@@ -118,7 +118,7 @@ class SegmentBuilderTest {
         assertThat(rollup.getValue().getNullAxisFlags().length == 1
             && rollup.getValue().getNullAxisFlags()[0]).as("Rolled up column should have nullAxisFlag set.").isTrue();
         assertThat(rollup.getKey().getConstrainedColumns()
-            .get(0).columnExpression).isEqualTo("col2");
+            .getFirst().columnExpression).isEqualTo("col2");
     }
 
     @Test
@@ -147,7 +147,7 @@ class SegmentBuilderTest {
             && rollup.getValue().getNullAxisFlags()[1]).as("Rolled up column should have nullAxisFlag set to false for "
             + "the first column, true for second column.").isTrue();
         assertThat(rollup.getKey().getConstrainedColumns()
-            .get(0).columnExpression).isEqualTo("col1");
+            .getFirst().columnExpression).isEqualTo("col1");
         assertThat(rollup.getKey().getConstrainedColumns()
             .get(1).columnExpression).isEqualTo("col2");
     }
@@ -193,7 +193,7 @@ class SegmentBuilderTest {
             && rollup.getValue().getNullAxisFlags()[0]).as("Rolled up column should have nullAxisFlag set to true for "
             + "a single column.").isTrue();
         assertThat(rollup.getKey().getConstrainedColumns()
-            .get(0).columnExpression).isEqualTo("col2");
+            .getFirst().columnExpression).isEqualTo("col2");
     }
 
 

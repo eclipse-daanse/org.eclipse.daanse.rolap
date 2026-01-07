@@ -34,7 +34,7 @@ import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
@@ -96,11 +96,9 @@ public class Aggregation {
     private final int maxConstraints;
 
     /**
-     * Timestamp of when the aggregation was created. (We use
-     * {@link java.util.Date} rather than {@link java.sql.Timestamp} because it
-     * has less baggage.)
+     * Timestamp of when the aggregation was created.
      */
-    private final Date creationTimestamp;
+    private final Instant creationTimestamp;
 
     /**
      * Creates an Aggregation.
@@ -116,13 +114,13 @@ public class Aggregation {
         this.constrainedColumnsBitKey =
             aggregationKey.getConstrainedColumnsBitKey();
         this.maxConstraints = maxConstraints;
-        this.creationTimestamp = new Date();
+        this.creationTimestamp = Instant.now();
     }
 
     /**
      * @return Returns the timestamp when the aggregation was created
      */
-    public Date getCreationTimestamp() {
+    public Instant getCreationTimestamp() {
         return creationTimestamp;
     }
 

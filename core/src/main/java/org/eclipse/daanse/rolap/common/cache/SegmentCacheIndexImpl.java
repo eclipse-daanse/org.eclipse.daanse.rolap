@@ -542,8 +542,8 @@ public class SegmentCacheIndexImpl implements SegmentCacheIndex {
                     if (o2.isEmpty()) {
                         return 1;
                     }
-                    return o1.get(0).getUniqueID()
-                        .compareTo(o2.get(0).getUniqueID());
+                    return o1.getFirst().getUniqueID()
+                        .compareTo(o2.getFirst().getUniqueID());
                 }
             });
         for (List<SegmentHeader> key : values) {

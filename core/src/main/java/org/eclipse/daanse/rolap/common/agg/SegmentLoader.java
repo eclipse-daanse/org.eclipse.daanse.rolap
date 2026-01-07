@@ -48,6 +48,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.function.Consumer;
 
 import org.eclipse.daanse.olap.api.execution.ExecutionMetadata;
@@ -159,8 +160,8 @@ public class SegmentLoader {
     try {
       segmentFutures.add( cacheMgr.sqlExecutor.submit( new SegmentLoadCommand( ExecutionContext.current(), this, cellRequestCount,
           groupingSets, compoundPredicateList ) ) );
-    } catch ( Exception e ) {
-      throw new OlapRuntimeException( e );
+    } catch (RejectedExecutionException e) {
+      throw new OlapRuntimeException(e);
     }
   }
 

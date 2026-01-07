@@ -119,7 +119,7 @@ public class AggregationManager extends RolapAggregationManager implements IAggr
         List<Future<Map<Segment, SegmentWithData>>> segmentFutures,
         boolean optimizePredicates)
     {
-        RolapStar star = measures.get(0).getStar();
+        RolapStar star = measures.getFirst().getStar();
         Aggregation aggregation =
             star.lookupOrCreateAggregation(aggregationKey);
 

@@ -113,7 +113,7 @@ class SegmentCacheManagerTest {
       results.add( execResults.poll( 2000, TimeUnit.MILLISECONDS ) );
     }
       assertThat(results.size()).isEqualTo(20);
-      assertThat(results.get(0)).isEqualTo("done");
+      assertThat(results.getFirst()).isEqualTo("done");
       assertThat(results.get(19)).isInstanceOf(OlapRuntimeException.class);
   }
 

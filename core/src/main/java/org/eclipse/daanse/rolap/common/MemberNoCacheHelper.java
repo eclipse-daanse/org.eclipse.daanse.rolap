@@ -65,7 +65,7 @@ public class MemberNoCacheHelper extends MemberCacheHelper {
     // implement MemberCache
     @Override
 	public Object makeKey(RolapMember parent, Object key) {
-        return new MemberKey(parent, key);
+        return new MemberKeyR(parent, key);
     }
 
     // implement MemberCache

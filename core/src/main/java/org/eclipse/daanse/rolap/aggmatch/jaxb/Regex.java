@@ -226,7 +226,7 @@ public class Regex extends CaseMatcher {
         // Remember that:
         //      templateParts.length == templateNamePos.length+1
         //
-        buf.append(templateParts.get(0));
+        buf.append(templateParts.getFirst());
         for (int i = 0; i < templateNamePos.size(); i++) {
             String n = names[templateNamePos.get(i)];
             if (n == null) {

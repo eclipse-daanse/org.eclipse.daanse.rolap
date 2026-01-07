@@ -26,49 +26,20 @@
  *   SmartCity Jena - initial
  */
 
-
 package org.eclipse.daanse.rolap.common;
-
-import java.util.Objects;
 
 import org.eclipse.daanse.rolap.element.RolapLevel;
 import org.eclipse.daanse.rolap.element.RolapMember;
 
 /**
- * MemberKey todo:
+ * Immutable key for a member, consisting of its parent member and value.
  *
+ * @param parent the parent member, or null for root members
+ * @param value the key value for this member
  * @author jhyde
  * @since 21 March, 2002
  */
-public class MemberKey {
-    private final RolapMember parent;
-    private final Object value;
-
-    protected MemberKey(RolapMember parent, Object value) {
-        this.parent = parent;
-        this.value = value;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (!(o instanceof MemberKey other)) {
-            return false;
-        }
-        return Objects.equals(this.parent, other.parent)
-            && Objects.equals(this.value, other.value);
-    }
-
-    @Override
-    public int hashCode() {
-        int h = 0;
-        if (value != null) {
-            h = value.hashCode();
-        }
-        if (parent != null) {
-            h = (h * 31) + parent.hashCode();
-        }
-        return h;
-    }
+public record MemberKeyR(RolapMember parent, Object value) {
 
     /**
      * Returns the level of the member that this key represents.

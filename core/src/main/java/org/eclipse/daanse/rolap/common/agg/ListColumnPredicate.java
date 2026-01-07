@@ -340,7 +340,7 @@ public class ListColumnPredicate extends AbstractColumnPredicate {
 	public void toSql(SqlQuery sqlQuery, StringBuilder buf) {
         List<StarColumnPredicate> predicates = getPredicates();
         if (predicates.size() == 1) {
-            predicates.get(0).toSql(sqlQuery, buf);
+            predicates.getFirst().toSql(sqlQuery, buf);
             return;
         }
 

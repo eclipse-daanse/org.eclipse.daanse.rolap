@@ -142,7 +142,7 @@ public class RolapNativeCrossJoin extends RolapNativeSet {
         // array is the CrossJoin dimensions.  The second array, if any,
         // contains additional constraints on the dimensions. If either the list
         // or the first array is null, then native cross join is not feasible.
-        if (allArgs == null || allArgs.isEmpty() || allArgs.get(0) == null) {
+        if (allArgs == null || allArgs.isEmpty() || allArgs.getFirst() == null) {
             // Something in the arguments to the crossjoin prevented
             // native evaluation; may need to alert
             alertCrossJoinNonNative(
@@ -152,7 +152,7 @@ public class RolapNativeCrossJoin extends RolapNativeSet {
             return null;
         }
 
-        CrossJoinArg[] cjArgs = allArgs.get(0);
+        CrossJoinArg[] cjArgs = allArgs.getFirst();
 
         // check if all CrossJoinArgs are "All" members or Calc members
         // "All" members do not have relational expression, and Calc members
@@ -287,7 +287,7 @@ public class RolapNativeCrossJoin extends RolapNativeSet {
     CrossJoinArg[] combineArgs(
         List<CrossJoinArg[]> allArgs)
     {
-        CrossJoinArg[] cjArgs = allArgs.get(0);
+        CrossJoinArg[] cjArgs = allArgs.getFirst();
         if (allArgs.size() == 2) {
             CrossJoinArg[] predicateArgs = allArgs.get(1);
             if (predicateArgs != null) {

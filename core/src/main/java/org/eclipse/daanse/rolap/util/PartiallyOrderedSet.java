@@ -585,7 +585,7 @@ public class PartiallyOrderedSet<E> extends AbstractSet<E>
         final Node<E> node = map.get(e);
         if (node == null) {
             return null;
-        } else if (node.childList.get(0).e == null) {
+        } else if (node.childList.getFirst().e == null) {
             // child list contains bottom element, so officially there are no
             // children
             return Collections.emptyList();
@@ -610,7 +610,7 @@ public class PartiallyOrderedSet<E> extends AbstractSet<E>
         final Node<E> node = map.get(e);
         if (node == null) {
             return null;
-        } else if (node.parentList.get(0).e == null) {
+        } else if (node.parentList.getFirst().e == null) {
             // parent list contains top element, so officially there are no
             // parents
             return Collections.emptyList();
@@ -621,7 +621,7 @@ public class PartiallyOrderedSet<E> extends AbstractSet<E>
 
     public List<E> getNonChildren() {
         if (topNode.childList.size() == 1
-            && topNode.childList.get(0).e == null)
+            && topNode.childList.getFirst().e == null)
         {
             return Collections.emptyList();
         }
@@ -630,7 +630,7 @@ public class PartiallyOrderedSet<E> extends AbstractSet<E>
 
     public List<E> getNonParents() {
         if (bottomNode.parentList.size() == 1
-            && bottomNode.parentList.get(0).e == null)
+            && bottomNode.parentList.getFirst().e == null)
         {
             return Collections.emptyList();
         }

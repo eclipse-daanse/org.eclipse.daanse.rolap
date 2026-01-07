@@ -1487,7 +1487,7 @@ public class AggStar {
                     // AggQuerySpec will take care of going up the
                     // parent-child hierarchy and do all the work for us.
                     while (!columnTable.getChildTables().isEmpty()) {
-                        columnTable = columnTable.getChildTables().get(0);
+                        columnTable = columnTable.getChildTables().getFirst();
                     }
                     final DimTable finalColumnTable = columnTable;
                     levelColumnsToJoin.put(

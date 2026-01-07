@@ -287,7 +287,7 @@ public class CacheControlImpl implements CacheControl {
         case 0:
             return;
         case 1:
-            cellRegion = cellRegionList.get(0);
+            cellRegion = cellRegionList.getFirst();
             break;
         default:
             final CellRegion[] cellRegions =
@@ -897,7 +897,7 @@ public class CacheControlImpl implements CacheControl {
                         memberRegion.getDimensionality();
                     if (!dimensions.isEmpty()) {
                         for (Cube cube
-                            : dimensions.get(0) .getCatalog().getCubes())
+                            : dimensions.getFirst() .getCatalog().getCubes())
                         {
                             try {
                                 final List<CellRegionImpl> crossList =
@@ -965,7 +965,7 @@ public class CacheControlImpl implements CacheControl {
         MemberCellRegion(List<Member> memberList, boolean descendants) {
             assert !memberList.isEmpty();
             this.memberList = memberList;
-            this.dimension = (memberList.get(0)).getDimension();
+            this.dimension = (memberList.getFirst()).getDimension();
 //            discard(descendants);
         }
 
@@ -1175,7 +1175,7 @@ public class CacheControlImpl implements CacheControl {
 
             // All regions must have same dimensionality.
             for (int i = 1; i < regions.size(); i++) {
-                final CellRegion region0 = regions.get(0);
+                final CellRegion region0 = regions.getFirst();
                 final CellRegion region = regions.get(i);
                 assert region0.getDimensionality().equals(
                     region.getDimensionality());
@@ -1184,7 +1184,7 @@ public class CacheControlImpl implements CacheControl {
 
         @Override
 		public List<Dimension> getDimensionality() {
-            return regions.get(0).getDimensionality();
+            return regions.getFirst().getDimensionality();
         }
 
         @Override
@@ -1352,7 +1352,7 @@ public class CacheControlImpl implements CacheControl {
                 if (list.isEmpty()) {
                     return;
                 }
-                RolapMember lowerChild = list.get(0);
+                RolapMember lowerChild = list.getFirst();
                 list.clear();
                 memberReader.getMemberChildren(upperMember, list);
                 if (list.isEmpty()) {
@@ -1421,7 +1421,7 @@ public class CacheControlImpl implements CacheControl {
             this.hierarchy =
                 members.isEmpty()
                     ? null
-                    : members.get(0).getHierarchy();
+                    : members.getFirst().getHierarchy();
         }
 
         @Override
@@ -1607,7 +1607,7 @@ public class CacheControlImpl implements CacheControl {
                 if (list.isEmpty()) {
                     return EmptyMemberSet.INSTANCE;
                 }
-                RolapMember lowerChild = list.get(0);
+                RolapMember lowerChild = list.getFirst();
                 list.clear();
                 memberReader.getMemberChildren(upper, list);
                 if (list.isEmpty()) {
