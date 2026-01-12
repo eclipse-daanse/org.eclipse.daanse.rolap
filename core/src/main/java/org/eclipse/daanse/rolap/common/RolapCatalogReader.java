@@ -69,7 +69,7 @@ import org.eclipse.daanse.olap.api.element.OlapElement;
 import org.eclipse.daanse.olap.api.function.FunctionDefinition;
 import org.eclipse.daanse.olap.api.query.component.Expression;
 import org.eclipse.daanse.olap.api.type.StringType;
-import org.eclipse.daanse.olap.calc.base.compiler.ElevatorSimplifyer;
+import org.eclipse.daanse.olap.calc.base.compiler.EvaluatorSimplifier;
 import org.eclipse.daanse.olap.calc.base.nested.AbstractProfilingNestedUnknownCalc;
 import org.eclipse.daanse.olap.common.NameResolverImpl;
 import org.eclipse.daanse.olap.common.ParameterImpl;
@@ -820,7 +820,7 @@ public class RolapCatalogReader
         FunctionDefinition fun, Expression[] args, Evaluator evaluator, Calc calc)
     {
         RolapEvaluator revaluator = (RolapEvaluator)
-ElevatorSimplifyer.simplifyEvaluator(calc, evaluator);
+                EvaluatorSimplifier.simplifyEvaluator(calc, evaluator);
         if (evaluator.nativeEnabled()) {
             return catalog.getNativeRegistry().createEvaluator(
                 revaluator, fun, args, context.getConfigValue(ConfigConstants.ENABLE_NATIVE_FILTER, ConfigConstants.ENABLE_NATIVE_FILTER_DEFAULT_VALUE, Boolean.class));

@@ -30,7 +30,7 @@ import org.eclipse.daanse.olap.api.calc.Calc;
 import org.eclipse.daanse.olap.api.calc.compiler.ExpressionCompiler;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.query.component.Expression;
-import org.eclipse.daanse.olap.calc.base.compiler.DelegatingExpCompiler;
+import org.eclipse.daanse.olap.calc.base.compiler.DelegatingExpressionCompiler;
 
 /**
  * Evaluator that collects profiling information as it evaluates expressions.
@@ -89,7 +89,7 @@ public class RolapInterceptaleEvaluator extends RolapEvaluator {
         return new RolapInterceptaleEvaluator(root, this, aggregationList);
     }
 
-    public static class InterceptableEvaluatorCompiler extends DelegatingExpCompiler {
+    public static class InterceptableEvaluatorCompiler extends DelegatingExpressionCompiler {
         public InterceptableEvaluatorCompiler(ExpressionCompiler compiler) {
             super(compiler);
         }

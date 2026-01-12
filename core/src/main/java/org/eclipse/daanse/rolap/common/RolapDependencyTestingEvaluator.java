@@ -44,7 +44,7 @@ import org.eclipse.daanse.olap.api.element.Level;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.query.component.Expression;
 import org.eclipse.daanse.olap.api.type.SetType;
-import org.eclipse.daanse.olap.calc.base.compiler.DelegatingExpCompiler;
+import org.eclipse.daanse.olap.calc.base.compiler.DelegatingExpressionCompiler;
 import org.eclipse.daanse.olap.calc.base.nested.AbstractProfilingNestedTupleIterableCalc;
 import org.eclipse.daanse.olap.calc.base.nested.AbstractProfilingNestedTupleListCalc;
 import org.eclipse.daanse.olap.calc.base.nested.AbstractProfilingNestedUnknownCalc;
@@ -459,7 +459,7 @@ public class RolapDependencyTestingEvaluator extends RolapEvaluator {
      * It also checks that the caller does not modify lists unless it has
      * explicitly asked for a mutable list.
      */
-    public static class DteCompiler extends DelegatingExpCompiler {
+    public static class DteCompiler extends DelegatingExpressionCompiler {
         public DteCompiler(ExpressionCompiler compiler) {
             super(compiler);
         }
