@@ -936,7 +936,7 @@ public class RolapCatalog implements Catalog {
 
 	@Override
 	public Parameter[] getParameters() {
-		return parameterList.toArray(new Parameter[parameterList.size()]);
+		return parameterList.toArray(Parameter[]::new);
 	}
 
 	/**

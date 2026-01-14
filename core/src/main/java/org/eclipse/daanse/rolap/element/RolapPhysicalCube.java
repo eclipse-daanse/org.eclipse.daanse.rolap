@@ -82,12 +82,11 @@ public class RolapPhysicalCube extends RolapCube implements PhysicalCube {
 
         if (getFact() == null) {
             throw Util.newError(
-                    new StringBuilder("Must specify fact table of cube '").append(getName()).append("'").toString());
+                    "Must specify fact table of cube '" + getName() + "'");
         }
 
         if (getLogger().isDebugEnabled()) {
-            String msg = new StringBuilder("RolapCube<init>: cube=").append(this.name).toString();
-            getLogger().debug(msg);
+            getLogger().debug("RolapCube<init>: cube={}", this.name);
         }
 
         // Initialize closure bit key only when we know how many columns are in
@@ -121,8 +120,7 @@ public class RolapPhysicalCube extends RolapCube implements PhysicalCube {
     @Override
     protected void logMessage() {
         if (getLogger().isDebugEnabled()) {
-            String msg = new StringBuilder("RolapCube<init>: cube=").append(this.name).toString();
-            getLogger().debug(msg);
+            getLogger().debug("RolapCube<init>: cube={}", this.name);
         }
     }
 

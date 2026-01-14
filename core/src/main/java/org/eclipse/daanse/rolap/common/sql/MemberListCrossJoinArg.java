@@ -131,7 +131,7 @@ public class MemberListCrossJoinArg implements CrossJoinArg {
         // Crossjoin Arg is an empty member list.
         // This is used to push down the constant "false" condition to the
         // native evaluator.
-        if (args.size() == 0) {
+        if (args.isEmpty()) {
             hasNonCalcMembers = true;
         }
         boolean hasAllMember = false;
@@ -262,7 +262,7 @@ public class MemberListCrossJoinArg implements CrossJoinArg {
      * @return whether the input CJ arg is empty
      */
     public boolean isEmptyCrossJoinArg() {
-        return (level == null && members.size() == 0);
+        return (level == null && members.isEmpty());
     }
 
     public boolean hasCalcMembers() {

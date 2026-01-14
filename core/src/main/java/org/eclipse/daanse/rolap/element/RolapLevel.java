@@ -303,7 +303,7 @@ public class RolapLevel extends LevelBase {
                 }
             }
         }
-        this.inheritedProperties = list.toArray(new RolapProperty[list.size()]);
+        this.inheritedProperties = list.toArray(RolapProperty[]::new);
 
         Dimension dim = hierarchy.getDimension();
         if (dim.getDimensionType() == DimensionType.TIME_DIMENSION) {
@@ -583,7 +583,7 @@ public class RolapLevel extends LevelBase {
                     false,
                     xmlProperty.getDescription(), null));
         }
-        return list.toArray(new RolapProperty[list.size()]);
+        return list.toArray(RolapProperty[]::new);
     }
 
     private static AbstractProperty.Datatype convertPropertyTypeNameToCode(
@@ -795,7 +795,7 @@ public class RolapLevel extends LevelBase {
         }
 
         List<Member> levelMembers = schemaReader.getLevelMembers(this, true);
-        if (levelMembers.size() > 0) {
+        if (!levelMembers.isEmpty()) {
             Member parent = levelMembers.getFirst().getParentMember();
             return
                 RolapUtil.findBestMemberMatch(

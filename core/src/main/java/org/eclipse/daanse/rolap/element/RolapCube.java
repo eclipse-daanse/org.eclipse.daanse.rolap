@@ -1174,14 +1174,12 @@ public abstract class RolapCube extends CubeBase {
         }
         for (HierarchyUsage hierUsage : hierarchyUsages) {
             if (hierUsage.equals(usage)) {
-                String msg = new StringBuilder("RolapCube.createUsage: duplicate ").append(hierUsage).toString();
-                getLogger().warn(msg);
+                getLogger().warn("RolapCube.createUsage: duplicate {}", hierUsage);
                 return;
             }
         }
         if (getLogger().isDebugEnabled()) {
-            String msg = new StringBuilder("RolapCube.createUsage: register ").append(usage).toString();
-            getLogger().debug(msg);
+            getLogger().debug("RolapCube.createUsage: register {}", usage);
         }
         this.hierarchyUsages.add(usage);
     }
@@ -1208,11 +1206,10 @@ public abstract class RolapCube extends CubeBase {
         String name = hierarchy.getName();
         if (!name.equals(hierarchy.getDimension().getName()))
         {
-            name = new StringBuilder(hierarchy.getDimension().getName()).append(".").append(name).toString();
+            name = hierarchy.getDimension().getName() + "." + name;
         }
         if (getLogger().isDebugEnabled()) {
-            String msg = new StringBuilder("RolapCube.getUsages: name=").append(name).toString();
-            getLogger().debug(msg);
+            getLogger().debug("RolapCube.getUsages: name={}", name);
         }
 
         HierarchyUsage hierUsage = null;
@@ -1251,7 +1248,7 @@ public abstract class RolapCube extends CubeBase {
             if (getLogger().isDebugEnabled()) {
                 getLogger().debug("RolapCube.getUsages: return list");
             }
-            return list.toArray(new HierarchyUsage[list.size()]);
+            return list.toArray(HierarchyUsage[]::new);
         } else {
             return new HierarchyUsage[0];
         }
@@ -1322,7 +1319,7 @@ public abstract class RolapCube extends CubeBase {
             if (getLogger().isDebugEnabled()) {
                 getLogger().debug("RolapCube.getUsagesBySource: return list");
             }
-            return list.toArray(new HierarchyUsage[list.size()]);
+            return list.toArray(HierarchyUsage[]::new);
         } else {
             return new HierarchyUsage[0];
         }

@@ -273,8 +273,8 @@ class ObjectPoolTest{
     // helpers
     /////////////////////////////////////////////////////////////////////////
     private static String[] genStringsArray(int nos) {
-        List<?> l = genStringsList(nos);
-        return l.toArray(new String[l.size()]);
+        List<String> l = genStringsList(nos);
+        return l.toArray(String[]::new);
     }
     private static List<String> genStringsList(int nos) {
         List<String> l = new ArrayList<>(nos);
@@ -285,7 +285,7 @@ class ObjectPoolTest{
     }
     private static KeyValue[] genKeyValueArray(int nos) {
         List<KeyValue> l = genKeyValueList(nos);
-        return l.toArray(new KeyValue[l.size()]);
+        return l.toArray(KeyValue[]::new);
     }
     private static List<KeyValue> genKeyValueList(int nos) {
         List<KeyValue> l = new ArrayList<>(nos);

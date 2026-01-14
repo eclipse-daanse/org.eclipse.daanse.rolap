@@ -585,7 +585,7 @@ public abstract class RolapAggregationManager {
         int unsatisfiableTupleCount = 0;
         for (List<RolapMember> aggregation : aggregationList) {
             boolean isTuple;
-            if (aggregation.size() > 0
+            if (!aggregation.isEmpty()
                 && (aggregation.getFirst() instanceof RolapCubeMember
                     || aggregation.getFirst() instanceof VisualTotalMember))
             {

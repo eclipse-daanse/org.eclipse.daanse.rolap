@@ -177,8 +177,7 @@ public class RolapVirtualCube extends RolapCube implements VirtualCube {
 
     protected void logMessage() {
         if (getLogger().isDebugEnabled()) {
-            String msg = new StringBuilder("RolapCube<init>: virtual cube=").append(this.name).toString();
-            getLogger().debug(msg);
+            getLogger().debug("RolapCube<init>: virtual cube={}", this.name);
         }
     }
 

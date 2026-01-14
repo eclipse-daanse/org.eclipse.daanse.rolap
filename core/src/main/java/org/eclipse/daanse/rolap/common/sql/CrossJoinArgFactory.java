@@ -342,7 +342,7 @@ public class CrossJoinArgFactory {
             }
         }
         if (!argList.isEmpty()) {
-            return argList.toArray(new CrossJoinArg[argList.size()]);
+            return argList.toArray(CrossJoinArg[]::new);
         }
         return null;
     }

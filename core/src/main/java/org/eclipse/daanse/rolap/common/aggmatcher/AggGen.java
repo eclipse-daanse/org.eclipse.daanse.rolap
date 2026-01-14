@@ -492,8 +492,7 @@ public class AggGen {
             }
             JdbcSchema.Table.Column c = getColumn(jt, name);
             if (c == null) {
-                String msg = new StringBuilder("Can not find column: ").append(name).toString();
-                getLogger().warn(msg);
+                getLogger().warn("Can not find column: {}", name);
                 break;
             }
 

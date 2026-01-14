@@ -241,7 +241,7 @@ public class SmartMemberReader implements MemberReader {
                     children.addAll(list);
                 }
             }
-            if (missed.size() > 0) {
+            if (!missed.isEmpty()) {
                 readMemberChildren(missed, children, constraint);
             }
         }

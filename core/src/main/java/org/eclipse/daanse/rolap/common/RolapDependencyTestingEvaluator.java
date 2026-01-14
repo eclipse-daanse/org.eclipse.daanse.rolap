@@ -114,7 +114,7 @@ public class RolapDependencyTestingEvaluator extends RolapEvaluator {
         // really is.
         if (calc.getResultStyle() == ResultStyle.MUTABLE_LIST) {
             List<Object> list = (List) result;
-            if (list.size() > 0) {
+            if (!list.isEmpty()) {
                 final Object zeroth = list.getFirst();
                 list.set(0, zeroth);
             }
@@ -302,7 +302,7 @@ public class RolapDependencyTestingEvaluator extends RolapEvaluator {
                     } else {
                         members = schemaReader.getMemberChildren(member);
                     }
-                    if (members.size() == 0) {
+                    if (members.isEmpty()) {
                         break;
                     }
                     member = members.get(random.nextInt(members.size()));
@@ -500,7 +500,7 @@ public class RolapDependencyTestingEvaluator extends RolapEvaluator {
                     list.add(hierarchy);
                 }
             }
-            return list.toArray(new Hierarchy[list.size()]);
+            return list.toArray(Hierarchy[]::new);
         }
     }
 }

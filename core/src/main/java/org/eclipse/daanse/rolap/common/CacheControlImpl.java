@@ -291,7 +291,7 @@ public class CacheControlImpl implements CacheControl {
             break;
         default:
             final CellRegion[] cellRegions =
-                cellRegionList.toArray(new CellRegion[cellRegionList.size()]);
+                cellRegionList.toArray(CellRegion[]::new);
             cellRegion = createUnionRegion(cellRegions);
             break;
         }
@@ -571,7 +571,7 @@ public class CacheControlImpl implements CacheControl {
                 }
             };
         ((CellRegionImpl) region).accept(visitor);
-        return list.toArray(new SegmentColumn[list.size()]);
+        return list.toArray(SegmentColumn[]::new);
     }
 
     public static List<RolapStar> getStarList(CellRegion region) {

@@ -176,7 +176,7 @@ public class RolapNativeSql {
             String expr = String.valueOf(literal.getValue());
             if (!DECIMAL.matcher(expr).matches()) {
                 throw new DaanseEvaluationException(
-                    new StringBuilder("Expected to get decimal, but got ").append(expr).toString());
+                    "Expected to get decimal, but got " + expr);
             }
 
             return dialect.quoteDecimalLiteral(expr);

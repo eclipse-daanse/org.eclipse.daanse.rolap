@@ -77,6 +77,6 @@ public class TupleConstraintStruct {
     }
 
     public Member[] getMembersArray() {
-        return members.toArray(new Member[members.size()]);
+        return members.toArray(Member[]::new);
     }
 }

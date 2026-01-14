@@ -135,7 +135,7 @@ public class WritebackUtil {
                                     for (Hierarchy h : hs) {
                                         if (h instanceof Hierarchy rolapCubeHierarchy) {
                                             List<? extends Level> levels = rolapCubeHierarchy.getLevels();
-                                            if (levels != null && levels.size() > 0) {
+                                            if (levels != null && !levels.isEmpty()) {
                                                 Set<Member> members = getLevelLeafMembers(levels, Optional.empty(),
                                                     rolapCube);
 

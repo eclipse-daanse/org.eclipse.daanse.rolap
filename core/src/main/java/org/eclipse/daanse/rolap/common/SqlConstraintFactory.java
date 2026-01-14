@@ -117,10 +117,9 @@ public class SqlConstraintFactory {
             Set<CrossJoinArg> joinArgs =
                 new CrossJoinArgFactory(false).buildConstraintFromAllAxes(
                     (RolapEvaluator) context, context.getQuery().getConnection().getContext().getConfigValue(ConfigConstants.ENABLE_NATIVE_FILTER, ConfigConstants.ENABLE_NATIVE_FILTER_DEFAULT_VALUE, Boolean.class));
-            if (joinArgs.size() > 0) {
+            if (!joinArgs.isEmpty()) {
                 return new RolapNativeCrossJoin.NonEmptyCrossJoinConstraint(
-                    joinArgs.toArray(
-                        new CrossJoinArg[joinArgs.size()]),
+                    joinArgs.toArray(CrossJoinArg[]::new),
                     (RolapEvaluator) context);
             }
         }

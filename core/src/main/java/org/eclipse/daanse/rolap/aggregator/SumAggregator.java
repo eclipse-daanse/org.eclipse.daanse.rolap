@@ -44,7 +44,7 @@ public class SumAggregator extends AbstractAggregator {
 
     @Override
     public Object aggregate(List<Object> rawData, DataTypeJdbc datatype) {
-        assert rawData.size() > 0;
+        assert !rawData.isEmpty();
         switch (datatype) {
         case INTEGER:
             int sumInt = Integer.MIN_VALUE;

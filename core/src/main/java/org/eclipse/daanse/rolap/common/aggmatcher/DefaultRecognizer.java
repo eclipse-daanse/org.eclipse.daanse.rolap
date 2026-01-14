@@ -258,7 +258,7 @@ class DefaultRecognizer extends Recognizer {
                     }
                 }
             }
-            if (levelMatches.size() == 0) {
+            if (levelMatches.isEmpty()) {
                 return;
             }
             // Sort the matches by level depth.

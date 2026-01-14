@@ -310,8 +310,8 @@ public class MemberTuplePredicate implements StarPredicate {
                 member = member.getParentMember();
                 relOp = relOp.desctrict();
             }
-            this.values = valueList.toArray(new Object[valueList.size()]);
-            this.relOps = relOpList.toArray(new RelOp[relOpList.size()]);
+            this.values = valueList.toArray(Object[]::new);
+            this.relOps = relOpList.toArray(RelOp[]::new);
         }
 
 

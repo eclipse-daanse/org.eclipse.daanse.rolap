@@ -243,9 +243,8 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
             if (relation instanceof org.eclipse.daanse.rolap.mapping.model.InlineTableQuery it) {
                 result = it.getTable().getRows() == null ? 0l : it.getTable().getRows().size();
             }
-            if (relation instanceof org.eclipse.daanse.rolap.mapping.model.SqlSelectQuery mv) {
-                // TODO
-                return 0l;
+            if (relation instanceof org.eclipse.daanse.rolap.mapping.model.SqlSelectQuery) {
+                return 0L;
             }
             if (relation instanceof org.eclipse.daanse.rolap.mapping.model.JoinQuery mj) {
                 Optional<String> tableName = getFactTableName(mj);
@@ -355,12 +354,9 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
 
     private List<String> cubeDimensionConnections(CatalogReader catalogReader, Cube c, int cubeIndex) {
         List<String> result = new ArrayList<>();
-        String cubeName = new StringBuilder("c").append(cubeIndex).toString();
-        if (cubeName != null) {
-            result.addAll(
-                    dimensionsConnections(catalogReader, catalogReader.getCubeDimensions(c), cubeName, cubeIndex));
-        }
-
+        String cubeName = "c" + cubeIndex;
+        result.addAll(
+                dimensionsConnections(catalogReader, catalogReader.getCubeDimensions(c), cubeName, cubeIndex));
         return result;
     }
 
@@ -1194,8 +1190,8 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
         if (relation instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery mt) {
             return getTableName(mt.getTable());
         }
-        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.InlineTableQuery it) {
-            // TODO
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.InlineTableQuery) {
+            // InlineTableQuery not yet supported for table extraction
         }
         if (relation instanceof org.eclipse.daanse.rolap.mapping.model.SqlSelectQuery mv) {
             StringBuilder sb = new StringBuilder();

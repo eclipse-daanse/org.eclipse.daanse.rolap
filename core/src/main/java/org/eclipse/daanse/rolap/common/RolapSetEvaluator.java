@@ -206,7 +206,7 @@ class RolapSetEvaluator
     @Override
 	public Member[] currentTuple() {
         final List<Member> tuple = list.get(currentOrdinal);
-        return tuple.toArray(new Member[tuple.size()]);
+        return tuple.toArray(Member[]::new);
     }
 
     @Override

@@ -1395,7 +1395,7 @@ public class RolapStar {
                     l.add(column);
                 }
             }
-            return l.toArray(new Column[l.size()]);
+            return l.toArray(Column[]::new);
         }
 
         public Column lookupColumn(String columnName) {

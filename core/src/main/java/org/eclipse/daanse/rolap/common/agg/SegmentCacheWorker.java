@@ -106,7 +106,7 @@ public final class SegmentCacheWorker {
         // There was no property set. Let's look for Java services.
         final List<Class<SegmentCache>> implementors =
             ServiceDiscovery.forClass(SegmentCache.class).getImplementor();
-        if (implementors.size() > 0) {
+        if (!implementors.isEmpty()) {
             // The contract is to use the first implementation found.
             SegmentCache cache =
                 instantiateCache(implementors.getFirst().getName());

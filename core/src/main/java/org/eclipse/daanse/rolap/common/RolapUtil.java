@@ -189,7 +189,7 @@ public class RolapUtil {
     static RolapMember[] toArray(List<RolapMember> v) {
         return v.isEmpty()
             ? new RolapMember[0]
-            : v.toArray(new RolapMember[v.size()]);
+            : v.toArray(RolapMember[]::new);
     }
 
     static RolapMember lookupMember(

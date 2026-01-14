@@ -44,7 +44,7 @@ public class MinAggregator extends AbstractAggregator {
 
     @Override
     public Object aggregate(List<Object> rawData, DataTypeJdbc datatype) {
-        assert rawData.size() > 0;
+        assert !rawData.isEmpty();
         switch (datatype) {
         case INTEGER:
             int minInt = Integer.MAX_VALUE;

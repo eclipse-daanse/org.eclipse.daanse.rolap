@@ -412,7 +412,7 @@ public class RolapCatalogReader
         List<Member> members,
         Evaluator context)
     {
-        if (members.size() == 0) {
+        if (members.isEmpty()) {
             return Collections.emptyList();
         } else {
             MemberChildrenConstraint constraint =
@@ -577,7 +577,7 @@ public class RolapCatalogReader
             }
             List<RolapMember> children =
                 internalGetMemberChildren(parent, constraint);
-            if (children.size() > 0) {
+            if (!children.isEmpty()) {
                 return
                     RolapUtil.findBestMemberMatch(
                         children,
@@ -743,7 +743,7 @@ public class RolapCatalogReader
             // the same level.
             //
             // todo: More efficient implementation
-            return getMemberChildren(member).size() > 0;
+            return !getMemberChildren(member).isEmpty();
         } else {
             // This is a regular level. It has children iff there is a lower
             // level.

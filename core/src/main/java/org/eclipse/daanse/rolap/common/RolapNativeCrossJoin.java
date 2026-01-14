@@ -228,7 +228,7 @@ public class RolapNativeCrossJoin extends RolapNativeSet {
         if (!NonEmptyCrossJoinConstraint.isValidContext(
                 evaluator,
                 false,
-                levels.toArray(new RolapLevel[levels.size()]),
+                levels.toArray(RolapLevel[]::new),
                 restrictMemberTypes()))
         {
             alertCrossJoinNonNative(
@@ -318,7 +318,7 @@ public class RolapNativeCrossJoin extends RolapNativeSet {
         Set<CrossJoinArg> joinArgs =
             crossJoinArgFactory().buildConstraintFromAllAxes(evaluator, enableNativeFilter);
         joinArgs.addAll(Arrays.asList(cargs));
-        return joinArgs.toArray(new CrossJoinArg[joinArgs.size()]);
+        return joinArgs.toArray(CrossJoinArg[]::new);
     }
 
     private boolean safeToConstrainByOtherAxes(final FunctionDefinition fun) {

@@ -334,7 +334,7 @@ public class SegmentBuilder {
 
         for (AxisInfo axis : axes) {
             axis.values =
-                axis.valueSet.toArray(new Comparable[axis.valueSet.size()]);
+                axis.valueSet.toArray(Comparable[]::new);
         }
 
         // Populate cells.
@@ -367,7 +367,7 @@ public class SegmentBuilder {
             for (SortedSet<Comparable> set : body.getAxisValueSets()) {
                     valueArrays[z] = keepColumns.contains(
                         firstHeaderConstrainedColumns.get(z).columnExpression)
-                        ? set.toArray(new Comparable[set.size()])
+                        ? set.toArray(Comparable[]::new)
                         : null;
                 ++z;
             }
@@ -460,7 +460,7 @@ public class SegmentBuilder {
         final SegmentBody body;
         // Peak at the values and determine the best way to store them
         // (whether to use a dense native dataset or a sparse one.
-        if (cellValues.size() == 0) {
+        if (cellValues.isEmpty()) {
             // Just store the data into an empty dense object dataset.
             body =
                 new DenseObjectSegmentBody(
@@ -770,7 +770,7 @@ public class SegmentBuilder {
             List<Comparable> values = new ArrayList<>();
             predicate.values(Util.cast(values));
             Comparable[] valuesArray =
-                values.toArray(new Comparable[values.size()]);
+                values.toArray(Comparable[]::new);
             Arrays.sort(valuesArray, RolapUtil.SqlNullSafeComparator.instance);
             ccs.add(
                 segmentColumn(predicate, new ArraySortedSet(valuesArray)));

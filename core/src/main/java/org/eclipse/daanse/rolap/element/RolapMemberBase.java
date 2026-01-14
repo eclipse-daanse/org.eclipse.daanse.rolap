@@ -706,7 +706,7 @@ public class RolapMemberBase
         if (isParentChildLeaf == null) {
             isParentChildLeaf = getLevel().isParentChild()
                 && getDimension().getCatalog().getCatalogReaderWithDefaultRole()
-                .getMemberChildren(this).size() == 0;
+                .getMemberChildren(this).isEmpty();
         }
         return isParentChildLeaf;
     }
@@ -892,10 +892,9 @@ public class RolapMemberBase
     }
 
     private static int setOrdinal(Member member, int ordinal) {
-        if (member instanceof RolapMemberBase) {
-            ((RolapMemberBase) member).setOrdinal(ordinal++);
+        if (member instanceof RolapMemberBase rolapMemberBase) {
+            rolapMemberBase.setOrdinal(ordinal++);
         } else {
-            // TODO
             LOGGER.warn(
                 "RolapMember.setAllChildren: NOT RolapMember member.name={}, member.class={}, ordinal={}",
                 member.getName(), member.getClass().getName(), ordinal);

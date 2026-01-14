@@ -315,7 +315,7 @@ public class SqlTupleReader implements TupleReader {
           if ( member != members.get( i ) ) {
             // Flush list we've been building.
             List<RolapMember> children = siblings.get( i + 1 );
-            if ( children != null && children.size() > 0) {
+            if ( children != null && !children.isEmpty()) {
               MemberChildrenConstraint mcc =
                 constraint.getMemberChildrenConstraint(
                   members.get( i ) );

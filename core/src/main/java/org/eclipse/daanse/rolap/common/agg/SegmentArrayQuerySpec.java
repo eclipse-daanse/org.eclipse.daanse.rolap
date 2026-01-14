@@ -81,7 +81,7 @@ class SegmentArrayQuerySpec extends AbstractQuerySpec {
      * @return Whether this query specification is valid
      */
     private boolean isValid(boolean fail) {
-        assert segments.size() > 0;
+        assert !segments.isEmpty();
         for (Segment segment : segments) {
             int n = segment.predicates.length;
             if (n != segment0.predicates.length) {
