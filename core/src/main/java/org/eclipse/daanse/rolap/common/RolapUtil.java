@@ -631,19 +631,15 @@ public class RolapUtil {
         final org.eclipse.daanse.rolap.mapping.model.RelationalQuery fact)
     {
       List<String> rlStarKey = new ArrayList<>();
-      org.eclipse.daanse.rolap.mapping.model.TableQuery table = null;
       rlStarKey.add(getAlias(fact));
-      if (fact instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery t) {
-        table = t;
-      }
       // Add SQL filter to the key
-      if (!Util.isNull(table) && table != null && !Util.isNull(table.getSqlWhereExpression())
-          && !Util.isBlank(table.getSqlWhereExpression().getSql()))
-      {
-        for (String dialect : table.getSqlWhereExpression().getDialects()) {
-            rlStarKey.add(dialect);
+      if (fact instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery table) {
+        org.eclipse.daanse.rolap.mapping.model.SqlStatement sqlWhere = table.getSqlWhereExpression();
+        String sql = sqlWhere != null ? sqlWhere.getSql() : null;
+        if (sql != null && !sql.isBlank()) {
+          rlStarKey.addAll(sqlWhere.getDialects());
+          rlStarKey.add(sql);
         }
-        rlStarKey.add(table.getSqlWhereExpression().getSql());
       }
       return Collections.unmodifiableList(rlStarKey);
     }

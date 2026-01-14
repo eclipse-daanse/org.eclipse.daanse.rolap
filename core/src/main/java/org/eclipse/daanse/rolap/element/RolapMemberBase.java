@@ -655,7 +655,7 @@ public class RolapMemberBase
             // a special key value whose toString() is "null".
             final String name = getName();
             return name.equals(RolapUtil.mdxNullLiteral())
-                || Util.isBlank(name);
+                || name.isBlank();
         }
 
         //TODO:: IfParentsProperty and additional attribute that is by default the name, or a property that is switch
