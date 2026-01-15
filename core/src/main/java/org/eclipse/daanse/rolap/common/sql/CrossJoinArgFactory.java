@@ -1007,7 +1007,7 @@ public class CrossJoinArgFactory {
     }
 
     private static final List<String> cheapFuns =
-        Arrays.asList("LastChild", "FirstChild", "Lag");
+        List.of("LastChild", "FirstChild", "Lag");
 
     private boolean allArgsCheapToExpand(Expression exp) {
         while (exp instanceof NamedSetExpression namedSetExpr) {

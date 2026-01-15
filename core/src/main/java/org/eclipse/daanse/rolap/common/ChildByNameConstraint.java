@@ -54,7 +54,7 @@ public class ChildByNameConstraint extends DefaultMemberChildrenConstraint {
      */
     public ChildByNameConstraint(NameSegment childName) {
         this.childNames = new String[]{childName.getName()};
-        this.cacheKey = Arrays.asList(ChildByNameConstraint.class, childName);
+        this.cacheKey = List.of(ChildByNameConstraint.class, childName);
     }
 
     public ChildByNameConstraint(List<NameSegment> childNames) {
@@ -63,7 +63,7 @@ public class ChildByNameConstraint extends DefaultMemberChildrenConstraint {
         for (NameSegment name : childNames) {
             this.childNames[i++] = name.getName();
         }
-        this.cacheKey = Arrays.asList(
+        this.cacheKey = List.of(
             ChildByNameConstraint.class, this.childNames);
     }
 
@@ -102,7 +102,7 @@ public class ChildByNameConstraint extends DefaultMemberChildrenConstraint {
     }
 
     public List<String> getChildNames() {
-        return Arrays.asList(childNames);
+        return List.of(childNames);
     }
 
 }

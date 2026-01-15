@@ -117,7 +117,7 @@ public class SegmentCacheIndexImpl implements SegmentCacheIndex {
     }
 
     public static List makeConverterKey(SegmentHeader header) {
-        return Arrays.asList(
+        return List.of(
             header.schemaName,
             header.schemaChecksum,
             header.cubeName,
@@ -128,7 +128,7 @@ public class SegmentCacheIndexImpl implements SegmentCacheIndex {
 
     public static List makeConverterKey(CellRequest request)
     {
-        return Arrays.asList(
+        return List.of(
             request.getMeasure().getStar().getCatalog().getName(),
             request.getMeasure().getStar().getCatalog().getChecksum(),
             request.getMeasure().getCubeName(),
@@ -688,7 +688,7 @@ public class SegmentCacheIndexImpl implements SegmentCacheIndex {
         String measureName,
         List<String> compoundPredicates)
     {
-        return Arrays.asList(
+        return List.of(
             schemaName,
             schemaChecksum,
             cubeName,
@@ -716,7 +716,7 @@ public class SegmentCacheIndexImpl implements SegmentCacheIndex {
         String measureName,
         List<String> compoundPredicates)
     {
-        return Arrays.asList(
+        return List.of(
             schemaName,
             schemaChecksum,
             cubeName,
@@ -741,7 +741,7 @@ public class SegmentCacheIndexImpl implements SegmentCacheIndex {
         String rolapStarFactTableName,
         String measureName)
     {
-        return Arrays.asList(
+        return List.of(
             schemaName,
             schemaChecksum,
             cubeName,

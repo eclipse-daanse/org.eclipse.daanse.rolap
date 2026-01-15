@@ -74,19 +74,9 @@ public class ListRecorder extends AbstractRecorder {
 
         Entry e = new Entry(context, msg, msgType, info);
         switch (msgType) {
-        case INFO:
-            infoList.add(e);
-            break;
-        case WARN:
-            warnList.add(e);
-            break;
-        case ERROR:
-            errorList.add(e);
-            break;
-        default:
-            e = new Entry(context, new StringBuilder("Unknown message type enum \"").append(msgType)
-                    .append("\" for message: ").append(msg).toString(), MessageType.WARN, info);
-            warnList.add(e);
+            case INFO -> infoList.add(e);
+            case WARN -> warnList.add(e);
+            case ERROR -> errorList.add(e);
         }
     }
 

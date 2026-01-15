@@ -30,7 +30,7 @@ public class ExternalRolapConnection extends AbstractRolapConnection {
         Role roleInner = null;
         if ( roleNameList.isEmpty() ) {
             if (context.getCatalogMapping().getDefaultAccessRole() == null && !catalog.roleNames().isEmpty()) {
-               throw new RuntimeException("User doesn't have any roles"); // TODO need throw access exception
+               throw new RuntimeException("User doesn't have any roles assigned and no default role is configured");
             }
         } else {
           List<Role> roleList = new ArrayList<>();
@@ -43,20 +43,13 @@ public class ExternalRolapConnection extends AbstractRolapConnection {
               }
               roleList.add( role1 );
             }
-            switch ( roleList.size() ) {
-             case 0:
-                // If they specify 'Role=;', the list of names will be
-                // empty, and the effect will be as if they did specify
-                // Role at all.
-               roleInner = null;
-                break;
-              case 1:
-                roleInner = roleList.get( 0 );
-                break;
-              default:
-                roleInner = RoleImpl.union( roleList );
-                break;
-            }
+            // If they specify 'Role=;', the list of names will be
+            // empty, and the effect will be as if they did specify Role at all.
+            roleInner = switch (roleList.size()) {
+                case 0 -> null;
+                case 1 -> roleList.getFirst();
+                default -> RoleImpl.union(roleList);
+            };
         }
 
         if ( roleInner == null ) {

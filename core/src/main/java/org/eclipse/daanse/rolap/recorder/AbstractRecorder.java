@@ -52,17 +52,9 @@ public abstract class AbstractRecorder implements MessageRecorder {
         buf.append(msg);
         String logMsg = buf.toString();
         switch (msgType) {
-        case INFO:
-            logger.info(logMsg);
-            break;
-        case WARN:
-            logger.warn(logMsg);
-            break;
-        case ERROR:
-            logger.error(logMsg);
-            break;
-        default:
-            logger.warn("Unknown message type enum \"{}\" for message: {}", msgType, logMsg);
+            case INFO -> logger.info(logMsg);
+            case WARN -> logger.warn(logMsg);
+            case ERROR -> logger.error(logMsg);
         }
     }
 

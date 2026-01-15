@@ -144,38 +144,37 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
         }
         Catalog catalog = catalogReader.getCatalog();
         String dbName = getCatalogName(catalog.getName());
-        FileWriter writer = new FileWriter(file);
-        writer.write("# Documentation");
-        writer.write(ENTER);
-        writer.write("### CatalogName : " + dbName);
-        writer.write(ENTER);
-        if (config.writeSchemasDescribing()) {
-            writeSchema(writer, catalogReader);
-            if (role == null) {
-                writeRoles(writer, catalogReader.getContext().getAccessRoles());
-            } else {
-                writeRoles(writer, List.of(role));
+        try (FileWriter writer = new FileWriter(file)) {
+            writer.write("# Documentation");
+            writer.write(ENTER);
+            writer.write("### CatalogName : " + dbName);
+            writer.write(ENTER);
+            if (config.writeSchemasDescribing()) {
+                writeSchema(writer, catalogReader);
+                if (role == null) {
+                    writeRoles(writer, catalogReader.getContext().getAccessRoles());
+                } else {
+                    writeRoles(writer, List.of(role));
+                }
+
+            }
+            if (config.writeSchemasAsXML()) {
+                writeSchemasAsXML(writer, context);
             }
 
+            if (config.writeCubsDiagrams()) {
+                writeSchemaDiagram(writer, context, catalogReader);
+            }
+            if (config.writeCubeMatrixDiagram()) {
+                writeCubeMatrixDiagram(writer, context);
+            }
+            if (config.writeDatabaseInfoDiagrams()) {
+                writeDatabaseInfo(writer, context, catalogReader);
+            }
+            if (config.writeVerifierResult()) {
+                writeVerifyer(writer, context);
+            }
         }
-        if (config.writeSchemasAsXML()) {
-            writeSchemasAsXML(writer, context);
-        }
-
-        if (config.writeCubsDiagrams()) {
-            writeSchemaDiagram(writer, context, catalogReader);
-        }
-        if (config.writeCubeMatrixDiagram()) {
-            writeCubeMatrixDiagram(writer, context);
-        }
-        if (config.writeDatabaseInfoDiagrams()) {
-            writeDatabaseInfo(writer, context, catalogReader);
-        }
-        if (config.writeVerifierResult()) {
-            writeVerifyer(writer, context);
-        }
-        writer.flush();
-        writer.close();
 
     }
 
