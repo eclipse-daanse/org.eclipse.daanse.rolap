@@ -1656,7 +1656,7 @@ public abstract class RolapCube extends CubeBase {
      */
     @Override
     public List<Hierarchy> getHierarchies() {
-        return hierarchyList.stream().map(Hierarchy.class::cast).collect(Collectors.toList());
+        return hierarchyList.stream().map(Hierarchy.class::cast).toList();
     }
 
     public boolean isLoadInProgress() {

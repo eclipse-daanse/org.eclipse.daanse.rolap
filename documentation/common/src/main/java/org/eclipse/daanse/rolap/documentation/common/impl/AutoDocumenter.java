@@ -30,10 +30,13 @@ import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.metatype.annotations.Designate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Designate(ocd = AutoDocumenterConfig.class, factory = true)
 @Component(immediate = true, configurationPid = Constants.AUTO_DOCUMENTER_PID)
 public class AutoDocumenter {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AutoDocumenter.class);
 
     private ExecutorService newVirtualThreadPerTaskExecutor = Executors.newVirtualThreadPerTaskExecutor();
     private Path outputBasePath;
@@ -59,7 +62,7 @@ public class AutoDocumenter {
             try {
                 documenter.createDocumentation(context, path);
             } catch (Exception e) {
-                e.printStackTrace();
+                LOGGER.error("Error creating documentation for context: {}", context.getName(), e);
             }
 
         });

@@ -816,7 +816,7 @@ public class RolapMemberBase
             List<List<Member>> levelMembers =
                 getAllMembers(schemaReader, hierarchy);
             List<Member> leafMembers =
-                levelMembers.get(levelMembers.size() - 1);
+                levelMembers.getLast();
             levelMembers = levelMembers.subList(0, levelMembers.size() - 1);
 
             // Set all ordinals

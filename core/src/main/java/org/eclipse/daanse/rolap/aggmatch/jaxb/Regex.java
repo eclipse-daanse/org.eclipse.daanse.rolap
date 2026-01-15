@@ -147,13 +147,11 @@ public class Regex extends CaseMatcher {
                         return;
                     }
                     // its OK, there are "count" ${}
-                    templateNamePos = Arrays.stream(poss, 0, count)
-                            .collect(Collectors.toList());
+                    templateNamePos = Arrays.stream(poss, 0, count).toList();
 
                     ss[count++] =
                         template.substring(end, template.length());
-                    templateParts = Arrays.stream(ss, 0, count)
-                            .collect(Collectors.toList());
+                    templateParts = Arrays.stream(ss, 0, count).toList();
 
                     return;
                 }

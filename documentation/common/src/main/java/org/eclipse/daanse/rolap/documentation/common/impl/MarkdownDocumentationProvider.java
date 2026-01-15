@@ -78,11 +78,14 @@ import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.metatype.annotations.Designate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Designate(ocd = DocumentationProviderConfig.class, factory = true)
 @Component(service = ContextDocumentationProvider.class, immediate = true, configurationPid = Constants.DOC_PROVIDER_MARKDOWN_PID)
 public class MarkdownDocumentationProvider extends AbstractContextDocumentationProvider {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(MarkdownDocumentationProvider.class);
     private static final String underline = "_";
     public static final String REF_NAME_VERIFIERS = "verifyer";
     public static final String REF_NAME_CHECK_SERVICE = "checkService";
@@ -224,12 +227,12 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
             writer.write("---");
             writer.write(ENTER);
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("Error writing cube matrix diagram", e);
         }
     }
 
     private String quadrantChartFormat(double x) {
-        return x < 1 ? String.format("%,.4f", x) : "1";
+        return x < 1 ? "%,.4f".formatted(x) : "1";
     }
 
     private long getFactCount(org.eclipse.daanse.rolap.mapping.model.PhysicalCube c) {
@@ -254,7 +257,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
                 }
             }
         } catch (Exception throwables) {
-            throwables.printStackTrace();
+            LOGGER.error("Error getting fact count for cube", throwables);
         }
 
         return result;
@@ -530,7 +533,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("Error writing schema verification result", e);
         }
     }
 
@@ -565,7 +568,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
             writer.write("|" + r.cause().name() + "|" + r.description() + "|");
             writer.write(ENTER);
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("Error writing verification result", e);
         }
     }
 
@@ -574,7 +577,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
             writer.write("|" + r.cause().name() + "|" + r.description() + "|");
             writer.write(ENTER);
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("Error writing database verification result", e);
         }
     }
 
@@ -614,7 +617,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
             // writer.write(serializerModifier.getXML());
             writer.write(ENTER);
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("Error writing schema as XML for catalog: {}", catalog.getName(), e);
         }
     }
 
@@ -641,7 +644,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
             // write database
 
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("Error writing schema", e);
         }
     }
 
@@ -659,7 +662,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
                 writeList(writer, roles, this::writeRole);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("Error writing roles", e);
         }
     }
 
@@ -672,7 +675,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
             writer.write(ENTER);
             writer.write(ENTER);
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("Error writing role: {}", role, e);
         }
 
     }
@@ -702,7 +705,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
                 writeCubeDimensions(writer, catalogReader.getCubeDimensions(cube), catalogReader);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("Error writing cube: {}", cube.getName(), e);
         }
     }
 
@@ -806,7 +809,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
                 writeAggregationSection(writer, catalogReader, cube, context);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("Error writing cube diagram: {}", cube.getName(), e);
         }
     }
 
@@ -883,7 +886,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
                         """);
 
             } catch (IOException | SQLException e) {
-                e.printStackTrace();
+                LOGGER.error("Error writing aggregation section", e);
             }
         }
     }
@@ -1000,7 +1003,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
                 hIndex++;
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("Error writing dimension part diagram", e);
         }
     }
 
@@ -1016,7 +1019,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("Error writing cube dimensions", e);
         }
     }
 
@@ -1042,7 +1045,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
             writer.write(ENTER);
             writeHierarchies(writer, catalogReader.getDimensionHierarchies(d), catalogReader);
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("Error writing cube dimension: {}", d.getName(), e);
         }
     }
 
@@ -1076,7 +1079,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
             writer.write(ENTER);
             writeList(writer, catalogReader.getHierarchyLevels(h), this::writeLevel);
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("Error writing hierarchy: {}", h.getName(), e);
         }
     }
 
@@ -1097,7 +1100,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
             writer.write(ENTER);
             writer.write(ENTER);
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("Error writing level: {}", level.getName(), e);
         }
 
     }
@@ -1221,7 +1224,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
             List<TableDefinition> tables = databaseService.getTableDefinitions(databaseMetaData, schemaReference);
             writeTables(writer, context, tables, databaseMetaData, dbschemas);
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.error("Error writing database info", e);
         }
     }
 
@@ -1259,7 +1262,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
                         """);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("Error writing tables diagram", e);
         }
     }
 
@@ -1300,7 +1303,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
             writer.write("}");
             writer.write(ENTER);
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("Error writing table diagram for mapping table: {}", table.getName(), e);
         }
     }
 
@@ -1333,7 +1336,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
             writer.write("}");
             writer.write(ENTER);
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("Error writing table diagram for database table: {}", table.getName(), e);
         }
     }
 
@@ -1393,7 +1396,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
             }
 
         } catch (IOException | SQLException e) {
-            e.printStackTrace();
+            LOGGER.error("Error writing table diagram with metadata: {}", table.getName(), e);
         }
     }
 
@@ -1450,7 +1453,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
             }
 
         } catch (IOException | SQLException e) {
-            e.printStackTrace();
+            LOGGER.error("Error writing table diagram for table reference: {}", tableReference.name(), e);
         }
     }
 

@@ -29,6 +29,8 @@ import java.util.stream.Collectors;
 import javax.sql.DataSource;
 
 import org.eclipse.daanse.jdbc.db.dialect.api.type.Datatype;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.olap.api.DataTypeJdbc;
 import org.eclipse.daanse.olap.api.connection.Connection;
@@ -44,6 +46,8 @@ import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.element.RolapCubeMember;
 
 public class WritebackUtil {
+    private static final Logger LOGGER = LoggerFactory.getLogger(WritebackUtil.class);
+
     public static void commit(RolapCube cube, Connection con, List<Map<String, Map.Entry<Datatype, Object>>> sessionValues, String userId) {
         if (cube.getWritebackTable().isPresent()) {
 
@@ -80,7 +84,7 @@ public class WritebackUtil {
                     statement.execute(sql.toString());
                 }
             } catch (SQLException e) {
-                e.printStackTrace();
+                LOGGER.error("Error committing writeback values to table: {}", writebackTable.getName(), e);
             }
         }
 

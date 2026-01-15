@@ -72,6 +72,8 @@ import org.eclipse.daanse.rolap.common.RolapStar;
 import org.eclipse.daanse.rolap.common.RolapUtil;
 import org.eclipse.daanse.rolap.common.SqlStatement;
 import org.eclipse.daanse.rolap.common.StarPredicate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.eclipse.daanse.rolap.common.agg.SegmentCacheManager.AbortException;
 import org.eclipse.daanse.rolap.common.agg.SegmentCacheManager.SegmentCacheIndexRegistry;
 import org.eclipse.daanse.rolap.common.cache.SegmentCacheIndex;
@@ -96,6 +98,7 @@ import org.eclipse.daanse.rolap.common.cache.SegmentCacheIndex;
  * @since 24 May 2007
  */
 public class SegmentLoader {
+  private static final Logger LOGGER = LoggerFactory.getLogger(SegmentLoader.class);
 
   private final SegmentCacheManager cacheMgr;
     private final static String segmentFetchLimitExceeded = "Number of cell results to be read exceeded limit of ({0,number})";
@@ -706,7 +709,7 @@ public class SegmentLoader {
                       o = Double.parseDouble( o.toString() );
                   }
                   catch (NumberFormatException e) {
-                      e.printStackTrace();
+                      LOGGER.warn("Failed to parse numeric value: {}", o, e);
                   }
               }
             }

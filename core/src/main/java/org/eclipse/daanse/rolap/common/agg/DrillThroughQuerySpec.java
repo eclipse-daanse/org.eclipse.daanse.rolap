@@ -186,7 +186,7 @@ public class DrillThroughQuerySpec extends AbstractQuerySpec {
         String alias =
             !request.getDrillThroughMeasures().isEmpty()
                 ? request.getDrillThroughMeasures().get(i).getName()
-                : columnNames.get(columnNames.size() - 1);
+                : columnNames.getLast();
         int j = 0;
         String maybe = alias;
         final Column[] cols = getColumns();

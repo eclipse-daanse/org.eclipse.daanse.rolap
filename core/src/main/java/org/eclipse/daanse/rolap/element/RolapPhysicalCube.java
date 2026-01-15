@@ -394,8 +394,7 @@ public class RolapPhysicalCube extends RolapCube implements PhysicalCube {
                 try {
                     ordinal = Integer.parseInt(expr.substring(1, expr.length() - 1));
                 } catch (NumberFormatException e) {
-                    e.printStackTrace();
-//                    discard(e);
+                    LOGGER.debug("Failed to parse member ordinal: {}", expr, e);
                 }
             }
         }

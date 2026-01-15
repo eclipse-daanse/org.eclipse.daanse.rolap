@@ -1358,7 +1358,7 @@ public class CacheControlImpl implements CacheControl {
                 if (list.isEmpty()) {
                     return;
                 }
-                RolapMember upperChild = list.get(list.size() - 1);
+                RolapMember upperChild = list.getLast();
                 visitRange(
                     memberReader, level, lowerChild, upperChild, recurse);
             }
@@ -1613,7 +1613,7 @@ public class CacheControlImpl implements CacheControl {
                 if (list.isEmpty()) {
                     return EmptyMemberSet.INSTANCE;
                 }
-                RolapMember upperChild = list.get(list.size() - 1);
+                RolapMember upperChild = list.getLast();
                 return filter2(
                     seekLevel, (RolapLevel) level.getChildLevel(),
                     lowerChild, upperChild);

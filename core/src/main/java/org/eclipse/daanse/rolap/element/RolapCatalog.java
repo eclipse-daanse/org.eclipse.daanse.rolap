@@ -889,8 +889,7 @@ public class RolapCatalog implements Catalog {
 	@Override
 	public List<Cube> getCubes() {
 		Collection<RolapCube> cubes = mapMappingToRolapCube.values();
-		return cubes.stream()
-		        .collect(Collectors.toList());
+		return cubes.stream().<Cube>map(c -> c).toList();
 	}
 
 	public List<RolapCube> getCubeList() {

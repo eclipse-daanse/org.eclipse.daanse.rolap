@@ -73,16 +73,17 @@ import org.slf4j.LoggerFactory;
  */
 public class SegmentBuilder {
 
-    private static final String LOG_FORMAT_STRING =
-        "column.columnExpression=%s\n"
-            + "column.valueCount=%s\n"
-            + "column.values=%s\n"
-            + "requestedValues=%s\n"
-            + "valueSet=%s\n"
-            + "values=%s\n"
-            + "hasNull=%b\n"
-            + "src=%d\n"
-            + "lostPredicate=%b\n";
+    private static final String LOG_FORMAT_STRING = """
+        column.columnExpression=%s
+        column.valueCount=%s
+        column.values=%s
+        requestedValues=%s
+        valueSet=%s
+        values=%s
+        hasNull=%b
+        src=%d
+        lostPredicate=%b
+        """;
     private static final Logger LOGGER =
         LoggerFactory.getLogger(SegmentBuilder.class);
     /**
@@ -595,8 +596,7 @@ public class SegmentBuilder {
               for (AxisInfo axis : axes) {
                   SortedSet<Comparable> colVals = axis.column.getValues();
                   builder.append(
-                      String.format(
-                          LOG_FORMAT_STRING,
+                      LOG_FORMAT_STRING.formatted(
                           axis.column.columnExpression,
                           axis.column.getValueCount(),
                           Arrays.toString(
