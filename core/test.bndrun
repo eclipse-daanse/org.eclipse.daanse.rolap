@@ -76,9 +76,9 @@
 	org.eclipse.daanse.rolap.core-tests;version='[0.0.1,0.0.2)',\
 	org.eclipse.daanse.rolap.mapping.model;version='[0.0.1,0.0.2)',\
 	org.eclipse.daanse.sql.guard.api;version='[0.0.1,0.0.2)',\
-	org.eclipse.emf.common;version='[2.30.0,2.30.1)',\
-	org.eclipse.emf.ecore;version='[2.36.0,2.36.1)',\
-	org.eclipse.emf.ecore.xmi;version='[2.37.0,2.37.1)',\
+	org.eclipse.emf.common;version='[2.44.0,2.44.1)',\
+	org.eclipse.emf.ecore;version='[2.41.0,2.41.1)',\
+	org.eclipse.emf.ecore.xmi;version='[2.39.0,2.39.1)',\
 	org.gecko.emf.osgi.component;version='[6.2.0,6.2.1)',\
 	org.mockito.junit-jupiter;version='[4.9.0,4.9.1)',\
 	org.mockito.mockito-core;version='[4.9.0,4.9.1)',\

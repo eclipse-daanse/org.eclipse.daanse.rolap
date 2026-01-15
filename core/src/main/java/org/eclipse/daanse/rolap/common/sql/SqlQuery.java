@@ -40,7 +40,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.IntStream;
 
 import org.eclipse.daanse.jdbc.db.dialect.api.type.BestFitColumnType;
 import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
@@ -157,6 +159,35 @@ public class SqlQuery {
         new HashMap<>();
 
     private static final String INDENT = "    ";
+    private static final String ALIAS_EXISTS_ERROR = "query already contains alias '%s'";
+    private static final String COLUMN_ALIAS_PREFIX = "c";
+    private static final int INITIAL_BUFFER_CAPACITY = 128;
+    private static final String EXPRESSION_NULL_OR_BLANK_ERROR = "expression must not be null or blank";
+    private static final String ALIAS_NULL_OR_BLANK_ERROR = "alias must not be null or blank";
+
+    /**
+     * Validates that an expression is not null or blank.
+     *
+     * @param expression the expression to validate
+     * @throws IllegalArgumentException if expression is null or blank
+     */
+    private static void requireNonBlankExpression(String expression) {
+        if (expression == null || expression.isBlank()) {
+            throw new IllegalArgumentException(EXPRESSION_NULL_OR_BLANK_ERROR);
+        }
+    }
+
+    /**
+     * Validates that an alias is not null or blank.
+     *
+     * @param alias the alias to validate
+     * @throws IllegalArgumentException if alias is null or blank
+     */
+    private static void requireNonBlankAlias(String alias) {
+        if (alias == null || alias.isBlank()) {
+            throw new IllegalArgumentException(ALIAS_NULL_OR_BLANK_ERROR);
+        }
+    }
 
     /**
      * Base constructor used by all other constructors to create an empty
@@ -179,7 +210,7 @@ public class SqlQuery {
         this.having = new ClauseList(false);
         this.orderBy = new ClauseList(false);
         this.fromAliases = new ArrayList<>();
-        this.buf = new StringBuilder(128);
+        this.buf = new StringBuilder(INITIAL_BUFFER_CAPACITY);
         this.groupingSets = new ArrayList<>();
         this.dialect = dialect;
         this.rowLimit = new ClauseList(false);
@@ -234,23 +265,18 @@ public class SqlQuery {
         final String alias,
         final boolean failIfExists)
     {
-        assert alias != null;
-        assert alias.length() > 0;
+        requireNonBlankAlias(alias);
 
         if (fromAliases.contains(alias)) {
             if (failIfExists) {
-                throw Util.newInternal(
-                    new StringBuilder("query already contains alias '").append(alias).append("'").toString());
+                throw Util.newInternal(ALIAS_EXISTS_ERROR.formatted(alias));
             } else {
                 return false;
             }
         }
 
         buf.setLength(0);
-
-        buf.append('(');
-        buf.append(query);
-        buf.append(')');
+        buf.append('(').append(query).append(')');
         if (dialect.allowsAs()) {
             buf.append(" as ");
         } else {
@@ -283,13 +309,12 @@ public class SqlQuery {
         final String name,
         final String alias,
         final String filter,
-        final Map hints,
+        final Map<String, String> hints,
         final boolean failIfExists)
     {
         if (fromAliases.contains(alias)) {
             if (failIfExists) {
-                throw Util.newInternal(
-                    new StringBuilder("query already contains alias '").append(alias).append("'").toString());
+                throw Util.newInternal(ALIAS_EXISTS_ERROR.formatted(alias));
             } else {
                 return false;
             }
@@ -298,8 +323,9 @@ public class SqlQuery {
         buf.setLength(0);
         dialect.quoteIdentifier(buf, schema, name);
         if (alias != null) {
-            Util.assertTrue(alias.length() > 0);
-
+            if (alias.isBlank()) {
+                throw new IllegalArgumentException(ALIAS_NULL_OR_BLANK_ERROR);
+            }
             if (dialect.allowsAs()) {
                 buf.append(" as ");
             } else {
@@ -373,35 +399,30 @@ public class SqlQuery {
             }
         }
 
-        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.SqlSelectQuery view) {
-            final String viewAlias =
-                (alias == null)
-                ? RelationUtil.getAlias(view)
-                : alias;
-            final String sqlString = getCodeSet(view).chooseQuery(dialect);
-            return addFromQuery(sqlString, viewAlias, false);
-
-        } else if (relation instanceof org.eclipse.daanse.rolap.mapping.model.InlineTableQuery inlineTableQueryMapping) {
-            final org.eclipse.daanse.rolap.mapping.model.RelationalQuery relation1 =
-                RolapUtil.convertInlineTableToRelation(
-                		inlineTableQueryMapping, dialect);
-            return addFrom(relation1, alias, failIfExists);
-
-        } else if (relation instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery table) {
-            final String tableAlias =
-                (alias == null)
-                ? RelationUtil.getAlias(table)
-                : alias;
-            return addFromTable(
-                getSchemaName(table.getTable().getSchema()),
-                table.getTable().getName(),
-                tableAlias,
-                table.getSqlWhereExpression() == null ? null : table.getSqlWhereExpression().getSql(),
-                getHintMap(table),
-                failIfExists);
-
-        } else if (relation instanceof org.eclipse.daanse.rolap.mapping.model.JoinQuery join) {
-            return addJoin(
+        return switch (relation) {
+            case org.eclipse.daanse.rolap.mapping.model.SqlSelectQuery view -> {
+                final String viewAlias = alias != null ? alias : RelationUtil.getAlias(view);
+                final String sqlString = getCodeSet(view).chooseQuery(dialect);
+                yield addFromQuery(sqlString, viewAlias, false);
+            }
+            case org.eclipse.daanse.rolap.mapping.model.InlineTableQuery inlineTable -> {
+                final org.eclipse.daanse.rolap.mapping.model.RelationalQuery relation1 =
+                    RolapUtil.convertInlineTableToRelation(inlineTable, dialect);
+                yield addFrom(relation1, alias, failIfExists);
+            }
+            case org.eclipse.daanse.rolap.mapping.model.TableQuery table -> {
+                final String tableAlias = alias != null ? alias : RelationUtil.getAlias(table);
+                yield addFromTable(
+                    getSchemaName(table.getTable().getSchema()),
+                    table.getTable().getName(),
+                    tableAlias,
+                    Optional.ofNullable(table.getSqlWhereExpression())
+                        .map(org.eclipse.daanse.rolap.mapping.model.SqlStatement::getSql)
+                        .orElse(null),
+                    getHintMap(table),
+                    failIfExists);
+            }
+            case org.eclipse.daanse.rolap.mapping.model.JoinQuery join -> addJoin(
                 left(join),
                 getLeftAlias(join),
                 join.getLeft().getKey(),
@@ -409,17 +430,13 @@ public class SqlQuery {
                 getRightAlias(join),
                 join.getRight().getKey(),
                 failIfExists);
-        } else {
-            throw Util.newInternal("bad relation type " + relation);
-        }
+            default -> throw Util.newInternal("bad relation type " + relation);
+        };
     }
 
     private String getSchemaName(org.eclipse.daanse.rolap.mapping.model.DatabaseSchema schema) {
-        if (schema != null) {
-            return schema.getName();
-        }
-        return null;
-	}
+        return schema != null ? schema.getName() : null;
+    }
 
 	private boolean addJoin(
 	    org.eclipse.daanse.rolap.mapping.model.Query left,
@@ -467,28 +484,25 @@ public class SqlQuery {
         for (int i = max - 1; i >= min; i--) {
             RelInfo relInfo = relations.get(i);
                 addJoin(
-                    relInfo.relation,
-                    relInfo.leftAlias != null
-                        ? relInfo.leftAlias
-                        : RelationUtil.getAlias(relInfo.relation),
-                    relInfo.leftKey,
-                    relations.get(i + 1).relation,
-                    relInfo.rightAlias != null
-                        ? relInfo.rightAlias
-                        : RelationUtil.getAlias(relations.get(i + 1).relation),
-                    relInfo.rightKey,
+                    relInfo.relation(),
+                    relInfo.leftAlias() != null
+                        ? relInfo.leftAlias()
+                        : RelationUtil.getAlias(relInfo.relation()),
+                    relInfo.leftKey(),
+                    relations.get(i + 1).relation(),
+                    relInfo.rightAlias() != null
+                        ? relInfo.rightAlias()
+                        : RelationUtil.getAlias(relations.get(i + 1).relation()),
+                    relInfo.rightKey(),
                     false);
         }
     }
 
     private int find(List<RelInfo> relations, org.eclipse.daanse.rolap.mapping.model.RelationalQuery relation) {
-        for (int i = 0, n = relations.size(); i < n; i++) {
-            RelInfo relInfo = relations.get(i);
-            if (Utils.equalsQuery(relInfo.relation, relation)) {
-                return i;
-            }
-        }
-        return -1;
+        return IntStream.range(0, relations.size())
+            .filter(i -> Utils.equalsQuery(relations.get(i).relation(), relation))
+            .findFirst()
+            .orElse(-1);
     }
 
     /**
@@ -524,7 +538,7 @@ public class SqlQuery {
     }
 
     public String nextColumnAlias() {
-        return "c" + select.size();
+        return COLUMN_ALIAS_PREFIX + select.size();
     }
 
     /**
@@ -587,16 +601,22 @@ public class SqlQuery {
 
     public void addWhere(final String expression)
     {
-        assert expression != null && !expression.equals("");
+        requireNonBlankExpression(expression);
         where.add(expression);
     }
 
     public void addGroupBy(final String expression)
     {
-        assert expression != null && !expression.equals("");
+        requireNonBlankExpression(expression);
         groupBy.add(expression);
     }
 
+    /**
+     * Adds an expression to the GROUP BY clause, using the alias if the dialect requires it.
+     *
+     * @param expression the expression to group by
+     * @param alias the column alias to use if the dialect requires GROUP BY aliases
+     */
     public void addGroupBy(final String expression, final String alias) {
         if (dialect.requiresGroupByAlias()) {
             addGroupBy(dialect.quoteIdentifier(alias).toString());
@@ -607,7 +627,7 @@ public class SqlQuery {
 
     public void addHaving(final String expression)
     {
-        assert expression != null && !expression.equals("");
+        requireNonBlankExpression(expression);
         having.add(expression);
     }
 
@@ -661,6 +681,17 @@ public class SqlQuery {
         }
     }
 
+    /**
+     * Adds an item to the ORDER BY clause with custom null value handling.
+     *
+     * @param expr the expression to order by
+     * @param alias the column alias (used if dialect requires ORDER BY aliases)
+     * @param ascending true for ascending order, false for descending
+     * @param prepend true to prepend to the order list, false to append
+     * @param nullParentValue the value to use for ordering null parent values
+     * @param type the data type of the expression for proper ordering
+     * @param collateNullsLast true to place nulls at the end regardless of sort direction
+     */
     public void addOrderBy(String expr, String alias, boolean ascending, boolean prepend, String nullParentValue,
             org.eclipse.daanse.jdbc.db.dialect.api.type.Datatype type, boolean collateNullsLast) {
         String orderExpr =
@@ -756,9 +787,7 @@ public class SqlQuery {
 
     public void addGroupingSet(List<String> groupingColumnsExpr) {
         ClauseList groupingList = new ClauseList(false);
-        for (String columnExp : groupingColumnsExpr) {
-            groupingList.add(columnExp);
-        }
+        groupingList.addAll(groupingColumnsExpr);
         groupingSets.add(groupingList);
     }
 
@@ -774,11 +803,15 @@ public class SqlQuery {
         types.add(type);
     }
 
+    /**
+     * Returns the SQL string and the list of column types for this query.
+     *
+     * @return a pair containing the SQL string and the list of column types
+     */
     public Pair<String, List<BestFitColumnType>> toSqlAndTypes() {
         assert types.size() == select.size() + groupingFunctions.size()
-            : new StringBuilder(types.size()).append(" types, ")
-            .append((select.size() + groupingFunctions.size()))
-            .append(" select items in query ").append(this).toString();
+            : "%d types, %d select items in query %s".formatted(
+                types.size(), select.size() + groupingFunctions.size(), this);
         return Pair.of(toString(), types);
     }
 
@@ -797,7 +830,7 @@ public class SqlQuery {
         List<RelInfo> relations = new ArrayList<>();
         flatten(relations, root, null, null, null, null);
         for (RelInfo relation : relations) {
-            mapRelationToRoot.put(relation.relation, root);
+            mapRelationToRoot.put(relation.relation(), root);
         }
         mapRootToRelations.put(root, relations);
     }
@@ -836,18 +869,20 @@ public class SqlQuery {
         isSupported = supported;
     }
 
-    private static class JoinOnClause {
-        private final String condition;
-        private final String left;
-        private final String right;
-
-        JoinOnClause(String condition, String left, String right) {
-            this.condition = condition;
-            this.left = left;
-            this.right = right;
-        }
+    /**
+     * Represents a JOIN ON condition with left and right table aliases.
+     *
+     * @param condition the SQL condition expression for the join
+     * @param left the alias of the left table in the join
+     * @param right the alias of the right table in the join
+     */
+    private record JoinOnClause(String condition, String left, String right) {
     }
 
+    /**
+     * Specialized clause list for FROM clause that manages JOIN ON conditions separately.
+     * Handles the generation of proper JOIN syntax based on the database dialect.
+     */
     static class FromClauseList extends ClauseList {
         private final List<JoinOnClause> joinOnClauses =
             new ArrayList<>();
@@ -906,19 +941,19 @@ public class SqlQuery {
                 // the first table was added before join, it has to be handled
                 // specially: Table.column = expression
                 if ((addedTables.size() == 1
-                     && addedTables.getFirst().equals(joinOnClause.left)
-                     && joinOnClause.left.equals(joinOnClause.right))
-                    || (alias.equals(joinOnClause.left)
-                        && addedTables.contains(joinOnClause.right))
-                    || (alias.equals(joinOnClause.right)
-                        && addedTables.contains(joinOnClause.left)))
+                     && addedTables.getFirst().equals(joinOnClause.left())
+                     && joinOnClause.left().equals(joinOnClause.right()))
+                    || (alias.equals(joinOnClause.left())
+                        && addedTables.contains(joinOnClause.right()))
+                    || (alias.equals(joinOnClause.right())
+                        && addedTables.contains(joinOnClause.left())))
                 {
                     if (n++ == 0) {
                         buf.append(" join ").append(from).append(" on ");
                     } else {
                         buf.append(" and ");
                     }
-                    buf.append(joinOnClause.condition);
+                    buf.append(joinOnClause.condition());
                 }
             }
             if (n == 0) {
@@ -932,6 +967,10 @@ public class SqlQuery {
         }
     }
 
+    /**
+     * A list of SQL clause elements (expressions) that can optionally prevent duplicates.
+     * Used to build SELECT, WHERE, GROUP BY, HAVING, and ORDER BY clauses.
+     */
     static class ClauseList extends ArrayList<String> {
         protected final boolean allowDups;
 
@@ -968,12 +1007,12 @@ public class SqlQuery {
                 buf.append(empty);
                 return;
             }
-            first = foo(generateFormattedSql, prefix, first);
-            sep = foo(generateFormattedSql, prefix, sep);
+            first = formatClauseKeyword(generateFormattedSql, prefix, first);
+            sep = formatClauseKeyword(generateFormattedSql, prefix, sep);
             toBuffer(buf, first, sep, last);
         }
 
-        static String foo(
+        static String formatClauseKeyword(
             boolean generateFormattedSql,
             String prefix,
             String s)
@@ -1022,8 +1061,8 @@ public class SqlQuery {
             String sep,
             String last)
         {
-            first = foo(generateFormattedSql, prefix, first);
-            sep = foo(generateFormattedSql, prefix, sep);
+            first = formatClauseKeyword(generateFormattedSql, prefix, first);
+            sep = formatClauseKeyword(generateFormattedSql, prefix, sep);
             buf.append(first);
             int n = 0;
             for (ClauseList clauseList : clauseListList) {
@@ -1065,31 +1104,32 @@ public class SqlQuery {
         }
     }
 
-    private static class RelInfo {
-        final org.eclipse.daanse.rolap.mapping.model.RelationalQuery relation;
-        final org.eclipse.daanse.rolap.mapping.model.Column leftKey;
-        final String leftAlias;
-        final org.eclipse.daanse.rolap.mapping.model.Column rightKey;
-        final String rightAlias;
-
-        public RelInfo(
-            org.eclipse.daanse.rolap.mapping.model.RelationalQuery relation,
-            org.eclipse.daanse.rolap.mapping.model.Column leftKey,
-            String leftAlias,
-            org.eclipse.daanse.rolap.mapping.model.Column rightKey,
-            String rightAlias)
-        {
-            this.relation = relation;
-            this.leftKey = leftKey;
-            this.leftAlias = leftAlias;
-            this.rightKey = rightKey;
-            this.rightAlias = rightAlias;
-        }
+    /**
+     * Holds information about a relation in a hierarchical query structure,
+     * including join keys and table aliases for building complex FROM clauses.
+     *
+     * @param relation the relational query (table or subquery)
+     * @param leftKey the column used as the left join key
+     * @param leftAlias the alias for the left table
+     * @param rightKey the column used as the right join key
+     * @param rightAlias the alias for the right table
+     */
+    private record RelInfo(
+        org.eclipse.daanse.rolap.mapping.model.RelationalQuery relation,
+        org.eclipse.daanse.rolap.mapping.model.Column leftKey,
+        String leftAlias,
+        org.eclipse.daanse.rolap.mapping.model.Column rightKey,
+        String rightAlias) {
     }
 
+    /**
+     * Adds a row limit clause to the query if required by the dialect.
+     *
+     * @param maxRowCount the maximum number of rows to return
+     */
     public void addRowLimit(int maxRowCount) {
-        if(this.dialect.requiresDrillthroughMaxRowsInLimit()) {
-            this.rowLimit.add("LIMIT " + Integer.toString(maxRowCount));
+        if (this.dialect.requiresDrillthroughMaxRowsInLimit()) {
+            this.rowLimit.add("LIMIT " + maxRowCount);
         }
     }
 }
