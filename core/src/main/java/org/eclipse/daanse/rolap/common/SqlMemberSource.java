@@ -55,6 +55,7 @@ import org.eclipse.daanse.olap.api.element.Level;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.element.Property;
 import org.eclipse.daanse.olap.api.execution.Execution;
+import org.eclipse.daanse.olap.api.execution.Execution.Purpose;
 import org.eclipse.daanse.olap.api.execution.ExecutionContext;
 import org.eclipse.daanse.olap.common.ResourceLimitExceededException;
 import org.eclipse.daanse.olap.common.SystemWideProperties;
@@ -204,7 +205,7 @@ public class SqlMemberSource
         ExecutionMetadata metadata = ExecutionMetadata.of(
             "SqlMemberSource.getMemberCount",
             "while counting members",
-            org.eclipse.daanse.olap.api.monitor.event.SqlStatementEvent.Purpose.TUPLES,
+            Purpose.TUPLES,
             0
         );
         ExecutionContext execContext = ExecutionContext.current().createChild(metadata, Optional.empty());
@@ -382,7 +383,7 @@ public class SqlMemberSource
         ExecutionMetadata metadata = ExecutionMetadata.of(
             "SqlMemberSource.getMembers",
             "while building member cache",
-            org.eclipse.daanse.olap.api.monitor.event.SqlStatementEvent.Purpose.TUPLES,
+            Purpose.TUPLES,
             0
         );
         ExecutionContext execContext = ExecutionContext.current().createChild(metadata, Optional.empty());
@@ -1058,7 +1059,7 @@ RME is this right
         ExecutionMetadata metadata = ExecutionMetadata.of(
             "SqlMemberSource.getMemberChildren",
             "while building member cache",
-            org.eclipse.daanse.olap.api.monitor.event.SqlStatementEvent.Purpose.TUPLES,
+            Purpose.TUPLES,
             0
         );
         ExecutionContext execContext = ExecutionContext.current().createChild(metadata, Optional.empty());

@@ -42,15 +42,14 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.type.BestFitColumnType;
 import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
+import org.eclipse.daanse.jdbc.db.dialect.api.type.BestFitColumnType;
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.ISqlStatement;
+import org.eclipse.daanse.olap.api.execution.Execution.Purpose;
 import org.eclipse.daanse.olap.api.execution.ExecutionContext;
 import org.eclipse.daanse.olap.api.monitor.event.EventCommon;
 import org.eclipse.daanse.olap.api.monitor.event.SqlStatementEndEvent;
-import org.eclipse.daanse.olap.api.monitor.event.SqlStatementEvent;
-import org.eclipse.daanse.olap.api.monitor.event.SqlStatementEvent.Purpose;
 import org.eclipse.daanse.olap.api.monitor.event.SqlStatementEventCommon;
 import org.eclipse.daanse.olap.api.monitor.event.SqlStatementExecuteEvent;
 import org.eclipse.daanse.olap.api.monitor.event.SqlStatementStartEvent;
@@ -205,7 +204,7 @@ public class SqlStatement implements ISqlStatement {
       }
 
       // First make sure to register with the execution instance.
-      if ( getPurpose() != Purpose.CELL_SEGMENT ) {
+      if ( getPurpose() != org.eclipse.daanse.olap.api.execution.Execution.Purpose.CELL_SEGMENT ) {
         executionContext.registerStatement(statement);
       } else {
         if ( callback != null ) {
@@ -525,10 +524,9 @@ public class SqlStatement implements ISqlStatement {
       new MyDelegatingInvocationHandler( this ) );
   }
 
-  private SqlStatementEvent.Purpose getPurpose() {
-    return executionContext.metadata().purpose() != null
-        ? executionContext.metadata().purpose()
-        : SqlStatementEvent.Purpose.OTHER;
+  private Purpose getPurpose() {
+      Purpose purpose = executionContext.metadata().purpose();
+      return purpose != null ? purpose : Purpose.OTHER;
   }
 
   private int getCellRequestCount() {

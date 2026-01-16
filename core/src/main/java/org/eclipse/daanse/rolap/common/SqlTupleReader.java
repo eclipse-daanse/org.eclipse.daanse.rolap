@@ -47,8 +47,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.eclipse.daanse.olap.api.execution.ExecutionMetadata;
-
 import org.eclipse.daanse.jdbc.db.dialect.api.type.BestFitColumnType;
 import org.eclipse.daanse.olap.api.ConfigConstants;
 import org.eclipse.daanse.olap.api.Context;
@@ -59,7 +57,9 @@ import org.eclipse.daanse.olap.api.calc.todo.TupleList;
 import org.eclipse.daanse.olap.api.element.Level;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.execution.Execution;
+import org.eclipse.daanse.olap.api.execution.Execution.Purpose;
 import org.eclipse.daanse.olap.api.execution.ExecutionContext;
+import org.eclipse.daanse.olap.api.execution.ExecutionMetadata;
 import org.eclipse.daanse.olap.api.query.component.Query;
 import org.eclipse.daanse.olap.calc.base.type.tuplebase.ArrayTupleList;
 import org.eclipse.daanse.olap.calc.base.type.tuplebase.ListTupleList;
@@ -513,7 +513,7 @@ public Object getCacheKey() {
         ExecutionMetadata metadata = ExecutionMetadata.of(
           "SqlTupleReader.readTuples " + partialTargets,
           message,
-          org.eclipse.daanse.olap.api.monitor.event.SqlStatementEvent.Purpose.TUPLES,
+          Purpose.TUPLES,
           0
         );
         ExecutionContext execContext = getExecution(context).asContext().createChild(metadata, Optional.empty());

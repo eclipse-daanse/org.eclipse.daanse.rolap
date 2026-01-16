@@ -54,6 +54,7 @@ import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.SqlExpression;
 import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
+import org.eclipse.daanse.olap.api.execution.Execution.Purpose;
 import org.eclipse.daanse.olap.api.execution.ExecutionContext;
 import org.eclipse.daanse.olap.common.ExecuteDurationUtil;
 import org.eclipse.daanse.olap.common.Util;
@@ -1570,7 +1571,7 @@ public class AggStar {
             ExecutionMetadata metadata = ExecutionMetadata.of(
                 "AggStar.DimTable.makeNumberOfRows",
                 "Getting row count for aggregate table " + getName(),
-                org.eclipse.daanse.olap.api.monitor.event.SqlStatementEvent.Purpose.OTHER,
+                Purpose.OTHER,
                 0
             );
             ExecutionContext execContext = execution.asContext().createChild(metadata, Optional.empty());

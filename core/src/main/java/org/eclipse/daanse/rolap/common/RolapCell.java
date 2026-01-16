@@ -53,6 +53,7 @@ import org.eclipse.daanse.olap.api.element.Level;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.element.OlapElement;
 import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
+import org.eclipse.daanse.olap.api.execution.Execution.Purpose;
 import org.eclipse.daanse.olap.api.execution.ExecutionContext;
 import org.eclipse.daanse.olap.api.function.FunctionDefinition;
 import org.eclipse.daanse.olap.api.query.component.DimensionExpression;
@@ -263,7 +264,7 @@ public class RolapCell implements Cell {
         ExecutionMetadata metadata = ExecutionMetadata.of(
             "RolapCell.getCellValue",
             "Error getting cell value",
-            org.eclipse.daanse.olap.api.monitor.event.SqlStatementEvent.Purpose.OTHER,
+            Purpose.OTHER,
             0
         );
         ExecutionContext execContext = execution.asContext().createChild(metadata, Optional.empty());
@@ -599,7 +600,7 @@ public class RolapCell implements Cell {
         ExecutionMetadata metadata = ExecutionMetadata.of(
             "RolapCell.drillThrough",
             "Error in drill through",
-            org.eclipse.daanse.olap.api.monitor.event.SqlStatementEvent.Purpose.DRILL_THROUGH,
+            Purpose.DRILL_THROUGH,
             0
         );
         ExecutionContext execContext = execution.asContext().createChild(metadata, Optional.empty());

@@ -31,6 +31,7 @@ import java.util.Optional;
 
 import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.olap.api.Context;
+import org.eclipse.daanse.olap.api.execution.Execution.Purpose;
 import org.eclipse.daanse.olap.api.execution.ExecutionContext;
 import org.eclipse.daanse.olap.api.execution.ExecutionMetadata;
 import org.eclipse.daanse.olap.execution.ExecutionImpl;
@@ -56,7 +57,7 @@ public class SqlStatisticsProviderNew  {
         ExecutionMetadata metadata = ExecutionMetadata.of(
             "SqlStatisticsProviderNew.getTableCardinality",
             "Reading row count from table " + table,
-            org.eclipse.daanse.olap.api.monitor.event.SqlStatementEvent.Purpose.OTHER,
+            Purpose.OTHER,
             0
         );
         ExecutionContext execContext = execution.asContext().createChild(metadata, Optional.empty());
@@ -100,7 +101,7 @@ public class SqlStatisticsProviderNew  {
         ExecutionMetadata metadata = ExecutionMetadata.of(
             "SqlStatisticsProviderNew.getQueryCardinality",
             "Reading row count from query",
-            org.eclipse.daanse.olap.api.monitor.event.SqlStatementEvent.Purpose.OTHER,
+            Purpose.OTHER,
             0
         );
         ExecutionContext execContext = execution.asContext().createChild(metadata, Optional.empty());
@@ -140,7 +141,7 @@ public class SqlStatisticsProviderNew  {
         ExecutionMetadata metadata = ExecutionMetadata.of(
             "SqlStatisticsProviderNew.getColumnCardinality",
             "Reading cardinality for column " + table + "." + column,
-            org.eclipse.daanse.olap.api.monitor.event.SqlStatementEvent.Purpose.OTHER,
+            Purpose.OTHER,
             0
         );
         ExecutionContext execContext = execution.asContext().createChild(metadata, Optional.empty());

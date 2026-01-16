@@ -58,6 +58,7 @@ import org.eclipse.daanse.olap.api.CacheCommand;
 import org.eclipse.daanse.olap.api.ConfigConstants;
 import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
 import org.eclipse.daanse.olap.api.execution.Execution;
+import org.eclipse.daanse.olap.api.execution.Execution.Purpose;
 import org.eclipse.daanse.olap.api.execution.ExecutionContext;
 import org.eclipse.daanse.olap.common.ResourceLimitExceededException;
 import org.eclipse.daanse.olap.common.SystemWideProperties;
@@ -490,7 +491,7 @@ public class SegmentLoader {
     ExecutionMetadata metadata = ExecutionMetadata.of(
         "Segment.load",
         "Error while loading segment",
-        org.eclipse.daanse.olap.api.monitor.event.SqlStatementEvent.Purpose.CELL_SEGMENT,
+        Purpose.CELL_SEGMENT,
         cellRequestCount
     );
     final ExecutionContext executionContext = ExecutionContext.current().createChild(metadata, Optional.empty());
