@@ -40,7 +40,7 @@ import org.eclipse.daanse.olap.api.element.Level;
 import org.eclipse.daanse.olap.api.element.MetaData;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.element.DimensionBase;
-import org.eclipse.daanse.olap.element.OlapMetaData;
+import org.eclipse.daanse.olap.element.OlapMetaDataBase;
 import org.eclipse.daanse.olap.exceptions.NonTimeLevelInTimeHierarchyException;
 import org.eclipse.daanse.olap.exceptions.TimeLevelInNonTimeHierarchyException;
 import org.eclipse.daanse.rolap.common.MemberReader;
@@ -223,7 +223,7 @@ public class RolapDimension extends DimensionBase {
             new RolapHierarchy(
                 this, subName,
                 caption, visible, description, null, hasAll, closureFor,
-                OlapMetaData.empty());
+                OlapMetaDataBase.empty());
         this.hierarchies.add(hierarchy);
         return hierarchy;
     }

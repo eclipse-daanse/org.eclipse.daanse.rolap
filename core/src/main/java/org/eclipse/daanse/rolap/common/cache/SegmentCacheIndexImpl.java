@@ -46,7 +46,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Future;
 
 import org.eclipse.daanse.olap.api.execution.Execution;
-import org.eclipse.daanse.olap.common.QueryCanceledException;
+import org.eclipse.daanse.olap.exceptions.QueryCanceledException;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.key.BitKey;
 import org.eclipse.daanse.olap.spi.SegmentBody;

@@ -53,7 +53,7 @@ import org.eclipse.daanse.olap.api.Segment;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
 import org.eclipse.daanse.olap.api.execution.ExecutionContext;
-import org.eclipse.daanse.olap.common.NativeEvaluationUnsupportedException;
+import org.eclipse.daanse.olap.exceptions.NativeEvaluationUnsupportedException;
 import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.exceptions.MdxCantFindMemberException;

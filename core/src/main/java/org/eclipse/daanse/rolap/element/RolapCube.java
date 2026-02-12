@@ -97,7 +97,7 @@ import org.eclipse.daanse.olap.common.ExecuteDurationUtil;
 import org.eclipse.daanse.olap.common.StandardProperty;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.element.CubeBase;
-import org.eclipse.daanse.olap.element.OlapMetaData;
+import org.eclipse.daanse.olap.element.OlapMetaDataBase;
 import org.eclipse.daanse.olap.element.SetBase;
 import org.eclipse.daanse.olap.exceptions.CalcMemberNotUniqueException;
 import org.eclipse.daanse.olap.execution.ExecutionImpl;
@@ -330,7 +330,7 @@ public abstract class RolapCube extends CubeBase {
                 true,
                 null,
                 DimensionType.MEASURES_DIMENSION,
-                OlapMetaData.empty());
+                OlapMetaDataBase.empty());
 
         this.dimensions.add(measuresDimension);
 

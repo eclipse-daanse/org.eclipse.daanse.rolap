@@ -39,7 +39,7 @@ import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.element.MetaData;
 import org.eclipse.daanse.olap.api.element.OlapElement;
 import org.eclipse.daanse.olap.api.query.component.Expression;
-import org.eclipse.daanse.olap.element.AbstractProperty;
+import org.eclipse.daanse.olap.element.PropertyBase;
 
 /**
  * Mock implementation of {@link Member} for testing.
@@ -175,7 +175,7 @@ public class TestMember implements Member {
     }
 
     @Override
-    public AbstractProperty[] getProperties() {
+    public PropertyBase[] getProperties() {
         throw new UnsupportedOperationException();
     }
 

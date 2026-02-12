@@ -85,12 +85,12 @@ import org.eclipse.daanse.olap.calc.base.constant.ConstantCalcs;
 import org.eclipse.daanse.olap.calc.base.type.tuplebase.AbstractProfilingNestedTupleListCalc;
 import org.eclipse.daanse.olap.calc.base.type.tuplebase.UnaryTupleList;
 import org.eclipse.daanse.olap.calc.base.value.CurrentValueUnknownCalc;
-import org.eclipse.daanse.olap.common.InvalidHierarchyException;
+import org.eclipse.daanse.olap.exceptions.InvalidHierarchyException;
 import org.eclipse.daanse.olap.common.StandardProperty;
 import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.element.HierarchyBase;
-import org.eclipse.daanse.olap.element.OlapMetaData;
+import org.eclipse.daanse.olap.element.OlapMetaDataBase;
 import org.eclipse.daanse.olap.format.FormatterCreateContext;
 import org.eclipse.daanse.olap.format.FormatterFactory;
 import org.eclipse.daanse.olap.fun.FunUtil;
@@ -232,7 +232,7 @@ public class RolapHierarchy extends HierarchyBase {
                     RolapLevel.HideMemberCondition.Never,
                     LevelType.REGULAR,
                     "",
-                    OlapMetaData.empty()));
+                    OlapMetaDataBase.empty()));
         } else {
             this.levels = new ArrayList<Level>();
         }
@@ -261,7 +261,7 @@ public class RolapHierarchy extends HierarchyBase {
                 RolapLevel.HideMemberCondition.Never,
                 LevelType.NULL,
                 "",
-                OlapMetaData.empty());
+                OlapMetaDataBase.empty());
     }
 
     /**
@@ -348,7 +348,7 @@ public class RolapHierarchy extends HierarchyBase {
                 null,
                 RolapLevel.HideMemberCondition.Never,
                 LevelType.REGULAR, ALL_LEVEL_CARDINALITY,
-                OlapMetaData.empty());
+                OlapMetaDataBase.empty());
         allLevel.init(cubeDimensionMapping);
         this.allMember = new RolapMemberBase(
             null, allLevel, Util.sqlNullValue,
@@ -647,7 +647,7 @@ public class RolapHierarchy extends HierarchyBase {
                 RolapLevel.HideMemberCondition.Never,
                 LevelType.REGULAR,
                 "",
-                OlapMetaData.empty());
+                OlapMetaDataBase.empty());
         this.levels.add(level);
         return level;
     }
@@ -1327,7 +1327,7 @@ public class RolapHierarchy extends HierarchyBase {
             true,
             "Closure dimension for parent-child hierarchy " + getName(),
             DimensionType.STANDARD_DIMENSION,
-            OlapMetaData.empty());
+            OlapMetaDataBase.empty());
 
         // Create a peer hierarchy.
         RolapHierarchy peerHier = peerDimension.newHierarchy(null, true, this);
@@ -1371,7 +1371,7 @@ public class RolapHierarchy extends HierarchyBase {
                 src.getHideMemberCondition(),
                 src.getLevelType(),
                 "",
-                OlapMetaData.empty());
+                OlapMetaDataBase.empty());
         peerHier.levels.add(level);
 
         // Create lower level.
@@ -1402,7 +1402,7 @@ public class RolapHierarchy extends HierarchyBase {
             src.getHideMemberCondition(),
             src.getLevelType(),
             "",
-            OlapMetaData.empty());
+            OlapMetaDataBase.empty());
         peerHier.levels.add(sublevel);
 
         return peerDimension;

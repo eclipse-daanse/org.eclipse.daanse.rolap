@@ -38,7 +38,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.daanse.olap.api.element.Hierarchy;
-import org.eclipse.daanse.olap.element.OlapMetaData;
+import org.eclipse.daanse.olap.element.OlapMetaDataBase;
 import org.eclipse.daanse.rolap.element.RolapCatalog;
 import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.element.RolapCubeDimension;
@@ -59,7 +59,7 @@ class RolapCubeDimensionTest {
     RolapDimension rolapDim = mock(TestPublicRolapDimension.class);
     List<? extends Hierarchy> rolapDim_hierarchies = new ArrayList<>();
     doReturn(rolapDim_hierarchies).when(rolapDim).getHierarchies();
-    doReturn(OlapMetaData.empty()).when(rolapDim).getMetaData();
+    doReturn(OlapMetaDataBase.empty()).when(rolapDim).getMetaData();
     
     org.eclipse.daanse.rolap.mapping.model.StandardDimension cubeDim = RolapMappingFactory.eINSTANCE.createStandardDimension();
     cubeDim.setName("StubCubeDimCaption");

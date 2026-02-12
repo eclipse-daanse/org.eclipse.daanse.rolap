@@ -48,7 +48,7 @@ import org.eclipse.daanse.olap.api.element.Level;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.calc.base.type.tuplebase.DelegatingTupleList;
 import org.eclipse.daanse.olap.common.DelegatingCatalogReader;
-import org.eclipse.daanse.olap.common.ResultStyleException;
+import org.eclipse.daanse.olap.exceptions.ResultStyleException;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.rolap.common.TupleReader.MemberBuilder;
 import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;

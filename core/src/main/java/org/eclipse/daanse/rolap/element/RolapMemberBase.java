@@ -51,7 +51,7 @@ import org.eclipse.daanse.olap.common.ExecuteDurationUtil;
 import org.eclipse.daanse.olap.common.StandardProperty;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.element.MemberBase;
-import org.eclipse.daanse.olap.element.OlapMetaData;
+import org.eclipse.daanse.olap.element.OlapMetaDataBase;
 import org.eclipse.daanse.olap.execution.ExecutionImpl;
 import org.eclipse.daanse.olap.function.def.aggregate.AggregateFunDef;
 import org.eclipse.daanse.olap.impl.StatementImpl;
@@ -230,7 +230,7 @@ public class RolapMemberBase
     // do, so they override this method.
     @Override
 	public MetaData getMetaData() {
-        return OlapMetaData.empty();
+        return OlapMetaDataBase.empty();
     }
 
     @Override

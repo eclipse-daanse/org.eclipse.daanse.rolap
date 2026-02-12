@@ -52,7 +52,7 @@ import org.eclipse.daanse.olap.api.element.Property;
 import org.eclipse.daanse.olap.api.formatter.MemberPropertyFormatter;
 import org.eclipse.daanse.olap.common.StandardProperty;
 import org.eclipse.daanse.olap.common.Util;
-import org.eclipse.daanse.olap.element.AbstractProperty;
+import org.eclipse.daanse.olap.element.PropertyBase;
 import org.eclipse.daanse.olap.element.LevelBase;
 import org.eclipse.daanse.olap.exceptions.NonTimeLevelInTimeHierarchyException;
 import org.eclipse.daanse.olap.exceptions.TimeLevelInNonTimeHierarchyException;
@@ -586,7 +586,7 @@ public class RolapLevel extends LevelBase {
         return list.toArray(RolapProperty[]::new);
     }
 
-    private static AbstractProperty.Datatype convertPropertyTypeNameToCode(
+    private static PropertyBase.Datatype convertPropertyTypeNameToCode(
         String type)
     {
         if ("String".equals(type)) {

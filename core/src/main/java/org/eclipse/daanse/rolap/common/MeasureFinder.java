@@ -21,7 +21,7 @@ import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.query.component.Formula;
 import org.eclipse.daanse.olap.api.query.component.MemberExpression;
 import org.eclipse.daanse.olap.common.Util;
-import org.eclipse.daanse.olap.element.OlapMetaData;
+import org.eclipse.daanse.olap.element.OlapMetaDataBase;
 import org.eclipse.daanse.olap.query.component.MdxVisitorImpl;
 import org.eclipse.daanse.rolap.element.RolapBaseCubeMeasure;
 import org.eclipse.daanse.rolap.element.RolapCalculatedMember;
@@ -128,7 +128,7 @@ public class MeasureFinder extends MdxVisitorImpl
                     null,
                     measuresLevel,
                     baseMeasure,
-                    OlapMetaData.empty());
+                    OlapMetaDataBase.empty());
             if (!measuresFound.contains(virtualCubeMeasure)) {
                 measuresFound.add(virtualCubeMeasure);
             }
