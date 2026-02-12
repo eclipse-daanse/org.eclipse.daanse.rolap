@@ -42,9 +42,9 @@ import org.eclipse.daanse.olap.api.ResultShepherd;
 import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
 import org.eclipse.daanse.olap.api.execution.Execution;
 import org.eclipse.daanse.olap.api.result.Result;
-import org.eclipse.daanse.olap.common.QueryCanceledException;
-import org.eclipse.daanse.olap.common.QueryTimeoutException;
-import org.eclipse.daanse.olap.common.ResourceLimitExceededException;
+import org.eclipse.daanse.olap.exceptions.QueryCanceledException;
+import org.eclipse.daanse.olap.exceptions.QueryTimeoutException;
+import org.eclipse.daanse.olap.exceptions.ResourceLimitExceededException;
 import org.eclipse.daanse.olap.common.Util;
 import  org.eclipse.daanse.olap.util.Pair;
 

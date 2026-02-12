@@ -40,7 +40,7 @@ import org.eclipse.daanse.olap.api.element.Dimension;
 import org.eclipse.daanse.olap.api.element.Hierarchy;
 import org.eclipse.daanse.olap.api.element.OlapElement;
 import org.eclipse.daanse.olap.api.formatter.MemberPropertyFormatter;
-import org.eclipse.daanse.olap.element.AbstractProperty;
+import org.eclipse.daanse.olap.element.PropertyBase;
 import org.eclipse.daanse.rolap.common.RolapStar;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,7 +50,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author jhyde
  */
-public class RolapProperty extends AbstractProperty implements LevelProperty, OlapElement {
+public class RolapProperty extends PropertyBase implements LevelProperty, OlapElement {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RolapProperty.class);
     private final static String mdxPropertyName = "property ''{0}''";

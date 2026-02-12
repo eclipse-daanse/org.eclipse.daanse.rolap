@@ -18,9 +18,9 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.daanse.olap.api.element.MetaData;
-import org.eclipse.daanse.olap.element.OlapMetaData;
+import org.eclipse.daanse.olap.element.OlapMetaDataBase;
 
-public class RolapMetaData extends OlapMetaData {
+public class RolapMetaData extends OlapMetaDataBase {
 
 	public RolapMetaData() {
 		super(Map.of());
@@ -32,7 +32,7 @@ public class RolapMetaData extends OlapMetaData {
 
 	public static MetaData createMetaData(List<? extends org.eclipse.daanse.rolap.mapping.model.Annotation> annotationMappings) {
 		if (annotationMappings == null || annotationMappings.isEmpty()) {
-			return OlapMetaData.empty();
+			return OlapMetaDataBase.empty();
 		}
 
 		// Use linked hash map because it retains order.

@@ -23,7 +23,7 @@ import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.query.component.Expression;
 import org.eclipse.daanse.olap.common.StandardProperty;
 import org.eclipse.daanse.olap.common.Util;
-import org.eclipse.daanse.olap.element.AbstractProperty;
+import org.eclipse.daanse.olap.element.PropertyBase;
 import org.eclipse.daanse.olap.query.component.MemberExpressionImpl;
 import org.eclipse.daanse.olap.query.component.UnresolvedFunCallImpl;
 
@@ -159,7 +159,7 @@ public class VisualTotalMember  extends RolapMemberBase {
 
     @Override
     public Object getPropertyValue(String propertyName, boolean matchCase) {
-        AbstractProperty property = StandardProperty.lookup(propertyName, matchCase);
+        PropertyBase property = StandardProperty.lookup(propertyName, matchCase);
         if (property == null) {
             return null;
         }

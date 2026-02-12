@@ -71,7 +71,7 @@ import org.eclipse.daanse.olap.api.execution.ExecutionContext;
 import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.core.AbstractBasicContext;
-import org.eclipse.daanse.olap.element.AbstractProperty;
+import org.eclipse.daanse.olap.element.PropertyBase;
 import org.eclipse.daanse.olap.key.BitKey;
 import org.eclipse.daanse.olap.util.Bug;
 import org.eclipse.daanse.rolap.common.agg.Aggregation;
@@ -1596,7 +1596,7 @@ public class RolapStar {
             return column;
         }
 
-        private Datatype convertPropertyType(AbstractProperty.Datatype type) {
+        private Datatype convertPropertyType(PropertyBase.Datatype type) {
             switch (type) {
                 case TYPE_STRING:
                     return Datatype.VARCHAR;

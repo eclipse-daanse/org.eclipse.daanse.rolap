@@ -33,7 +33,7 @@ import org.eclipse.daanse.olap.api.query.component.Expression;
 import org.eclipse.daanse.olap.api.query.component.Formula;
 import org.eclipse.daanse.olap.common.StandardProperty;
 import org.eclipse.daanse.olap.common.Util;
-import org.eclipse.daanse.olap.element.OlapMetaData;
+import org.eclipse.daanse.olap.element.OlapMetaDataBase;
 import org.eclipse.daanse.olap.query.component.FormulaImpl;
 
 /**
@@ -70,7 +70,7 @@ public class RolapCalculatedMember extends RolapMemberBase implements Calculated
         // overrides MEASURE.
         super(parentMember, level, name, null, MemberType.FORMULA);
         this.formula = formula;
-        this.metaData = OlapMetaData.empty();
+        this.metaData = OlapMetaDataBase.empty();
     }
 
     // override RolapMember
