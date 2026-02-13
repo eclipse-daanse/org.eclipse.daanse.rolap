@@ -22,7 +22,7 @@ import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.olap.api.calc.Calc;
 import org.eclipse.daanse.olap.api.calc.tuple.TupleList;
 import org.eclipse.daanse.olap.api.evaluator.Evaluator;
-import org.eclipse.daanse.rolap.common.RolapOrderedColumn;
+import org.eclipse.daanse.rolap.common.star.RolapOrderedColumn;
 
 public class NthValueAggregator implements Aggregator {
 

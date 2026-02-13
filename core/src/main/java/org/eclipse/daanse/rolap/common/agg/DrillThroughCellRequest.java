@@ -31,7 +31,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.daanse.olap.api.element.OlapElement;
-import org.eclipse.daanse.rolap.common.RolapStar;
+import org.eclipse.daanse.rolap.common.star.RolapStar;
 
 /**
  * Subclass of {@link CellRequest} that allows to specify

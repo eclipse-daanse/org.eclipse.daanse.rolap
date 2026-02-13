@@ -34,6 +34,9 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.daanse.olap.key.BitKey;
+import org.eclipse.daanse.rolap.common.star.RolapStar;
+import org.eclipse.daanse.rolap.common.star.StarColumnPredicate;
+import org.eclipse.daanse.rolap.common.star.StarPredicate;
 
 /**
  * A RolapCacheRegion represents a region of multidimensional space

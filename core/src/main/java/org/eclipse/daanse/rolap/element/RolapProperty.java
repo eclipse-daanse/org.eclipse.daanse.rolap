@@ -41,7 +41,7 @@ import org.eclipse.daanse.olap.api.element.OlapElement;
 import org.eclipse.daanse.olap.api.formatter.MemberPropertyFormatter;
 import org.eclipse.daanse.olap.api.sql.SqlExpression;
 import org.eclipse.daanse.olap.element.PropertyBase;
-import org.eclipse.daanse.rolap.common.RolapStar;
+import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

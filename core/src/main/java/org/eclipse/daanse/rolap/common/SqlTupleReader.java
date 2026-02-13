@@ -77,12 +77,22 @@ import  org.eclipse.daanse.olap.util.Pair;
 import org.eclipse.daanse.rolap.common.agg.AggregationManager;
 import org.eclipse.daanse.rolap.common.agg.CellRequest;
 import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;
+import org.eclipse.daanse.rolap.common.catalog.RolapCubeComparator;
+import org.eclipse.daanse.rolap.common.constraint.DescendantsConstraint;
+import org.eclipse.daanse.rolap.common.constraint.SqlConstraintUtils;
+import org.eclipse.daanse.rolap.common.constraint.SqlContextConstraint;
+import org.eclipse.daanse.rolap.common.evaluator.RolapEvaluator;
+import org.eclipse.daanse.rolap.common.member.MemberCache;
+import org.eclipse.daanse.rolap.common.member.SqlMemberSource;
+import org.eclipse.daanse.rolap.common.nativize.RolapNativeCrossJoin;
+import org.eclipse.daanse.rolap.common.nativize.RolapNativeFilter;
 import org.eclipse.daanse.rolap.common.sql.CrossJoinArg;
 import org.eclipse.daanse.rolap.common.sql.DescendantsCrossJoinArg;
 import org.eclipse.daanse.rolap.common.sql.MemberChildrenConstraint;
 import org.eclipse.daanse.rolap.common.sql.MemberListCrossJoinArg;
 import org.eclipse.daanse.rolap.common.sql.SqlQuery;
 import org.eclipse.daanse.rolap.common.sql.TupleConstraint;
+import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.util.ExpressionUtil;
 import org.eclipse.daanse.rolap.element.RolapBaseCubeMeasure;
 import org.eclipse.daanse.rolap.element.RolapCube;
@@ -1634,7 +1644,7 @@ public TupleList readTuples(
    * @param baseCube   The base cube from which to choose an aggregation star. Can be null, in which case we use the
    *                   evaluator's cube.
    */
-  AggStar chooseAggStar(
+  public AggStar chooseAggStar(
     TupleConstraint constraint,
     Evaluator evaluator,
     RolapCube baseCube,
@@ -1756,7 +1766,7 @@ public TupleList readTuples(
     return maxRows;
   }
 
-  void setMaxRows( int maxRows ) {
+  public void setMaxRows( int maxRows ) {
     this.maxRows = maxRows;
   }
 

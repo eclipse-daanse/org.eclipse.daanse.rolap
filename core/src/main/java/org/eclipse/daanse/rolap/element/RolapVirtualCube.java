@@ -32,11 +32,11 @@ import org.eclipse.daanse.olap.api.query.component.Query;
 import org.eclipse.daanse.olap.common.StandardProperty;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.query.component.IdImpl;
-import org.eclipse.daanse.rolap.common.CacheMemberReader;
 import org.eclipse.daanse.rolap.common.MeasureFinder;
-import org.eclipse.daanse.rolap.common.MeasureMemberSource;
-import org.eclipse.daanse.rolap.common.RolapCubeComparator;
-import org.eclipse.daanse.rolap.common.RolapCubeUsages;
+import org.eclipse.daanse.rolap.common.catalog.RolapCubeComparator;
+import org.eclipse.daanse.rolap.common.catalog.RolapCubeUsages;
+import org.eclipse.daanse.rolap.common.member.CacheMemberReader;
+import org.eclipse.daanse.rolap.common.member.MeasureMemberSource;
 
 /**
  * RolapCube implements {@link Cube} for a ROLAP database.

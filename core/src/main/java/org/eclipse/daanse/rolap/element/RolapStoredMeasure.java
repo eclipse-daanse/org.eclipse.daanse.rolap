@@ -30,7 +30,7 @@ package org.eclipse.daanse.rolap.element;
 
 import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.olap.api.element.StoredMeasure;
-import org.eclipse.daanse.rolap.common.RolapSqlExpression;
+import org.eclipse.daanse.rolap.common.star.RolapSqlExpression;
 
 /**
  * A measure which is implemented by a SQL column or SQL expression (as opposed

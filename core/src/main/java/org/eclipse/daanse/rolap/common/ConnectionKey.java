@@ -17,7 +17,7 @@ import javax.sql.DataSource;
 
 public record ConnectionKey(int dataSourceIdentityHashCode, String sessionId) {
 
-	static ConnectionKey of(DataSource dataSource, String sessionId) {
+	public static ConnectionKey of(DataSource dataSource, String sessionId) {
 		return new ConnectionKey(System.identityHashCode(dataSource), sessionId);
 	}
 

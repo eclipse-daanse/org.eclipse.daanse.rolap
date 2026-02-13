@@ -28,8 +28,8 @@ package org.eclipse.daanse.rolap.element;
 import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.olap.api.element.MetaData;
 import org.eclipse.daanse.olap.api.element.VirtualCubeMeasure;
-import org.eclipse.daanse.rolap.common.RolapResult;
-import org.eclipse.daanse.rolap.common.RolapSqlExpression;
+import org.eclipse.daanse.rolap.common.result.RolapResult;
+import org.eclipse.daanse.rolap.common.star.RolapSqlExpression;
 
 /**
  * Measure which is defined in a virtual cube, and based on a stored measure

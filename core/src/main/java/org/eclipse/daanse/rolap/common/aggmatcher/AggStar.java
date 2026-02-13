@@ -60,13 +60,14 @@ import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.execution.ExecutionImpl;
 import org.eclipse.daanse.olap.key.BitKey;
 import org.eclipse.daanse.rolap.aggregator.countbased.AbstractFactCountBasedAggregator;
-import org.eclipse.daanse.rolap.common.RolapSqlExpression;
-import org.eclipse.daanse.rolap.common.RolapStar;
 import org.eclipse.daanse.rolap.common.RolapUtil;
 import org.eclipse.daanse.rolap.common.SqlStatement;
 import org.eclipse.daanse.rolap.common.aggmatcher.JdbcSchema.Table.Column.Usage;
 import org.eclipse.daanse.rolap.common.aggmatcher.JdbcSchema.UsageType;
 import org.eclipse.daanse.rolap.common.sql.SqlQuery;
+import org.eclipse.daanse.rolap.common.star.RolapSqlExpression;
+import org.eclipse.daanse.rolap.common.star.RolapStar;
+import org.eclipse.daanse.rolap.common.star.RolapStar.Table;
 import org.eclipse.daanse.rolap.common.util.ExpressionUtil;
 import org.eclipse.daanse.rolap.element.RolapColumn;
 import org.eclipse.daanse.rolap.element.RolapLevel;
@@ -585,7 +586,7 @@ public class AggStar {
                 pw.print(subprefix);
                 pw.print("left=");
                 if (left instanceof org.eclipse.daanse.rolap.element.RolapColumn c) {
-                    org.eclipse.daanse.rolap.common.RolapStar.Column col =
+                    org.eclipse.daanse.rolap.common.star.RolapStar.Column col =
                         getTable().getAggStar().getStar().getFactTable()
                         .lookupColumn(c.getName());
                     if (col != null) {
@@ -990,7 +991,7 @@ public class AggStar {
             // AggStar. This lets us later determine if a measure is
             // based upon a foreign key (see AggregationManager findAgg
             // method).
-            org.eclipse.daanse.rolap.common.RolapStar.Column col =
+            org.eclipse.daanse.rolap.common.star.RolapStar.Column col =
                 getAggStar().getStar().getFactTable().lookupColumn(left.getName());
             if (col != null) {
                 getAggStar().setForeignKey(col.getBitPosition());

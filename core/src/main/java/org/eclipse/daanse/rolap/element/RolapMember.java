@@ -27,7 +27,7 @@ package org.eclipse.daanse.rolap.element;
 
 import org.eclipse.daanse.olap.api.element.Level;
 import org.eclipse.daanse.olap.api.element.ParentChildMember;
-import org.eclipse.daanse.rolap.common.RolapCalculation;
+import org.eclipse.daanse.rolap.common.evaluator.RolapCalculation;
 
 /**
  * A RolapMember is a member of a {@link RolapHierarchy}. There are

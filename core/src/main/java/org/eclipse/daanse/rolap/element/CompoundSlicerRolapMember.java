@@ -21,8 +21,8 @@ import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.query.component.Expression;
 import org.eclipse.daanse.olap.element.MemberBase;
 import org.eclipse.daanse.olap.util.type.TypeWrapperExp;
-import org.eclipse.daanse.rolap.common.RolapEvaluatorRoot;
-import org.eclipse.daanse.rolap.common.RolapResult.ValueFormatter;
+import org.eclipse.daanse.rolap.common.evaluator.RolapEvaluatorRoot;
+import org.eclipse.daanse.rolap.common.result.RolapResult.ValueFormatter;
 
 /**
  * Member which holds the AggregateCalc used when evaluating a compound slicer. This is used to better handle some

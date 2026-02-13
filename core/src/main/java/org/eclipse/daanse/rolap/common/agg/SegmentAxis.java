@@ -37,7 +37,7 @@ import java.util.SortedSet;
 import org.eclipse.daanse.olap.common.Util;
 import  org.eclipse.daanse.olap.util.ArraySortedSet;
 import  org.eclipse.daanse.olap.util.Pair;
-import org.eclipse.daanse.rolap.common.StarColumnPredicate;
+import org.eclipse.daanse.rolap.common.star.StarColumnPredicate;
 
 /**
  * Collection of values of one of the columns that parameterizes a

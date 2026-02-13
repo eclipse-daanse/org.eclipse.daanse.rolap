@@ -36,8 +36,8 @@ import org.eclipse.daanse.olap.exceptions.CastInvalidTypeException;
 import org.eclipse.daanse.olap.query.component.StringLiteralImpl;
 import org.eclipse.daanse.rolap.aggregator.CountAggregator;
 import org.eclipse.daanse.rolap.aggregator.DistinctCountAggregator;
-import org.eclipse.daanse.rolap.common.RolapResult;
-import org.eclipse.daanse.rolap.common.RolapSqlExpression;
+import org.eclipse.daanse.rolap.common.result.RolapResult;
+import org.eclipse.daanse.rolap.common.star.RolapSqlExpression;
 import org.eclipse.daanse.rolap.mapping.model.ColumnInternalDataType;
 
 /**

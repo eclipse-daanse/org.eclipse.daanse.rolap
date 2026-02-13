@@ -32,6 +32,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 
+import org.eclipse.daanse.rolap.common.star.RolapStarRegistry;
 import org.eclipse.daanse.rolap.mapping.model.PhysicalTable;
 import org.eclipse.daanse.rolap.mapping.model.RolapMappingFactory;
 import org.eclipse.daanse.rolap.mapping.model.SqlStatement;

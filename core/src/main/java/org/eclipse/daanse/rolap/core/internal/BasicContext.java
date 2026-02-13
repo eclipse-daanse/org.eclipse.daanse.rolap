@@ -56,17 +56,17 @@ import org.eclipse.daanse.olap.core.LoggingEventBus;
 import org.eclipse.daanse.olap.execution.ExecutionImpl;
 import org.eclipse.daanse.rolap.api.RolapContext;
 import org.eclipse.daanse.rolap.common.AbstractRolapContext;
-import org.eclipse.daanse.rolap.common.RolapCatalogCache;
-import org.eclipse.daanse.rolap.common.RolapDependencyTestingEvaluator;
-import org.eclipse.daanse.rolap.common.RolapEvaluator;
-import org.eclipse.daanse.rolap.common.RolapEvaluatorRoot;
-import org.eclipse.daanse.rolap.common.RolapInterceptaleEvaluator;
-import org.eclipse.daanse.rolap.common.RolapResult;
-import org.eclipse.daanse.rolap.common.RolapResultShepherd;
 import org.eclipse.daanse.rolap.common.agg.AggregationManager;
 import org.eclipse.daanse.rolap.common.aggregator.AggregationFactoryImpl;
+import org.eclipse.daanse.rolap.common.catalog.RolapCatalogCache;
 import org.eclipse.daanse.rolap.common.connection.ExternalRolapConnection;
 import org.eclipse.daanse.rolap.common.connection.InternalRolapConnection;
+import org.eclipse.daanse.rolap.common.evaluator.RolapDependencyTestingEvaluator;
+import org.eclipse.daanse.rolap.common.evaluator.RolapEvaluator;
+import org.eclipse.daanse.rolap.common.evaluator.RolapEvaluatorRoot;
+import org.eclipse.daanse.rolap.common.evaluator.RolapInterceptableEvaluator;
+import org.eclipse.daanse.rolap.common.result.RolapResult;
+import org.eclipse.daanse.rolap.common.result.RolapResultShepherd;
 import org.eclipse.daanse.rolap.core.api.BasicContextOCD;
 import org.eclipse.daanse.rolap.mapping.model.provider.CatalogMappingSupplier;
 import org.eclipse.daanse.sql.guard.api.SqlGuardFactory;
@@ -277,7 +277,7 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
 
     @Override
     public ExpressionCompiler createProfilingCompiler(ExpressionCompiler compiler) {
-        return new RolapInterceptaleEvaluator.InterceptableEvaluatorCompiler(compiler);
+        return new RolapInterceptableEvaluator.InterceptableEvaluatorCompiler(compiler);
     }
 
     /**

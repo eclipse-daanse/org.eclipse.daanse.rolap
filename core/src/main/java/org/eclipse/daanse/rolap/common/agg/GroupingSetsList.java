@@ -33,8 +33,8 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import org.eclipse.daanse.olap.key.BitKey;
-import org.eclipse.daanse.rolap.common.RolapStar;
-import org.eclipse.daanse.rolap.common.StarColumnPredicate;
+import org.eclipse.daanse.rolap.common.star.RolapStar;
+import org.eclipse.daanse.rolap.common.star.StarColumnPredicate;
 
 /**
  * Class for using GROUP BY GROUPING SETS sql query.

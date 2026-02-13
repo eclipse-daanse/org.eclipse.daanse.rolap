@@ -45,10 +45,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 
 import org.eclipse.daanse.olap.api.cache.CacheControl;
-import org.eclipse.daanse.olap.api.cache.CacheControl.CellRegion;
-import org.eclipse.daanse.olap.api.cache.CacheControl.MemberEditCommand;
-import org.eclipse.daanse.olap.api.cache.CacheControl.MemberSet;
-import org.eclipse.daanse.olap.api.cache.ISegmentCacheManager;
+import org.eclipse.daanse.olap.api.cache.OlapSegmentCacheManager;
 import org.eclipse.daanse.olap.api.connection.Connection;
 import org.eclipse.daanse.olap.api.element.Cube;
 import org.eclipse.daanse.olap.api.element.Dimension;
@@ -67,7 +64,14 @@ import org.eclipse.daanse.olap.query.component.IdImpl;
 import org.eclipse.daanse.olap.spi.SegmentColumn;
 import org.eclipse.daanse.olap.util.ArraySortedSet;
 import org.eclipse.daanse.rolap.common.connection.AbstractRolapConnection;
+import org.eclipse.daanse.rolap.common.constraint.ChildByNameConstraint;
+import org.eclipse.daanse.rolap.common.constraint.DefaultMemberChildrenConstraint;
+import org.eclipse.daanse.rolap.common.constraint.DefaultTupleConstraint;
+import org.eclipse.daanse.rolap.common.member.MemberCache;
+import org.eclipse.daanse.rolap.common.member.MemberReader;
+import org.eclipse.daanse.rolap.common.member.SmartMemberReader;
 import org.eclipse.daanse.rolap.common.sql.MemberChildrenConstraint;
+import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.element.RolapCubeLevel;
 import org.eclipse.daanse.rolap.element.RolapCubeMember;
@@ -590,7 +594,7 @@ public class CacheControlImpl implements CacheControl {
         }
 
 		AbstractBasicContext abc = (AbstractBasicContext) connection.getContext();
-        final ISegmentCacheManager manager =
+        final OlapSegmentCacheManager manager =
                 abc.getAggregationManager().getCacheMgr(this.connection);
 
         // Create ExecutionImpl for printCacheState operation
@@ -947,7 +951,7 @@ public class CacheControlImpl implements CacheControl {
      *
      * @see MemberRangeCellRegion
      */
-    static class MemberCellRegion implements CellRegionImpl {
+    public static class MemberCellRegion implements CellRegionImpl {
         private final List<Member> memberList;
         private final Dimension dimension;
 
@@ -995,7 +999,7 @@ public class CacheControlImpl implements CacheControl {
     /**
      * Cell region formed a range of members between a lower and upper bound.
      */
-    static class MemberRangeCellRegion implements CellRegionImpl {
+    public static class MemberRangeCellRegion implements CellRegionImpl {
         private final RolapMember lowerMember;
         private final boolean lowerInclusive;
         private final RolapMember upperMember;
@@ -1089,7 +1093,7 @@ public class CacheControlImpl implements CacheControl {
     /**
      * Cell region formed by a cartesian product of two or more CellRegions.
      */
-    static class CrossjoinCellRegion implements CellRegionImpl {
+    public static class CrossjoinCellRegion implements CellRegionImpl {
         final List<Dimension> dimensions;
         private List<CellRegionImpl> components =
             new ArrayList<>();

@@ -33,8 +33,8 @@ import java.util.List;
 
 import org.eclipse.daanse.jdbc.db.dialect.api.type.BestFitColumnType;
 import  org.eclipse.daanse.olap.util.Pair;
-import org.eclipse.daanse.rolap.common.RolapStar;
-import org.eclipse.daanse.rolap.common.StarColumnPredicate;
+import org.eclipse.daanse.rolap.common.star.RolapStar;
+import org.eclipse.daanse.rolap.common.star.StarColumnPredicate;
 
 /**
  * Contains the information necessary to generate a SQL statement to

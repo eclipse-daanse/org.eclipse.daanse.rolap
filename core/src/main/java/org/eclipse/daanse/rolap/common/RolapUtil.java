@@ -60,6 +60,8 @@ import org.eclipse.daanse.olap.exceptions.NativeEvaluationUnsupportedException;
 import org.eclipse.daanse.olap.fun.FunUtil;
 import org.eclipse.daanse.olap.key.BitKey;
 import org.eclipse.daanse.rolap.common.connection.AbstractRolapConnection;
+import org.eclipse.daanse.rolap.common.member.MemberReader;
+import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.element.RolapCubeLevel;
 import org.eclipse.daanse.rolap.element.RolapCubeMember;
@@ -192,7 +194,7 @@ public class RolapUtil {
             : v.toArray(RolapMember[]::new);
     }
 
-    static RolapMember lookupMember(
+    public static RolapMember lookupMember(
         MemberReader reader,
         List<Segment> uniqueNameParts,
         boolean failIfNotFound)

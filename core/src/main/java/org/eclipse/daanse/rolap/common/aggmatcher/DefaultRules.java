@@ -43,7 +43,7 @@ import org.eclipse.daanse.rolap.aggmatch.jaxb.MeasureMapRef;
 import org.eclipse.daanse.rolap.aggmatch.jaxb.Regex;
 import org.eclipse.daanse.rolap.aggmatch.jaxb.TableMatch;
 import org.eclipse.daanse.rolap.aggmatch.jaxb.TableMatchRef;
-import org.eclipse.daanse.rolap.common.RolapStar;
+import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.recorder.ListRecorder;
 import org.eclipse.daanse.rolap.recorder.MessageRecorder;
 import org.eclipse.daanse.rolap.recorder.RecorderException;

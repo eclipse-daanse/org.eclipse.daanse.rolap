@@ -38,7 +38,7 @@ import org.eclipse.daanse.olap.api.connection.ConnectionProps;
 import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.rolap.api.RolapContext;
-import org.eclipse.daanse.rolap.common.RolapStar;
+import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.util.PojoUtil;
 import org.eclipse.daanse.rolap.element.RolapCatalog;
 import org.eclipse.daanse.rolap.element.RolapCube;

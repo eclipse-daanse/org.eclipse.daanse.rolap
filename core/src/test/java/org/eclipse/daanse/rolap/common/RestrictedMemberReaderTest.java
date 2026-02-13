@@ -39,6 +39,8 @@ import org.eclipse.daanse.olap.api.element.Cube;
 import org.eclipse.daanse.olap.api.element.Dimension;
 import org.eclipse.daanse.olap.api.element.Hierarchy;
 import org.eclipse.daanse.olap.api.element.Level;
+import org.eclipse.daanse.rolap.common.member.MemberReader;
+import org.eclipse.daanse.rolap.common.member.RestrictedMemberReader;
 import org.eclipse.daanse.rolap.common.sql.MemberChildrenConstraint;
 import org.eclipse.daanse.rolap.element.MultiCardinalityDefaultMember;
 import org.eclipse.daanse.rolap.element.RolapHierarchy;

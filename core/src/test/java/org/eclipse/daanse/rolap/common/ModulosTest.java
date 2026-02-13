@@ -33,6 +33,8 @@ import org.eclipse.daanse.olap.api.calc.tuple.TupleList;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.result.Axis;
 import org.eclipse.daanse.olap.calc.base.type.tuplebase.UnaryTupleList;
+import org.eclipse.daanse.rolap.common.result.Modulos;
+import org.eclipse.daanse.rolap.common.result.RolapAxis;
 import org.junit.jupiter.api.Test;
 
 /**
