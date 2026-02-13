@@ -42,7 +42,7 @@ import org.eclipse.daanse.rolap.common.evaluator.RolapEvaluator;
  *   in its cache). This value should only be returned if the caller is
  *   expecting it.
  * {@link Util#nullValue} if the cell evaluates to null
- * {@link org.eclipse.daanse.olap.Util.ErrorCellValue} if the cell evaluates to an
+ * if the cell evaluates to an
  *   error
  * an Object representing a value (often a {@link Double} or a {@link
  *   java.math.BigDecimal}), otherwise

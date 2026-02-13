@@ -88,7 +88,7 @@ public class RolapMemberBase
      * Sets a member's parent.
      *
      * Can screw up the caching structure. Only to be called by
-     * {@link org.eclipse.daanse.olap.api.CacheControl#createMoveCommand}.
+     * {@link org.eclipse.daanse.olap.api.cache.CacheControl#createMoveCommand}.
      *
      * New parent must be in same level as old parent.
      *

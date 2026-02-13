@@ -28,8 +28,8 @@ package org.eclipse.daanse.rolap.common.agg;
 import org.eclipse.daanse.rolap.common.star.StarColumnPredicate;
 
 /**
- * Utilities for {@link org.eclipse.daanse.rolap.common.StarPredicate}s and
- * {@link org.eclipse.daanse.rolap.common.StarColumnPredicate}s.
+ * Utilities for {@link org.eclipse.daanse.rolap.common.star.StarPredicate}s and
+ * {@link org.eclipse.daanse.rolap.common.star.StarColumnPredicate}s.
  *
  * @author jhyde
  */

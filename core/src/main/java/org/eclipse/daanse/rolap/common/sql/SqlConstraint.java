@@ -30,7 +30,7 @@ package org.eclipse.daanse.rolap.common.sql;
 /**
  * Restricts the members that are fetched by SqlMemberSource.
  *
- * @see org.eclipse.daanse.rolap.common.SqlMemberSource
+ * @see org.eclipse.daanse.rolap.common.member.SqlMemberSource
  *
  * @author av
  * @since Nov 2, 2005

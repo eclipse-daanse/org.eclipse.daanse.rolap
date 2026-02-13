@@ -43,9 +43,9 @@ import org.eclipse.daanse.rolap.common.star.StarPredicate;
  * in the cache.
  *
  * The region is represented in terms of the columns of a given
- * {@link org.eclipse.daanse.rolap.common.RolapStar}, and constraints on those columns.
+ * {@link org.eclipse.daanse.rolap.common.star.RolapStar}, and constraints on those columns.
  *
- * Compare with {@link org.eclipse.daanse.olap.api.CacheControl.CellRegion}: a
+ * Compare with {@link org.eclipse.daanse.olap.api.cache.CacheControl.CellRegion}: a
  * CellRegion is in terms of {@link org.eclipse.daanse.olap.api.element.Member} objects
  * (logical); whereas a RolapCacheRegion is in terms of columns
  * (physical).

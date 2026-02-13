@@ -36,7 +36,7 @@ import org.eclipse.daanse.rolap.element.RolapMember;
 /**
  * Restricts the SQL result of a MembersChildren query in SqlMemberSource.
  *
- * @see org.eclipse.daanse.rolap.common.SqlMemberSource
+ * @see org.eclipse.daanse.rolap.common.member.SqlMemberSource
  *
  * @author av
  * @since Nov 2, 2005

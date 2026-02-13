@@ -56,7 +56,7 @@ public interface RolapStoredMeasure extends RolapMeasure, StoredMeasure {
     Aggregator getAggregator();
 
     /**
-     * Returns the {@link org.eclipse.daanse.rolap.common.RolapStar.Measure} from which this
+     * Returns the {@link org.eclipse.daanse.rolap.common.star.RolapStar.Measure} from which this
      * member is computed. Untyped, because another implementation might store
      * it somewhere else.
      */

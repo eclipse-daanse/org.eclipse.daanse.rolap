@@ -42,7 +42,7 @@ import org.eclipse.daanse.rolap.common.star.StarPredicate;
 
 /**
  * A AbstractColumnPredicate is an abstract implementation for
- * {@link org.eclipse.daanse.rolap.common.StarColumnPredicate}.
+ * {@link org.eclipse.daanse.rolap.common.star.StarColumnPredicate}.
  */
 public abstract class AbstractColumnPredicate implements StarColumnPredicate {
     protected final RolapStar.Column constrainedColumn;
@@ -168,8 +168,8 @@ public abstract class AbstractColumnPredicate implements StarColumnPredicate {
     }
 
     /**
-     * Factory for {@link org.eclipse.daanse.rolap.common.StarPredicate}s and
-     * {@link org.eclipse.daanse.rolap.common.StarColumnPredicate}s.
+     * Factory for {@link org.eclipse.daanse.rolap.common.star.StarPredicate}s and
+     * {@link org.eclipse.daanse.rolap.common.star.StarColumnPredicate}s.
      */
     public static class Factory {
 

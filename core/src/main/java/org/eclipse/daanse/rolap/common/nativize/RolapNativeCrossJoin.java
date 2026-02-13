@@ -53,7 +53,7 @@ import org.eclipse.daanse.rolap.element.RolapMember;
 import org.eclipse.daanse.rolap.element.RolapVirtualCube;
 
 /**
- * Creates a {@link org.eclipse.daanse.olap.api.NativeEvaluator} that evaluates NON EMPTY
+ * Creates a {@link org.eclipse.daanse.olap.api.evaluator.NativeEvaluator} that evaluates NON EMPTY
  * CrossJoin in SQL. The generated SQL will join the dimension tables with
  * the fact table and return all combinations that have a
  * corresponding row in the fact table. The current context (slicer) is

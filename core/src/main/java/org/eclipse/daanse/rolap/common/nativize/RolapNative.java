@@ -37,7 +37,7 @@ import org.eclipse.daanse.rolap.common.TupleReader;
 import org.eclipse.daanse.rolap.common.evaluator.RolapEvaluator;
 
 /**
- * A factory for {@link org.eclipse.daanse.olap.api.NativeEvaluator}.
+ * A factory for {@link org.eclipse.daanse.olap.api.evaluator.NativeEvaluator}.
  * If the instance returns null,
  * then the interpreter must compute the result itself.
  * If it returns a NativeEvaluator
