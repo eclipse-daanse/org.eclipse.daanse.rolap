@@ -32,7 +32,7 @@ import org.eclipse.daanse.rolap.common.sql.SqlQuery;
 
 /**
  * Condition which constrains a set of values of a single
- * {@link org.eclipse.daanse.rolap.common.RolapStar.Column} or a set of columns.
+ * {@link org.eclipse.daanse.rolap.common.star.RolapStar.Column} or a set of columns.
  *
  * For example, the predicate
  * Range([Time].[1997].[Q3], [Time].[1998].[Q2])

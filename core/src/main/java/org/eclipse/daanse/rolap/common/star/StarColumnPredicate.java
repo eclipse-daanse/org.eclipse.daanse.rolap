@@ -109,7 +109,7 @@ public interface StarColumnPredicate extends StarPredicate {
 
     /**
      * Returned by
-     * {@link org.eclipse.daanse.rolap.common.StarColumnPredicate#intersect},
+     * {@link org.eclipse.daanse.rolap.common.star.StarColumnPredicate#intersect},
      * describes whether two predicates overlap, and if so, the remaining
      * predicate.
      */

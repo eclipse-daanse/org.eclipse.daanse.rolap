@@ -942,7 +942,7 @@ public class AggStar {
         }
 
         /**
-         * Converts a {@link org.eclipse.daanse.rolap.common.RolapStar.Table} into a
+         * Converts a {@link org.eclipse.daanse.rolap.common.star.RolapStar.Table} into a
          * {@link AggStar.DimTable} as well as converting all columns and
          * child tables. If the rightJoinConditionColumnName parameter
          * is null, then the table's namd and the rTable parameter's

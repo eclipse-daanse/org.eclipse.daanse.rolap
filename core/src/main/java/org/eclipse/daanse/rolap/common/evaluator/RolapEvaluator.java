@@ -98,7 +98,7 @@ import org.slf4j.LoggerFactory;
  *
  * 
  * The {@code savepoint} method is recommended for most purposes, because the initial checkpoint is extremely cheap.
- * Each call that modifies state (such as {@link org.eclipse.daanse.olap.api.Evaluator#setContext(org.eclipse.daanse.olap.api.element.Member)}) creates, at
+ * Each call that modifies state (such as {@link org.eclipse.daanse.olap.api.evaluator.Evaluator#setContext(org.eclipse.daanse.olap.api.element.Member)}) creates, at
  * a modest cost, an entry on an internal command stack.
  *
  * 

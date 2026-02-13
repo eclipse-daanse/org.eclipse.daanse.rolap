@@ -33,7 +33,7 @@ import org.eclipse.daanse.rolap.element.RolapHierarchy;
 import org.eclipse.daanse.rolap.element.RolapMember;
 
 /**
- * Implementation of {@link org.eclipse.daanse.rolap.common.RolapCalculation}
+ * Implementation of {@link org.eclipse.daanse.rolap.common.evaluator.RolapCalculation}
  * that changes one or more dimensions, then evaluates a given calculation.
  *
  * It is used to implement sets in slicers, in particular sets of tuples in

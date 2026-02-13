@@ -38,7 +38,7 @@ import org.eclipse.daanse.rolap.element.RolapMember;
  * SqlMemberSource#getMembersInLevel(RolapLevel, TupleConstraint).
  *
  * @see org.eclipse.daanse.rolap.common.TupleReader
- * @see org.eclipse.daanse.rolap.common.SqlMemberSource
+ * @see org.eclipse.daanse.rolap.common.member.SqlMemberSource
  *
  * @author av
  */

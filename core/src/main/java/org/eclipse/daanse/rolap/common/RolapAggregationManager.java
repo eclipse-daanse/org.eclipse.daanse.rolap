@@ -942,7 +942,7 @@ public abstract class RolapAggregationManager {
     }
 
     /**
-     * Returns a {@link org.eclipse.daanse.rolap.common.CellReader} which reads cells from cache.
+     * Returns a {@link org.eclipse.daanse.rolap.common.result.CellReader} which reads cells from cache.
      */
     public CellReader getCacheCellReader() {
         return new CellReader() {
