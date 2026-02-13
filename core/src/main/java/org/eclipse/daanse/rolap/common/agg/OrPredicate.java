@@ -32,9 +32,9 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.daanse.olap.key.BitKey;
-import org.eclipse.daanse.rolap.common.RolapStar;
-import org.eclipse.daanse.rolap.common.StarPredicate;
 import org.eclipse.daanse.rolap.common.sql.SqlQuery;
+import org.eclipse.daanse.rolap.common.star.RolapStar;
+import org.eclipse.daanse.rolap.common.star.StarPredicate;
 
 /**
  * Predicate which is the union of a list of predicates. It evaluates to

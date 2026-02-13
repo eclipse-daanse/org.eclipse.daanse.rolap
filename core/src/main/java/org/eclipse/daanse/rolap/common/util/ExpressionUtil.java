@@ -17,8 +17,8 @@ import java.util.Objects;
 
 import org.eclipse.daanse.olap.api.SqlStatement;
 import org.eclipse.daanse.olap.api.sql.SqlExpression;
-import org.eclipse.daanse.rolap.common.RolapSqlExpression;
 import org.eclipse.daanse.rolap.common.sql.SqlQuery;
+import org.eclipse.daanse.rolap.common.star.RolapSqlExpression;
 import org.eclipse.daanse.rolap.element.RolapColumn;
 
 public class ExpressionUtil {

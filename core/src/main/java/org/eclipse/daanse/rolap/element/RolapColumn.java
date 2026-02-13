@@ -31,8 +31,8 @@ package org.eclipse.daanse.rolap.element;
 import java.util.List;
 import java.util.Objects;
 
-import org.eclipse.daanse.rolap.common.RolapSqlExpression;
 import org.eclipse.daanse.rolap.common.RolapSqlStatement;
+import org.eclipse.daanse.rolap.common.star.RolapSqlExpression;
 
 public class RolapColumn extends RolapSqlExpression {
 

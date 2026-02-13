@@ -33,10 +33,10 @@ import java.util.List;
 import java.util.Set;
 
 import org.eclipse.daanse.olap.common.Util;
-import org.eclipse.daanse.rolap.common.RolapStar;
-import org.eclipse.daanse.rolap.common.StarColumnPredicate;
-import org.eclipse.daanse.rolap.common.StarPredicate;
 import org.eclipse.daanse.rolap.common.sql.SqlQuery;
+import org.eclipse.daanse.rolap.common.star.RolapStar;
+import org.eclipse.daanse.rolap.common.star.StarColumnPredicate;
+import org.eclipse.daanse.rolap.common.star.StarPredicate;
 
 /**
  * Predicate which is the union of a list of predicates, each of which applies

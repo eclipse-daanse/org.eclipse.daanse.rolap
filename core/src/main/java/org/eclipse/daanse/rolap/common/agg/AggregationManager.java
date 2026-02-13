@@ -39,9 +39,9 @@ import java.util.concurrent.Future;
 
 import org.eclipse.daanse.jdbc.db.dialect.api.type.BestFitColumnType;
 import org.eclipse.daanse.olap.api.ConfigConstants;
-import org.eclipse.daanse.olap.api.agg.IAggregationManager;
+import org.eclipse.daanse.olap.api.agg.OlapAggregationManager;
 import org.eclipse.daanse.olap.api.cache.CacheControl;
-import org.eclipse.daanse.olap.api.cache.ISegmentCacheManager;
+import org.eclipse.daanse.olap.api.cache.OlapSegmentCacheManager;
 import org.eclipse.daanse.olap.api.connection.Connection;
 import org.eclipse.daanse.olap.api.element.OlapElement;
 import org.eclipse.daanse.olap.api.execution.ExecutionContext;
@@ -50,12 +50,12 @@ import org.eclipse.daanse.olap.key.BitKey;
 import  org.eclipse.daanse.olap.util.Pair;
 import org.eclipse.daanse.rolap.api.RolapContext;
 import org.eclipse.daanse.rolap.common.CacheControlImpl;
-import org.eclipse.daanse.rolap.common.GroupingSetsCollector;
 import org.eclipse.daanse.rolap.common.RolapAggregationManager;
-import org.eclipse.daanse.rolap.common.RolapStar;
-import org.eclipse.daanse.rolap.common.StarColumnPredicate;
-import org.eclipse.daanse.rolap.common.StarPredicate;
 import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;
+import org.eclipse.daanse.rolap.common.result.GroupingSetsCollector;
+import org.eclipse.daanse.rolap.common.star.RolapStar;
+import org.eclipse.daanse.rolap.common.star.StarColumnPredicate;
+import org.eclipse.daanse.rolap.common.star.StarPredicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,7 +66,7 @@ import org.slf4j.LoggerFactory;
  * @author jhyde
  * @since 30 August, 2001
  */
-public class AggregationManager extends RolapAggregationManager implements IAggregationManager{
+public class AggregationManager extends RolapAggregationManager implements OlapAggregationManager{
 
 
 
@@ -587,7 +587,7 @@ System.out.println(buf.toString());
 	private Map<Connection, SegmentCacheManager> segCachStore = new HashMap<>();
 
 	@Override
-	public ISegmentCacheManager getCacheMgr(Connection connection) {
+	public OlapSegmentCacheManager getCacheMgr(Connection connection) {
 		if (connection == null || !connection.getContext()
 		        .getConfigValue(ConfigConstants.ENABLE_SESSION_CACHING, ConfigConstants.ENABLE_SESSION_CACHING_DEFAULT_VALUE, Boolean.class)) {
 			return cacheMgr;
@@ -603,7 +603,7 @@ System.out.println(buf.toString());
 	}
 
     @Override
-    public ISegmentCacheManager getCacheMgr() {
+    public OlapSegmentCacheManager getCacheMgr() {
         return this.cacheMgr;
     }
 }

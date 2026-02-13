@@ -51,9 +51,9 @@ import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.olap.common.Util;
 import  org.eclipse.daanse.olap.util.Pair;
-import org.eclipse.daanse.rolap.common.RolapStar;
 import org.eclipse.daanse.rolap.common.RolapUtil;
 import org.eclipse.daanse.rolap.common.Utils;
+import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.util.RelationUtil;
 
 /**

@@ -68,13 +68,13 @@ import org.eclipse.daanse.olap.spi.SegmentColumn;
 import org.eclipse.daanse.olap.spi.SegmentHeader;
 import  org.eclipse.daanse.olap.util.CancellationChecker;
 import  org.eclipse.daanse.olap.util.Pair;
-import org.eclipse.daanse.rolap.common.RolapStar;
 import org.eclipse.daanse.rolap.common.RolapUtil;
 import org.eclipse.daanse.rolap.common.SqlStatement;
-import org.eclipse.daanse.rolap.common.StarPredicate;
 import org.eclipse.daanse.rolap.common.agg.SegmentCacheManager.AbortException;
 import org.eclipse.daanse.rolap.common.agg.SegmentCacheManager.SegmentCacheIndexRegistry;
 import org.eclipse.daanse.rolap.common.cache.SegmentCacheIndex;
+import org.eclipse.daanse.rolap.common.star.RolapStar;
+import org.eclipse.daanse.rolap.common.star.StarPredicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

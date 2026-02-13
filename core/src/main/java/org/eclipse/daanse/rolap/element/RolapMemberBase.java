@@ -57,11 +57,11 @@ import org.eclipse.daanse.olap.function.def.aggregate.AggregateFunDef;
 import org.eclipse.daanse.olap.impl.StatementImpl;
 import org.eclipse.daanse.olap.query.component.ResolvedFunCallImpl;
 import  org.eclipse.daanse.olap.util.Bug;
-import org.eclipse.daanse.rolap.common.HierarchyUsage;
-import org.eclipse.daanse.rolap.common.RolapEvaluator;
-import org.eclipse.daanse.rolap.common.RolapEvaluatorRoot;
 import org.eclipse.daanse.rolap.common.RolapUtil;
-import org.eclipse.daanse.rolap.common.ScenarioImpl;
+import org.eclipse.daanse.rolap.common.evaluator.RolapEvaluator;
+import org.eclipse.daanse.rolap.common.evaluator.RolapEvaluatorRoot;
+import org.eclipse.daanse.rolap.common.star.HierarchyUsage;
+import org.eclipse.daanse.rolap.common.writeback.ScenarioImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

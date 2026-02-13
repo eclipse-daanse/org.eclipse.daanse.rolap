@@ -31,9 +31,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.daanse.olap.common.SystemWideProperties;
-import org.eclipse.daanse.rolap.common.RolapEvaluator;
-import org.eclipse.daanse.rolap.common.SqlConstraintUtils;
 import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;
+import org.eclipse.daanse.rolap.common.constraint.SqlConstraintUtils;
+import org.eclipse.daanse.rolap.common.evaluator.RolapEvaluator;
 import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.element.RolapLevel;
 import org.eclipse.daanse.rolap.element.RolapMember;

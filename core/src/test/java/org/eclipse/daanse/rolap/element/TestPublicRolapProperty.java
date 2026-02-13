@@ -19,7 +19,7 @@
 package org.eclipse.daanse.rolap.element;
 
 import org.eclipse.daanse.olap.api.formatter.MemberPropertyFormatter;
-import org.eclipse.daanse.rolap.common.RolapSqlExpression;
+import org.eclipse.daanse.rolap.common.star.RolapSqlExpression;
 
 public class TestPublicRolapProperty extends RolapProperty {
 

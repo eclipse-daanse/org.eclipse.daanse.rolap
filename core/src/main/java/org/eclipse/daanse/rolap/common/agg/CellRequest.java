@@ -39,10 +39,10 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import org.eclipse.daanse.olap.key.BitKey;
-import org.eclipse.daanse.rolap.common.CompoundPredicateInfo;
-import org.eclipse.daanse.rolap.common.RolapStar;
-import org.eclipse.daanse.rolap.common.StarColumnPredicate;
-import org.eclipse.daanse.rolap.common.StarPredicate;
+import org.eclipse.daanse.rolap.common.constraint.CompoundPredicateInfo;
+import org.eclipse.daanse.rolap.common.star.RolapStar;
+import org.eclipse.daanse.rolap.common.star.StarColumnPredicate;
+import org.eclipse.daanse.rolap.common.star.StarPredicate;
 
 /**
  * A CellRequest contains the context necessary to get a cell

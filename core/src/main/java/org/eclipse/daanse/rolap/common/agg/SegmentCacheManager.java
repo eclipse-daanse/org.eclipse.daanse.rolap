@@ -37,6 +37,7 @@ import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -47,9 +48,10 @@ import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.Message;
 import org.eclipse.daanse.olap.api.cache.CacheCommand;
 import org.eclipse.daanse.olap.api.cache.CacheControl.CellRegion;
-import org.eclipse.daanse.olap.api.cache.ISegmentCacheIndex;
-import org.eclipse.daanse.olap.api.cache.ISegmentCacheManager;
+import org.eclipse.daanse.olap.api.cache.OlapSegmentCacheIndex;
+import org.eclipse.daanse.olap.api.cache.OlapSegmentCacheManager;
 import org.eclipse.daanse.olap.api.element.Member;
+import org.eclipse.daanse.olap.api.exception.CellRequestQuantumExceededException;
 import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
 import org.eclipse.daanse.olap.api.execution.Execution;
 import org.eclipse.daanse.olap.api.execution.ExecutionContext;
@@ -71,13 +73,14 @@ import org.eclipse.daanse.olap.spi.SegmentHeader;
 import  org.eclipse.daanse.olap.util.Pair;
 import org.eclipse.daanse.rolap.api.RolapContext;
 import org.eclipse.daanse.rolap.common.CacheControlImpl;
-import org.eclipse.daanse.rolap.common.RolapCatalogCache;
-import org.eclipse.daanse.rolap.common.RolapCatalogKey;
-import org.eclipse.daanse.rolap.common.RolapStar;
 import org.eclipse.daanse.rolap.common.RolapUtil;
 import org.eclipse.daanse.rolap.common.cache.MemorySegmentCache;
 import org.eclipse.daanse.rolap.common.cache.SegmentCacheIndex;
 import org.eclipse.daanse.rolap.common.cache.SegmentCacheIndexImpl;
+import org.eclipse.daanse.rolap.common.catalog.RolapCatalogCache;
+import org.eclipse.daanse.rolap.common.catalog.RolapCatalogKey;
+import org.eclipse.daanse.rolap.common.result.FastBatchingCellReader;
+import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.element.RolapCatalog;
 import org.eclipse.daanse.rolap.element.RolapStoredMeasure;
 import org.eclipse.daanse.rolap.util.BlockingHashMap;
@@ -265,7 +268,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author jhyde
  */
-public class SegmentCacheManager implements ISegmentCacheManager {
+public class SegmentCacheManager implements OlapSegmentCacheManager {
   private final Handler handler = new Handler();
   private final Actor actor;
   public final Thread thread;
@@ -423,7 +426,7 @@ public class SegmentCacheManager implements ISegmentCacheManager {
     return actor.execute( handler, command );
   }
 
-  public ISegmentCacheIndex getIndexRegistry() {
+  public OlapSegmentCacheIndex getIndexRegistry() {
     return indexRegistry;
   }
 
@@ -1684,7 +1687,7 @@ public class SegmentCacheManager implements ISegmentCacheManager {
    * 
    * The index is based off the checksum of the schema.
    */
-  public class SegmentCacheIndexRegistry implements ISegmentCacheIndex{
+  public class SegmentCacheIndexRegistry implements OlapSegmentCacheIndex{
     private final Map<RolapCatalogKey, SegmentCacheIndex> indexes =
       Collections.synchronizedMap(
         new HashMap<>() );

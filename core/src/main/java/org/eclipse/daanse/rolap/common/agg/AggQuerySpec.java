@@ -33,10 +33,10 @@ import java.util.List;
 
 import org.eclipse.daanse.jdbc.db.dialect.api.type.BestFitColumnType;
 import  org.eclipse.daanse.olap.util.Pair;
-import org.eclipse.daanse.rolap.common.RolapStar;
-import org.eclipse.daanse.rolap.common.StarColumnPredicate;
 import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;
 import org.eclipse.daanse.rolap.common.sql.SqlQuery;
+import org.eclipse.daanse.rolap.common.star.RolapStar;
+import org.eclipse.daanse.rolap.common.star.StarColumnPredicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

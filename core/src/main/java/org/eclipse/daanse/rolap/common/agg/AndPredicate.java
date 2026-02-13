@@ -32,8 +32,8 @@ import java.util.TreeSet;
 
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.key.BitKey;
-import org.eclipse.daanse.rolap.common.StarPredicate;
 import org.eclipse.daanse.rolap.common.sql.SqlQuery;
+import org.eclipse.daanse.rolap.common.star.StarPredicate;
 
 /**
  * Predicate which is the intersection of a list of predicates. It evaluates to

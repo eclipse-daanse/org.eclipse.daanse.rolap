@@ -38,6 +38,7 @@ import org.eclipse.daanse.olap.fun.DaanseEvaluationException;
 import org.eclipse.daanse.olap.query.component.NumericLiteralImpl;
 import org.eclipse.daanse.olap.query.component.StringLiteralImpl;
 import org.eclipse.daanse.olap.util.type.TypeWrapperExp;
+import org.eclipse.daanse.rolap.common.nativize.RolapNativeSql;
 import org.eclipse.daanse.rolap.common.sql.SqlQuery;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;

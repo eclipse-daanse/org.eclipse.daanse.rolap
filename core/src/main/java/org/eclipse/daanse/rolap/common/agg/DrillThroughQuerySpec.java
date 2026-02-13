@@ -37,11 +37,11 @@ import org.eclipse.daanse.jdbc.db.dialect.api.type.BestFitColumnType;
 import org.eclipse.daanse.olap.api.element.OlapElement;
 import org.eclipse.daanse.olap.common.Util;
 import  org.eclipse.daanse.olap.util.Pair;
-import org.eclipse.daanse.rolap.common.RolapStar;
-import org.eclipse.daanse.rolap.common.RolapStar.Column;
-import org.eclipse.daanse.rolap.common.StarColumnPredicate;
-import org.eclipse.daanse.rolap.common.StarPredicate;
 import org.eclipse.daanse.rolap.common.sql.SqlQuery;
+import org.eclipse.daanse.rolap.common.star.RolapStar;
+import org.eclipse.daanse.rolap.common.star.RolapStar.Column;
+import org.eclipse.daanse.rolap.common.star.StarColumnPredicate;
+import org.eclipse.daanse.rolap.common.star.StarPredicate;
 
 /**
  * Provides the information necessary to generate SQL for a drill-through

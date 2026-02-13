@@ -29,9 +29,9 @@ import org.eclipse.daanse.olap.api.calc.Calc;
 import org.eclipse.daanse.olap.api.query.component.Expression;
 import org.eclipse.daanse.olap.function.def.aggregate.AggregateFunDef;
 import org.eclipse.daanse.olap.query.component.ResolvedFunCallImpl;
-import org.eclipse.daanse.rolap.common.RolapCalculation;
-import org.eclipse.daanse.rolap.common.RolapEvaluator;
-import org.eclipse.daanse.rolap.common.RolapEvaluatorRoot;
+import org.eclipse.daanse.rolap.common.evaluator.RolapCalculation;
+import org.eclipse.daanse.rolap.common.evaluator.RolapEvaluator;
+import org.eclipse.daanse.rolap.common.evaluator.RolapEvaluatorRoot;
 
 /**
  * Implementation of {@link org.eclipse.daanse.rolap.common.RolapCalculation}

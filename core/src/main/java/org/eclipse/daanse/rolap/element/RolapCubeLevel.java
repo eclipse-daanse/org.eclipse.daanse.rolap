@@ -34,13 +34,13 @@ import org.eclipse.daanse.olap.api.sql.SqlExpression;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.rolap.common.RolapCacheRegion;
 import org.eclipse.daanse.rolap.common.RolapRuntimeException;
-import org.eclipse.daanse.rolap.common.RolapStar;
-import org.eclipse.daanse.rolap.common.StarColumnPredicate;
 import org.eclipse.daanse.rolap.common.agg.CellRequest;
 import org.eclipse.daanse.rolap.common.agg.MemberColumnPredicate;
 import org.eclipse.daanse.rolap.common.agg.MemberTuplePredicate;
 import org.eclipse.daanse.rolap.common.agg.RangeColumnPredicate;
 import org.eclipse.daanse.rolap.common.agg.ValueColumnPredicate;
+import org.eclipse.daanse.rolap.common.star.RolapStar;
+import org.eclipse.daanse.rolap.common.star.StarColumnPredicate;
 import org.eclipse.daanse.rolap.common.util.ExpressionUtil;
 import org.eclipse.daanse.rolap.common.util.RelationUtil;
 

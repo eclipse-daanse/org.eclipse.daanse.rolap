@@ -45,10 +45,10 @@ import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.key.BitKey;
 import org.eclipse.daanse.olap.key.CellKey;
-import org.eclipse.daanse.rolap.common.GroupingSetsCollector;
-import org.eclipse.daanse.rolap.common.RolapStar;
-import org.eclipse.daanse.rolap.common.StarColumnPredicate;
-import org.eclipse.daanse.rolap.common.StarPredicate;
+import org.eclipse.daanse.rolap.common.result.GroupingSetsCollector;
+import org.eclipse.daanse.rolap.common.star.RolapStar;
+import org.eclipse.daanse.rolap.common.star.StarColumnPredicate;
+import org.eclipse.daanse.rolap.common.star.StarPredicate;
 
 /**
  * A Aggregation is a pre-computed aggregation over a set of

@@ -25,7 +25,7 @@
 
 package org.eclipse.daanse.rolap.common.agg;
 
-import org.eclipse.daanse.rolap.common.StarColumnPredicate;
+import org.eclipse.daanse.rolap.common.star.StarColumnPredicate;
 
 /**
  * Utilities for {@link org.eclipse.daanse.rolap.common.StarPredicate}s and

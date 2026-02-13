@@ -49,6 +49,8 @@ import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;
 import org.eclipse.daanse.rolap.common.aggmatcher.JdbcSchema;
 import org.eclipse.daanse.rolap.common.sql.SqlQuery;
 import org.eclipse.daanse.rolap.common.sql.TupleConstraint;
+import org.eclipse.daanse.rolap.common.star.RolapSqlExpression;
+import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.element.RolapColumn;
 import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.element.RolapCubeLevel;

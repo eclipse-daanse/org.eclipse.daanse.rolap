@@ -31,6 +31,7 @@ import java.util.List;
 
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.calc.tuple.TupleList;
+import org.eclipse.daanse.rolap.common.member.MemberCache;
 import org.eclipse.daanse.rolap.element.RolapLevel;
 import org.eclipse.daanse.rolap.element.RolapMember;
 
