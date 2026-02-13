@@ -29,17 +29,17 @@
 
 package org.eclipse.daanse.rolap.common.agg;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.Comparator;
-import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
 
-import org.eclipse.daanse.olap.api.CatalogReader;
+import org.eclipse.daanse.olap.api.catalog.CatalogReader;
 import org.eclipse.daanse.olap.api.element.Level;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.common.Util;

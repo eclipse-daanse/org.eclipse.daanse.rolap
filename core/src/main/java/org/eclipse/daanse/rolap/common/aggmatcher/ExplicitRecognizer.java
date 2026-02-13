@@ -37,7 +37,7 @@ import java.util.Optional;
 import java.util.TreeMap;
 
 import org.eclipse.daanse.olap.api.NameSegment;
-import org.eclipse.daanse.olap.api.Segment;
+import org.eclipse.daanse.olap.api.agg.Segment;
 import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.olap.api.element.Hierarchy;
 import org.eclipse.daanse.olap.api.element.Level;

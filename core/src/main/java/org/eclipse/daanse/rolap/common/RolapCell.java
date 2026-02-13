@@ -38,13 +38,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import org.eclipse.daanse.olap.api.execution.ExecutionMetadata;
-
 import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.olap.api.ConfigConstants;
 import org.eclipse.daanse.olap.api.Context;
-import org.eclipse.daanse.olap.api.Evaluator;
-import org.eclipse.daanse.olap.api.ISqlStatement;
 import org.eclipse.daanse.olap.api.Statement;
 import org.eclipse.daanse.olap.api.connection.Connection;
 import org.eclipse.daanse.olap.api.element.Cube;
@@ -52,9 +48,11 @@ import org.eclipse.daanse.olap.api.element.Hierarchy;
 import org.eclipse.daanse.olap.api.element.Level;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.element.OlapElement;
+import org.eclipse.daanse.olap.api.evaluator.Evaluator;
 import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
 import org.eclipse.daanse.olap.api.execution.Execution.Purpose;
 import org.eclipse.daanse.olap.api.execution.ExecutionContext;
+import org.eclipse.daanse.olap.api.execution.ExecutionMetadata;
 import org.eclipse.daanse.olap.api.function.FunctionDefinition;
 import org.eclipse.daanse.olap.api.query.component.DimensionExpression;
 import org.eclipse.daanse.olap.api.query.component.Expression;
@@ -73,6 +71,7 @@ import org.eclipse.daanse.olap.api.query.component.UnresolvedFunCall;
 import org.eclipse.daanse.olap.api.result.Axis;
 import org.eclipse.daanse.olap.api.result.Cell;
 import org.eclipse.daanse.olap.api.result.Position;
+import org.eclipse.daanse.olap.api.sql.SqlStatementI;
 import org.eclipse.daanse.olap.common.ExecuteDurationUtil;
 import org.eclipse.daanse.olap.common.StandardProperty;
 import org.eclipse.daanse.olap.common.SystemWideProperties;
@@ -559,7 +558,7 @@ public class RolapCell implements Cell {
      * @param logger Logger. If not null and debug is enabled, log SQL here
      * @return executed SQL statement
      */
-    public ISqlStatement drillThroughInternal(
+    public SqlStatementI drillThroughInternal(
         int maxRowCount,
         int firstRowOrdinal,
         List<OlapElement> fields,

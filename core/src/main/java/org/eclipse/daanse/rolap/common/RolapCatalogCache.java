@@ -18,7 +18,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
-import org.eclipse.daanse.olap.api.CatalogCache;
+import org.eclipse.daanse.olap.api.cache.CatalogCache;
 import org.eclipse.daanse.olap.api.connection.ConnectionProps;
 import org.eclipse.daanse.rolap.api.RolapContext;
 import org.eclipse.daanse.rolap.element.RolapCatalog;

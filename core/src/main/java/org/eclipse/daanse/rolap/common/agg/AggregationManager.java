@@ -38,10 +38,10 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 import org.eclipse.daanse.jdbc.db.dialect.api.type.BestFitColumnType;
-import org.eclipse.daanse.olap.api.CacheControl;
 import org.eclipse.daanse.olap.api.ConfigConstants;
-import org.eclipse.daanse.olap.api.IAggregationManager;
-import org.eclipse.daanse.olap.api.ISegmentCacheManager;
+import org.eclipse.daanse.olap.api.agg.IAggregationManager;
+import org.eclipse.daanse.olap.api.cache.CacheControl;
+import org.eclipse.daanse.olap.api.cache.ISegmentCacheManager;
 import org.eclipse.daanse.olap.api.connection.Connection;
 import org.eclipse.daanse.olap.api.element.OlapElement;
 import org.eclipse.daanse.olap.api.execution.ExecutionContext;

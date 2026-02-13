@@ -30,7 +30,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 import org.eclipse.daanse.olap.api.Context;
-import org.eclipse.daanse.olap.api.calc.todo.TupleList;
+import org.eclipse.daanse.olap.api.calc.tuple.TupleList;
 import org.eclipse.daanse.rolap.element.RolapLevel;
 import org.eclipse.daanse.rolap.element.RolapMember;
 

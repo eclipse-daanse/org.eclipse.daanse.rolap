@@ -15,7 +15,7 @@ package org.eclipse.daanse.rolap.common;
 
 import java.util.List;
 
-public class RolapSqlExpression implements org.eclipse.daanse.olap.api.SqlExpression{
+public class RolapSqlExpression implements org.eclipse.daanse.olap.api.sql.SqlExpression{
     private List<org.eclipse.daanse.olap.api.SqlStatement> sqls;
 
     public RolapSqlExpression() {

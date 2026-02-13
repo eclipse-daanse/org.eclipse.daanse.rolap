@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.daanse.olap.api.Context;
-import org.eclipse.daanse.olap.api.ISegmentCacheManager;
+import org.eclipse.daanse.olap.api.cache.ISegmentCacheManager;
 import org.eclipse.daanse.olap.api.connection.Connection;
 import org.eclipse.daanse.olap.core.AbstractBasicContext;
 import org.eclipse.daanse.rolap.common.agg.SegmentCacheManager;

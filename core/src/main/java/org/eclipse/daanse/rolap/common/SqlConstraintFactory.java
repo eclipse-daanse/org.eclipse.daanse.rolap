@@ -29,11 +29,11 @@ package org.eclipse.daanse.rolap.common;
 import java.util.List;
 import java.util.Set;
 
-import org.eclipse.daanse.olap.api.CatalogReader;
 import org.eclipse.daanse.olap.api.ConfigConstants;
-import org.eclipse.daanse.olap.api.Evaluator;
 import org.eclipse.daanse.olap.api.NameSegment;
+import org.eclipse.daanse.olap.api.catalog.CatalogReader;
 import org.eclipse.daanse.olap.api.element.Level;
+import org.eclipse.daanse.olap.api.evaluator.Evaluator;
 import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.rolap.common.sql.CrossJoinArg;
 import org.eclipse.daanse.rolap.common.sql.CrossJoinArgFactory;

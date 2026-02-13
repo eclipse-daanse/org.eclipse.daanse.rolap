@@ -26,7 +26,7 @@
 
 package org.eclipse.daanse.rolap.common.sql;
 
-import org.eclipse.daanse.olap.api.Evaluator;
+import org.eclipse.daanse.olap.api.evaluator.Evaluator;
 import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;
 import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.element.RolapLevel;

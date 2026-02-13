@@ -28,7 +28,7 @@ package org.eclipse.daanse.rolap.common;
 
 import java.util.List;
 
-import org.eclipse.daanse.olap.api.Evaluator;
+import org.eclipse.daanse.olap.api.evaluator.Evaluator;
 import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;
 import org.eclipse.daanse.rolap.common.sql.MemberChildrenConstraint;
 import org.eclipse.daanse.rolap.common.sql.SqlQuery;

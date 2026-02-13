@@ -25,10 +25,10 @@
  */
 package org.eclipse.daanse.rolap.element;
 
-import org.eclipse.daanse.olap.api.CatalogReader;
 import org.eclipse.daanse.olap.api.CubeMember;
 import org.eclipse.daanse.olap.api.MatchType;
-import org.eclipse.daanse.olap.api.Segment;
+import org.eclipse.daanse.olap.api.agg.Segment;
+import org.eclipse.daanse.olap.api.catalog.CatalogReader;
 import org.eclipse.daanse.olap.api.element.Level;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.element.OlapElement;

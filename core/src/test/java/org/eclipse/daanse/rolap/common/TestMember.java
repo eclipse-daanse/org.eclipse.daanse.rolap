@@ -26,9 +26,9 @@ package org.eclipse.daanse.rolap.common;
 import java.util.List;
 import java.util.Locale;
 
-import org.eclipse.daanse.olap.api.CatalogReader;
 import org.eclipse.daanse.olap.api.MatchType;
-import org.eclipse.daanse.olap.api.Segment;
+import org.eclipse.daanse.olap.api.agg.Segment;
+import org.eclipse.daanse.olap.api.catalog.CatalogReader;
 import org.eclipse.daanse.olap.api.element.Catalog;
 import org.eclipse.daanse.olap.api.element.Cube;
 import org.eclipse.daanse.olap.api.element.Dimension;
