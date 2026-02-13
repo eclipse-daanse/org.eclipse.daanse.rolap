@@ -28,7 +28,7 @@ package org.eclipse.daanse.rolap.common;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.daanse.olap.api.calc.todo.TupleList;
+import org.eclipse.daanse.olap.api.calc.tuple.TupleList;
 import org.eclipse.daanse.olap.api.element.Member;
 
 public class TupleConstraintStruct {

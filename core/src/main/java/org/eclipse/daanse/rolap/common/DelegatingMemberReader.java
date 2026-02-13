@@ -30,8 +30,8 @@ package org.eclipse.daanse.rolap.common;
 import java.util.List;
 import java.util.Map;
 
-import org.eclipse.daanse.olap.api.Segment;
 import org.eclipse.daanse.olap.api.access.AccessMember;
+import org.eclipse.daanse.olap.api.agg.Segment;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.rolap.common.TupleReader.MemberBuilder;
 import org.eclipse.daanse.rolap.common.sql.MemberChildrenConstraint;

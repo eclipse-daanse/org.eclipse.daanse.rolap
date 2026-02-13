@@ -29,7 +29,7 @@ import org.eclipse.daanse.jdbc.db.dialect.api.type.Datatype;
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.olap.api.element.MetaData;
-import org.eclipse.daanse.olap.api.element.PhisicalCubeMeasure;
+import org.eclipse.daanse.olap.api.element.PhysicalCubeMeasure;
 import org.eclipse.daanse.olap.api.formatter.CellFormatter;
 import org.eclipse.daanse.olap.common.StandardProperty;
 import org.eclipse.daanse.olap.exceptions.CastInvalidTypeException;
@@ -51,7 +51,7 @@ import org.eclipse.daanse.rolap.mapping.model.ColumnInternalDataType;
  */
 public class RolapBaseCubeMeasure
     extends RolapMemberBase
-    implements PhisicalCubeMeasure, RolapStoredMeasure
+    implements PhysicalCubeMeasure, RolapStoredMeasure
 {
 
     private final static String unknownAggregator = "Unknown aggregator ''{0}''";

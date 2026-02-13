@@ -13,9 +13,9 @@
 package org.eclipse.daanse.rolap.aggregator;
 
 import org.eclipse.daanse.olap.api.DataTypeJdbc;
-import org.eclipse.daanse.olap.api.Evaluator;
 import org.eclipse.daanse.olap.api.calc.Calc;
-import org.eclipse.daanse.olap.api.calc.todo.TupleList;
+import org.eclipse.daanse.olap.api.calc.tuple.TupleList;
+import org.eclipse.daanse.olap.api.evaluator.Evaluator;
 
 public class NoneAggregator extends AbstractAggregator {
 

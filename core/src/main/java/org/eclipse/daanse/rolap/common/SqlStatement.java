@@ -45,7 +45,6 @@ import java.util.function.Consumer;
 import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.jdbc.db.dialect.api.type.BestFitColumnType;
 import org.eclipse.daanse.olap.api.Context;
-import org.eclipse.daanse.olap.api.ISqlStatement;
 import org.eclipse.daanse.olap.api.execution.Execution.Purpose;
 import org.eclipse.daanse.olap.api.execution.ExecutionContext;
 import org.eclipse.daanse.olap.api.monitor.event.EventCommon;
@@ -53,6 +52,7 @@ import org.eclipse.daanse.olap.api.monitor.event.SqlStatementEndEvent;
 import org.eclipse.daanse.olap.api.monitor.event.SqlStatementEventCommon;
 import org.eclipse.daanse.olap.api.monitor.event.SqlStatementExecuteEvent;
 import org.eclipse.daanse.olap.api.monitor.event.SqlStatementStartEvent;
+import org.eclipse.daanse.olap.api.sql.SqlStatementI;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.rolap.util.Counters;
 import org.eclipse.daanse.rolap.util.DelegatingInvocationHandler;
@@ -84,7 +84,7 @@ import org.eclipse.daanse.rolap.util.DelegatingInvocationHandler;
  * @author jhyde
  * @since 2.3
  */
-public class SqlStatement implements ISqlStatement {
+public class SqlStatement implements SqlStatementI {
   private static final String TIMING_NAME = "SqlStatement-";
 
   // used for SQL logging, allows for a SQL Statement UID

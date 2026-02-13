@@ -31,7 +31,7 @@ package org.eclipse.daanse.rolap.common;
 
 import java.util.List;
 
-import org.eclipse.daanse.olap.api.Segment;
+import org.eclipse.daanse.olap.api.agg.Segment;
 import org.eclipse.daanse.rolap.element.RolapHierarchy;
 import org.eclipse.daanse.rolap.element.RolapMember;
 

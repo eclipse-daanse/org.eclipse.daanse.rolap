@@ -31,15 +31,15 @@ import static org.eclipse.daanse.olap.common.Util.makeFqName;
 import java.text.MessageFormat;
 import java.util.Locale;
 
-import org.eclipse.daanse.olap.api.CatalogReader;
 import org.eclipse.daanse.olap.api.LevelProperty;
 import org.eclipse.daanse.olap.api.MatchType;
-import org.eclipse.daanse.olap.api.Segment;
-import org.eclipse.daanse.olap.api.SqlExpression;
+import org.eclipse.daanse.olap.api.agg.Segment;
+import org.eclipse.daanse.olap.api.catalog.CatalogReader;
 import org.eclipse.daanse.olap.api.element.Dimension;
 import org.eclipse.daanse.olap.api.element.Hierarchy;
 import org.eclipse.daanse.olap.api.element.OlapElement;
 import org.eclipse.daanse.olap.api.formatter.MemberPropertyFormatter;
+import org.eclipse.daanse.olap.api.sql.SqlExpression;
 import org.eclipse.daanse.olap.element.PropertyBase;
 import org.eclipse.daanse.rolap.common.RolapStar;
 import org.slf4j.Logger;

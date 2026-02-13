@@ -42,13 +42,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.eclipse.daanse.olap.api.CacheCommand;
-import org.eclipse.daanse.olap.api.CacheControl.CellRegion;
 import org.eclipse.daanse.olap.api.ConfigConstants;
 import org.eclipse.daanse.olap.api.Context;
-import org.eclipse.daanse.olap.api.ISegmentCacheIndex;
-import org.eclipse.daanse.olap.api.ISegmentCacheManager;
 import org.eclipse.daanse.olap.api.Message;
+import org.eclipse.daanse.olap.api.cache.CacheCommand;
+import org.eclipse.daanse.olap.api.cache.CacheControl.CellRegion;
+import org.eclipse.daanse.olap.api.cache.ISegmentCacheIndex;
+import org.eclipse.daanse.olap.api.cache.ISegmentCacheManager;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
 import org.eclipse.daanse.olap.api.execution.Execution;

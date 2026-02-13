@@ -44,9 +44,9 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import org.eclipse.daanse.jdbc.db.dialect.api.type.Datatype;
-import org.eclipse.daanse.olap.api.SqlExpression;
 import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
+import org.eclipse.daanse.olap.api.sql.SqlExpression;
 import org.eclipse.daanse.rolap.common.RolapSqlExpression;
 import org.eclipse.daanse.rolap.common.RolapStar;
 import org.eclipse.daanse.rolap.element.RolapLevel;
