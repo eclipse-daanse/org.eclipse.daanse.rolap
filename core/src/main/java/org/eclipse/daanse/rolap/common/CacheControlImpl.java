@@ -238,7 +238,7 @@ public class CacheControlImpl implements CacheControl {
     @Override
 	public void flush(final CellRegion region) {
         // Create ExecutionImpl for flush operation
-        final org.eclipse.daanse.olap.api.Statement statement = connection.getInternalStatement();
+        final org.eclipse.daanse.olap.api.execution.Statement statement = connection.getInternalStatement();
         final ExecutionImpl execution = new ExecutionImpl(statement,
             ExecuteDurationUtil.executeDurationValue(connection.getContext()));
 
@@ -598,7 +598,7 @@ public class CacheControlImpl implements CacheControl {
                 abc.getAggregationManager().getCacheMgr(this.connection);
 
         // Create ExecutionImpl for printCacheState operation
-        final org.eclipse.daanse.olap.api.Statement statement = connection.getInternalStatement();
+        final org.eclipse.daanse.olap.api.execution.Statement statement = connection.getInternalStatement();
         final ExecutionImpl execution = new ExecutionImpl(statement,
             ExecuteDurationUtil.executeDurationValue(connection.getContext()));
 

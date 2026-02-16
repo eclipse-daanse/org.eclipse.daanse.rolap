@@ -13,9 +13,9 @@
  */
 package org.eclipse.daanse.rolap.common.statement;
 
-import org.eclipse.daanse.olap.api.Statement;
 import org.eclipse.daanse.olap.api.connection.Connection;
 import org.eclipse.daanse.olap.api.execution.Execution;
+import org.eclipse.daanse.olap.api.execution.Statement;
 import org.eclipse.daanse.olap.execution.ExecutionImpl;
 
 /**

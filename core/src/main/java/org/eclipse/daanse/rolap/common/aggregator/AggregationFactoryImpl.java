@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
-import org.eclipse.daanse.olap.api.AggregationFactory;
+import org.eclipse.daanse.olap.api.agg.AggregationFactory;
 import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.olap.api.aggregator.CustomAggregatorFactory;
 import org.eclipse.daanse.rolap.aggregator.AvgAggregator;

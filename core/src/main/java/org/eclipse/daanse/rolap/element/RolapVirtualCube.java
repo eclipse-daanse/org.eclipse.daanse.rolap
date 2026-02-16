@@ -22,11 +22,11 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import org.eclipse.daanse.olap.api.Context;
-import org.eclipse.daanse.olap.api.Quoting;
 import org.eclipse.daanse.olap.api.element.Cube;
 import org.eclipse.daanse.olap.api.element.Hierarchy;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.element.VirtualCube;
+import org.eclipse.daanse.olap.api.query.Quoting;
 import org.eclipse.daanse.olap.api.query.component.Formula;
 import org.eclipse.daanse.olap.api.query.component.Query;
 import org.eclipse.daanse.olap.common.StandardProperty;

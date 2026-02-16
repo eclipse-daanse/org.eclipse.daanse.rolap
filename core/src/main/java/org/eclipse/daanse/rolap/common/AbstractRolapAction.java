@@ -26,7 +26,7 @@
 
 package org.eclipse.daanse.rolap.common;
 
-import org.eclipse.daanse.olap.api.OlapAction;
+import org.eclipse.daanse.olap.api.action.OlapAction;
 
 public abstract class AbstractRolapAction implements OlapAction {
 	private final String name;

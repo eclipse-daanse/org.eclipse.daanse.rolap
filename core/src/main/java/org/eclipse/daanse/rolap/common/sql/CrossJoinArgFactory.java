@@ -38,7 +38,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.daanse.mdx.model.api.expression.operation.BracesOperationAtom;
-import org.eclipse.daanse.olap.api.ConfigConstants;
 import org.eclipse.daanse.olap.api.access.AccessHierarchy;
 import org.eclipse.daanse.olap.api.access.Role;
 import org.eclipse.daanse.olap.api.access.RollupPolicy;
@@ -59,6 +58,7 @@ import org.eclipse.daanse.olap.api.query.component.NumericLiteral;
 import org.eclipse.daanse.olap.api.query.component.QueryAxis;
 import org.eclipse.daanse.olap.api.type.HierarchyType;
 import org.eclipse.daanse.olap.api.type.Type;
+import org.eclipse.daanse.olap.common.ConfigConstants;
 import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.function.def.parentheses.ParenthesesFunDef;
