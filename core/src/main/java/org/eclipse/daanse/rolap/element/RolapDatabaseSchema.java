@@ -15,8 +15,8 @@ package org.eclipse.daanse.rolap.element;
 
 import java.util.List;
 
-import org.eclipse.daanse.olap.api.element.DatabaseSchema;
-import org.eclipse.daanse.olap.api.element.DatabaseTable;
+import org.eclipse.daanse.olap.api.element.db.DatabaseSchema;
+import org.eclipse.daanse.olap.api.element.db.DatabaseTable;
 
 public class RolapDatabaseSchema implements DatabaseSchema {
 	private String name;

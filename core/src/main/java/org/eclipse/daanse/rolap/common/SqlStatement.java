@@ -625,7 +625,7 @@ public class SqlStatement implements SqlStatementI {
 
   public static long mdxStatementIdOf(ExecutionContext executionContext) {
     if (executionContext.getExecution() != null) {
-      final org.eclipse.daanse.olap.api.Statement statement = executionContext.getExecution().getDaanseStatement();
+      final org.eclipse.daanse.olap.api.execution.Statement statement = executionContext.getExecution().getDaanseStatement();
       if (statement != null) {
         return statement.getId();
       }

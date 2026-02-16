@@ -20,7 +20,7 @@ package org.eclipse.daanse.rolap.common;
 
 import java.util.List;
 
-import org.eclipse.daanse.olap.api.NameSegment;
+import org.eclipse.daanse.olap.api.query.NameSegment;
 import org.eclipse.daanse.rolap.common.constraint.ChildByNameConstraint;
 
 public class TestPublicChildByNameConstraint extends ChildByNameConstraint {

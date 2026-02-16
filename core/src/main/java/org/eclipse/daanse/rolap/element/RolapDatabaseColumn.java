@@ -14,7 +14,7 @@
 package org.eclipse.daanse.rolap.element;
 
 import org.eclipse.daanse.olap.api.DataTypeJdbc;
-import org.eclipse.daanse.olap.api.element.DatabaseColumn;
+import org.eclipse.daanse.olap.api.element.db.DatabaseColumn;
 
 public class RolapDatabaseColumn implements DatabaseColumn{
 	private String name;

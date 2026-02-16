@@ -29,7 +29,7 @@ package org.eclipse.daanse.rolap.common.constraint;
 import java.util.Arrays;
 import java.util.List;
 
-import org.eclipse.daanse.olap.api.NameSegment;
+import org.eclipse.daanse.olap.api.query.NameSegment;
 import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;
 import org.eclipse.daanse.rolap.common.sql.SqlQuery;
 import org.eclipse.daanse.rolap.element.RolapCube;
