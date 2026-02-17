@@ -1425,6 +1425,7 @@ public TupleList readTuples(
 
       // Figure out the order-by part
       final String orderByAlias;
+      boolean ascending = ordinalExp.isAscend();
       if ( !currLevel.getKeyExp().equals( currLevel.getOrdinalExp() ) ) {
         String ordinalSql = getExpression( ordinalExp, sqlQuery );
         orderByAlias = sqlQuery.addSelect( ordinalSql, null );
@@ -1433,14 +1434,14 @@ public TupleList readTuples(
         }
         if ( whichSelect == WhichSelect.ONLY ) {
           sqlQuery.addOrderBy(
-            ordinalSql, orderByAlias, true, false, true, true );
+            ordinalSql, orderByAlias, ascending, false, true, true );
           sqlQuery.addOrderBy(
                   keySql, keyAlias, true, false, true, true );
         }
       } else {
         if ( whichSelect == WhichSelect.ONLY ) {
           sqlQuery.addOrderBy(
-            keySql, keyAlias, true, false, true, true );
+            keySql, keyAlias, ascending, false, true, true );
         }
       }
 

@@ -541,6 +541,7 @@ RME is this right
             final String keyAlias =
                 sqlQuery.addSelectGroupBy(expString, null);
 
+            final boolean ascending = level.getOrdinalExp().isAscend();
             if (!keyExp.equals(level.getOrdinalExp())) {
                 // Ordering comes from a separate expression
                 final SqlExpression ordinalExp =
@@ -554,13 +555,13 @@ RME is this right
                 sqlQuery.addOrderBy(
                     ordinalExpString,
                     orderAlias,
-                    true, false, true, true);
+                    ascending, false, true, true);
             } else {
                 // Still need to order by key.
                 sqlQuery.addOrderBy(
                     expString,
                     keyAlias,
-                    true, false, true, true);
+                    ascending, false, true, true);
             }
 
             RolapProperty[] properties = level.getProperties();
@@ -755,16 +756,17 @@ RME is this right
         }
 
         final String orderBy = getExpression(level.getOrdinalExp(), sqlQuery);
+        final boolean ascending = level.getOrdinalExp().isAscend();
         if (!orderBy.equals(q)) {
             String orderAlias = sqlQuery.addSelect(orderBy, null);
             if(needsGroupBy) {
                 sqlQuery.addGroupBy(orderBy, orderAlias);
             }
             sqlQuery.addOrderBy(
-                orderBy, orderAlias, true, false, true, true);
+                orderBy, orderAlias, ascending, false, true, true);
         } else {
             sqlQuery.addOrderBy(
-                q, idAlias, true, false, true, true);
+                q, idAlias, ascending, false, true, true);
         }
 
         RolapProperty[] properties = level.getProperties();
@@ -1186,7 +1188,13 @@ RME is this right
             new RolapMemberBase(parentMember, rolapChildLevel, value);
         if (!childLevel.getOrdinalExp().equals(childLevel.getKeyExp())) {
             member.setOrdinal(lastOrdinal++);
+        } else {
+            // by default ordering by ascending for KeyExp. 
+            if (childLevel.getOrdinalExp().isAscend() != childLevel.getKeyExp().isAscend()) {
+                member.setOrdinal(lastOrdinal++);
+            }
         }
+        
         if (captionValue != null) {
             // passing caption column raw value
             // to be properly formatted later
@@ -1356,6 +1364,7 @@ RME is this right
 
         // Now deal with the ordering column.
         final String orderSql = getExpression(order, sqlQuery);
+        final boolean ascending = order.isAscend();
         if (!orderSql.equals(keySql)) {
             final String orderAlias =
                 group
@@ -1364,13 +1373,13 @@ RME is this right
             sqlQuery.addOrderBy(
                 orderSql,
                 orderAlias,
-                true, false, true, true);
+                ascending, false, true, true);
         } else {
             // Same key as order. Just order it.
             sqlQuery.addOrderBy(
                 keySql,
                 keyAlias,
-                true, false, true, true);
+                ascending, false, true, true);
         }
 
         final RolapProperty[] properties = level.getProperties();
@@ -1431,13 +1440,14 @@ RME is this right
             sqlQuery.addSelectGroupBy(childId, level.getInternalType());
         hierarchy.addToFrom(sqlQuery, level.getOrdinalExp());
         final String orderBy = getExpression(level.getOrdinalExp(), sqlQuery);
+        boolean ascending = level.getOrdinalExp().isAscend();
         if (!orderBy.equals(childId)) {
             String orderAlias = sqlQuery.addSelectGroupBy(orderBy, null);
             sqlQuery.addOrderBy(
-                orderBy, orderAlias, true, false, true, true);
+                orderBy, orderAlias, ascending, false, true, true);
         } else {
             sqlQuery.addOrderBy(
-                childId, idAlias, true, false, true, true);
+                childId, idAlias, ascending, false, true, true);
         }
 
         RolapProperty[] properties = level.getProperties();
@@ -1485,13 +1495,14 @@ RME is this right
                 sqlQuery.addSelectGroupBy(childId, level.getInternalType());
             hierarchy.addToFrom(sqlQuery, level.getOrdinalExp());
             final String orderBy = getExpression(level.getOrdinalExp(), sqlQuery);
+            boolean ascending = level.getOrdinalExp().isAscend();
             if (!orderBy.equals(childId)) {
                 String orderAlias = sqlQuery.addSelectGroupBy(orderBy, null);
                 sqlQuery.addOrderBy(
-                    orderBy, orderAlias, true, false, true, true);
+                    orderBy, orderAlias, ascending, false, true, true);
             } else {
                 sqlQuery.addOrderBy(
-                    childId, idAlias, true, false, true, true);
+                    childId, idAlias, ascending, false, true, true);
             }
 
             RolapProperty[] properties = level.getProperties();

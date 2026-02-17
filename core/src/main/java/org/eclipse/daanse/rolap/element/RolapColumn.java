@@ -38,11 +38,18 @@ public class RolapColumn extends RolapSqlExpression {
 
     private String table;
     private String name;
+    private boolean ascend;
 
+	public RolapColumn(String table, String name, boolean ascend) {
+        this.table = table;
+        this.name = name;
+        this.ascend = ascend;
+    }
 
 	public RolapColumn(String table, String name) {
         this.table = table;
         this.name = name;
+        this.ascend = true;
     }
 
     public String getTable() {
@@ -51,6 +58,10 @@ public class RolapColumn extends RolapSqlExpression {
 
     public String getName() {
 	    return name;
+    }
+
+    public boolean isAscend() {
+	    return ascend;
     }
 
     @Override

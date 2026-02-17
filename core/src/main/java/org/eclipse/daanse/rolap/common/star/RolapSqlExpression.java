@@ -19,13 +19,18 @@ import org.eclipse.daanse.rolap.common.RolapSqlStatement;
 
 public class RolapSqlExpression implements org.eclipse.daanse.olap.api.sql.SqlExpression{
     private List<org.eclipse.daanse.olap.api.SqlStatement> sqls;
-
+    private boolean ascend;
+    
     public RolapSqlExpression() {
     }
-    
     public RolapSqlExpression(org.eclipse.daanse.rolap.mapping.model.SQLExpressionColumn scm) {
+        this(scm, true);
+    }
+    
+    public RolapSqlExpression(org.eclipse.daanse.rolap.mapping.model.SQLExpressionColumn scm, boolean ascend) {
         if (scm.getSqls() != null) {
-            sqls = scm.getSqls().stream().map(ex -> (org.eclipse.daanse.olap.api.SqlStatement)RolapSqlStatement.builder().withDialects(ex.getDialects()).withSql(ex.getSql()).build()).toList();
+            this.sqls = scm.getSqls().stream().map(ex -> (org.eclipse.daanse.olap.api.SqlStatement)RolapSqlStatement.builder().withDialects(ex.getDialects()).withSql(ex.getSql()).build()).toList();
+            this.ascend = ascend;
         }
         else {
             sqls = List.of();
@@ -40,4 +45,10 @@ public class RolapSqlExpression implements org.eclipse.daanse.olap.api.sql.SqlEx
     public void setSqls(List<org.eclipse.daanse.olap.api.SqlStatement> sqls) {
         this.sqls = sqls;
     }
+
+    @Override
+    public boolean isAscend() {
+        return ascend;
+    }
+
 }
