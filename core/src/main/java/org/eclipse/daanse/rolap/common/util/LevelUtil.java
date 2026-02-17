@@ -29,7 +29,7 @@ public class LevelUtil {
         if (level.getColumn() instanceof org.eclipse.daanse.rolap.mapping.model.SQLExpressionColumn sec) {
             return new RolapSqlExpression(sec);
         } else if (level.getColumn() != null) {
-            return new RolapColumn(level.getColumn().getTable() != null ? level.getColumn().getTable().getName() : null, level.getColumn().getName());
+            return new RolapColumn(getTableName(level.getColumn().getTable()), level.getColumn().getName());
         } else {
             return null;
         }
@@ -63,10 +63,11 @@ public class LevelUtil {
     }
 
     public static RolapSqlExpression getOrdinalExp(org.eclipse.daanse.rolap.mapping.model.Level level) {
-        if (level.getOrdinalColumn() instanceof org.eclipse.daanse.rolap.mapping.model.SQLExpressionColumn sec) {
-            return new RolapSqlExpression(sec);
-        } else if (level.getOrdinalColumn() != null) {
-            return new RolapColumn(getTableName(level.getColumn().getTable()), level.getOrdinalColumn().getName());
+        if (level.getOrdinalColumn() != null && level.getOrdinalColumn().getColumn() != null) {
+            if (level.getOrdinalColumn().getColumn() instanceof org.eclipse.daanse.rolap.mapping.model.SQLExpressionColumn sec) {
+                return new RolapSqlExpression(sec, level.getOrdinalColumn().isAscend());
+            }
+            return new RolapColumn(getTableName(level.getColumn().getTable()), level.getOrdinalColumn().getColumn().getName(), level.getOrdinalColumn().isAscend());
         } else {
             return null;
         }
