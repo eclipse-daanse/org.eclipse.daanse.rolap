@@ -20,20 +20,21 @@ import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.olap.api.calc.Calc;
 import org.eclipse.daanse.olap.api.calc.tuple.TupleList;
 import org.eclipse.daanse.olap.api.evaluator.Evaluator;
-import org.eclipse.daanse.rolap.common.star.RolapOrderedColumn;
+import org.eclipse.daanse.rolap.element.RolapColumn;
 import org.eclipse.daanse.rolap.mapping.model.PercentType;
+import org.eclipse.daanse.rolap.mapping.model.SortingDirection;
 
 
 public class PercentileAggregator implements Aggregator {
 
     private Double percentile;
     private PercentType percentileType;
-    private RolapOrderedColumn rolapOrderedColumn;
+    private RolapColumn rolapOrderedColumn;
     private Dialect dialect;
 
 
     public PercentileAggregator(PercentType percentileType, Double percentile,
-            RolapOrderedColumn rolapOrderedColumn, Dialect dialect) {
+            RolapColumn rolapOrderedColumn, Dialect dialect) {
         this.percentile = percentile;
         this.percentileType = percentileType;
         this.rolapOrderedColumn = rolapOrderedColumn;
@@ -48,9 +49,9 @@ public class PercentileAggregator implements Aggregator {
 
     @Override
     public StringBuilder getExpression(CharSequence operand) {
-        boolean desc = !rolapOrderedColumn.isAscend();
-        String table = rolapOrderedColumn.getColumn().getTable();
-        String name = rolapOrderedColumn.getColumn().getName();
+        boolean desc = SortingDirection.DESC.equals(rolapOrderedColumn.getSortingDirection());
+        String table = rolapOrderedColumn.getTable();
+        String name = rolapOrderedColumn.getName();
 
         return switch (percentileType) {
         case PercentType.DISC -> dialect.generatePercentileDisc(percentile, desc, table, name);

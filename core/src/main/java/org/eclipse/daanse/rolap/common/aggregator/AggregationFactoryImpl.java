@@ -19,6 +19,7 @@ import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.olap.api.agg.AggregationFactory;
 import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.olap.api.aggregator.CustomAggregatorFactory;
+import org.eclipse.daanse.olap.api.sql.SortingDirection;
 import org.eclipse.daanse.rolap.aggregator.AvgAggregator;
 import org.eclipse.daanse.rolap.aggregator.CountAggregator;
 import org.eclipse.daanse.rolap.aggregator.DistinctCountAggregator;
@@ -30,7 +31,6 @@ import org.eclipse.daanse.rolap.aggregator.extra.ListAggAggregator;
 import org.eclipse.daanse.rolap.aggregator.extra.NoneAggregator;
 import org.eclipse.daanse.rolap.aggregator.extra.NthValueAggregator;
 import org.eclipse.daanse.rolap.aggregator.extra.PercentileAggregator;
-import org.eclipse.daanse.rolap.common.star.RolapOrderedColumn;
 import org.eclipse.daanse.rolap.element.RolapColumn;
 
 public class AggregationFactoryImpl implements AggregationFactory{
@@ -77,16 +77,16 @@ public class AggregationFactoryImpl implements AggregationFactory{
     private Aggregator getPercentileAggregator(org.eclipse.daanse.rolap.mapping.model.PercentileMeasure measure) {
     	org.eclipse.daanse.rolap.mapping.model.OrderedColumn oc = measure.getColumn();
             return new PercentileAggregator(measure.getPercentType(), measure.getPercentile(),
-                    new RolapOrderedColumn(new RolapColumn(oc.getColumn().getTable().getName(), oc.getColumn().getName()), oc.isAscend()), dialect);
+                    new RolapColumn(oc.getColumn().getTable().getName(), oc.getColumn().getName(), SortingDirection.valueOf(oc.getDirection().name())), dialect);
     }
 
     private Aggregator getBitAggAggregator(org.eclipse.daanse.rolap.mapping.model.BitAggMeasure measure) {
         return new BitAggAggregator(measure.isNot(), measure.getAggType(), dialect);
     }
 
-    private List<RolapOrderedColumn> getOrderedColumns(List<? extends org.eclipse.daanse.rolap.mapping.model.OrderedColumn> orderByColumns) {
+    private List<RolapColumn> getOrderedColumns(List<? extends org.eclipse.daanse.rolap.mapping.model.OrderedColumn> orderByColumns) {
         if (orderByColumns != null) {
-            return orderByColumns.stream().map(oc -> new RolapOrderedColumn(new RolapColumn(oc.getColumn().getTable().getName(), oc.getColumn().getName()), oc.isAscend())).toList();
+            return orderByColumns.stream().map(oc -> new RolapColumn(oc.getColumn().getTable().getName(), oc.getColumn().getName(), SortingDirection.valueOf(oc.getDirection().name()))).toList();
         }
         return List.of();
     }

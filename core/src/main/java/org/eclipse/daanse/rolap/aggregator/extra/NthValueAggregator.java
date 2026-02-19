@@ -13,6 +13,7 @@
 package org.eclipse.daanse.rolap.aggregator.extra;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.jdbc.db.dialect.api.order.OrderedColumn;
@@ -22,18 +23,18 @@ import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.olap.api.calc.Calc;
 import org.eclipse.daanse.olap.api.calc.tuple.TupleList;
 import org.eclipse.daanse.olap.api.evaluator.Evaluator;
-import org.eclipse.daanse.rolap.common.star.RolapOrderedColumn;
+import org.eclipse.daanse.rolap.element.RolapColumn;
 
 public class NthValueAggregator implements Aggregator {
 
     private boolean ignoreNulls;
     private Integer n;
-    private List<RolapOrderedColumn> rolapOrderedColumnList;
+    private List<RolapColumn> rolapOrderedColumnList;
     private Dialect dialect;
 
 
     public NthValueAggregator(boolean ignoreNulls, Integer n,
-                              List<RolapOrderedColumn> rolapOrderedColumnList, Dialect dialect) {
+                              List<RolapColumn> rolapOrderedColumnList, Dialect dialect) {
         this.ignoreNulls = ignoreNulls;
         this.n = n;
         this.rolapOrderedColumnList = rolapOrderedColumnList;
@@ -51,8 +52,9 @@ public class NthValueAggregator implements Aggregator {
         List<OrderedColumn> columnsList = List.of();
         if (rolapOrderedColumnList != null) {
             columnsList = rolapOrderedColumnList.stream()
-                .map(c -> new OrderedColumn(c.getColumn().getName(), c.getColumn().getTable(),
-                    c.isAscend() ? SortDirection.ASC : SortDirection.DESC))
+                .map(c -> new OrderedColumn(c.getName(), c.getTable(),
+                        org.eclipse.daanse.olap.api.sql.SortingDirection.NONE.equals(c.getSortingDirection()) ? Optional.empty() : Optional.of(SortDirection.valueOf(c.getSortingDirection().name())),
+                                Optional.empty()))
                 .toList();
         }
         return dialect.generateNthValueAgg(operand, ignoreNulls, n, columnsList);
