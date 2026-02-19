@@ -13,6 +13,7 @@
 package org.eclipse.daanse.rolap.aggregator.extra;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.jdbc.db.dialect.api.order.OrderedColumn;
@@ -22,19 +23,19 @@ import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.olap.api.calc.Calc;
 import org.eclipse.daanse.olap.api.calc.tuple.TupleList;
 import org.eclipse.daanse.olap.api.evaluator.Evaluator;
-import org.eclipse.daanse.rolap.common.star.RolapOrderedColumn;
+import org.eclipse.daanse.rolap.element.RolapColumn;
 
 public class ListAggAggregator implements Aggregator {
 
     private boolean distinct;
     private String separator;
-    private List<RolapOrderedColumn> columns;
+    private List<RolapColumn> columns;
     private String coalesce;
     private String onOverflowTruncate;
     private Dialect dialect;
     
     //
-    public ListAggAggregator(boolean distinct, String separator, List<RolapOrderedColumn> columns, String coalesce, String onOverflowTruncate, Dialect dialect) {
+    public ListAggAggregator(boolean distinct, String separator, List<RolapColumn> columns, String coalesce, String onOverflowTruncate, Dialect dialect) {
         this.distinct = distinct;
         this.separator = separator;
         this.columns = columns;
@@ -63,8 +64,9 @@ public class ListAggAggregator implements Aggregator {
         List<OrderedColumn> columnsList = List.of();
         if (columns != null) {
             columnsList = columns.stream()
-                .map(c -> new OrderedColumn(c.getColumn().getName(), c.getColumn().getTable(),
-                    c.isAscend() ? SortDirection.ASC : SortDirection.DESC))
+                .map(c -> new OrderedColumn(c.getName(), c.getTable(),
+                    org.eclipse.daanse.olap.api.sql.SortingDirection.NONE.equals(c.getSortingDirection()) ? Optional.empty() : Optional.of(SortDirection.valueOf(c.getSortingDirection().name())),
+                    Optional.empty()))
                 .toList();
         }
         return dialect.generateListAgg(operand, distinct, separator, coalesce, onOverflowTruncate, columnsList);

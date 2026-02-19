@@ -15,6 +15,7 @@ package org.eclipse.daanse.rolap.common.util;
 
 import java.util.Objects;
 
+import org.eclipse.daanse.olap.api.sql.SortingDirection;
 import org.eclipse.daanse.olap.api.sql.SqlExpression;
 import org.eclipse.daanse.rolap.common.star.RolapSqlExpression;
 import org.eclipse.daanse.rolap.element.RolapColumn;
@@ -65,9 +66,9 @@ public class LevelUtil {
     public static RolapSqlExpression getOrdinalExp(org.eclipse.daanse.rolap.mapping.model.Level level) {
         if (level.getOrdinalColumn() != null && level.getOrdinalColumn().getColumn() != null) {
             if (level.getOrdinalColumn().getColumn() instanceof org.eclipse.daanse.rolap.mapping.model.SQLExpressionColumn sec) {
-                return new RolapSqlExpression(sec, level.getOrdinalColumn().isAscend());
+                return new RolapSqlExpression(sec, SortingDirection.valueOf(level.getOrdinalColumn().getDirection().name()));
             }
-            return new RolapColumn(getTableName(level.getColumn().getTable()), level.getOrdinalColumn().getColumn().getName(), level.getOrdinalColumn().isAscend());
+            return new RolapColumn(getTableName(level.getColumn().getTable()), level.getOrdinalColumn().getColumn().getName(), SortingDirection.valueOf(level.getOrdinalColumn().getDirection().getName()));
         } else {
             return null;
         }

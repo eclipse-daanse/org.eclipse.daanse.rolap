@@ -59,6 +59,7 @@ import org.eclipse.daanse.olap.api.execution.ExecutionContext;
 import org.eclipse.daanse.olap.api.execution.ExecutionMetadata;
 import org.eclipse.daanse.olap.api.execution.Statement;
 import org.eclipse.daanse.olap.api.query.component.Query;
+import org.eclipse.daanse.olap.api.sql.SortingDirection;
 import org.eclipse.daanse.olap.api.sql.SqlExpression;
 import org.eclipse.daanse.olap.calc.base.type.tuplebase.ArrayTupleList;
 import org.eclipse.daanse.olap.calc.base.type.tuplebase.ListTupleList;
@@ -1131,7 +1132,7 @@ public TupleList readTuples(
             unionQuery.addOrderBy(
               new StringBuilder().append(i + 1),
               null,
-              true,
+              SortingDirection.ASC,
               false,
               // We can't order the nulls
               // because column ordinals used as alias
@@ -1385,10 +1386,10 @@ public TupleList readTuples(
               parentSql, currLevel.getInternalType() );
           if (level.getNullParentValue() == null) {
               sqlQuery.addOrderBy(
-                      parentSql, parentAlias, true, false, true, false );
+                      parentSql, parentAlias, SortingDirection.ASC, false, true, false );
           } else {
               sqlQuery.addOrderBy(
-                      parentSql, parentAlias, true, false, level.getNullParentValue(), level.getDatatype(), false);
+                      parentSql, parentAlias, SortingDirection.ASC, false, level.getNullParentValue(), level.getDatatype(), false);
           }
         }
       }
@@ -1425,7 +1426,7 @@ public TupleList readTuples(
 
       // Figure out the order-by part
       final String orderByAlias;
-      boolean ascending = ordinalExp.isAscend();
+      SortingDirection sortingDirection = ordinalExp.getSortingDirection();
       if ( !currLevel.getKeyExp().equals( currLevel.getOrdinalExp() ) ) {
         String ordinalSql = getExpression( ordinalExp, sqlQuery );
         orderByAlias = sqlQuery.addSelect( ordinalSql, null );
@@ -1434,14 +1435,14 @@ public TupleList readTuples(
         }
         if ( whichSelect == WhichSelect.ONLY ) {
           sqlQuery.addOrderBy(
-            ordinalSql, orderByAlias, ascending, false, true, true );
+            ordinalSql, orderByAlias, sortingDirection, false, true, true );
           sqlQuery.addOrderBy(
-                  keySql, keyAlias, true, false, true, true );
+                  keySql, keyAlias, SortingDirection.ASC, false, true, true );
         }
       } else {
         if ( whichSelect == WhichSelect.ONLY ) {
           sqlQuery.addOrderBy(
-            keySql, keyAlias, ascending, false, true, true );
+            keySql, keyAlias, sortingDirection, false, true, true );
         }
       }
 
@@ -1593,7 +1594,7 @@ public TupleList readTuples(
       sqlQuery.addSelectGroupBy( aggColExp, starColumn.getInternalType() );
     if ( whichSelect == WhichSelect.ONLY ) {
       sqlQuery.addOrderBy(
-        aggColExp, colAlias, true, false, true, true );
+        aggColExp, colAlias, SortingDirection.ASC, false, true, true );
     }
     aggColumn.getTable().addToFrom( sqlQuery, false, true );
   }

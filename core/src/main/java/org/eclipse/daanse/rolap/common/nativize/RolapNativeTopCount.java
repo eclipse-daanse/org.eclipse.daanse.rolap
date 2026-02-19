@@ -37,6 +37,7 @@ import org.eclipse.daanse.olap.api.function.FunctionDefinition;
 import org.eclipse.daanse.olap.api.query.component.Expression;
 import org.eclipse.daanse.olap.api.query.component.MemberExpression;
 import org.eclipse.daanse.olap.api.query.component.NumericLiteral;
+import org.eclipse.daanse.olap.api.sql.SortingDirection;
 import org.eclipse.daanse.olap.common.ConfigConstants;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.rolap.aggregator.DistinctCountAggregator;
@@ -63,17 +64,17 @@ public class RolapNativeTopCount extends RolapNativeSet {
 
     static class TopCountConstraint extends SetConstraint {
         Expression orderByExpr;
-        boolean ascending;
+        SortingDirection sortingDirection;
         Integer topCount;
 
         public TopCountConstraint(
             int count,
             CrossJoinArg[] args, RolapEvaluator evaluator,
-            Expression orderByExpr, boolean ascending)
+            Expression orderByExpr, SortingDirection sortingDirection)
         {
             super(args, evaluator, true);
             this.orderByExpr = orderByExpr;
-            this.ascending = ascending;
+            this.sortingDirection = sortingDirection;
             this.topCount = count;
         }
 
@@ -136,7 +137,7 @@ public class RolapNativeTopCount extends RolapNativeSet {
                 sqlQuery.addOrderBy(
                     orderBySql,
                     orderByAlias,
-                    ascending,
+                    sortingDirection,
                     true,
                     nullable,
                     true);
@@ -168,7 +169,7 @@ public class RolapNativeTopCount extends RolapNativeSet {
             if (orderByExpr != null) {
                 key.add(orderByExpr.toString());
             }
-            key.add(ascending);
+            key.add(sortingDirection);
             key.add(topCount);
             key.add(this.getEvaluator().isNonEmpty());
 
@@ -198,12 +199,12 @@ public class RolapNativeTopCount extends RolapNativeSet {
         }
 
         // is this "TopCount(<set>, <count>, [<numeric expr>])"
-        boolean ascending;
+        SortingDirection sortingDirection;
         String funName = fun.getFunctionMetaData().operationAtom().name();
         if ("TopCount".equalsIgnoreCase(funName)) {
-            ascending = false;
+            sortingDirection = SortingDirection.DESC;
         } else if ("BottomCount".equalsIgnoreCase(funName)) {
-            ascending = true;
+            sortingDirection = SortingDirection.ASC;
         } else {
             return null;
         }
@@ -288,7 +289,7 @@ public class RolapNativeTopCount extends RolapNativeSet {
             }
             TopCountConstraint constraint =
                 new TopCountConstraint(
-                    count, combinedArgs, evaluator, orderByExpr, ascending);
+                    count, combinedArgs, evaluator, orderByExpr, sortingDirection);
             if (!constraint.isValid()) {
                 alertNonNativeTopCount(
                     "Constraint constructed cannot be used for native eval.",

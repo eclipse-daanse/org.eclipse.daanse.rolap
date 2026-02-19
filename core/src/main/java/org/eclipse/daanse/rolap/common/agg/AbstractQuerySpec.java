@@ -34,6 +34,7 @@ import java.util.Map;
 
 import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.jdbc.db.dialect.api.type.BestFitColumnType;
+import org.eclipse.daanse.olap.api.sql.SortingDirection;
 import org.eclipse.daanse.olap.common.Util;
 import  org.eclipse.daanse.olap.util.Pair;
 import org.eclipse.daanse.rolap.common.sql.SqlQuery;
@@ -157,7 +158,7 @@ public abstract class AbstractQuerySpec implements QuerySpec {
                 sqlQuery.addOrderBy(
                     expr,
                     alias,
-                    true, false, false, true);
+                    SortingDirection.ASC, false, false, true);
             }
         }
 

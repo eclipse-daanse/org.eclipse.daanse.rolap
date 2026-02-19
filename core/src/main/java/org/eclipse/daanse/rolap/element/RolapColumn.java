@@ -31,6 +31,7 @@ package org.eclipse.daanse.rolap.element;
 import java.util.List;
 import java.util.Objects;
 
+import org.eclipse.daanse.olap.api.sql.SortingDirection;
 import org.eclipse.daanse.rolap.common.RolapSqlStatement;
 import org.eclipse.daanse.rolap.common.star.RolapSqlExpression;
 
@@ -38,18 +39,17 @@ public class RolapColumn extends RolapSqlExpression {
 
     private String table;
     private String name;
-    private boolean ascend;
 
-	public RolapColumn(String table, String name, boolean ascend) {
+	public RolapColumn(String table, String name, SortingDirection sortingDirection) {
         this.table = table;
         this.name = name;
-        this.ascend = ascend;
+        setSortingDirection(sortingDirection);
     }
 
 	public RolapColumn(String table, String name) {
         this.table = table;
         this.name = name;
-        this.ascend = true;
+        setSortingDirection(SortingDirection.ASC);
     }
 
     public String getTable() {
@@ -58,10 +58,6 @@ public class RolapColumn extends RolapSqlExpression {
 
     public String getName() {
 	    return name;
-    }
-
-    public boolean isAscend() {
-	    return ascend;
     }
 
     @Override

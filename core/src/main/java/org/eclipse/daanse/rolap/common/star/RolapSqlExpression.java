@@ -15,22 +15,23 @@ package org.eclipse.daanse.rolap.common.star;
 
 import java.util.List;
 
+import org.eclipse.daanse.olap.api.sql.SortingDirection;
 import org.eclipse.daanse.rolap.common.RolapSqlStatement;
 
 public class RolapSqlExpression implements org.eclipse.daanse.olap.api.sql.SqlExpression{
-    private List<org.eclipse.daanse.olap.api.SqlStatement> sqls;
-    private boolean ascend;
+	private List<org.eclipse.daanse.olap.api.SqlStatement> sqls;
+    private SortingDirection sortingDirection;
     
     public RolapSqlExpression() {
     }
     public RolapSqlExpression(org.eclipse.daanse.rolap.mapping.model.SQLExpressionColumn scm) {
-        this(scm, true);
+        this(scm, SortingDirection.ASC);
     }
     
-    public RolapSqlExpression(org.eclipse.daanse.rolap.mapping.model.SQLExpressionColumn scm, boolean ascend) {
+    public RolapSqlExpression(org.eclipse.daanse.rolap.mapping.model.SQLExpressionColumn scm, SortingDirection sortingDirection) {
         if (scm.getSqls() != null) {
             this.sqls = scm.getSqls().stream().map(ex -> (org.eclipse.daanse.olap.api.SqlStatement)RolapSqlStatement.builder().withDialects(ex.getDialects()).withSql(ex.getSql()).build()).toList();
-            this.ascend = ascend;
+            this.sortingDirection = sortingDirection;
         }
         else {
             sqls = List.of();
@@ -47,8 +48,11 @@ public class RolapSqlExpression implements org.eclipse.daanse.olap.api.sql.SqlEx
     }
 
     @Override
-    public boolean isAscend() {
-        return ascend;
+    public SortingDirection getSortingDirection() {
+        return sortingDirection;
     }
 
+    public void setSortingDirection(SortingDirection sortingDirection) {
+        this.sortingDirection = sortingDirection;
+    }
 }

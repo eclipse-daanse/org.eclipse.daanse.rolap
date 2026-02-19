@@ -47,6 +47,7 @@ import java.util.stream.IntStream;
 import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.jdbc.db.dialect.api.type.BestFitColumnType;
 import org.eclipse.daanse.olap.api.Context;
+import org.eclipse.daanse.olap.api.sql.SortingDirection;
 import org.eclipse.daanse.olap.common.ConfigConstants;
 import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.olap.common.Util;
@@ -635,17 +636,17 @@ public class SqlQuery {
      * Adds an item to the ORDER BY clause.
      *
      * @param expr the expr to order by
-     * @param ascending sort direction
+     * @param sortingDirection sort direction
      * @param prepend whether to prepend to the current list of items
      * @param nullable whether the expression might be null
      */
     public void addOrderBy(
         CharSequence expr,
-        boolean ascending,
+        SortingDirection sortingDirection,
         boolean prepend,
         boolean nullable)
     {
-        this.addOrderBy(expr, expr, ascending, prepend, nullable, true);
+        this.addOrderBy(expr, expr, sortingDirection, prepend, nullable, true);
     }
 
     /**
@@ -653,7 +654,7 @@ public class SqlQuery {
      *
      * @param expr the expr to order by
      * @param alias the alias of the column, as returned by addSelect
-     * @param ascending sort direction
+     * @param sortingDirection sort direction
      * @param prepend whether to prepend to the current list of items
      * @param nullable whether the expression might be null
      * @param collateNullsLast whether null values should appear first or last.
@@ -661,23 +662,26 @@ public class SqlQuery {
     public void addOrderBy(
         CharSequence expr,
         CharSequence alias,
-        boolean ascending,
+        SortingDirection sortingDirection,
         boolean prepend,
         boolean nullable,
         boolean collateNullsLast)
     {
-        String orderExpr =
-            dialect.generateOrderItem(
-                dialect.requiresOrderByAlias() && alias != null
-                    ? dialect.quoteIdentifier(alias)
-                    : expr,
-                nullable,
-                ascending,
-                collateNullsLast).toString();
-        if (prepend) {
-            orderBy.add(0, orderExpr);
-        } else {
-            orderBy.add(orderExpr);
+        if (!SortingDirection.NONE.equals(sortingDirection)) {
+            boolean ascending = SortingDirection.ASC.equals(sortingDirection);
+            String orderExpr =
+                dialect.generateOrderItem(
+                    dialect.requiresOrderByAlias() && alias != null
+                        ? dialect.quoteIdentifier(alias)
+                        : expr,
+                    nullable,
+                    ascending,
+                    collateNullsLast).toString();
+            if (prepend) {
+                orderBy.add(0, orderExpr);
+            } else {
+                orderBy.add(orderExpr);
+            }
         }
     }
 
@@ -686,29 +690,31 @@ public class SqlQuery {
      *
      * @param expr the expression to order by
      * @param alias the column alias (used if dialect requires ORDER BY aliases)
-     * @param ascending true for ascending order, false for descending
+     * @param sortingDirection true for ascending order, false for descending
      * @param prepend true to prepend to the order list, false to append
      * @param nullParentValue the value to use for ordering null parent values
      * @param type the data type of the expression for proper ordering
      * @param collateNullsLast true to place nulls at the end regardless of sort direction
      */
-    public void addOrderBy(String expr, String alias, boolean ascending, boolean prepend, String nullParentValue,
+    public void addOrderBy(String expr, String alias, SortingDirection sortingDirection, boolean prepend, String nullParentValue,
             org.eclipse.daanse.jdbc.db.dialect.api.type.Datatype type, boolean collateNullsLast) {
-        String orderExpr =
-                dialect.generateOrderItemForOrderValue(
-                    dialect.requiresOrderByAlias() && alias != null
-                        ? dialect.quoteIdentifier(alias)
-                        : expr,
-                    nullParentValue,
-                    type,
-                    ascending,
-                    collateNullsLast).toString();
-            if (prepend) {
-                orderBy.add(0, orderExpr);
-            } else {
-                orderBy.add(orderExpr);
-            }
-
+        if (!SortingDirection.NONE.equals(sortingDirection)) {
+            boolean ascending = SortingDirection.ASC.equals(sortingDirection);
+            String orderExpr =
+                    dialect.generateOrderItemForOrderValue(
+                        dialect.requiresOrderByAlias() && alias != null
+                            ? dialect.quoteIdentifier(alias)
+                            : expr,
+                        nullParentValue,
+                        type,
+                        ascending,
+                        collateNullsLast).toString();
+                if (prepend) {
+                    orderBy.add(0, orderExpr);
+                } else {
+                    orderBy.add(orderExpr);
+                }
+        }
     }
 
     @Override
