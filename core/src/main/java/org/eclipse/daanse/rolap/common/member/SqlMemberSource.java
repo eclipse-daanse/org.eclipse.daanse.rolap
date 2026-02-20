@@ -462,18 +462,30 @@ RME is this right
 
                     // REVIEW jvs 20-Feb-2007:  What about caption?
 
-                    if(assignOrderKeys && level.getOrdinalExp() != null) {
-                        if (!level.getOrdinalExp().equals(level.getKeyExp())) {
-                            Object orderKey = accessors.get(column).get();
-                            setOrderKey((RolapMemberBase) member, orderKey);
-                        }
-                        else {
+                    if(assignOrderKeys && level.getOrdinalExps() != null) {
+                        if (!level.getOrdinalExps().isEmpty()) {
+                            for (SqlExpression oe : level.getOrdinalExps()) {
+                                if (!oe.equals(level.getKeyExp())) {
+                                    Object orderKey = accessors.get(column).get();
+                                    setOrderKey((RolapMemberBase) member, orderKey);
+                                }
+                                else {
+                                    setOrderKey((RolapMemberBase) member, value);
+                                }
+                            }
+                        } else {
                             setOrderKey((RolapMemberBase) member, value);
                         }
                     }
-                    if (!level.getOrdinalExp().equals(level.getKeyExp())) {
-                        column++;
+                    if (!level.getOrdinalExps().isEmpty()) {
+                        for ( SqlExpression oe : level.getOrdinalExps() ) {
+                            if (!oe.equals(level.getKeyExp())) {
+                            	column++;
+                            }
+                        }
                     }
+                    //    column++;
+                    //}
 
                     Property[] properties = level.getProperties();
                     for (Property property : properties) {
@@ -542,27 +554,27 @@ RME is this right
             final String keyAlias =
                 sqlQuery.addSelectGroupBy(expString, null);
 
-            final SortingDirection sortingDirection = level.getOrdinalExp().getSortingDirection();
-            if (!keyExp.equals(level.getOrdinalExp())) {
-                // Ordering comes from a separate expression
-                final SqlExpression ordinalExp =
-                    level.getOrdinalExp();
-                // Make sure the table is selected.
-                hierarchy.addToFrom(sqlQuery, ordinalExp);
-                final String ordinalExpString =
-                    getExpression(ordinalExp, sqlQuery);
-                final String orderAlias =
-                    sqlQuery.addSelectGroupBy(ordinalExpString, null);
-                sqlQuery.addOrderBy(
-                    ordinalExpString,
-                    orderAlias,
-                    sortingDirection, false, true, true);
+            if (level.getOrdinalExps() != null && !level.getOrdinalExps().isEmpty()) {
+                for (SqlExpression ordinalExp : level.getOrdinalExps()) {
+                    final SortingDirection sortingDirection = ordinalExp.getSortingDirection();
+                    // Ordering comes from a separate expression
+                    // Make sure the table is selected.
+                    hierarchy.addToFrom(sqlQuery, ordinalExp);
+                    final String ordinalExpString =
+                        getExpression(ordinalExp, sqlQuery);
+                    final String orderAlias =
+                        sqlQuery.addSelectGroupBy(ordinalExpString, null);
+                    sqlQuery.addOrderBy(
+                        ordinalExpString,
+                        orderAlias,
+                        sortingDirection, false, true, true);
+                }
             } else {
                 // Still need to order by key.
                 sqlQuery.addOrderBy(
                     expString,
                     keyAlias,
-                    sortingDirection, false, true, true);
+                    keyExp.getSortingDirection(), false, true, true);
             }
 
             RolapProperty[] properties = level.getProperties();
@@ -753,21 +765,30 @@ RME is this right
             }
         }
         if (!levelCollapsed) {
-            hierarchy.addToFrom(sqlQuery, level.getOrdinalExp());
+            for (SqlExpression ordinalExp : level.getOrdinalExps()) {
+                hierarchy.addToFrom(sqlQuery, ordinalExp);
+            }
         }
 
-        final String orderBy = getExpression(level.getOrdinalExp(), sqlQuery);
-        final SortingDirection sortingDirection = level.getOrdinalExp().getSortingDirection();
-        if (!orderBy.equals(q)) {
-            String orderAlias = sqlQuery.addSelect(orderBy, null);
-            if(needsGroupBy) {
-                sqlQuery.addGroupBy(orderBy, orderAlias);
+        if (level.getOrdinalExps() != null && !level.getOrdinalExps().isEmpty()) {
+            for (SqlExpression order : level.getOrdinalExps()) {
+                final String orderBy = getExpression(order, sqlQuery);
+                final SortingDirection sortingDirection = order.getSortingDirection();
+                if (!orderBy.equals(q)) {
+                    String orderAlias = sqlQuery.addSelect(orderBy, null);
+                    if(needsGroupBy) {
+                        sqlQuery.addGroupBy(orderBy, orderAlias);
+                    }
+                    sqlQuery.addOrderBy(
+                        orderBy, orderAlias, sortingDirection, false, true, true);
+                } else {
+                    sqlQuery.addOrderBy(
+                        q, idAlias, sortingDirection, false, true, true);
+                }
             }
-            sqlQuery.addOrderBy(
-                orderBy, orderAlias, sortingDirection, false, true, true);
         } else {
             sqlQuery.addOrderBy(
-                q, idAlias, sortingDirection, false, true, true);
+                q, idAlias, level.getKeyExp().getSortingDirection(), false, true, true);
         }
 
         RolapProperty[] properties = level.getProperties();
@@ -875,10 +896,9 @@ RME is this right
             return false;
         }
         SqlExpression keyExp = level.getKeyExp();
-        SqlExpression ordinalExp = level.getOrdinalExp();
         SqlExpression captionExp = level.getCaptionExp();
 
-        if (!keyExp.equals(ordinalExp)) {
+        if (level.getOrdinalExps() != null && !level.getOrdinalExps().isEmpty()) {
             return true;
         }
 
@@ -1126,8 +1146,7 @@ RME is this right
                     children.add(member);
                 }
 
-                if (!childLevel.getOrdinalExp()
-                        .equals(childLevel.getKeyExp()))
+                if (!childLevel.getOrdinalExps().isEmpty())
                 {
                     Object ordinal = accessors.get(columnOffset).get();
                     Object prevValue = rolapToOrdinalMap.put(member, ordinal);
@@ -1187,13 +1206,8 @@ RME is this right
         }
         RolapMemberBase member =
             new RolapMemberBase(parentMember, rolapChildLevel, value);
-        if (!childLevel.getOrdinalExp().equals(childLevel.getKeyExp())) {
+        if (childLevel.getOrdinalExps() != null && !childLevel.getOrdinalExps().isEmpty()) {
             member.setOrdinal(lastOrdinal++);
-        } else {
-            // by default ordering by ascending for KeyExp. 
-            if (childLevel.getOrdinalExp().getSortingDirection() != childLevel.getKeyExp().getSortingDirection()) {
-                member.setOrdinal(lastOrdinal++);
-            }
         }
         
         if (captionValue != null) {
@@ -1217,17 +1231,26 @@ RME is this right
         }
         Property[] properties = childLevel.getProperties();
         final List<SqlStatement.Accessor> accessors = stmt.getAccessors();
-        if(assignOrderKeys && childLevel.getOrdinalExp() != null) {
-            if (!childLevel.getOrdinalExp().equals(childLevel.getKeyExp())) {
-                Object orderKey = accessors.get(columnOffset).get();
-                setOrderKey(member, orderKey);
-            }
-            else {
+        if(assignOrderKeys) {
+        	if (!childLevel.getOrdinalExps().isEmpty()) {
+        	    for ( SqlExpression oe : childLevel.getOrdinalExps() ) {
+                    if (!oe.equals(childLevel.getKeyExp())) {
+                        Object orderKey = accessors.get(columnOffset).get();
+                        setOrderKey(member, orderKey);
+                    } else {
+                        setOrderKey(member, value);
+                    }
+                }
+            } else {
                 setOrderKey(member, value);
             }
         }
-        if (!childLevel.getOrdinalExp().equals(childLevel.getKeyExp())) {
-            ++columnOffset;
+        if (!childLevel.getOrdinalExps().isEmpty()) {
+            for ( SqlExpression oe : childLevel.getOrdinalExps() ) {
+                if (!oe.equals(childLevel.getKeyExp())) {
+                    columnOffset++;
+                }
+            }
         }
         for (int j = 0; j < properties.length; j++) {
             Property property = properties[j];
@@ -1350,11 +1373,13 @@ RME is this right
         boolean group)
     {
         final SqlExpression key = level.getKeyExp();
-        final SqlExpression order = level.getOrdinalExp();
+        //final SqlExpression order = level.getOrdinalExp();
 
         // Make sure the tables are in the query.
         hierarchy.addToFrom(sqlQuery, key);
-        hierarchy.addToFrom(sqlQuery, order);
+        for (SqlExpression order : level.getOrdinalExps()) {
+            hierarchy.addToFrom(sqlQuery, order);
+        }
 
         // First deal with the key column.
         final String keySql = getExpression(key, sqlQuery);
@@ -1364,23 +1389,32 @@ RME is this right
                 : sqlQuery.addSelect(keySql, level.getInternalType());
 
         // Now deal with the ordering column.
-        final String orderSql = getExpression(order, sqlQuery);
-        final SortingDirection sortingDirection = order.getSortingDirection();
-        if (!orderSql.equals(keySql)) {
-            final String orderAlias =
-                group
-                    ? sqlQuery.addSelectGroupBy(orderSql, null)
-                    : sqlQuery.addSelect(orderSql, null);
-            sqlQuery.addOrderBy(
-                orderSql,
-                orderAlias,
-                sortingDirection, false, true, true);
+        if (level.getOrdinalExps() != null && !level.getOrdinalExps().isEmpty()) {
+            for (SqlExpression order : level.getOrdinalExps()) {
+                final String orderSql = getExpression(order, sqlQuery);
+                final SortingDirection sortingDirection = order.getSortingDirection();
+                if (!orderSql.equals(keySql)) {
+                    final String orderAlias =
+                        group
+                            ? sqlQuery.addSelectGroupBy(orderSql, null)
+                            : sqlQuery.addSelect(orderSql, null);
+                     sqlQuery.addOrderBy(
+                        orderSql,
+                        orderAlias,
+                        sortingDirection, false, true, true);
+                } else {
+                    // Same key as order. Just order it.
+                    sqlQuery.addOrderBy(
+                        keySql,
+                        keyAlias,
+                        sortingDirection, false, true, true);
+                }
+            }
         } else {
-            // Same key as order. Just order it.
             sqlQuery.addOrderBy(
-                keySql,
-                keyAlias,
-                sortingDirection, false, true, true);
+                    keySql,
+                    keyAlias,
+                    key.getSortingDirection(), false, true, true);
         }
 
         final RolapProperty[] properties = level.getProperties();
@@ -1439,18 +1473,26 @@ RME is this right
         String childId = getExpression(level.getKeyExp(), sqlQuery);
         String idAlias =
             sqlQuery.addSelectGroupBy(childId, level.getInternalType());
-        hierarchy.addToFrom(sqlQuery, level.getOrdinalExp());
-        final String orderBy = getExpression(level.getOrdinalExp(), sqlQuery);
-        SortingDirection sortingDirection = level.getOrdinalExp().getSortingDirection();
-        if (!orderBy.equals(childId)) {
-            String orderAlias = sqlQuery.addSelectGroupBy(orderBy, null);
-            sqlQuery.addOrderBy(
-                orderBy, orderAlias, sortingDirection, false, true, true);
+        for (SqlExpression oe : level.getOrdinalExps()) {
+           hierarchy.addToFrom(sqlQuery, oe);
+        }
+        if (level.getOrdinalExps() != null && !level.getOrdinalExps().isEmpty()) {
+            for (SqlExpression oe : level.getOrdinalExps()) {
+                final String orderBy = getExpression(oe, sqlQuery);
+                SortingDirection sortingDirection = oe.getSortingDirection();
+                if (!orderBy.equals(childId)) {
+                     String orderAlias = sqlQuery.addSelectGroupBy(orderBy, null);
+                     sqlQuery.addOrderBy(
+                         orderBy, orderAlias, sortingDirection, false, true, true);
+                } else {
+                     sqlQuery.addOrderBy(
+                          childId, idAlias, sortingDirection, false, true, true);
+                }
+           }
         } else {
             sqlQuery.addOrderBy(
-                childId, idAlias, sortingDirection, false, true, true);
+                    childId, idAlias, level.getKeyExp().getSortingDirection(), false, true, true);
         }
-
         RolapProperty[] properties = level.getProperties();
         for (RolapProperty property : properties) {
             final SqlExpression exp = property.getExp();
@@ -1494,16 +1536,25 @@ RME is this right
             String childId = getExpression(level.getKeyExp(), sqlQuery);
             String idAlias =
                 sqlQuery.addSelectGroupBy(childId, level.getInternalType());
-            hierarchy.addToFrom(sqlQuery, level.getOrdinalExp());
-            final String orderBy = getExpression(level.getOrdinalExp(), sqlQuery);
-            SortingDirection sortingDirection = level.getOrdinalExp().getSortingDirection();
-            if (!orderBy.equals(childId)) {
-                String orderAlias = sqlQuery.addSelectGroupBy(orderBy, null);
-                sqlQuery.addOrderBy(
-                    orderBy, orderAlias, sortingDirection, false, true, true);
+            for (SqlExpression oe : level.getOrdinalExps()) {
+                hierarchy.addToFrom(sqlQuery, oe);
+            }
+            if (level.getOrdinalExps() != null && !level.getOrdinalExps().isEmpty()) {
+                for (SqlExpression oe : level.getOrdinalExps()) {
+                    final String orderBy = getExpression(oe, sqlQuery);
+                    SortingDirection sortingDirection = oe.getSortingDirection();
+                    if (!orderBy.equals(childId)) {
+                        String orderAlias = sqlQuery.addSelectGroupBy(orderBy, null);
+                        sqlQuery.addOrderBy(
+                            orderBy, orderAlias, sortingDirection, false, true, true);
+                    } else {
+                        sqlQuery.addOrderBy(
+                            childId, idAlias, sortingDirection, false, true, true);
+                    }
+                }
             } else {
                 sqlQuery.addOrderBy(
-                    childId, idAlias, sortingDirection, false, true, true);
+                        childId, idAlias, level.getKeyExp().getSortingDirection(), false, true, true);
             }
 
             RolapProperty[] properties = level.getProperties();

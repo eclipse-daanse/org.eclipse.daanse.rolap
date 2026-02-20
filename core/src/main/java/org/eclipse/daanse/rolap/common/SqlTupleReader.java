@@ -305,17 +305,18 @@ public class SqlTupleReader implements TupleReader {
 
           if (member != null) {
           // Skip over the columns consumed by makeMember
-          if ( !childLevel.getOrdinalExp().equals(
-            childLevel.getKeyExp() ) ) {
-            Object ordinal = accessors.get( column++ ).get();
-            Object prevValue = rolapToOrdinalMap
-              .put( member, ordinal );
-            if ( prevValue != null
-              && !Objects.equals( prevValue, ordinal ) ) {
-              LOGGER.error(
-                "Column expression for {} is inconsistent with ordinal or caption expression. It should have 1:1 relationship",
-                  member.getUniqueName() );
-            }
+          for (SqlExpression oe : childLevel.getOrdinalExps()) {
+              if ( !oe.equals(
+                  childLevel.getKeyExp() ) ) {
+                  Object ordinal = accessors.get( column++ ).get();
+                  Object prevValue = rolapToOrdinalMap.put( member, ordinal );
+                  if ( prevValue != null
+                      && !Objects.equals( prevValue, ordinal ) ) {
+                      LOGGER.error(
+                          "Column expression for {} is inconsistent with ordinal or caption expression. It should have 1:1 relationship",
+                      member.getUniqueName() );
+                  }
+              }
           }
           column += childLevel.getProperties().length;
 
@@ -1367,8 +1368,7 @@ public TupleList readTuples(
         targetExp = getLevelTargetExpMap( currLevel, aggStar );
       SqlExpression keyExp =
         targetExp.get( currLevel.getKeyExp() );
-      SqlExpression ordinalExp =
-        targetExp.get( currLevel.getOrdinalExp() );
+      List<? extends SqlExpression> ordinalExps = currLevel.getOrdinalExps().stream().filter(oe -> targetExp.containsKey(oe)) .map(oe -> targetExp.get( oe )).toList();
       SqlExpression captionExp =
         targetExp.get( currLevel.getCaptionExp() );
       SqlExpression parentExp = currLevel.getParentExp();
@@ -1397,7 +1397,9 @@ public TupleList readTuples(
 
       if ( !levelCollapsed ) {
         hierarchy.addToFrom( sqlQuery, keyExp );
-        hierarchy.addToFrom( sqlQuery, ordinalExp );
+        for (SqlExpression ordinalExp : ordinalExps) {
+            hierarchy.addToFrom( sqlQuery, ordinalExp );
+        }
       }
       String captionSql = null;
       if ( captionExp != null ) {
@@ -1425,24 +1427,32 @@ public TupleList readTuples(
       }
 
       // Figure out the order-by part
-      final String orderByAlias;
-      SortingDirection sortingDirection = ordinalExp.getSortingDirection();
-      if ( !currLevel.getKeyExp().equals( currLevel.getOrdinalExp() ) ) {
-        String ordinalSql = getExpression( ordinalExp, sqlQuery );
-        orderByAlias = sqlQuery.addSelect( ordinalSql, null );
-        if ( needsGroupBy ) {
-          sqlQuery.addGroupBy( ordinalSql, orderByAlias );
-        }
-        if ( whichSelect == WhichSelect.ONLY ) {
-          sqlQuery.addOrderBy(
-            ordinalSql, orderByAlias, sortingDirection, false, true, true );
-          sqlQuery.addOrderBy(
-                  keySql, keyAlias, SortingDirection.ASC, false, true, true );
+      String orderByAlias;
+      if ( currLevel.getOrdinalExps() != null && !currLevel.getOrdinalExps().isEmpty() ) {
+        for (SqlExpression ordinalExp : currLevel.getOrdinalExps()) {
+            SortingDirection sortingDirection = ordinalExp.getSortingDirection();
+            if ( currLevel.getKeyExp().equals( ordinalExp ) ) {
+                sqlQuery.addOrderBy(
+                        keySql, keyAlias, sortingDirection, false, true, true );
+            } else {
+            	SqlExpression oe = targetExp.get(ordinalExp);
+                String ordinalSql = getExpression( oe, sqlQuery );
+                orderByAlias = sqlQuery.addSelect( ordinalSql, null );
+                if ( needsGroupBy ) {
+                    sqlQuery.addGroupBy( ordinalSql, orderByAlias );
+                }
+                if ( whichSelect == WhichSelect.ONLY ) {
+                    sqlQuery.addOrderBy(
+                        ordinalSql, orderByAlias, sortingDirection, false, true, true );
+                    sqlQuery.addOrderBy(
+                        keySql, keyAlias, SortingDirection.ASC, false, true, true );
+                }
+            }
         }
       } else {
         if ( whichSelect == WhichSelect.ONLY ) {
           sqlQuery.addOrderBy(
-            keySql, keyAlias, sortingDirection, false, true, true );
+            keySql, keyAlias, SortingDirection.ASC, false, true, true );
         }
       }
 
@@ -1548,8 +1558,12 @@ public TupleList readTuples(
     } else {
       assert aggLevel.getExpression() != null;
       map.put( level.getKeyExp(), aggLevel.getExpression() );
-      if ( aggLevel.getOrdinalExp() != null ) {
-        map.put( level.getOrdinalExp(), aggLevel.getOrdinalExp() );
+      //put in target map elements where indexes are same.
+      if ( aggLevel.getOrdinalExps() != null ) {
+        int size = Math.min(aggLevel.getOrdinalExps().size(), level.getOrdinalExps().size());
+        for (int i = 0; i < size; i++) {
+            map.put( level.getOrdinalExps().get(i), aggLevel.getOrdinalExps().get(i) );
+        }
       }
       if ( aggLevel.getCaptionExp() != null ) {
         map.put( level.getCaptionExp(), aggLevel.getCaptionExp() );
@@ -1572,7 +1586,9 @@ public TupleList readTuples(
   private Map<SqlExpression, SqlExpression> initializeIdentityMap( RolapLevel level ) {
     Map<SqlExpression, SqlExpression> map = new HashMap<>();
     map.put( level.getKeyExp(), level.getKeyExp() );
-    map.put( level.getOrdinalExp(), level.getOrdinalExp() );
+    for (SqlExpression oe : level.getOrdinalExps()) { 
+        map.put( oe, oe );
+    }
     map.put( level.getCaptionExp(), level.getCaptionExp() );
     for ( RolapProperty prop : level.getProperties() ) {
       if ( !map.containsKey( prop.getExp() ) ) {
