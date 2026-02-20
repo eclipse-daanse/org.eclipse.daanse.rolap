@@ -229,7 +229,7 @@ public class JdbcSchema {
 
                 // level stuff
                 public RolapStar.Column rColumn;
-                public Column ordinalColumn;
+                public List<Column> ordinalColumns;
                 public Column captionColumn;
                 public Map<String, Column> properties;
 
@@ -290,14 +290,15 @@ public class JdbcSchema {
                     return symbolicName;
                 }
 
-                public RolapSqlExpression getOrdinalExp() {
-                    RolapSqlExpression ordinalExp = null;
-                    if (ordinalColumn != null) {
-                        ordinalExp =
-                            new org.eclipse.daanse.rolap.element.RolapColumn(
-                                getTable().getName(), ordinalColumn.getName());
+                public List<RolapSqlExpression> getOrdinalExps() {
+                    List<RolapSqlExpression> ordinalExps = new ArrayList<RolapSqlExpression>();
+                    if (ordinalColumns != null && !ordinalColumns.isEmpty()) {
+                    	for (Column ordinalColumn : ordinalColumns) {
+                            ordinalExps.add(new org.eclipse.daanse.rolap.element.RolapColumn(
+                                    getTable().getName(), ordinalColumn.getName()));
+                    	}
                     }
-                    return ordinalExp;
+                    return ordinalExps;
                 }
 
                 public RolapSqlExpression getCaptionExp() {

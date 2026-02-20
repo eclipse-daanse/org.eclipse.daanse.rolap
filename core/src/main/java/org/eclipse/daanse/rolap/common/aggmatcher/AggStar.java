@@ -767,7 +767,7 @@ public class AggStar {
          */
         public final class Level extends Column {
             private final RolapStar.Column starColumn;
-            private final SqlExpression ordinalExp;
+            private final List<? extends SqlExpression> ordinalExps;
             private final SqlExpression captionExp;
             private final boolean collapsed;
             private final Map<String, RolapSqlExpression> properties;
@@ -790,7 +790,7 @@ public class AggStar {
                 final int bitPosition,
                 RolapStar.Column starColumn,
                 boolean collapsed,
-                SqlExpression ordinalExp,
+                List<? extends SqlExpression>  ordinalExps,
                 SqlExpression captionExp,
                 Map<String, RolapSqlExpression> props)
             {
@@ -798,7 +798,7 @@ public class AggStar {
                 this.starColumn = starColumn;
                 this.collapsed = collapsed;
                 AggStar.this.levelBitKey.set(bitPosition);
-                this.ordinalExp = ordinalExp;
+                this.ordinalExps = ordinalExps;
                 this.captionExp = captionExp;
                 this.properties = props;
             }
@@ -812,8 +812,8 @@ public class AggStar {
                 return collapsed;
             }
 
-            public SqlExpression getOrdinalExp() {
-                return ordinalExp;
+            public List<? extends SqlExpression> getOrdinalExps() {
+                return ordinalExps;
             }
 
             public SqlExpression getCaptionExp() {
@@ -1444,7 +1444,7 @@ public class AggStar {
                     bitPosition,
                     usage.rColumn,
                     usage.collapsed,
-                    usage.getOrdinalExp(),
+                    usage.getOrdinalExps(),
                     usage.getCaptionExp(),
                     usage.getProperties());
             addLevel(level);

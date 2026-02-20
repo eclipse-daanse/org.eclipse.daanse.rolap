@@ -631,7 +631,7 @@ public class ExplicitRules {
                 aggLevel.getName(),
                 aggLevel.getColumn(),
                 aggLevel.isCollapsed(),
-                aggLevel.getOrdinalColumn(),
+                aggLevel.getOrdinalColumns(),
                 aggLevel.getCaptionColumn(),
                 aggLevel.getAggregationLevelProperties());
         }
@@ -663,12 +663,12 @@ public class ExplicitRules {
             final String name,
             final org.eclipse.daanse.rolap.mapping.model.Column columnName,
             final boolean collapsed,
-            org.eclipse.daanse.rolap.mapping.model.Column ordinalColumn,
+            List<org.eclipse.daanse.rolap.mapping.model.Column> ordinalColumns,
             org.eclipse.daanse.rolap.mapping.model.Column captionColumn,
             List<? extends org.eclipse.daanse.rolap.mapping.model.AggregationLevelProperty> properties)
         {
             Level level = tableDef.new Level(
-                name, columnName, collapsed, ordinalColumn, captionColumn,
+                name, columnName, collapsed, ordinalColumns, captionColumn,
                 properties);
             tableDef.add(level);
         }
@@ -692,7 +692,7 @@ public class ExplicitRules {
             private final org.eclipse.daanse.rolap.mapping.model.Column column;
             private final boolean collapsed;
             private RolapLevel rlevel;
-            private final org.eclipse.daanse.rolap.mapping.model.Column ordinalColumn;
+            private final List<org.eclipse.daanse.rolap.mapping.model.Column> ordinalColumns;
             private final org.eclipse.daanse.rolap.mapping.model.Column captionColumn;
             private final Map<String, org.eclipse.daanse.rolap.mapping.model.Column> properties;
             private final static String unknownLevelName =
@@ -706,14 +706,14 @@ public class ExplicitRules {
                 final String name,
                 final org.eclipse.daanse.rolap.mapping.model.Column column,
                 final boolean collapsed,
-                org.eclipse.daanse.rolap.mapping.model.Column ordinalColumn,
+                List<org.eclipse.daanse.rolap.mapping.model.Column> ordinalColumns,
                 org.eclipse.daanse.rolap.mapping.model.Column captionColumn,
                 List<? extends org.eclipse.daanse.rolap.mapping.model.AggregationLevelProperty> properties)
             {
                 this.name = name;
                 this.column = column;
                 this.collapsed = collapsed;
-                this.ordinalColumn = ordinalColumn;
+                this.ordinalColumns = ordinalColumns;
                 this.captionColumn = captionColumn;
                 this.properties = makePropertyMap(properties);
             }
@@ -850,8 +850,8 @@ public class ExplicitRules {
             }
 
 
-            public org.eclipse.daanse.rolap.mapping.model.Column getOrdinalColumn() {
-                return ordinalColumn;
+            public List<org.eclipse.daanse.rolap.mapping.model.Column> getOrdinalColumns() {
+                return ordinalColumns;
             }
 
             public org.eclipse.daanse.rolap.mapping.model.Column getCaptionColumn() {

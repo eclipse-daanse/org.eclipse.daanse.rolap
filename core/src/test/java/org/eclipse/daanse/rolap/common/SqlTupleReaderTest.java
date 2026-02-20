@@ -98,7 +98,7 @@ class SqlTupleReaderTest {
     RolapProperty[] properties = { rolapProperty };
     when( levelIter.getProperties() ).thenReturn( properties );
     when( levelIter.getKeyExp() ).thenReturn( expression );
-    when( levelIter.getOrdinalExp() ).thenReturn( expression );
+    when( levelIter.getOrdinalExps() ).thenAnswer(setupDummyListAnswer( expression ));
     when( levelIter.getParentExp() ).thenReturn( null );
     RolapHierarchy hierarchy = mock( RolapHierarchy.class, Answers.RETURNS_MOCKS );
     when( hierarchy.getRelation() ).thenReturn( queryMapping );

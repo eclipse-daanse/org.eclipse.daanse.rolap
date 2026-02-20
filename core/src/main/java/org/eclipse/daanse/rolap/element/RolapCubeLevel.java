@@ -27,6 +27,9 @@
 
 package org.eclipse.daanse.rolap.element;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.eclipse.daanse.olap.api.element.CubeLevel;
 import org.eclipse.daanse.olap.api.element.LevelType;
 import org.eclipse.daanse.olap.api.formatter.MemberFormatter;
@@ -76,7 +79,7 @@ public class RolapCubeLevel extends RolapLevel implements CubeLevel {
             level.getKeyExp(),
             level.getNameExp(),
             level.getCaptionExp(),
-            level.getOrdinalExp(),
+            level.getOrdinalExps(),
             level.getParentExp(),
             level.getNullParentValue(),
             null,
@@ -103,7 +106,7 @@ public class RolapCubeLevel extends RolapLevel implements CubeLevel {
         keyExp = convertExpression(level.getKeyExp(), hierarchyRel);
         nameExp = convertExpression(level.getNameExp(), hierarchyRel);
         captionExp = convertExpression(level.getCaptionExp(), hierarchyRel);
-        ordinalExp = convertExpression(level.getOrdinalExp(), hierarchyRel);
+        ordinalExps = level.getOrdinalExps().stream().map(se -> convertExpression(se, hierarchyRel)).toList();
         parentExp = convertExpression(level.getParentExp(), hierarchyRel);
         properties = convertProperties(level.getProperties(), hierarchyRel);
     }
@@ -200,7 +203,7 @@ public class RolapCubeLevel extends RolapLevel implements CubeLevel {
             if (rel instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery table) {
                 return new org.eclipse.daanse.rolap.element.RolapColumn(
                     RelationUtil.getAlias(table),
-                    col.getName());
+                    col.getName(), col.getSortingDirection());
             } else if (rel instanceof org.eclipse.daanse.rolap.mapping.model.JoinQuery
                 || rel instanceof org.eclipse.daanse.rolap.mapping.model.RelationalQuery)
             {
@@ -208,7 +211,7 @@ public class RolapCubeLevel extends RolapLevel implements CubeLevel {
                 // this may be defined in level
                 // col.table
                 String alias = getHierarchy().lookupAlias(ExpressionUtil.getTableAlias(col));
-                return new org.eclipse.daanse.rolap.element.RolapColumn(alias, col.getName());
+                return new org.eclipse.daanse.rolap.element.RolapColumn(alias, col.getName(), col.getSortingDirection());
             }
         } else {
             // this is a limitation, in the future, we may need
