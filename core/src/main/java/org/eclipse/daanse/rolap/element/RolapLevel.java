@@ -86,7 +86,7 @@ public class RolapLevel extends LevelBase {
     /**
      * The column or expression which yields the level's ordinal.
      */
-    protected SqlExpression ordinalExp;
+    protected List<? extends SqlExpression> ordinalExps;
 
     /**
      * The column or expression which yields the level members' caption.
@@ -150,7 +150,7 @@ public class RolapLevel extends LevelBase {
         SqlExpression keyExp,
         SqlExpression nameExp,
         SqlExpression captionExp,
-        SqlExpression ordinalExp,
+        List<SqlExpression> ordinalExps,
         SqlExpression parentExp,
         String nullParentValue,
         org.eclipse.daanse.rolap.mapping.model.ParentChildLink mappingClosure,
@@ -173,7 +173,7 @@ public class RolapLevel extends LevelBase {
                 keyExp,
                 nameExp,
                 captionExp,
-                ordinalExp,
+                ordinalExps,
                 parentExp,
                 nullParentValue,
                 mappingClosure,
@@ -205,7 +205,7 @@ public class RolapLevel extends LevelBase {
         SqlExpression keyExp,
         SqlExpression nameExp,
         SqlExpression captionExp,
-        SqlExpression ordinalExp,
+        List<? extends SqlExpression> ordinalExps,
         SqlExpression parentExp,
         String nullParentValue,
         org.eclipse.daanse.rolap.mapping.model.ParentChildLink mappingClosure,
@@ -249,13 +249,15 @@ public class RolapLevel extends LevelBase {
             }
         }
         this.captionExp = captionExp;
-        if (ordinalExp != null) {
-            if (ordinalExp instanceof RolapColumn rc) {
-                checkColumn(rc);
+        if (ordinalExps != null && !ordinalExps.isEmpty()) {
+            for (SqlExpression oe : ordinalExps) {
+                if (oe instanceof RolapColumn rc) {
+                    checkColumn(rc);
+                }
             }
-            this.ordinalExp = ordinalExp;
+            this.ordinalExps = ordinalExps;
         } else {
-            this.ordinalExp = this.keyExp;
+            this.ordinalExps = List.of(); 
         }
         if (parentExp instanceof RolapColumn rc) {
             checkColumn(rc);
@@ -374,8 +376,8 @@ public class RolapLevel extends LevelBase {
     }
 
     @Override
-    public SqlExpression getOrdinalExp() {
-        return ordinalExp;
+    public List<? extends SqlExpression> getOrdinalExps() {
+        return ordinalExps;
     }
 
     public SqlExpression getCaptionExp() {
@@ -387,7 +389,7 @@ public class RolapLevel extends LevelBase {
     }
 
     public boolean hasOrdinalExp() {
-      return getOrdinalExp() != null && !getOrdinalExp().equals(getKeyExp());
+      return getOrdinalExps() != null && !getOrdinalExps().isEmpty();
     }
 
     final int getFlags() {

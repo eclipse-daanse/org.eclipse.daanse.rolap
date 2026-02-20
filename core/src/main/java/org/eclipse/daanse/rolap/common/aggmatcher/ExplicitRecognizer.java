@@ -348,7 +348,7 @@ class ExplicitRecognizer extends Recognizer {
                         : aggLevels.get(levelMatches.indexOf(pair))
                         .isCollapsed(),
                     rolapLevel,
-                    getColumn(aggLevel.getOrdinalColumn(), aggTableColumnMap),
+                    aggLevel.getOrdinalColumns().stream().filter(oc -> oc != null && aggTableColumnMap.containsKey(oc.getName())).map(oc -> getColumn(oc, aggTableColumnMap)).toList(),
                     getColumn(aggLevel.getCaptionColumn(), aggTableColumnMap),
                     getProperties(aggLevel.getProperties(), aggTableColumnMap));
             }

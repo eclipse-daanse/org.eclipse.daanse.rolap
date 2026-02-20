@@ -656,7 +656,7 @@ public abstract class Recognizer {
         final String symbolicName,
         final boolean isCollapsed,
         final RolapLevel rLevel,
-        JdbcSchema.Table.Column ordinalColumn,
+        List<JdbcSchema.Table.Column> ordinalColumns,
         JdbcSchema.Table.Column captionColumn,
         Map<String, JdbcSchema.Table.Column> properties
     ) {
@@ -704,11 +704,11 @@ public abstract class Recognizer {
                 aggUsage.collapsed = isCollapsed;
                 aggUsage.level = rLevel;
                 aggUsage.captionColumn = captionColumn;
-                aggUsage.ordinalColumn = ordinalColumn;
+                aggUsage.ordinalColumns = ordinalColumns;
                 aggUsage.properties = properties;
 
                 makeLevelExtraUsages(
-                    aggUsage.captionColumn, aggUsage.ordinalColumn,
+                    aggUsage.captionColumn, aggUsage.ordinalColumns,
                     aggUsage.properties);
 
                 aggUsage.setSymbolicName(symbolicName);
@@ -781,14 +781,14 @@ public abstract class Recognizer {
      */
     private void makeLevelExtraUsages(
         JdbcSchema.Table.Column captionColumn,
-        JdbcSchema.Table.Column ordinalColumn,
+        List<JdbcSchema.Table.Column> ordinalColumns,
         Map<String, JdbcSchema.Table.Column> properties
     ) {
         if (captionColumn != null) {
             captionColumn.newUsage(JdbcSchema.UsageType.LEVEL_EXTRA);
         }
-        if (ordinalColumn != null) {
-            ordinalColumn.newUsage(JdbcSchema.UsageType.LEVEL_EXTRA);
+        if (ordinalColumns != null) {
+        	ordinalColumns.forEach(ordinalColumn -> ordinalColumn.newUsage(JdbcSchema.UsageType.LEVEL_EXTRA));
         }
         if (properties != null) {
             for (JdbcSchema.Table.Column column : properties.values()) {
