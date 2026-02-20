@@ -13,6 +13,7 @@
  */
 package org.eclipse.daanse.rolap.common.util;
 
+import java.util.List;
 import java.util.Objects;
 
 import org.eclipse.daanse.olap.api.sql.SortingDirection;
@@ -63,14 +64,16 @@ public class LevelUtil {
         }
     }
 
-    public static RolapSqlExpression getOrdinalExp(org.eclipse.daanse.rolap.mapping.model.Level level) {
-        if (level.getOrdinalColumn() != null && level.getOrdinalColumn().getColumn() != null) {
-            if (level.getOrdinalColumn().getColumn() instanceof org.eclipse.daanse.rolap.mapping.model.SQLExpressionColumn sec) {
-                return new RolapSqlExpression(sec, SortingDirection.valueOf(level.getOrdinalColumn().getDirection().name()));
-            }
-            return new RolapColumn(getTableName(level.getColumn().getTable()), level.getOrdinalColumn().getColumn().getName(), SortingDirection.valueOf(level.getOrdinalColumn().getDirection().getName()));
+    public static List<? extends SqlExpression> getOrdinalExp(org.eclipse.daanse.rolap.mapping.model.Level level) {
+        if (level.getOrdinalColumns() != null && !level.getOrdinalColumns().isEmpty()) {
+            return level.getOrdinalColumns().stream().filter(oc -> oc.getColumn() != null).map(oc -> {
+                if (oc.getColumn() instanceof org.eclipse.daanse.rolap.mapping.model.SQLExpressionColumn sec) {
+                    return new RolapSqlExpression(sec, SortingDirection.valueOf(oc.getDirection().name()));
+                }
+                return new RolapColumn(getTableName(level.getColumn().getTable()), oc.getColumn().getName(), SortingDirection.valueOf(oc.getDirection().getName()));
+            }).toList();
         } else {
-            return null;
+            return List.of();
         }
     }
 
