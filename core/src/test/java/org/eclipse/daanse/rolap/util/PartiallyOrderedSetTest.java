@@ -33,12 +33,17 @@ import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Unit test for {@link PartiallyOrderedSet}.
  */
 class PartiallyOrderedSetTest {
+    private static final Logger LOGGER =
+            LoggerFactory.getLogger(PartiallyOrderedSetTest.class);
     private static final boolean debug = false;
     private final int SCALE = 250; // 100, 1000, 3000 are also reasonable values
     final long seed = new Random().nextLong();
@@ -275,7 +280,7 @@ class PartiallyOrderedSetTest {
             ok = true;
         } finally {
             if (!ok) {
-                System.out.println("Random seed: " + seed);
+            	LOGGER.debug("Random seed: " + seed);
             }
         }
     }
@@ -289,7 +294,7 @@ class PartiallyOrderedSetTest {
             ok = true;
         } finally {
             if (!ok) {
-                System.out.println("Random seed: " + seed);
+            	LOGGER.debug("Random seed: " + seed);
             }
         }
     }
@@ -309,7 +314,7 @@ class PartiallyOrderedSetTest {
             ok = true;
         } finally {
             if (!ok) {
-                System.out.println("Random seed: " + seed);
+            	LOGGER.debug("Random seed: " + seed);
             }
         }
     }
@@ -324,7 +329,7 @@ class PartiallyOrderedSetTest {
             ok = true;
         } finally {
             if (!ok) {
-                System.out.println("Random seed: " + seed);
+            	LOGGER.debug("Random seed: " + seed);
             }
         }
     }
@@ -343,7 +348,7 @@ class PartiallyOrderedSetTest {
             ok = true;
         } finally {
             if (!ok) {
-                System.out.println("Random seed: " + seed);
+            	LOGGER.debug("Random seed: " + seed);
             }
         }
     }
@@ -371,7 +376,7 @@ class PartiallyOrderedSetTest {
         for (int i : generator) {
             if (remove && z++ % 2 == 0) {
                 if (debug) {
-                    System.out.println("remove " + i);
+                    LOGGER.debug("remove " + i);
                 }
                 poset.remove(i);
                 if (debug) {
@@ -380,7 +385,7 @@ class PartiallyOrderedSetTest {
                 continue;
             }
             if (debug) {
-                System.out.println("add " + i);
+            	LOGGER.debug("add " + i);
             }
             poset.add(i);
             if (debug) {
@@ -404,7 +409,7 @@ class PartiallyOrderedSetTest {
     private <E> void dump(PartiallyOrderedSet<E> poset) {
         final StringBuilder buf = new StringBuilder();
         poset.out(buf);
-        System.out.println(buf);
+        LOGGER.debug(buf.toString());
     }
 
     private static Collection<Integer> range(

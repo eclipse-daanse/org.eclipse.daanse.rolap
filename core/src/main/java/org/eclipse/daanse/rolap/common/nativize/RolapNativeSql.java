@@ -61,6 +61,8 @@ import org.eclipse.daanse.rolap.element.RolapCubeHierarchy;
 import org.eclipse.daanse.rolap.element.RolapCubeLevel;
 import org.eclipse.daanse.rolap.element.RolapLevel;
 import org.eclipse.daanse.rolap.element.RolapStoredMeasure;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Creates SQL from parse tree nodes. Currently it creates the SQL that
@@ -71,6 +73,8 @@ import org.eclipse.daanse.rolap.element.RolapStoredMeasure;
   */
 public class RolapNativeSql {
 
+	private static final Logger LOGGER =
+	        LoggerFactory.getLogger(RolapNativeSql.class);
     private static final Pattern DECIMAL =
         Pattern.compile("[+-]?((\\d+(\\.\\d*)?)|(\\.\\d+))");
 
@@ -172,7 +176,7 @@ public class RolapNativeSql {
             if (!(exp instanceof Literal)) {
                 return null;
             }
-            System.out.println(exp.getCategory());
+            LOGGER.debug("Expression category: {}", exp.getCategory());
             if (exp.getCategory() == DataType.INTEGER) {//TODO: REVIEW BITWISE
                 return null;
             }

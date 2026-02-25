@@ -957,15 +957,6 @@ public class RolapCatalog implements Catalog {
 				if (false) {
 					mapSharedHierarchyToReader.put(xmlDimension, reader);
 				}
-				/*
-				 * System.out.println("RolapCatalog.createMemberReader: "+
-				 * "add to sharedHierName->Hier map"+ " sharedName=" + sharedName +
-				 * ", hierarchy=" + hierarchy.getName() + ", hierarchy.dim=" +
-				 * hierarchy.getDimension().getName() ); if
-				 * (mapSharedHierarchyNameToHierarchy.containsKey(sharedName)) {
-				 * System.out.println("RolapCatalog.createMemberReader: CONTAINS NAME"); } else {
-				 * mapSharedHierarchyNameToHierarchy.put(sharedName, hierarchy); }
-				 */
 				mapSharedHierarchyNameToHierarchy.computeIfAbsent(xmlDimension, k -> hierarchy);
 
 				// mapSharedHierarchyNameToHierarchy.put(sharedName, hierarchy);

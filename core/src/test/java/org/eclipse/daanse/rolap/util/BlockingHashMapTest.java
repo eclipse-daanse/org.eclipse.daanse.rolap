@@ -92,7 +92,6 @@ class BlockingHashMapTest{
             try {
                 Thread.sleep(random.nextInt(SLEEP_TIME));
                 map.put(key, value);
-                // System.out.println("putting key: " + key);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -113,7 +112,6 @@ class BlockingHashMapTest{
             try {
                 Thread.sleep(random.nextInt(SLEEP_TIME));
                 Integer val = map.get(key);
-                // System.out.println("getting key: " + key);
                 assertThat(val).isEqualTo(key);
             } catch (InterruptedException e) {
                 e.printStackTrace();

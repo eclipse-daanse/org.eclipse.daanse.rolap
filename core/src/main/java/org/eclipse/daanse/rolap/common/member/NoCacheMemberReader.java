@@ -140,7 +140,7 @@ public class NoCacheMemberReader implements MemberReader, MemberCache {
     // implement MemberReader
     @Override
 	public List<RolapMember> getMembers() {
-        System.out.println("NoCache getMembers");
+        LOGGER.debug("NoCache getMembers");
         List<RolapMember> v = new ArrayList<>();
         List<RolapLevel> levels =  (List<RolapLevel>) getHierarchy().getLevels();
         // todo: optimize by walking to children for members we know about
