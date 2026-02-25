@@ -239,7 +239,6 @@ final public class PrimeFinder {
 
         for (int i = from; i <= to; i++) {
             int primeCapacity = nextPrime(i);
-            //System.out.println(primeCapacity);
             double deviation = (primeCapacity - i) / (double)i;
 
             if (deviation > maxDeviation) {

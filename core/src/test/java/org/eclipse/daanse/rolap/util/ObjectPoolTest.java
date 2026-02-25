@@ -32,6 +32,8 @@ import java.util.List;
 import java.util.Random;
 
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Test case for {@link ObjectPool}.
@@ -39,7 +41,8 @@ import org.junit.jupiter.api.Test;
  * @author Richard Emberson, Stefan Bischof
  */
 class ObjectPoolTest{
-
+    private static final Logger LOGGER =
+            LoggerFactory.getLogger(ObjectPoolTest.class);
     static class KeyValue {
         long key;
         Object value;
@@ -255,14 +258,14 @@ class ObjectPoolTest{
             assertThat(set.size()).isEqualTo(expectedDistinct);
         }
         if (print) {
-            System.out.println(
+            LOGGER.debug(
                 "Using " + (usePool ? "ObjectPool" : "HashSet")
                     + ", density=" + density
                     + ", " + distinctCount + " distinct entries, "
                     + hitCount + " hits");
-            System.out.println(
+            LOGGER.debug(
                 entryCount + " adds took " + (t2 - t1) + " milliseconds");
-            System.out.println(
+            LOGGER.debug(
                 retrieveCount + " gets took " + (t3 - t2) + " milliseconds");
         }
         assertThat(distinctCount).isEqualTo(expectedDistinct);

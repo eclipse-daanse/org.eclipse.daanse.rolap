@@ -453,37 +453,6 @@ public class AggregationManager extends RolapAggregationManager implements OlapA
             }
 
             if (aggStar.hasForeignKeys()) {
-/*
-                    StringBuilder buf = new StringBuilder(256);
-                    buf.append("");
-                    buf.append(star.getFactTable().getAlias());
-                    buf.append(Util.nl);
-                    buf.append("foreign =");
-                    buf.append(levelBitKey);
-                    buf.append(Util.nl);
-                    buf.append("measure =");
-                    buf.append(measureBitKey);
-                    buf.append(Util.nl);
-                    buf.append("aggstar =");
-                    buf.append(aggStar.getBitKey());
-                    buf.append(Util.nl);
-                    buf.append("distinct=");
-                    buf.append(aggStar.getDistinctMeasureBitKey());
-                    buf.append(Util.nl);
-                    buf.append("AggStar=");
-                    buf.append(aggStar.getFactTable().getName());
-                    buf.append(Util.nl);
-                    for (Iterator columnIter =
-                            aggStar.getFactTable().getColumns().iterator();
-                         columnIter.hasNext();) {
-                        AggStar.Table.Column column =
-                                (AggStar.Table.Column) columnIter.next();
-                        buf.append("   ");
-                        buf.append(column);
-                        buf.append(Util.nl);
-                    }
-System.out.println(buf.toString());
-*/
                 // This is a little pessimistic. If the measure is
                 // 'count(distinct customer_id)' and one of the foreign keys is
                 // 'customer_id' then it is OK to roll up.

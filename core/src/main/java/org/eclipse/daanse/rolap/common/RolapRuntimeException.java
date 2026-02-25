@@ -13,9 +13,19 @@
  */
 package org.eclipse.daanse.rolap.common;
 
-public class RolapRuntimeException extends RuntimeException{
+import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
+
+public class RolapRuntimeException extends OlapRuntimeException{
 
     public RolapRuntimeException(String msg) {
         super(msg);
+    }
+    
+    public RolapRuntimeException(Throwable cause) {
+        super(cause);
+    }
+    
+    public RolapRuntimeException(String msg, Throwable cause) {
+        super(msg, cause);
     }
 }

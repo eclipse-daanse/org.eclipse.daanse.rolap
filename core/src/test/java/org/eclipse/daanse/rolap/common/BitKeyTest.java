@@ -33,6 +33,8 @@ import java.util.Iterator;
 
 import org.eclipse.daanse.olap.key.BitKey;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Unit test for {@link BitKey}.
@@ -40,6 +42,8 @@ import org.junit.jupiter.api.Test;
  * @author Richard Emberson
  */
 class BitKeyTest {
+    private static final Logger LOGGER =
+            LoggerFactory.getLogger(BitKeyTest.class);
     /**
      * Test that negative size throws IllegalArgumentException.
      *
@@ -796,7 +800,7 @@ class BitKeyTest {
     private void printBitPositions(int i) {
         int b = (i & -i);
         int p = BitKey.bitPositionTable[b];
-        System.out.println("  i=" + i + ",b=" + b + ",p=" + p);
+        LOGGER.debug("  i=" + i + ",b=" + b + ",p=" + p);
     }
 
     private void doTestIterator(int[] bitPositions) {

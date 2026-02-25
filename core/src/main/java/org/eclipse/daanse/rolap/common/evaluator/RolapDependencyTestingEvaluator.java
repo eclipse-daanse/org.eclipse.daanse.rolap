@@ -152,13 +152,6 @@ public class RolapDependencyTestingEvaluator extends RolapEvaluator {
                 saveMember, getQuery().getCatalogReader(false));
         setContext(otherMember);
         final Object otherResult = calc.evaluate(this);
-        if (false) {
-            System.out.println(
-                new StringBuilder("original=").append(saveMember.getUniqueName())
-                .append(", member=").append(otherMember.getUniqueName())
-                .append(", originalResult=").append(result)
-                .append(", result=").append(otherResult).toString());
-        }
         if (!equals(otherResult, result)) {
             final Member[] members = getMembers();
             final StringBuilder buf = new StringBuilder();
