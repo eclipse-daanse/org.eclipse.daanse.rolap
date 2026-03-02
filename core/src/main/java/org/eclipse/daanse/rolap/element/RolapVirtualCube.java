@@ -32,6 +32,7 @@ import org.eclipse.daanse.olap.api.query.component.Query;
 import org.eclipse.daanse.olap.common.StandardProperty;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.query.component.IdImpl;
+import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.MeasureFinder;
 import org.eclipse.daanse.rolap.common.catalog.RolapCubeComparator;
 import org.eclipse.daanse.rolap.common.catalog.RolapCubeUsages;

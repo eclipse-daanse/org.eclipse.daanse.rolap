@@ -31,8 +31,8 @@ package org.eclipse.daanse.rolap.common.member;
 
 import java.util.List;
 
+import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.element.RolapHierarchy;
-import org.eclipse.daanse.rolap.element.RolapMember;
 
 /**
  * A MeasureMemberSource implements the {@link MemberReader}

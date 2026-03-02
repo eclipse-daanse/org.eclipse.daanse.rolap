@@ -37,6 +37,7 @@ import org.eclipse.daanse.olap.common.StandardProperty;
 import org.eclipse.daanse.olap.query.component.HierarchyExpressionImpl;
 import org.eclipse.daanse.olap.query.component.ResolvedFunCallImpl;
 import  org.eclipse.daanse.olap.util.Bug;
+import org.eclipse.daanse.rolap.api.element.RolapMember;
 
 /**
  * RolapCubeMember wraps RolapMembers and binds them to a specific cube.

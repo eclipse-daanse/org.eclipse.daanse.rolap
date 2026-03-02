@@ -30,10 +30,10 @@ import java.util.List;
 import java.util.RandomAccess;
 
 import org.eclipse.daanse.olap.api.element.Member;
+import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.nativize.RolapNativeCrossJoin;
 import org.eclipse.daanse.rolap.common.sql.TupleConstraint;
 import org.eclipse.daanse.rolap.element.RolapLevel;
-import org.eclipse.daanse.rolap.element.RolapMember;
 
 /**
  * Base helper class for the SQL tuple readers

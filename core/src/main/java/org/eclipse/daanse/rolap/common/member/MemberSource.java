@@ -32,8 +32,8 @@ package org.eclipse.daanse.rolap.common.member;
 import java.util.List;
 
 import org.eclipse.daanse.olap.api.agg.Segment;
+import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.element.RolapHierarchy;
-import org.eclipse.daanse.rolap.element.RolapMember;
 
 /**
  * A MemberSource has the basic operations to read the members of a

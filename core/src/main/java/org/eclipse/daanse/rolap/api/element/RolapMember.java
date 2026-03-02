@@ -23,11 +23,15 @@
  * Contributors after Fork in 2023:
  *   SmartCity Jena - initial
  */
-package org.eclipse.daanse.rolap.element;
+package org.eclipse.daanse.rolap.api.element;
 
 import org.eclipse.daanse.olap.api.element.Level;
 import org.eclipse.daanse.olap.api.element.ParentChildMember;
 import org.eclipse.daanse.rolap.common.evaluator.RolapCalculation;
+import org.eclipse.daanse.rolap.element.RolapCalculatedMember;
+import org.eclipse.daanse.rolap.element.RolapHierarchy;
+import org.eclipse.daanse.rolap.element.RolapLevel;
+import org.eclipse.daanse.rolap.element.RolapStoredMeasure;
 
 /**
  * A RolapMember is a member of a {@link RolapHierarchy}. There are

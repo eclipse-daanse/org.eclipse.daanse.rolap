@@ -14,6 +14,7 @@
 package org.eclipse.daanse.rolap.element;
 
 import org.eclipse.daanse.olap.api.query.component.Expression;
+import org.eclipse.daanse.rolap.api.element.RolapMember;
 
 /**
  * Member of a parent-child dimension which has no closure table.

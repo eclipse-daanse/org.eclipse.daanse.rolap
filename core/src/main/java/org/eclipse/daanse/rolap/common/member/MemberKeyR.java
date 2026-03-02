@@ -28,8 +28,8 @@
 
 package org.eclipse.daanse.rolap.common.member;
 
+import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.element.RolapLevel;
-import org.eclipse.daanse.rolap.element.RolapMember;
 
 /**
  * Immutable key for a member, consisting of its parent member and value.

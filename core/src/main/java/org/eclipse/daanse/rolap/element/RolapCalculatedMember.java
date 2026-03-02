@@ -35,6 +35,7 @@ import org.eclipse.daanse.olap.common.StandardProperty;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.element.OlapMetaDataBase;
 import org.eclipse.daanse.olap.query.component.FormulaImpl;
+import org.eclipse.daanse.rolap.api.element.RolapMember;
 
 /**
  * A RolapCalculatedMember is a member based upon a

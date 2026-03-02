@@ -14,6 +14,7 @@
 package org.eclipse.daanse.rolap.element;
 
 import org.eclipse.daanse.olap.api.element.PseudoLeafMember;
+import org.eclipse.daanse.rolap.api.element.RolapMember;
 
 public class RolapPseudoLeafMember extends RolapCubeMember implements PseudoLeafMember{
 

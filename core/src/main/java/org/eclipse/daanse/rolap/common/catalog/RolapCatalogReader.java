@@ -77,6 +77,7 @@ import org.eclipse.daanse.olap.common.SystemProperty;
 import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.query.component.NullLiteralImpl;
+import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.RolapUtil;
 import org.eclipse.daanse.rolap.common.constraint.SqlConstraintFactory;
 import org.eclipse.daanse.rolap.common.constraint.SqlConstraintUtils;
@@ -94,7 +95,6 @@ import org.eclipse.daanse.rolap.element.RolapDatabaseSchema;
 import org.eclipse.daanse.rolap.element.RolapDatabaseTable;
 import org.eclipse.daanse.rolap.element.RolapHierarchy;
 import org.eclipse.daanse.rolap.element.RolapLevel;
-import org.eclipse.daanse.rolap.element.RolapMember;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

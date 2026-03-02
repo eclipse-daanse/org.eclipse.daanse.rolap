@@ -35,6 +35,7 @@ import org.eclipse.daanse.olap.api.element.LevelType;
 import org.eclipse.daanse.olap.api.formatter.MemberFormatter;
 import org.eclipse.daanse.olap.api.sql.SqlExpression;
 import org.eclipse.daanse.olap.common.Util;
+import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.RolapCacheRegion;
 import org.eclipse.daanse.rolap.common.RolapRuntimeException;
 import org.eclipse.daanse.rolap.common.agg.CellRequest;

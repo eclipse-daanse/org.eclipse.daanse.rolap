@@ -43,6 +43,7 @@ import org.eclipse.daanse.olap.element.DimensionBase;
 import org.eclipse.daanse.olap.element.OlapMetaDataBase;
 import org.eclipse.daanse.olap.exceptions.NonTimeLevelInTimeHierarchyException;
 import org.eclipse.daanse.olap.exceptions.TimeLevelInNonTimeHierarchyException;
+import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.evaluator.RolapEvaluator;
 import org.eclipse.daanse.rolap.common.member.MemberReader;
 import org.eclipse.daanse.rolap.common.util.DimensionTypeUtil;

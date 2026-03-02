@@ -35,9 +35,9 @@ import java.util.List;
 
 import org.eclipse.daanse.olap.api.calc.tuple.TupleList;
 import org.eclipse.daanse.olap.common.Util;
+import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.SqlStatement;
 import org.eclipse.daanse.rolap.common.TargetBase;
-import org.eclipse.daanse.rolap.element.RolapMember;
 
 /**
  * Loader to be iterated to load all results from database.

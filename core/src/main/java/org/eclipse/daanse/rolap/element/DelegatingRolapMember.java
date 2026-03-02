@@ -37,9 +37,10 @@ import org.eclipse.daanse.olap.api.element.MetaData;
 import org.eclipse.daanse.olap.api.element.OlapElement;
 import org.eclipse.daanse.olap.api.element.Property;
 import org.eclipse.daanse.olap.api.query.component.Expression;
+import org.eclipse.daanse.rolap.api.element.RolapMember;
 
 /**
- * Implementation of {@link org.eclipse.daanse.rolap.element.RolapMember} that delegates all calls
+ * Implementation of {@link org.eclipse.daanse.rolap.api.element.RolapMember} that delegates all calls
  * to an underlying member.
  *
  * @author jhyde

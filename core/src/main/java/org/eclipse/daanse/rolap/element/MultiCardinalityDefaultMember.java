@@ -14,6 +14,7 @@
 package org.eclipse.daanse.rolap.element;
 
 import org.eclipse.daanse.olap.api.evaluator.Evaluator;
+import org.eclipse.daanse.rolap.api.element.RolapMember;
 
 /**
  * This is a special subclass of {@link DelegatingRolapMember}.

@@ -25,6 +25,8 @@
 
 package org.eclipse.daanse.rolap.element;
 
+import org.eclipse.daanse.rolap.api.element.RolapMember;
+
 /**
  * Extension to {@link RolapMember} that knows the current cube.
  *

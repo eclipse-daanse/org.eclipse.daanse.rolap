@@ -21,6 +21,7 @@ import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.query.component.Expression;
 import org.eclipse.daanse.olap.element.MemberBase;
 import org.eclipse.daanse.olap.util.type.TypeWrapperExp;
+import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.evaluator.RolapEvaluatorRoot;
 import org.eclipse.daanse.rolap.common.result.RolapResult.ValueFormatter;
 

@@ -55,6 +55,7 @@ import org.eclipse.daanse.olap.format.FormatterCreateContext;
 import org.eclipse.daanse.olap.format.FormatterFactory;
 import org.eclipse.daanse.olap.key.BitKey;
 import org.eclipse.daanse.rolap.aggregator.CountAggregator;
+import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.member.CacheMemberReader;
 import org.eclipse.daanse.rolap.common.member.MeasureMemberSource;
 import org.eclipse.daanse.rolap.common.star.RolapSqlExpression;

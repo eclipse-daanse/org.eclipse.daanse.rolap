@@ -35,8 +35,8 @@ import java.util.List;
 import org.eclipse.daanse.olap.api.agg.Segment;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.exceptions.MdxCantFindMemberException;
+import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.element.RolapHierarchy;
-import org.eclipse.daanse.rolap.element.RolapMember;
 /**
  * ArrayMemberSource implements a flat, static hierarchy. There is
  * no root member, and all members are siblings.

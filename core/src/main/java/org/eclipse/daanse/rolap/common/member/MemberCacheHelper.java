@@ -38,6 +38,7 @@ import java.util.Objects;
 import java.util.TreeSet;
 
 import  org.eclipse.daanse.olap.util.Pair;
+import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.cache.SmartCache;
 import org.eclipse.daanse.rolap.common.cache.SoftSmartCache;
 import org.eclipse.daanse.rolap.common.constraint.ChildByNameConstraint;
@@ -47,7 +48,6 @@ import org.eclipse.daanse.rolap.common.sql.MemberChildrenConstraint;
 import org.eclipse.daanse.rolap.common.sql.TupleConstraint;
 import org.eclipse.daanse.rolap.element.RolapHierarchy;
 import org.eclipse.daanse.rolap.element.RolapLevel;
-import org.eclipse.daanse.rolap.element.RolapMember;
 
 /**
  * Encapsulation of member caching.

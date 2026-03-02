@@ -59,6 +59,7 @@ import org.eclipse.daanse.olap.exceptions.TimeLevelInNonTimeHierarchyException;
 import org.eclipse.daanse.olap.format.FormatterCreateContext;
 import org.eclipse.daanse.olap.format.FormatterFactory;
 import org.eclipse.daanse.olap.query.component.IdImpl;
+import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.RolapUtil;
 import org.eclipse.daanse.rolap.common.star.RolapSqlExpression;
 import org.eclipse.daanse.rolap.common.util.ExpressionUtil;
