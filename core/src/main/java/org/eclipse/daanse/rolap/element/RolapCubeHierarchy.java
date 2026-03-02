@@ -32,6 +32,7 @@ import static org.eclipse.daanse.rolap.common.util.JoinUtil.left;
 import static org.eclipse.daanse.rolap.common.util.JoinUtil.right;
 
 import java.sql.SQLException;
+import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -62,7 +63,6 @@ import org.eclipse.daanse.rolap.common.sql.MemberChildrenConstraint;
 import org.eclipse.daanse.rolap.common.sql.TupleConstraint;
 import org.eclipse.daanse.rolap.common.star.HierarchyUsage;
 import org.eclipse.daanse.rolap.common.util.RelationUtil;
-import org.eclipse.daanse.rolap.util.UnsupportedList;
 
 /**
  * Hierarchy that is associated with a specific Cube.
@@ -1140,35 +1140,15 @@ public class RolapCubeHierarchy extends RolapHierarchy {
                             level, constraint);
                 }
 
-                return new UnsupportedList<>() {
+                return new AbstractList<RolapMember>() {
                     @Override
-					public RolapMember get(final int index) {
+                    public RolapMember get(int index) {
                         return mutate(list.get(index));
                     }
 
                     @Override
-					public int size() {
+                    public int size() {
                         return list.size();
-                    }
-
-                    @Override
-					public Iterator<RolapMember> iterator() {
-                        final Iterator<RolapMember> it = list.iterator();
-                        return new Iterator<>() {
-                            @Override
-							public boolean hasNext() {
-                                return it.hasNext();
-                            }
-                            @Override
-							public RolapMember next() {
-                                return mutate(it.next());
-                            }
-
-                            @Override
-							public void remove() {
-                                throw new UnsupportedOperationException();
-                            }
-                        };
                     }
 
                     private RolapMember mutate(final RolapMember member) {
@@ -1183,6 +1163,7 @@ public class RolapCubeHierarchy extends RolapHierarchy {
                         return lookupCubeMember(
                             parent, member, (RolapCubeLevel) level);
                     }
+
                 };
         }
 
