@@ -693,9 +693,10 @@ public class RolapResult extends ResultBase {
       // the ObjectPool's internal storage by half (but, of course,
       // it will not reduce the size of the stored objects themselves).
       // Only call this if there are lots of CellInfo.
-      if ( this.cellInfos.size() > 10000 ) {
-        this.cellInfos.trimToSize();
-      }
+      //if ( this.cellInfos.size() > 10000 ) {
+      //  this.cellInfos.trimToSize();
+      //}
+
       // revert the slicer axis so that the original slicer
       // can be included in the result.
       this.slicerAxis = savedSlicerAxis;
@@ -1971,12 +1972,6 @@ public Cell getCell( int[] pos ) {
     int size();
 
     /**
-     * Reduces the size of the internal data structures needed to support the current entries. This should be called
-     * after all CellInfo objects have been added to container.
-     */
-    void trimToSize();
-
-    /**
      * Removes all CellInfo objects from container. Does not change the size of the internal data structures.
      */
     void clear();
@@ -2025,11 +2020,6 @@ public Cell getCell( int[] pos ) {
     @Override
 	public int size() {
       return this.map.size();
-    }
-
-    @Override
-	public void trimToSize() {
-      // empty
     }
 
     @Override
@@ -2206,11 +2196,6 @@ public Cell getCell( int[] pos ) {
     @Override
 	public int size() {
       return this.cellInfoPool.size();
-    }
-
-    @Override
-	public void trimToSize() {
-      this.cellInfoPool.trimToSize();
     }
 
     @Override
