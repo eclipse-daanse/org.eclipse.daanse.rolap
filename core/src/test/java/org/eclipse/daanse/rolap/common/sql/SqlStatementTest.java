@@ -42,7 +42,7 @@ import org.eclipse.daanse.olap.api.execution.ExecutionContext;
 import org.eclipse.daanse.olap.api.execution.QueryCanceledException;
 import org.eclipse.daanse.olap.api.monitor.EventBus;
 import org.eclipse.daanse.olap.execution.ExecutionImpl;
-import org.eclipse.daanse.olap.execution.StatementImpl;
+import org.eclipse.daanse.olap.execution.AbstractStatement;
 import org.eclipse.daanse.rolap.common.SqlStatement;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -56,7 +56,7 @@ class SqlStatementTest {
   private EventBus monitor;
   private Context context;
   private Connection rolapConnection;
-  private StatementImpl statMock;
+  private AbstractStatement statMock;
   private ExecutionImpl execution;
   private ExecutionContext executionContext;
   private SqlStatement statement;
@@ -71,7 +71,7 @@ class SqlStatementTest {
     rolapConnection = mock(Connection.class);
     when(rolapConnection.getContext()).thenReturn(context);
 
-    statMock = mock(StatementImpl.class);
+    statMock = mock(AbstractStatement.class);
     when(statMock.getDaanseConnection()).thenReturn(rolapConnection);
 
     execution = new ExecutionImpl(statMock, Optional.empty());
