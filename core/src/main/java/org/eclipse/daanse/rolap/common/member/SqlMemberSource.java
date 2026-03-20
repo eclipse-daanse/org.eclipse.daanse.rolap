@@ -1085,8 +1085,6 @@ RME is this right
         }
         final String sql = pair.left;
 
-        HashMap<RolapMember, Object> rolapToOrdinalMap = new HashMap<>();
-
         final List<BestFitColumnType> types = pair.right;
         ExecutionMetadata metadata = ExecutionMetadata.of(
             "SqlMemberSource.getMemberChildren",
@@ -1146,16 +1144,6 @@ RME is this right
                     children.add(member);
                 }
 
-                if (!childLevel.getOrdinalExps().isEmpty())
-                {
-                    Object ordinal = accessors.get(columnOffset).get();
-                    Object prevValue = rolapToOrdinalMap.put(member, ordinal);
-                    if (prevValue != null && !Objects.equals(prevValue, ordinal)) {
-                        LOGGER.error(
-                            "Column expression for {} is inconsistent with ordinal or caption expression. It should have 1:1 relationship",
-                            member.getUniqueName());
-                    }
-                }
             }
         } catch (SQLException e) {
             throw stmt.handle(e);
