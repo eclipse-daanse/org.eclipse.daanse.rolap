@@ -521,7 +521,7 @@ public class SegmentCacheManager implements OlapSegmentCacheManager {
   public void externalSegmentCreated(
     SegmentHeader header,
     Context<?> context ) {
-    if ( context.getConfigValue(ConfigConstants.DISABLE_CACHING, ConfigConstants.DISABLE_CACHING_DEFAULT_VALUE, Boolean.class) ) {
+    if ( !context.isCashEnabled(header.cubeName) ) {
       // Ignore cache requests.
       return;
     }
@@ -544,7 +544,7 @@ public class SegmentCacheManager implements OlapSegmentCacheManager {
   public void externalSegmentDeleted(
     SegmentHeader header,
     Context<?> context ) {
-    if ( context.getConfigValue(ConfigConstants.DISABLE_CACHING, ConfigConstants.DISABLE_CACHING_DEFAULT_VALUE, Boolean.class) ) {
+    if ( !context.isCashEnabled( header.cubeName ) ) {
       // Ignore cache requests.
       return;
     }

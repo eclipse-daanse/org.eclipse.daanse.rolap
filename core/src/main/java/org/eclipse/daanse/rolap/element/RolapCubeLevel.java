@@ -141,7 +141,7 @@ public class RolapCubeLevel extends RolapLevel implements CubeLevel {
                     (RolapCubeHierarchy) cubeDimensionInner.getHierarchies().getFirst(),
                     xmlDimension);
             }
-            cubeDimensionInner.init(xmlDimension);
+            cubeDimensionInner.init(xmlDimension, cube);
             getCube().registerDimension(cubeDimensionInner);
             closedPeerCubeLevel = (RolapCubeLevel)
                 cubeDimensionInner.getHierarchies().getFirst().getLevels().get(1);

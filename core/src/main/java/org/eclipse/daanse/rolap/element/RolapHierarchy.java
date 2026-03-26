@@ -57,6 +57,7 @@ import org.eclipse.daanse.olap.api.calc.compiler.ExpressionCompiler;
 import org.eclipse.daanse.olap.api.calc.tuple.TupleList;
 import org.eclipse.daanse.olap.api.calc.tuple.TupleListCalc;
 import org.eclipse.daanse.olap.api.catalog.CatalogReader;
+import org.eclipse.daanse.olap.api.element.Cube;
 import org.eclipse.daanse.olap.api.element.Dimension;
 import org.eclipse.daanse.olap.api.element.DimensionType;
 import org.eclipse.daanse.olap.api.element.Hierarchy;
@@ -429,7 +430,7 @@ public class RolapHierarchy extends HierarchyBase {
                 RolapLevel l = new RolapLevel(sb.toString(), LevelUtil.getParentExp(pch), pch.getNullParentValue(), pch.getParentChildLink(), this, i,
                         pch.isParentAsLeafEnable(), pch.getParentAsLeafNameFormat(), xmlLevel);
                 levels.add(l);
-                Map<Integer, Set<RolapMember>> childMap = getChildMap((RolapLevel)l);
+                Map<Integer, Set<RolapMember>> childMap = getChildMap((RolapLevel)l, cube);
                 for (Map.Entry<Integer, Set<RolapMember>> e : childMap.entrySet()) {
                     if (e.getKey() != 0) {
                         i++;
@@ -448,7 +449,7 @@ public class RolapHierarchy extends HierarchyBase {
                 RolapLevel l = new RolapLevel(sb.toString(), LevelUtil.getParentExp(pch), pch.getNullParentValue(), pch.getParentChildLink(), this, i,
                         pch.isParentAsLeafEnable(), pch.getParentAsLeafNameFormat(), xmlLevel);
                 levels.add(l);
-                Map<Integer, Set<RolapMember>> childMap = getChildMap((RolapLevel)l);
+                Map<Integer, Set<RolapMember>> childMap = getChildMap((RolapLevel)l, cube);
                 for (Map.Entry<Integer, Set<RolapMember>> e : childMap.entrySet()) {
                     if (e.getKey() != 0) {
                         i++;
@@ -491,10 +492,10 @@ public class RolapHierarchy extends HierarchyBase {
         defaultMemberName = xmlHierarchy.getDefaultMember();
     }
 
-    private Map<Integer, Set<RolapMember>> getChildMap(RolapLevel l) {
+    private Map<Integer, Set<RolapMember>> getChildMap(RolapLevel l, Cube cube) {
         if (this.memberReader == null) {
             this.memberReader = getRolapCatalog().createMemberReader(
-                null, this, memberReaderClass);
+                null, this, cube, memberReaderClass);
         }
         List<RolapMember> members = this.memberReader.getMembers();
         Map<Integer, Set<RolapMember>> childMap = new HashMap<>();
@@ -561,11 +562,11 @@ public class RolapHierarchy extends HierarchyBase {
     /**
      * Initializes a hierarchy within the context of a cube.
      */
-    void init(org.eclipse.daanse.rolap.mapping.model.DimensionConnector xmlDimension) {
+    void init(org.eclipse.daanse.rolap.mapping.model.DimensionConnector xmlDimension, Cube cube) {
         // first create memberReader
         if (this.memberReader == null) {
             this.memberReader = getRolapCatalog().createMemberReader(
-                xmlDimension != null ? xmlDimension.getDimension() : null, this, memberReaderClass);
+                xmlDimension != null ? xmlDimension.getDimension() : null, this, cube, memberReaderClass);
         }
         for (Level level : levels) {
             ((RolapLevel) level).init(xmlDimension);

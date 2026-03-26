@@ -314,7 +314,7 @@ public abstract class RolapCube extends CubeBase {
         this.context = context;
 
         if (getFact() != null && this instanceof RolapPhysicalCube) {
-            this.star = catalog.getRolapStarRegistry().getOrCreateStar(getFact());
+            this.star = catalog.getRolapStarRegistry().getOrCreateStar(getFact(), this);
             // only set if different from default (so that if two cubes share
             // the same fact table, either can turn off caching and both are
             // effected).
@@ -1017,10 +1017,10 @@ public abstract class RolapCube extends CubeBase {
         return null;
     }
 
-    protected void init(List<? extends org.eclipse.daanse.rolap.mapping.model.DimensionConnector> mappingDimensions) {
+    protected void init(List<? extends org.eclipse.daanse.rolap.mapping.model.DimensionConnector> mappingDimensions, Cube cube) {
         for (Dimension dimension1 : dimensions) {
             final RolapDimension dimension = (RolapDimension) dimension1;
-            dimension.init(lookup(mappingDimensions, dimension.getName()));
+            dimension.init(lookup(mappingDimensions, dimension.getName()), cube);
         }
         register();
     }
@@ -1105,7 +1105,7 @@ public abstract class RolapCube extends CubeBase {
             if (star != null && star.getFactTable().getRelation().equals(getFact())) {
                 return star;
             }
-            star = catalog.getRolapStarRegistry().makeRolapStar(getFact());
+            star = catalog.getRolapStarRegistry().makeRolapStar(getFact(), this);
         }
         return star;
     }

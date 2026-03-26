@@ -139,7 +139,7 @@ public class FastBatchingCellReader implements CellReader {
         this.aggMgr = (AggregationManager)aggMgr;
         cacheMgr = (SegmentCacheManager)aggMgr.getCacheMgr(execution.getDaanseStatement().getDaanseConnection());
         pinnedSegments = this.aggMgr.createPinSet();
-        cacheEnabled = !cube.getCatalog().getInternalConnection().getContext().getConfigValue(ConfigConstants.DISABLE_CACHING, ConfigConstants.DISABLE_CACHING_DEFAULT_VALUE, Boolean.class);
+        cacheEnabled = cube.getCatalog().getInternalConnection().getContext().isCashEnabled(cube.getName());
         Integer cellBatchSize = cube.getCatalog().getInternalConnection().getContext()
                 .getConfigValue(ConfigConstants.CELL_BATCH_SIZE, ConfigConstants.CELL_BATCH_SIZE_DEFAULT_VALUE ,Integer.class);
         cellRequestLimit =
@@ -376,7 +376,7 @@ public class FastBatchingCellReader implements CellReader {
                 // Then we insert the segment body into the SlotFuture.
                 // This has to be done on the SegmentCacheManager's
                 // Actor thread to ensure thread safety.
-                if (!cacheMgr.getContext().getConfigValue(ConfigConstants.DISABLE_CACHING, ConfigConstants.DISABLE_CACHING_DEFAULT_VALUE, Boolean.class)) {
+                if (cacheMgr.getContext().isCashEnabled(header.cubeName)) {
                     final ExecutionContext executionContext = ExecutionContext.current();
                     cacheMgr.execute(
                         new CacheCommand<Void>() {

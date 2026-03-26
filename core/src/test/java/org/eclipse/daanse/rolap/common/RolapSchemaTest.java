@@ -316,20 +316,22 @@ class RolapCatalogTest {
       List<String> rolapStarKey = RolapUtil.makeRolapStarKey(fact);
       //Expected result star
       RolapStar expectedStar = rlStarMock;
+      RolapCube cube = mock(RolapCube.class);
+      when(cube.getName()).thenReturn("CubeName");
       RolapStarRegistry rolapStarRegistry =
-          getStarRegistryLinkedToRolapCatalogSpy(schemaSpy, fact);
+          getStarRegistryLinkedToRolapCatalogSpy(schemaSpy, fact, cube);
 
 
       //Test that a new rolap star has created and put to the registry
-      RolapStar actualStar = rolapStarRegistry.getOrCreateStar(fact);
+      RolapStar actualStar = rolapStarRegistry.getOrCreateStar(fact, cube);
         assertThat(actualStar).isSameAs(expectedStar);
         assertThat(rolapStarRegistry.getStars().size()).isEqualTo(1);
         assertThat(rolapStarRegistry.getStar(rolapStarKey)).isEqualTo(expectedStar);
-      verify(rolapStarRegistry, times(1)).makeRolapStar(fact);
+      verify(rolapStarRegistry, times(1)).makeRolapStar(fact, cube);
       //test that no new rolap star has created,
       //but extracted already existing one from the registry
-      RolapStar actualStar2 = rolapStarRegistry.getOrCreateStar(fact);
-      verify(rolapStarRegistry, times(1)).makeRolapStar(fact);
+      RolapStar actualStar2 = rolapStarRegistry.getOrCreateStar(fact, cube);
+      verify(rolapStarRegistry, times(1)).makeRolapStar(fact, cube);
         assertThat(actualStar2).isSameAs(expectedStar);
         assertThat(rolapStarRegistry.getStars().size()).isEqualTo(1);
         assertThat(rolapStarRegistry.getStar(rolapStarKey)).isEqualTo(expectedStar);
@@ -350,13 +352,16 @@ class RolapCatalogTest {
     	fact.setTable(table);
     	fact.setAlias("TableAlias");
     	fact.setSqlWhereExpression(sqlWhereExpression);
-    
+
+        RolapCube cube = mock(RolapCube.class);
+        when(cube.getName()).thenReturn("CubeName");
+
       List<String> rolapStarKey = RolapUtil.makeRolapStarKey(fact);
       //Expected result star
       RolapStarRegistry rolapStarRegistry =
-          getStarRegistryLinkedToRolapCatalogSpy(schemaSpy, fact);
+          getStarRegistryLinkedToRolapCatalogSpy(schemaSpy, fact, cube);
       //Put rolap star to the registry
-      rolapStarRegistry.getOrCreateStar(fact);
+      rolapStarRegistry.getOrCreateStar(fact, cube);
 
       RolapStar actualStar = rolapStarRegistry.getStar(rolapStarKey);
         assertThat(actualStar).isSameAs(rlStarMock);
@@ -373,25 +378,29 @@ class RolapCatalogTest {
     	fact.setTable(table);
     	fact.setAlias("TableAlias");
 
+        RolapCube cube = mock(RolapCube.class);
+        when(cube.getName()).thenReturn("CubeName");
+
       //Expected result star
       RolapStarRegistry rolapStarRegistry =
-          getStarRegistryLinkedToRolapCatalogSpy(schemaSpy, fact);
+          getStarRegistryLinkedToRolapCatalogSpy(schemaSpy, fact, cube);
       //Put rolap star to the registry
-      RolapStar actualStar = rolapStarRegistry.getOrCreateStar(fact);
+      RolapStar actualStar = rolapStarRegistry.getOrCreateStar(fact, cube);
 
         //RolapStar actualStar = schemaSpy.getRolapStarRegistry().getStar(RelationUtil.getAlias(fact));
         assertThat(actualStar).isSameAs(rlStarMock);
     }
 
     private static RolapStarRegistry getStarRegistryLinkedToRolapCatalogSpy(
-        RolapCatalog schemaSpy, org.eclipse.daanse.rolap.mapping.model.RelationalQuery fact) throws Exception
+        RolapCatalog schemaSpy, org.eclipse.daanse.rolap.mapping.model.RelationalQuery fact, RolapCube cube) throws Exception
     {
       //the rolap star registry is linked to the origin rolap schema,
       //not to the schemaSpy
       //RolapStarRegistry rolapStarRegistry = schemaSpy.getRolapStarRegistry();
+
       RolapStarRegistry rolapStarRegistry = spy(new RolapStarRegistry(schemaSpy, contextMock));
       //the star mock
-      doReturn(rlStarMock).when(rolapStarRegistry).makeRolapStar(fact);
+      doReturn(rlStarMock).when(rolapStarRegistry).makeRolapStar(fact, cube);
       //Set the schema spy to be linked with the rolap star registry
       //assertTrue(
       //        replaceRolapCatalogLinkedToStarRegistry(

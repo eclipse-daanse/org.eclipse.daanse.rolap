@@ -30,6 +30,7 @@ import static org.mockito.Mockito.when;
 import org.assertj.core.api.Assertions;
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.connection.Connection;
+import org.eclipse.daanse.olap.api.element.Cube;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.star.RolapStar.Column;
 import org.eclipse.daanse.rolap.element.RolapCatalog;
@@ -49,9 +50,10 @@ class RolapStarTest {
         public RolapStarForTests(
             final RolapCatalog schema,
             final Context<?> context,
+            final Cube cube,
             final RelationalQuery fact)
         {
-            super(schema, context, fact);
+            super(schema, context, cube, fact);
         }
 
         public Query cloneRelationForTests(
@@ -74,6 +76,7 @@ class RolapStarTest {
         return new RolapStarForTests(
             rs.getCatalog(),
             rs.getContext(),
+            rs.getCube(),
             rs.getFactTable().getRelation());
     }
 

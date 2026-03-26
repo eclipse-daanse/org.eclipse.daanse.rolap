@@ -76,7 +76,7 @@ public class RolapVirtualCube extends RolapCube implements VirtualCube {
             virtualCubeMapping, measureHash);
         List<? extends org.eclipse.daanse.rolap.mapping.model.CalculatedMember> origCalcMeasureList = calculatedMembersMap.entrySet().stream().map(Map.Entry::getValue).flatMap(Collection::stream).toList();
         // Must init the dimensions before dealing with calculated members
-        init(virtualCubeMapping.getDimensionConnectors());
+        init(virtualCubeMapping.getDimensionConnectors(), this);
 
         // Loop through the base cubes containing calculated members
         // referenced by this virtual cube. Resolve those members relative

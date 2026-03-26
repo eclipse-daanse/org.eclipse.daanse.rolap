@@ -63,6 +63,7 @@ import org.eclipse.daanse.jdbc.db.dialect.api.type.Datatype;
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.olap.api.cache.OlapSegmentCacheManager;
+import org.eclipse.daanse.olap.api.element.Cube;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
 import org.eclipse.daanse.olap.api.execution.ExecutionContext;
@@ -122,6 +123,7 @@ public class RolapStar {
 
     private final Table factTable;
 
+    private final Cube cube;
     /**
      * Number of columns (column and columnName).
      */
@@ -165,10 +167,12 @@ public class RolapStar {
     protected RolapStar(
         final RolapCatalog catalog,
         final Context context,
+        final Cube cube,
         final org.eclipse.daanse.rolap.mapping.model.RelationalQuery fact)
     {
         this.cacheAggregations = true;
         this.catalog = catalog;
+        this.cube = cube;
         this.context = context;
         this.factTable = new RolapStar.Table(this, fact, null, null);
 
@@ -631,7 +635,7 @@ public class RolapStar {
     }
 
     boolean isCacheDisabled() {
-        return context.getConfigValue(ConfigConstants.DISABLE_CACHING, ConfigConstants.DISABLE_CACHING_DEFAULT_VALUE, Boolean.class);
+        return !context.isCashEnabled(cube.getName());
     }
 
     /**
@@ -2218,4 +2222,8 @@ public class RolapStar {
           return result;
         }
     }
+
+	public Cube getCube() {
+		return cube;
+	}
 }

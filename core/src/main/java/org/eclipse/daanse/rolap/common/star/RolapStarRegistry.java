@@ -36,6 +36,7 @@ import java.util.Map;
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.cache.OlapSegmentCacheManager;
 import org.eclipse.daanse.olap.api.connection.Connection;
+import org.eclipse.daanse.olap.api.element.Cube;
 import org.eclipse.daanse.olap.core.AbstractBasicContext;
 import org.eclipse.daanse.rolap.common.RolapUtil;
 import org.eclipse.daanse.rolap.common.agg.SegmentCacheManager;
@@ -59,11 +60,11 @@ public class RolapStarRegistry {
 	 *
 	 * {@link RolapStar.Table#addJoin} works in a similar way.
 	 */
-	public synchronized RolapStar getOrCreateStar(final org.eclipse.daanse.rolap.mapping.model.RelationalQuery fact) {
+	public synchronized RolapStar getOrCreateStar(final org.eclipse.daanse.rolap.mapping.model.RelationalQuery fact, Cube cube) {
 		final List<String> rolapStarKey = RolapUtil.makeRolapStarKey(fact);
 		RolapStar star = stars.get(rolapStarKey);
 		if (star == null) {
-			star = makeRolapStar(fact);
+			star = makeRolapStar(fact, cube);
 			stars.put(rolapStarKey, star);
 			// let cache manager load pending segments
 			// from external cache if needed
@@ -79,8 +80,8 @@ public class RolapStarRegistry {
 		return getStar(makeRolapStarKey(factTableName));
 	}
 
-	public RolapStar makeRolapStar(final org.eclipse.daanse.rolap.mapping.model.RelationalQuery fact) {
-		return new RolapStar(schema, context, fact);
+	public RolapStar makeRolapStar(final org.eclipse.daanse.rolap.mapping.model.RelationalQuery fact, Cube cube) {
+		return new RolapStar(schema, context, cube, fact);
 	}
 
 	public synchronized RolapStar getStar(List<String> starKey) {
