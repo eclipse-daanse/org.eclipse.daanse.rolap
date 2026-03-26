@@ -946,13 +946,13 @@ public class RolapCatalog implements Catalog {
 	 *
 	 * Synchronization: thread safe
 	 */
-	synchronized MemberReader createMemberReader(final org.eclipse.daanse.rolap.mapping.model.Dimension xmlDimension, final RolapHierarchy hierarchy,
+	synchronized MemberReader createMemberReader(final org.eclipse.daanse.rolap.mapping.model.Dimension xmlDimension, final RolapHierarchy hierarchy, final Cube cube,
 			final String memberReaderClass) {
 		MemberReader reader;
 		if (xmlDimension != null) {
 			reader = mapSharedHierarchyToReader.get(xmlDimension);
 			if (reader == null) {
-				reader = createMemberReader(hierarchy, memberReaderClass);
+				reader = createMemberReader(hierarchy, memberReaderClass, cube);
 				// share, for other uses of the same shared hierarchy
 				if (false) {
 					mapSharedHierarchyToReader.put(xmlDimension, reader);
@@ -972,7 +972,7 @@ public class RolapCatalog implements Catalog {
 //                        sharedDimension.getGlobalOrdinal());
 			}
 		} else {
-			reader = createMemberReader(hierarchy, memberReaderClass);
+			reader = createMemberReader(hierarchy, memberReaderClass, cube);
 		}
 		return reader;
 	}
@@ -980,7 +980,7 @@ public class RolapCatalog implements Catalog {
 	/**
 	 * Creates a {@link MemberReader} with which to Read a hierarchy.
 	 */
-	private MemberReader createMemberReader(final RolapHierarchy hierarchy, final String memberReaderClass) {
+	private MemberReader createMemberReader(final RolapHierarchy hierarchy, final String memberReaderClass, Cube cube) {
 		if (memberReaderClass != null) {
 			Exception e2;
 			try {
@@ -1004,7 +1004,7 @@ public class RolapCatalog implements Catalog {
 			SqlMemberSource source = new SqlMemberSource(hierarchy);
 
 			LOGGER.debug("Normal cardinality for {}", hierarchy.getDimension());
-			if (internalConnection.getContext().getConfigValue(ConfigConstants.DISABLE_CACHING, ConfigConstants.DISABLE_CACHING_DEFAULT_VALUE, Boolean.class)) {
+			if (!internalConnection.getContext().isCashEnabled(cube.getName())) {
 				// If the cell cache is disabled, we can't cache
 				// the members or else we get undefined results,
 				// depending on the functions used and all.

@@ -143,7 +143,7 @@ public class BatchLoader {
         final AggregationKey key,
         final SegmentBuilder.SegmentConverterImpl converter)
     {
-        if (cacheMgr.getContext().getConfigValue(ConfigConstants.DISABLE_CACHING, ConfigConstants.DISABLE_CACHING_DEFAULT_VALUE, Boolean.class)) {
+        if (!cacheMgr.getContext().isCashEnabled(request.getMeasure().getCubeName())) {
             // Caching is disabled. Return always false.
             return false;
         }

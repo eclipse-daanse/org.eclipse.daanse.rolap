@@ -148,18 +148,20 @@ public class SegmentLoader {
    */
   public void load( int cellRequestCount, List<GroupingSet> groupingSets, List<StarPredicate> compoundPredicateList,
       List<Future<Map<Segment, SegmentWithData>>> segmentFutures ) {
-    if ( !cacheMgr.getContext().getConfigValue(ConfigConstants.DISABLE_CACHING, ConfigConstants.DISABLE_CACHING_DEFAULT_VALUE, Boolean.class) ) {
+    //if ( !cacheMgr.getContext().getConfigValue(ConfigConstants.DISABLE_CACHING, ConfigConstants.DISABLE_CACHING_DEFAULT_VALUE, Boolean.class) ) {
       for ( GroupingSet groupingSet : groupingSets ) {
         for ( Segment segment : groupingSet.getSegments() ) {
-          final SegmentCacheIndex index = ((SegmentCacheIndexRegistry)cacheMgr.getIndexRegistry()).getIndex( segment.star );
-          index.add( segment.getHeader(), new SegmentBuilder.StarSegmentConverter( segment.measure,
-              compoundPredicateList ), true );
-          // Make sure that we are registered as a client of
-          // the segment by invoking getFuture.
-          index.getFuture( ExecutionContext.current().getExecution(), segment.getHeader() ) ;
+          if ( cacheMgr.getContext().isCashEnabled(segment.star.getCube().getName()) ) {
+              final SegmentCacheIndex index = ((SegmentCacheIndexRegistry)cacheMgr.getIndexRegistry()).getIndex( segment.star );
+              index.add( segment.getHeader(), new SegmentBuilder.StarSegmentConverter( segment.measure,
+                  compoundPredicateList ), true );
+              // Make sure that we are registered as a client of
+              // the segment by invoking getFuture.
+              index.getFuture( ExecutionContext.current().getExecution(), segment.getHeader() ) ;
+          }
         }
       }
-    }
+    //}
     try {
       segmentFutures.add( cacheMgr.sqlExecutor.submit( new SegmentLoadCommand( ExecutionContext.current(), this, cellRequestCount,
           groupingSets, compoundPredicateList ) ) );
@@ -263,7 +265,7 @@ public class SegmentLoader {
     // Also note that we push the segments to external cache after we have
     // called cacheMgr.loadSucceeded. That call will allow the current
     // query to proceed.
-    if ( !cacheMgr.getContext().getConfigValue(ConfigConstants.DISABLE_CACHING, ConfigConstants.DISABLE_CACHING_DEFAULT_VALUE, Boolean.class) ) {
+    if ( cacheMgr.getContext().isCashEnabled(header.cubeName) ) {
       cacheMgr.compositeCache.put( header, body );
       cacheMgr.loadSucceeded( star, header, body );
     }
@@ -546,7 +548,7 @@ public class SegmentLoader {
       return RolapUtil.executeQuery( star.getContext(), pair.left, pair.right, 0, 0, executionContext, -1, -1,
           // Only one of the two callbacks are required, depending if we
           // cache the segments or not.
-          cacheMgr.getContext().getConfigValue(ConfigConstants.DISABLE_CACHING, ConfigConstants.DISABLE_CACHING_DEFAULT_VALUE, Boolean.class) ? callbackNoCaching : callbackWithCaching );
+              !star.getContext().isCashEnabled(star.getCube().getName()) ? callbackNoCaching : callbackWithCaching );
     } catch ( Throwable t ) {
       if ( Util.getMatchingCause( t, AbortException.class ) != null ) {
         return null;

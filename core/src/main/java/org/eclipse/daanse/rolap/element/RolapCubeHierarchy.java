@@ -42,6 +42,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.eclipse.daanse.olap.api.access.AccessMember;
+import org.eclipse.daanse.olap.api.element.Cube;
 import org.eclipse.daanse.olap.api.element.Level;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.query.component.Formula;
@@ -513,11 +514,11 @@ public class RolapCubeHierarchy extends RolapHierarchy {
     }
 
     @Override
-	void init(org.eclipse.daanse.rolap.mapping.model.DimensionConnector xmlDimension) {
+	void init(org.eclipse.daanse.rolap.mapping.model.DimensionConnector xmlDimension, Cube cube) {
         // first init shared hierarchy
-        rolapHierarchy.init(xmlDimension);
+        rolapHierarchy.init(xmlDimension, cube);
         // second init cube hierarchy
-        super.init(xmlDimension);
+        super.init(xmlDimension, cube);
     }
 
     /**

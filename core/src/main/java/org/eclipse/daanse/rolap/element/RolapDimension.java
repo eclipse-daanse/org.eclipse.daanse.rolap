@@ -198,10 +198,10 @@ public class RolapDimension extends DimensionBase {
     /**
      * Initializes a dimension within the context of a cube.
      */
-    void init(org.eclipse.daanse.rolap.mapping.model.DimensionConnector mappingDimension) {
+    void init(org.eclipse.daanse.rolap.mapping.model.DimensionConnector mappingDimension, Cube cube) {
         for (Hierarchy h : hierarchies) {
             if (h != null) {
-                ((RolapHierarchy) h).init(mappingDimension);
+                ((RolapHierarchy) h).init(mappingDimension, cube);
             }
         }
     }

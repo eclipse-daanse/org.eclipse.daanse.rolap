@@ -106,7 +106,7 @@ public class RolapPhysicalCube extends RolapCube implements PhysicalCube {
         // done in a common constructor.
         List<RolapMember> measureList = initMeasures(cubeMapping);
 
-        init(cubeMapping.getDimensionConnectors());
+        init(cubeMapping.getDimensionConnectors(), this);
         init(cubeMapping, measureList);
 
         setMeasuresHierarchyMemberReader(

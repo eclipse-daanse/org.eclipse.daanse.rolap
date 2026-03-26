@@ -41,6 +41,7 @@ import org.eclipse.daanse.olap.api.access.Role;
 import org.eclipse.daanse.olap.api.calc.ResultStyle;
 import org.eclipse.daanse.olap.api.calc.tuple.TupleList;
 import org.eclipse.daanse.olap.api.catalog.CatalogReader;
+import org.eclipse.daanse.olap.api.element.Cube;
 import org.eclipse.daanse.olap.api.element.Hierarchy;
 import org.eclipse.daanse.olap.api.element.Level;
 import org.eclipse.daanse.olap.api.element.Member;
@@ -229,15 +230,15 @@ public abstract class RolapNativeSet extends RolapNative {
 	public Object execute( ResultStyle desiredResultStyle ) {
       return switch (desiredResultStyle) {
       case ITERABLE -> executeList(
-                  new SqlTupleReader( constraint ) );
-      case MUTABLE_LIST, LIST -> executeList( new SqlTupleReader( constraint ) );
+                  new SqlTupleReader( constraint), constraint.getEvaluator().getCube() );
+      case MUTABLE_LIST, LIST -> executeList( new SqlTupleReader( constraint ), constraint.getEvaluator().getCube() );
       default -> throw ResultStyleException.generate(
           ResultStyle.ITERABLE_MUTABLELIST_LIST,
           Collections.singletonList( desiredResultStyle ) );
       };
     }
 
-    protected TupleList executeList( final SqlTupleReader tr ) {
+    protected TupleList executeList( final SqlTupleReader tr, Cube cube ) {
       tr.setMaxRows( maxRows );
       for ( CrossJoinArg arg : args ) {
         addLevel( tr, arg );
@@ -328,7 +329,7 @@ public abstract class RolapNativeSet extends RolapNative {
             context, null, new ArrayList<>() ) );
       }
 
-      if ( !schemaReader.getContext().getConfigValue(ConfigConstants.DISABLE_CACHING, ConfigConstants.DISABLE_CACHING_DEFAULT_VALUE, Boolean.class) ) {
+      if ( schemaReader.getContext().isCashEnabled(cube.getName()) ) {
         if ( hasEnumTargets ) {
           if ( newPartialResult != null ) {
             cache.put(
