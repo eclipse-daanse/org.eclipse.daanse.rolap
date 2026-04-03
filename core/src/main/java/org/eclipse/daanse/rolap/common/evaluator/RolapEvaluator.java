@@ -140,6 +140,7 @@ public class RolapEvaluator implements Evaluator {
 
   private final RolapCalculation[] calculations;
   private int calculationCount;
+  private Member contextMember;
 
   /**
    * List of lists of tuples or members, rarely used, but overrides the ordinary dimensional context if set when a cell
@@ -412,7 +413,9 @@ public final Member[] getNonAllMembers() {
       nonAllMembers = new RolapMember[root.nonAllPositionCount];
       for ( int i = 0; i < root.nonAllPositionCount; i++ ) {
         int nonAllPosition = root.nonAllPositions[i];
-        nonAllMembers[i] = currentMembers[nonAllPosition];
+        if (currentMembers[nonAllPosition].isMeasure() || (contextMember != null && contextMember.getHierarchy().equals(currentMembers[nonAllPosition].getHierarchy()))) {
+            nonAllMembers[i] = currentMembers[nonAllPosition];
+        }
       }
     }
     return nonAllMembers;
@@ -687,6 +690,19 @@ public final Member setContext( Member member ) {
     }
     nonAllMembers = null;
     return previous;
+  }
+
+  public final void setContextMember( Member member ) {
+    contextMember = member;
+  }
+  
+  public final void setContextMember( List<Member> memberList ) {
+    for (Member member : memberList) {
+        if (member == null) {
+            throw new IllegalArgumentException(NULL_MEMBER_IN + memberList);
+        }
+        setContextMember( member );
+    }
   }
 
   @Override

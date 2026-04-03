@@ -1325,6 +1325,7 @@ public Cell getCell( int[] pos ) {
           point.setAxis( axisOrdinal, tupleIndex );
           final int savepoint = revaluator.savepoint();
           try {
+        	revaluator.setContextMember( tuple );
             revaluator.setEvalAxes( true );
             revaluator.setContext( tuple );
             execution.checkCancelOrTimeout();
