@@ -40,7 +40,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.eclipse.daanse.mdx.model.api.expression.operation.InternalOperationAtom;
 import org.eclipse.daanse.mdx.model.api.expression.operation.OperationAtom;
@@ -1322,14 +1321,6 @@ public Cell getCell( int[] pos ) {
         }
 
         int tupleIndex = 0;
-        
-        Set<Member> contextMembers = new HashSet<Member>();
-        for (Axis ax : axes) {
-            contextMembers.addAll(ax.getTupleList().stream()
-                .filter(Objects::nonNull)
-                .flatMap(list -> list.stream().filter(Objects::nonNull)).collect(Collectors.toSet()));
-        }
-        revaluator.setContextMembers(contextMembers );
         for ( final List<Member> tuple : tupleList ) {
           point.setAxis( axisOrdinal, tupleIndex );
           final int savepoint = revaluator.savepoint();
