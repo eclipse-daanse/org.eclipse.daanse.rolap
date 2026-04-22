@@ -410,13 +410,17 @@ public final Member[] getMembers() {
   @Override
 public final Member[] getNonAllMembers() {
     if ( nonAllMembers == null ) {
-      nonAllMembers = new RolapMember[root.nonAllPositionCount];
+      // Collect all current non-All members; if contextMembers is set and
+      // non-empty, intersect with measures + contextMembers (narrower scope).
+      List<Member> collected = new ArrayList<>(root.nonAllPositionCount);
       for ( int i = 0; i < root.nonAllPositionCount; i++ ) {
         int nonAllPosition = root.nonAllPositions[i];
-        if (currentMembers[nonAllPosition].isMeasure() || (contextMembers != null && contextMembers.contains(currentMembers[nonAllPosition]))) {
-            nonAllMembers[i] = currentMembers[nonAllPosition];
+        Member m = currentMembers[nonAllPosition];
+        if ( m.isMeasure() || (contextMembers != null  && contextMembers.contains(m)) ) {
+            collected.add(m);
         }
       }
+      nonAllMembers = collected.toArray(new Member[0]);
     }
     return nonAllMembers;
   }
