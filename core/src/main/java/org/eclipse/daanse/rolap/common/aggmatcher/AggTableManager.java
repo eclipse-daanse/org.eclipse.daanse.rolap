@@ -51,6 +51,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
+import org.eclipse.daanse.rolap.mapping.model.database.source.SourceFactory;
 /**
  * Manages aggregate tables.
  *
@@ -181,14 +182,14 @@ public class AggTableManager {
 //            connectionProps.aggregateScanCatalog();
             Optional<String> oAaggregateScanSchema=    connectionProps.aggregateScanSchema();
 
-			List<? extends org.eclipse.daanse.rolap.mapping.model.DatabaseSchema> schemas = ((RolapContext) context).getCatalogMapping()
+			List<? extends org.eclipse.daanse.cwm.model.cwm.resource.relational.Schema> schemas = ((RolapContext) context).getCatalogMapping()
 					.getDbschemas();
 
-			org.eclipse.daanse.rolap.mapping.model.DatabaseSchema databaseSchema = schemas.getFirst();
+			org.eclipse.daanse.cwm.model.cwm.resource.relational.Schema databaseSchema = schemas.getFirst();
 			if (oAaggregateScanSchema.isPresent()) {
 				String aaggregateScanSchema = oAaggregateScanSchema.get();
 
-				for (org.eclipse.daanse.rolap.mapping.model.DatabaseSchema dbs : schemas) {
+				for (org.eclipse.daanse.cwm.model.cwm.resource.relational.Schema dbs : schemas) {
 					if (dbs.getName().equals(aaggregateScanSchema)) {
 						databaseSchema = dbs;
 						break;
@@ -233,7 +234,7 @@ public class AggTableManager {
 
                     for (JdbcSchema.Table dbTable : db.getTables()) {
                         String name = dbTable.getName();
-                        org.eclipse.daanse.rolap.mapping.model.Table t = dbTable.getModelTable();
+                        org.eclipse.daanse.cwm.model.cwm.resource.relational.NamedColumnSet t = dbTable.getModelTable();
                         // Do the catalog schema aggregate excludes, exclude
                         // this table name.
                         if (ExplicitRules.excludeTable(name, aggGroups)) {
@@ -275,7 +276,7 @@ public class AggTableManager {
                         if (makeAggStar) {
                             dbTable.setTableUsageType(
                                 JdbcSchema.TableUsageType.AGG);
-                            org.eclipse.daanse.rolap.mapping.model.TableQuery q = RolapMappingFactory.eINSTANCE.createTableQuery();
+                            org.eclipse.daanse.rolap.mapping.model.database.source.TableSource q = SourceFactory.eINSTANCE.createTableSource();
                             q.setTable(t);
                             dbTable.table = q;
                             AggStar aggStar = AggStar.makeAggStar(
@@ -350,18 +351,18 @@ public class AggTableManager {
 
             dbFactTable.setTableUsageType(JdbcSchema.TableUsageType.FACT);
 
-            org.eclipse.daanse.rolap.mapping.model.Query relation =
+            org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation =
                 star.getFactTable().getRelation();
             
-            List<? extends org.eclipse.daanse.rolap.mapping.model.TableQueryOptimizationHint> tableHints = null;
-            if (relation instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery table) {
+            List<? extends org.eclipse.daanse.rolap.mapping.model.database.source.TableQueryOptimizationHint> tableHints = null;
+            if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.TableSource table) {
                 tableHints = PojoUtil.getOptimizationHints(table.getOptimizationHints());
             }
             
-            org.eclipse.daanse.rolap.mapping.model.Table t = dbFactTable.getModelTable();
+            org.eclipse.daanse.cwm.model.cwm.resource.relational.NamedColumnSet t = dbFactTable.getModelTable();
 
             String alias = null;
-            org.eclipse.daanse.rolap.mapping.model.TableQuery q = RolapMappingFactory.eINSTANCE.createTableQuery();
+            org.eclipse.daanse.rolap.mapping.model.database.source.TableSource q = SourceFactory.eINSTANCE.createTableSource();
             q.setAlias(alias);
             q.setTable(t);
             q.getOptimizationHints().addAll(tableHints);

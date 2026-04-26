@@ -22,21 +22,21 @@ public class JoinUtil {
         // constructor
     }
 
-    public static org.eclipse.daanse.rolap.mapping.model.Query left(org.eclipse.daanse.rolap.mapping.model.JoinQuery join) {
+    public static org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource left(org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource join) {
         if (join != null && join.getLeft() != null) {
             return join.getLeft().getQuery();
         }
         throw new RolapRuntimeException("Join left error");
     }
 
-    public static org.eclipse.daanse.rolap.mapping.model.Query right(org.eclipse.daanse.rolap.mapping.model.JoinQuery join) {
+    public static org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource right(org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource join) {
         if (join != null && join.getRight() != null) {
             return join.getRight().getQuery();
         }
         throw new RolapRuntimeException("Join right error");
     }
 
-    public static void changeLeftRight(org.eclipse.daanse.rolap.mapping.model.JoinQuery join, org.eclipse.daanse.rolap.mapping.model.Query left, org.eclipse.daanse.rolap.mapping.model.Query right) {
+    public static void changeLeftRight(org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource join, org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource left, org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource right) {
         join.getLeft().setQuery(left);
         join.getRight().setQuery(right);
     }
@@ -45,13 +45,16 @@ public class JoinUtil {
      * Returns the alias of the left join key, defaulting to left's
      * alias if left is a table.
      */
-    public static String getLeftAlias(org.eclipse.daanse.rolap.mapping.model.JoinQuery join) {
+    public static String getLeftAlias(org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource join) {
         if (join.getLeft() != null && join.getLeft().getAlias() != null) {
             return join.getLeft().getAlias();
         }
-        org.eclipse.daanse.rolap.mapping.model.Query left = left(join);
-        if (left instanceof org.eclipse.daanse.rolap.mapping.model.RelationalQuery relation) {
-            return RelationUtil.getAlias(relation);
+        org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource left = left(join);
+        if (left instanceof org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource innerJoin) {
+            return getLeftAlias(innerJoin);
+        }
+        if (left != null) {
+            return RelationUtil.getAlias(left);
         }
         throw Util.newInternal(
             new StringBuilder("alias is required because ").append(left).append(" is not a table").toString());
@@ -61,16 +64,16 @@ public class JoinUtil {
      * Returns the alias of the right join key, defaulting to right's
      * alias if right is a table.
      */
-    public static String getRightAlias(org.eclipse.daanse.rolap.mapping.model.JoinQuery join) {
+    public static String getRightAlias(org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource join) {
         if (join.getRight() != null && join.getRight().getAlias() != null) {
             return join.getRight().getAlias();
         }
-        org.eclipse.daanse.rolap.mapping.model.Query right = right(join);
-        if (right instanceof org.eclipse.daanse.rolap.mapping.model.RelationalQuery relation) {
-            return RelationUtil.getAlias(relation);
-        }
-        if (right instanceof org.eclipse.daanse.rolap.mapping.model.JoinQuery j) {
+        org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource right = right(join);
+        if (right instanceof org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource j) {
             return getLeftAlias(j);
+        }
+        if (right != null) {
+            return RelationUtil.getAlias(right);
         }
         throw Util.newInternal(
             new StringBuilder("alias is required because ").append(right).append(" is not a table").toString());

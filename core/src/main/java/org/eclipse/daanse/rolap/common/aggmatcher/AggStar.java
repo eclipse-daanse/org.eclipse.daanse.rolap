@@ -829,11 +829,11 @@ public class AggStar {
 
         /** The name of the table in the database. */
         private final String name;
-        private final org.eclipse.daanse.rolap.mapping.model.RelationalQuery relation;
+        private final org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation;
         protected final List<Level> levels = new ArrayList<>();
         protected List<DimTable> children;
 
-        Table(final String name, final org.eclipse.daanse.rolap.mapping.model.RelationalQuery relation) {
+        Table(final String name, final org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation) {
             this.name = name;
             this.relation = relation;
             this.children = Collections.emptyList();
@@ -864,7 +864,7 @@ public class AggStar {
         public abstract boolean hasJoinCondition();
         public abstract Table.JoinCondition getJoinCondition();
 
-        public org.eclipse.daanse.rolap.mapping.model.RelationalQuery getRelation() {
+        public org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource getRelation() {
             return relation;
         }
 
@@ -954,7 +954,7 @@ public class AggStar {
             final Usage usage)
         {
             String tableName = rTable.getAlias();
-            org.eclipse.daanse.rolap.mapping.model.RelationalQuery relationInner = rTable.getRelation();
+            org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relationInner = rTable.getRelation();
             RolapStar.Condition rjoinCondition = rTable.getJoinCondition();
             SqlExpression rleft = rjoinCondition.getLeft();
             final SqlExpression rright;
@@ -1203,7 +1203,7 @@ public class AggStar {
 
         FactTable(
             final String name,
-            final org.eclipse.daanse.rolap.mapping.model.RelationalQuery relation,
+            final org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation,
             final int totalColumnSize,
             final long numberOfRows)
         {
@@ -1612,7 +1612,7 @@ public class AggStar {
         DimTable(
             final Table parent,
             final String name,
-            final org.eclipse.daanse.rolap.mapping.model.RelationalQuery relation,
+            final org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation,
             final JoinCondition joinCondition)
         {
             super(name, relation);

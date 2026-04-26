@@ -25,11 +25,11 @@ import org.eclipse.daanse.olap.api.evaluator.Evaluator;
 public class BitAggAggregator implements Aggregator {
 
     private boolean not;
-    private org.eclipse.daanse.rolap.mapping.model.BitAggType bitAggType;
+    private org.eclipse.daanse.rolap.mapping.model.olap.cube.measure.BitAggType bitAggType;
     private Dialect dialect;
 
     //
-    public BitAggAggregator(boolean not, org.eclipse.daanse.rolap.mapping.model.BitAggType bitAggType, Dialect dialect) {
+    public BitAggAggregator(boolean not, org.eclipse.daanse.rolap.mapping.model.olap.cube.measure.BitAggType bitAggType, Dialect dialect) {
         this.not = not;
         this.bitAggType = bitAggType;
         this.dialect = dialect;
@@ -53,9 +53,9 @@ public class BitAggAggregator implements Aggregator {
     @Override
     public StringBuilder getExpression(CharSequence operand) {
         return switch (bitAggType) {
-        case org.eclipse.daanse.rolap.mapping.model.BitAggType.AND -> and(operand);
-        case org.eclipse.daanse.rolap.mapping.model.BitAggType.OR -> or(operand);
-        case org.eclipse.daanse.rolap.mapping.model.BitAggType.XOR -> xor(operand);
+        case org.eclipse.daanse.rolap.mapping.model.olap.cube.measure.BitAggType.AND -> and(operand);
+        case org.eclipse.daanse.rolap.mapping.model.olap.cube.measure.BitAggType.OR -> or(operand);
+        case org.eclipse.daanse.rolap.mapping.model.olap.cube.measure.BitAggType.XOR -> xor(operand);
         };
     }
 

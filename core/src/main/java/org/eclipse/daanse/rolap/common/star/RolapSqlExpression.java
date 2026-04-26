@@ -24,11 +24,11 @@ public class RolapSqlExpression implements org.eclipse.daanse.olap.api.sql.SqlEx
     
     public RolapSqlExpression() {
     }
-    public RolapSqlExpression(org.eclipse.daanse.rolap.mapping.model.SQLExpressionColumn scm) {
+    public RolapSqlExpression(org.eclipse.daanse.rolap.mapping.model.database.relational.ExpressionColumn scm) {
         this(scm, SortingDirection.ASC);
     }
     
-    public RolapSqlExpression(org.eclipse.daanse.rolap.mapping.model.SQLExpressionColumn scm, SortingDirection sortingDirection) {
+    public RolapSqlExpression(org.eclipse.daanse.rolap.mapping.model.database.relational.ExpressionColumn scm, SortingDirection sortingDirection) {
         if (scm.getSqls() != null) {
             this.sqls = scm.getSqls().stream().map(ex -> (org.eclipse.daanse.olap.api.SqlStatement)RolapSqlStatement.builder().withDialects(ex.getDialects()).withSql(ex.getSql()).build()).toList();
             this.sortingDirection = sortingDirection;

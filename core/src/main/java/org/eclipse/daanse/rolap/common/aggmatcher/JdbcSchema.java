@@ -27,7 +27,7 @@ package org.eclipse.daanse.rolap.common.aggmatcher;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.sql.JDBCType;
+import org.eclipse.daanse.cwm.util.resource.relational.SqlSimpleTypes;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.text.MessageFormat;
@@ -50,7 +50,7 @@ import org.eclipse.daanse.olap.api.sql.SqlExpression;
 import org.eclipse.daanse.rolap.common.star.RolapSqlExpression;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.element.RolapLevel;
-import org.eclipse.daanse.rolap.mapping.model.ColumnType;
+import org.eclipse.daanse.rolap.mapping.model.database.relational.ColumnType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -223,7 +223,7 @@ public class JdbcSchema {
                 public RolapStar.Measure rMeasure;
 
                 // hierarchy stuff
-                public org.eclipse.daanse.rolap.mapping.model.RelationalQuery relation;
+                public org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation;
                 public SqlExpression joinExp;
                 public String levelColumnName;
 
@@ -724,31 +724,36 @@ public class JdbcSchema {
          */
         private final String tableType;
 
-        private final org.eclipse.daanse.rolap.mapping.model.Table modelTable; 
+        private final org.eclipse.daanse.cwm.model.cwm.resource.relational.NamedColumnSet modelTable; 
         
         // mondriandef stuff
-        public org.eclipse.daanse.rolap.mapping.model.TableQuery table;
+        public org.eclipse.daanse.rolap.mapping.model.database.source.TableSource table;
 
-        private Table(final String name, String tableType, List<? extends org.eclipse.daanse.rolap.mapping.model.Column> list, org.eclipse.daanse.rolap.mapping.model.Table modelTable) {
+        private Table(final String name, String tableType, List<? extends org.eclipse.daanse.cwm.model.cwm.resource.relational.Column> list, org.eclipse.daanse.cwm.model.cwm.resource.relational.NamedColumnSet modelTable) {
             this.name = name;
             this.tableUsageType = TableUsageType.UNKNOWN;
             this.tableType = tableType;
             this.modelTable = modelTable;
 
-			for (org.eclipse.daanse.rolap.mapping.model.Column rdbColumn : list) {
+			for (org.eclipse.daanse.cwm.model.cwm.resource.relational.Column rdbColumn : list) {
 
 				String nameInner = rdbColumn.getName();
-				int type = rdbColumn.getType() != null ? JDBCType.valueOf(rdbColumn.getType().name()).getVendorTypeNumber() : 0;
-				ColumnType typeName = rdbColumn.getType();
-				Integer columnSize = rdbColumn.getColumnSize() == null ? 0 : rdbColumn.getColumnSize();
-				Integer decimalDigits = rdbColumn.getDecimalDigits() == null ? 0 : rdbColumn.getDecimalDigits();
-				int numPrecRadix = rdbColumn.getNumPrecRadix() == null ? 0 : rdbColumn.getNumPrecRadix();
-				int charOctetLength = rdbColumn.getCharOctetLength() == null ? 0 : rdbColumn.getCharOctetLength();
-				boolean isNullable = Boolean.TRUE == rdbColumn.getNullable();
+				org.eclipse.daanse.cwm.model.cwm.resource.relational.SQLSimpleType rdbType =
+					rdbColumn.getType() instanceof org.eclipse.daanse.cwm.model.cwm.resource.relational.SQLSimpleType st ? st : null;
+				String typeName = rdbType != null ? rdbType.getName() : null;
+				// Read the JDBC type code straight from the SQLSimpleType.typeNumber
+				// field; avoids JDBCType.valueOf(name) failing on SQL-99 spec names
+				// such as "CHARACTER VARYING" or "DOUBLE PRECISION".
+				int type = rdbType != null ? SqlSimpleTypes.jdbcType(rdbType) : 0;
+				Integer columnSize = rdbType == null ? 0 : (int) rdbType.getCharacterMaximumLength();
+				Integer decimalDigits = rdbType == null ? 0 : (int) rdbType.getNumericScale();
+				int numPrecRadix = rdbType == null ? 0 : (int) rdbType.getNumericPrecisionRadix();
+				int charOctetLength = rdbType == null ? 0 : (int) rdbType.getCharacterOctetLength();
+				boolean isNullable = rdbColumn.getIsNullable() == null || rdbColumn.getIsNullable().getValue() == 1;
 
 				Column column = new Column(nameInner);
 				column.setType(type);
-				column.setTypeName(typeName != null ? typeName.name() : null);
+				column.setTypeName(typeName);
 				column.setColumnSize(columnSize);
 				column.setDecimalDigits(decimalDigits);
 				column.setNumPrecRadix(numPrecRadix);
@@ -756,7 +761,7 @@ public class JdbcSchema {
 				column.setIsNullable(isNullable);
 
 				getColumnMap().put(column.getName(), column);
-				totalColumnSize += column.getColumnSize();
+				totalColumnSize += (columnSize != null ? columnSize : 0);
 			}
         }
 
@@ -895,7 +900,7 @@ public class JdbcSchema {
             return tableType;
         }
 
-        public org.eclipse.daanse.rolap.mapping.model.Table getModelTable() {
+        public org.eclipse.daanse.cwm.model.cwm.resource.relational.NamedColumnSet getModelTable() {
             return modelTable;
         }
 
@@ -945,7 +950,7 @@ public class JdbcSchema {
         }
     }
 
-    private org.eclipse.daanse.rolap.mapping.model.DatabaseSchema databaseSchema;
+    private org.eclipse.daanse.cwm.model.cwm.resource.relational.Schema databaseSchema;
 
     /**
      * Tables by name. We use a sorted map so {@link #getTables()}'s output
@@ -954,7 +959,7 @@ public class JdbcSchema {
     private final SortedMap<String, Table> tables =
         new TreeMap<>();
 
-	public JdbcSchema(final org.eclipse.daanse.rolap.mapping.model.DatabaseSchema databaseSchema) {
+	public JdbcSchema(final org.eclipse.daanse.cwm.model.cwm.resource.relational.Schema databaseSchema) {
 		this.databaseSchema = databaseSchema;
 		loadTables();
 	}
@@ -1013,10 +1018,16 @@ public class JdbcSchema {
      */
 	protected void loadTables() {
 
-		for (org.eclipse.daanse.rolap.mapping.model.Table rdbTable : databaseSchema.getTables()) {
-			if (rdbTable instanceof org.eclipse.daanse.rolap.mapping.model.PhysicalTable || rdbTable instanceof org.eclipse.daanse.rolap.mapping.model.ViewTable || rdbTable instanceof org.eclipse.daanse.rolap.mapping.model.SystemTable) {
+		for (org.eclipse.daanse.cwm.model.cwm.objectmodel.core.ModelElement _me : databaseSchema.getOwnedElement()) {
+			if (!(_me instanceof org.eclipse.daanse.cwm.model.cwm.resource.relational.NamedColumnSet rdbTable)) continue;
+			if (rdbTable instanceof org.eclipse.daanse.cwm.model.cwm.resource.relational.Table || rdbTable instanceof org.eclipse.daanse.cwm.model.cwm.resource.relational.View || rdbTable instanceof org.eclipse.daanse.cwm.model.cwm.resource.relational.Table) {
 
-			Table table = new Table(rdbTable.getName(), rdbTable.getClass().getSimpleName(),rdbTable.getColumns(), rdbTable);
+			java.util.List<org.eclipse.daanse.cwm.model.cwm.resource.relational.Column> _tblCols =
+				rdbTable.getFeature().stream()
+					.filter(org.eclipse.daanse.cwm.model.cwm.resource.relational.Column.class::isInstance)
+					.map(org.eclipse.daanse.cwm.model.cwm.resource.relational.Column.class::cast)
+					.toList();
+			Table table = new Table(rdbTable.getName(), rdbTable.getClass().getSimpleName(), _tblCols, rdbTable);
 				getLogger().debug("Adding table {}", rdbTable.getName());
 				tables.put(table.getName(), table);
 			}

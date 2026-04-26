@@ -46,11 +46,13 @@ import org.eclipse.daanse.rolap.element.RolapDimension;
 import org.eclipse.daanse.rolap.element.RolapHierarchy;
 import org.eclipse.daanse.rolap.element.RolapVirtualCube;
 import org.eclipse.daanse.rolap.element.TestPublicRolapDimension;
-import org.eclipse.daanse.rolap.mapping.model.PhysicalCube;
+import org.eclipse.daanse.rolap.mapping.model.olap.cube.PhysicalCube;
 import org.eclipse.daanse.rolap.mapping.model.RolapMappingFactory;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import org.eclipse.daanse.rolap.mapping.model.olap.cube.CubeFactory;
+import org.eclipse.daanse.rolap.mapping.model.olap.dimension.DimensionFactory;
 class RolapCubeDimensionTest {
 
   private RolapCubeDimension stubRolapCubeDimension(boolean virtualCube) {
@@ -61,7 +63,7 @@ class RolapCubeDimensionTest {
     doReturn(rolapDim_hierarchies).when(rolapDim).getHierarchies();
     doReturn(OlapMetaDataBase.empty()).when(rolapDim).getMetaData();
     
-    org.eclipse.daanse.rolap.mapping.model.StandardDimension cubeDim = RolapMappingFactory.eINSTANCE.createStandardDimension();
+    org.eclipse.daanse.rolap.mapping.model.olap.dimension.StandardDimension cubeDim = DimensionFactory.eINSTANCE.createStandardDimension();
     cubeDim.setName("StubCubeDimCaption");
     cubeDim.setDescription("StubCubeDimDescription");
     cubeDim.setVisible(true);
@@ -69,7 +71,7 @@ class RolapCubeDimensionTest {
     String name = "StubCubeName";
     int cubeOrdinal = 0;
     List<RolapHierarchy> hierarchyList = null;
-    org.eclipse.daanse.rolap.mapping.model.DimensionConnector dimensionConnector = RolapMappingFactory.eINSTANCE.createDimensionConnector();
+    org.eclipse.daanse.rolap.mapping.model.olap.dimension.DimensionConnector dimensionConnector = DimensionFactory.eINSTANCE.createDimensionConnector();
     dimensionConnector.setDimension(cubeDim);
     
     return new RolapCubeDimension(
@@ -84,14 +86,14 @@ class RolapCubeDimensionTest {
   @Test
   void lookupCubeNull() {
     RolapCubeDimension rcd = stubRolapCubeDimension(false);
-    org.eclipse.daanse.rolap.mapping.model.DimensionConnector dimConnector = RolapMappingFactory.eINSTANCE.createDimensionConnector();
+    org.eclipse.daanse.rolap.mapping.model.olap.dimension.DimensionConnector dimConnector = DimensionFactory.eINSTANCE.createDimensionConnector();
       assertThat(rcd.lookupFactCube(dimConnector, null)).isNull();
   }
 
   @Test
   void lookupCubeNotVirtual() {
     RolapCubeDimension rcd = stubRolapCubeDimension(false);
-    org.eclipse.daanse.rolap.mapping.model.DimensionConnector cubeDim = RolapMappingFactory.eINSTANCE.createDimensionConnector();
+    org.eclipse.daanse.rolap.mapping.model.olap.dimension.DimensionConnector cubeDim = DimensionFactory.eINSTANCE.createDimensionConnector();
     RolapCatalog schema = mock(RolapCatalog.class);
 
       assertThat(rcd.lookupFactCube(cubeDim, schema)).isNull();
@@ -103,13 +105,13 @@ class RolapCubeDimensionTest {
     RolapCubeDimension rcd = stubRolapCubeDimension(false);
     RolapCatalog schema = mock(RolapCatalog.class);
     final String cubeName = "TheCubeName";
-    PhysicalCube cube = RolapMappingFactory.eINSTANCE.createPhysicalCube();
+    PhysicalCube cube = CubeFactory.eINSTANCE.createPhysicalCube();
     cube.setName(cubeName);
-    org.eclipse.daanse.rolap.mapping.model.DimensionConnector dimCon = RolapMappingFactory.eINSTANCE.createDimensionConnector();
+    org.eclipse.daanse.rolap.mapping.model.olap.dimension.DimensionConnector dimCon = DimensionFactory.eINSTANCE.createDimensionConnector();
     dimCon.setPhysicalCube(cube);
 
     // explicit doReturn - just to make it evident
-    doReturn(null).when(schema).lookupCube(any(org.eclipse.daanse.rolap.mapping.model.Cube.class));
+    doReturn(null).when(schema).lookupCube(any(org.eclipse.daanse.rolap.mapping.model.olap.cube.Cube.class));
 
       assertThat(rcd.lookupFactCube(dimCon, schema)).isNull();
     Mockito.verify(schema).lookupCube(cube);
@@ -119,9 +121,9 @@ class RolapCubeDimensionTest {
   void lookupCubeFound() {
     RolapCubeDimension rcd = stubRolapCubeDimension(false);
     final String cubeName = "TheCubeName";
-    PhysicalCube cube = RolapMappingFactory.eINSTANCE.createPhysicalCube();
+    PhysicalCube cube = CubeFactory.eINSTANCE.createPhysicalCube();
     cube.setName(cubeName);
-    org.eclipse.daanse.rolap.mapping.model.DimensionConnector cubeCon = RolapMappingFactory.eINSTANCE.createDimensionConnector();
+    org.eclipse.daanse.rolap.mapping.model.olap.dimension.DimensionConnector cubeCon = DimensionFactory.eINSTANCE.createDimensionConnector();
     cubeCon.setPhysicalCube(cube);
 
     RolapCatalog schema = mock(RolapCatalog.class);

@@ -33,7 +33,7 @@ public abstract class RolapWritebackColumn{
 
     protected final RolapDatabaseColumn column;
 
-    protected RolapWritebackColumn(org.eclipse.daanse.rolap.mapping.model.Column column) {
+    protected RolapWritebackColumn(org.eclipse.daanse.cwm.model.cwm.resource.relational.Column column) {
         this.column = new RolapDatabaseColumn();
         this.column.setName(column.getName());
     }

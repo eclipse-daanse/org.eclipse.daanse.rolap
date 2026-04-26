@@ -21,9 +21,11 @@ import static org.eclipse.daanse.rolap.common.util.JoinUtil.right;
 import java.util.List;
 
 import org.eclipse.daanse.olap.common.Util;
-import org.eclipse.daanse.rolap.mapping.model.Query;
+import org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource;
 import org.eclipse.daanse.rolap.mapping.model.RolapMappingFactory;
 
+import org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationFactory;
+import org.eclipse.daanse.rolap.mapping.model.database.source.SourceFactory;
 public class PojoUtil {
 	public static final String BAD_RELATION_TYPE = "bad relation type ";
 	private PojoUtil() {
@@ -36,13 +38,13 @@ public class PojoUtil {
 //					.withsSchema(getDatabaseSchema(s.getSchema()))
 //					.withColumns(getColumns(s.getColumns()))
 //					.withName(s.getName()))
-//					.withSqlStatements(getSqlStatements(s.getSqlStatements()))
+//					.withSqlStatements(getSqlStatements(s.getDialectStatements()))
 //					.build();
 //		}
 //		return null;
 //	}
 
-    private static org.eclipse.daanse.rolap.mapping.model.SqlStatement getSql(org.eclipse.daanse.rolap.mapping.model.SqlStatement s) {
+    private static org.eclipse.daanse.rolap.mapping.model.database.source.SqlStatement getSql(org.eclipse.daanse.rolap.mapping.model.database.source.SqlStatement s) {
         if (s != null) {
             //return SqlStatementMappingImpl.builder()
             //    .withDialects(s.getDialects())
@@ -77,16 +79,16 @@ public class PojoUtil {
      *
      * @param relation A table or a join
      */
-    public static org.eclipse.daanse.rolap.mapping.model.Query copy(
-         org.eclipse.daanse.rolap.mapping.model.Query relation)
+    public static org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource copy(
+         org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation)
     {
         return switch (relation) {
-        case org.eclipse.daanse.rolap.mapping.model.TableQuery table -> {
-        	org.eclipse.daanse.rolap.mapping.model.SqlStatement sqlMappingImpl = getSql(table.getSqlWhereExpression());
-            List<? extends org.eclipse.daanse.rolap.mapping.model.AggregationExclude> aggregationExcludes = getAggregationExcludes(table.getAggregationExcludes());
-            List<? extends org.eclipse.daanse.rolap.mapping.model.TableQueryOptimizationHint> optimizationHints = getOptimizationHints(table.getOptimizationHints());
-            List<? extends org.eclipse.daanse.rolap.mapping.model.AggregationTable> aggregationTables = getAggregationTables(table.getAggregationTables());
-            org.eclipse.daanse.rolap.mapping.model.TableQuery q = RolapMappingFactory.eINSTANCE.createTableQuery();
+        case org.eclipse.daanse.rolap.mapping.model.database.source.TableSource table -> {
+        	org.eclipse.daanse.rolap.mapping.model.database.source.SqlStatement sqlMappingImpl = getSql(table.getSqlWhereExpression());
+            List<? extends org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationExclude> aggregationExcludes = getAggregationExcludes(table.getAggregationExcludes());
+            List<? extends org.eclipse.daanse.rolap.mapping.model.database.source.TableQueryOptimizationHint> optimizationHints = getOptimizationHints(table.getOptimizationHints());
+            List<? extends org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationTable> aggregationTables = getAggregationTables(table.getAggregationTables());
+            org.eclipse.daanse.rolap.mapping.model.database.source.TableSource q = SourceFactory.eINSTANCE.createTableSource();
             q.setAlias(table.getAlias());
             q.setTable(getPhysicalTable(table.getTable()));
             q.setSqlWhereExpression(sqlMappingImpl);
@@ -95,23 +97,23 @@ public class PojoUtil {
             q.getAggregationTables().addAll(aggregationTables);
             yield q;
         }
-        case org.eclipse.daanse.rolap.mapping.model.InlineTableQuery table -> {
-            org.eclipse.daanse.rolap.mapping.model.InlineTableQuery inlineTableQuery = RolapMappingFactory.eINSTANCE.createInlineTableQuery();
+        case org.eclipse.daanse.rolap.mapping.model.database.source.InlineTableSource table -> {
+            org.eclipse.daanse.rolap.mapping.model.database.source.InlineTableSource inlineTableQuery = SourceFactory.eINSTANCE.createInlineTableSource();
             inlineTableQuery.setAlias(table.getAlias());
             inlineTableQuery.setTable(getInlineTable(table.getTable()));
             yield inlineTableQuery;
         }
-        case org.eclipse.daanse.rolap.mapping.model.JoinQuery join -> {
-            org.eclipse.daanse.rolap.mapping.model.Query left = copy(left(join));
-            org.eclipse.daanse.rolap.mapping.model.Query right = copy(right(join));
-            org.eclipse.daanse.rolap.mapping.model.JoinQuery joinQuery = RolapMappingFactory.eINSTANCE.createJoinQuery();
+        case org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource join -> {
+            org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource left = copy(left(join));
+            org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource right = copy(right(join));
+            org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource joinQuery = SourceFactory.eINSTANCE.createJoinSource();
             
-            org.eclipse.daanse.rolap.mapping.model.JoinedQueryElement leftElement = RolapMappingFactory.eINSTANCE.createJoinedQueryElement();
+            org.eclipse.daanse.rolap.mapping.model.database.source.JoinedQueryElement leftElement = SourceFactory.eINSTANCE.createJoinedQueryElement();
             leftElement.setAlias(getLeftAlias(join));
             leftElement.setKey(getColumn(join.getLeft().getKey()));
             leftElement.setQuery(left);
             
-            org.eclipse.daanse.rolap.mapping.model.JoinedQueryElement rightElement = RolapMappingFactory.eINSTANCE.createJoinedQueryElement();
+            org.eclipse.daanse.rolap.mapping.model.database.source.JoinedQueryElement rightElement = SourceFactory.eINSTANCE.createJoinedQueryElement();
             rightElement.setAlias(getRightAlias(join));
             rightElement.setKey(getColumn(join.getRight().getKey()));
             rightElement.setQuery(right);
@@ -124,11 +126,11 @@ public class PojoUtil {
         };
     }
 
-	public static org.eclipse.daanse.rolap.mapping.model.InlineTable getInlineTable(org.eclipse.daanse.rolap.mapping.model.InlineTable table) {
+	public static org.eclipse.daanse.rolap.mapping.model.database.relational.InlineTable getInlineTable(org.eclipse.daanse.rolap.mapping.model.database.relational.InlineTable table) {
     	//List<? extends org.eclipse.daanse.rolap.mapping.model.Row> rows = getRows(table.getRows());
-    	//List<? extends org.eclipse.daanse.rolap.mapping.model.Column> columns = getColumns(table.getColumns());
-    	//org.eclipse.daanse.rolap.mapping.model.DatabaseSchema schema = getDatabaseSchema(table.getSchema());
-    	//org.eclipse.daanse.rolap.mapping.model.InlineTable inlineTable = InlineTableMappingImpl.builder().build();
+    	//List<? extends org.eclipse.daanse.cwm.model.cwm.resource.relational.Column> columns = getColumns(table.getFeature().stream().filter(org.eclipse.daanse.cwm.model.cwm.resource.relational.Column.class::isInstance).map(org.eclipse.daanse.cwm.model.cwm.resource.relational.Column.class::cast).toList());
+    	//org.eclipse.daanse.cwm.model.cwm.resource.relational.Schema schema = getDatabaseSchema(table.getSchema());
+    	//org.eclipse.daanse.rolap.mapping.model.database.relational.InlineTable inlineTable = InlineTableMappingImpl.builder().build();
         //inlineTable.setName(table.getName());
         //inlineTable.setColumns(columns);
         //inlineTable.setSchema(schema);
@@ -138,8 +140,8 @@ public class PojoUtil {
 		return table; //TODO temove method
 	}
 
-	private static List<? extends org.eclipse.daanse.rolap.mapping.model.AggregationTable> getAggregationTables(
-			List<? extends org.eclipse.daanse.rolap.mapping.model.AggregationTable> aggregationTables) {
+	private static List<? extends org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationTable> getAggregationTables(
+			List<? extends org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationTable> aggregationTables) {
 		if (aggregationTables != null) {
 			//return aggregationTables.stream().map(c -> getAggregationTable(c)).toList();
 			return aggregationTables; //TODO remove
@@ -147,14 +149,14 @@ public class PojoUtil {
 		return List.of();
 	}
 
-	private static org.eclipse.daanse.rolap.mapping.model.AggregationTable getAggregationTable(org.eclipse.daanse.rolap.mapping.model.AggregationTable a) {
-		if (a instanceof org.eclipse.daanse.rolap.mapping.model.AggregationName anm) {
-			org.eclipse.daanse.rolap.mapping.model.AggregationName aggregationName = RolapMappingFactory.eINSTANCE.createAggregationName();
+	private static org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationTable getAggregationTable(org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationTable a) {
+		if (a instanceof org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationName anm) {
+			org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationName aggregationName = AggregationFactory.eINSTANCE.createAggregationName();
 			aggregationName.setApproxRowCount(anm.getApproxRowCount());
 			return aggregationName;
 		}
-		if (a instanceof org.eclipse.daanse.rolap.mapping.model.AggregationPattern apm) {
-			org.eclipse.daanse.rolap.mapping.model.AggregationPattern aggregationPattern = RolapMappingFactory.eINSTANCE.createAggregationPattern();
+		if (a instanceof org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationPattern apm) {
+			org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationPattern aggregationPattern = AggregationFactory.eINSTANCE.createAggregationPattern();
 			aggregationPattern.setPattern(apm.getPattern());
 			aggregationPattern.getAggregationMeasures().addAll(getAggregationMeasures(apm.getAggregationMeasures()));
 			return aggregationPattern;
@@ -162,11 +164,11 @@ public class PojoUtil {
 		return null;
 	}
 
-	private static List<org.eclipse.daanse.rolap.mapping.model.AggregationMeasure> getAggregationMeasures(
-			List<? extends org.eclipse.daanse.rolap.mapping.model.AggregationMeasure> aggregationMeasures) {
+	private static List<org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationMeasure> getAggregationMeasures(
+			List<? extends org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationMeasure> aggregationMeasures) {
 		if (aggregationMeasures != null) {
 			return aggregationMeasures.stream().map(c -> {
-				org.eclipse.daanse.rolap.mapping.model.AggregationMeasure aggregationMeasure = RolapMappingFactory.eINSTANCE.createAggregationMeasure();
+				org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationMeasure aggregationMeasure = AggregationFactory.eINSTANCE.createAggregationMeasure();
 				aggregationMeasure.setColumn(c.getColumn());
 				aggregationMeasure.setName(c.getName());
 				aggregationMeasure.setRollupType(c.getRollupType());
@@ -176,8 +178,8 @@ public class PojoUtil {
 		return List.of();
 	}
 
-	public static List<? extends org.eclipse.daanse.rolap.mapping.model.TableQueryOptimizationHint> getOptimizationHints(
-			List<? extends org.eclipse.daanse.rolap.mapping.model.TableQueryOptimizationHint> optimizationHints) {
+	public static List<? extends org.eclipse.daanse.rolap.mapping.model.database.source.TableQueryOptimizationHint> getOptimizationHints(
+			List<? extends org.eclipse.daanse.rolap.mapping.model.database.source.TableQueryOptimizationHint> optimizationHints) {
 		if (optimizationHints != null) {
 			//return optimizationHints.stream().map(c -> TableQueryOptimizationHintMappingImpl.builder()
 			//		.withValue(c.getValue())
@@ -189,8 +191,8 @@ public class PojoUtil {
 	}
 
 
-	private static List<? extends org.eclipse.daanse.rolap.mapping.model.AggregationExclude> getAggregationExcludes(
-			List<? extends org.eclipse.daanse.rolap.mapping.model.AggregationExclude> aggregationExcludes) {
+	private static List<? extends org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationExclude> getAggregationExcludes(
+			List<? extends org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationExclude> aggregationExcludes) {
     	if (aggregationExcludes != null) {
     		//return aggregationExcludes.stream().map(a ->
     		//AggregationExcludeMappingImpl.builder()
@@ -204,29 +206,28 @@ public class PojoUtil {
     	return List.of();
 	}
 
-	public static List<? extends org.eclipse.daanse.rolap.mapping.model.Row> getRows(List<? extends org.eclipse.daanse.rolap.mapping.model.Row> rows) {
+	public static List<? extends org.eclipse.daanse.cwm.model.cwm.resource.relational.Row> getRows(List<? extends org.eclipse.daanse.cwm.model.cwm.resource.relational.Row> rows) {
     	if (rows != null) {
-    		//return rows.stream().map(r -> ((RowMapping)(RowMappingImpl.builder().withRowValues(getRowValues(r.getRowValues())).build()))).toList();
-    		return rows; 
+    		return rows;
     	}
     	return List.of();
 	}
 
-	private static List<? extends org.eclipse.daanse.rolap.mapping.model.RowValue> getRowValues(List<? extends org.eclipse.daanse.rolap.mapping.model.RowValue> list) {
+	private static List<? extends org.eclipse.daanse.cwm.model.cwm.objectmodel.instance.DataSlot> getRowValues(List<? extends org.eclipse.daanse.cwm.model.cwm.objectmodel.instance.DataSlot> list) {
 		if (list != null) {
-			//return list.stream().map(c -> RowValueMappingImpl.builder().withValue(c.getValue()).withColumn((PhysicalColumnMappingImpl)getColumn(c.getColumn())).build()).toList();
-			return list; //TODO remove
+			return list;
 		}
-		return List.of();	}
+		return List.of();
+	}
 
-	private static org.eclipse.daanse.rolap.mapping.model.DatabaseSchema getDatabaseSchema(org.eclipse.daanse.rolap.mapping.model.DatabaseSchema schema) {
+	private static org.eclipse.daanse.cwm.model.cwm.resource.relational.Schema getDatabaseSchema(org.eclipse.daanse.cwm.model.cwm.resource.relational.Schema schema) {
         if (schema != null) {
             return schema; //TODO remove
         }
         return null;
 	}
 
-	private static List<org.eclipse.daanse.rolap.mapping.model.Column> getColumns(List<? extends org.eclipse.daanse.rolap.mapping.model.Column> columns) {
+	private static List<org.eclipse.daanse.cwm.model.cwm.resource.relational.Column> getColumns(List<? extends org.eclipse.daanse.cwm.model.cwm.resource.relational.Column> columns) {
 		if (columns != null) {
             return columns.stream().map(c -> getColumn(c)).toList();
         }
@@ -234,18 +235,18 @@ public class PojoUtil {
 	}
 
 	// TODO: migrate to util.Converter
-	public static org.eclipse.daanse.rolap.mapping.model.Column getColumn(org.eclipse.daanse.rolap.mapping.model.Column column) {
+	public static org.eclipse.daanse.cwm.model.cwm.resource.relational.Column getColumn(org.eclipse.daanse.cwm.model.cwm.resource.relational.Column column) {
         if (column != null) {
             /*
             String name = column.getName();
             ColumnType type = column.getType();
-            Integer columnSize = column.getColumnSize();
-            Integer decimalDigits = column.getDecimalDigits();
-            Integer numPrecRadix = column.getNumPrecRadix();
-            Integer charOctetLength = column.getCharOctetLength();
-            Boolean nullable = column.getNullable();
+            Integer columnSize = (column.getType() instanceof org.eclipse.daanse.cwm.model.cwm.resource.relational.SQLSimpleType _sst ? _sst.getCharacterMaximumLength() : null);
+            Integer decimalDigits = (column.getType() instanceof org.eclipse.daanse.cwm.model.cwm.resource.relational.SQLSimpleType _sst2 ? _sst2.getNumericScale() : null);
+            Integer numPrecRadix = (column.getType() instanceof org.eclipse.daanse.cwm.model.cwm.resource.relational.SQLSimpleType _sst3 ? _sst3.getNumericPrecisionRadix() : null);
+            Integer charOctetLength = (column.getType() instanceof org.eclipse.daanse.cwm.model.cwm.resource.relational.SQLSimpleType _sst4 ? _sst4.getCharacterOctetLength() : null);
+            Boolean nullable = (column.getIsNullable() != null ? column.getIsNullable().getValue() == 1 : null);
             String description = column.getDescription();
-            org.eclipse.daanse.rolap.mapping.model.PhysicalColumn c = PhysicalColumnMappingImpl.builder().withName(name).withDataType(type)
+            org.eclipse.daanse.cwm.model.cwm.resource.relational.Column c = PhysicalColumnMappingImpl.builder().withName(name).withDataType(type)
                     .withColumnSize(orZero(columnSize))
                     .withDecimalDigits(orZero(decimalDigits))
                     .withNumPrecRadix(orZero(numPrecRadix))
@@ -263,16 +264,16 @@ public class PojoUtil {
     }
 
     // TODO: migrate to util.Converter
-	public static org.eclipse.daanse.rolap.mapping.model.Table getPhysicalTable(org.eclipse.daanse.rolap.mapping.model.Table table) {
+	public static org.eclipse.daanse.cwm.model.cwm.resource.relational.NamedColumnSet getPhysicalTable(org.eclipse.daanse.cwm.model.cwm.resource.relational.NamedColumnSet table) {
 		if (table != null) {
             //String name = table.getName();
-            //List<org.eclipse.daanse.rolap.mapping.model.Column> columns = getColumns(table.getColumns());
-            //org.eclipse.daanse.rolap.mapping.model.DatabaseSchema schema = getDatabaseSchema(table.getSchema());
+            //List<org.eclipse.daanse.cwm.model.cwm.resource.relational.Column> columns = getColumns(table.getFeature().stream().filter(org.eclipse.daanse.cwm.model.cwm.resource.relational.Column.class::isInstance).map(org.eclipse.daanse.cwm.model.cwm.resource.relational.Column.class::cast).toList());
+            //org.eclipse.daanse.cwm.model.cwm.resource.relational.Schema schema = getDatabaseSchema(table.getSchema());
             //String description = table.getDescription();
-            //org.eclipse.daanse.rolap.mapping.model.PhysicalTable t = ((PhysicalTableMappingImpl.Builder) PhysicalTableMappingImpl.builder()
+            //org.eclipse.daanse.cwm.model.cwm.resource.relational.Table t = ((PhysicalTableMappingImpl.Builder) PhysicalTableMappingImpl.builder()
             //        .withName(name).withColumns(columns).withsSchema(schema).withsDdescription(description)).build();
             //if (t.getColumns() != null) {
-            //    t.getColumns().forEach(c -> ((org.eclipse.daanse.rolap.mapping.model.PhysicalColumn)c).setTable(table));
+            //    t.getColumns().forEach(c -> ((org.eclipse.daanse.cwm.model.cwm.resource.relational.Column)c).setTable(table));
             //}
             //return t;
 			return table;

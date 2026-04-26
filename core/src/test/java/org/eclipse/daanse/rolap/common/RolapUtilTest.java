@@ -33,12 +33,13 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 
 import org.eclipse.daanse.rolap.common.star.RolapStarRegistry;
-import org.eclipse.daanse.rolap.mapping.model.PhysicalTable;
+import org.eclipse.daanse.cwm.model.cwm.resource.relational.Table;
 import org.eclipse.daanse.rolap.mapping.model.RolapMappingFactory;
-import org.eclipse.daanse.rolap.mapping.model.SqlStatement;
-import org.eclipse.daanse.rolap.mapping.model.TableQuery;
+import org.eclipse.daanse.rolap.mapping.model.database.source.SqlStatement;
+import org.eclipse.daanse.rolap.mapping.model.database.source.TableSource;
 import org.junit.jupiter.api.Test;
 
+import org.eclipse.daanse.rolap.mapping.model.database.source.SourceFactory;
 class RolapUtilTest {
 
   private static final String FILTER_QUERY =
@@ -47,17 +48,17 @@ class RolapUtilTest {
   private static final String TABLE_ALIAS = "TableAlias";
   private static final String RELATION_ALIAS = "RelationAlias";
   private static final String FACT_NAME = "order_fact";
-  private TableQuery fact;
+  private TableSource fact;
 
   @Test
   void makeRolapStarKeyUnmodifiable() throws Exception {
       assertThatThrownBy(() -> {
-          PhysicalTable t = RolapMappingFactory.eINSTANCE.createPhysicalTable();
+          org.eclipse.daanse.cwm.model.cwm.resource.relational.Table t = org.eclipse.daanse.cwm.model.cwm.resource.relational.RelationalFactory.eINSTANCE.createTable();
           t.setName("getFactTable())");
-          SqlStatement sqlStatement = RolapMappingFactory.eINSTANCE.createSqlStatement();
+          SqlStatement sqlStatement = SourceFactory.eINSTANCE.createSqlStatement();
           sqlStatement.getDialects().add("mysql");
           sqlStatement.setSql("`TableAlias`.`promotion_id` = 112");
-          fact = RolapMappingFactory.eINSTANCE.createTableQuery();
+          fact = SourceFactory.eINSTANCE.createTableSource();
           fact.setTable(t);
           fact.setAlias("TableAlias");
           fact.setSqlWhereExpression(sqlStatement);
@@ -70,13 +71,13 @@ class RolapUtilTest {
   @Test
   void makeRolapStarKeyByFactTableName() throws Exception {
     //fact = SchemaUtil.parse(getFactTableWithSQLFilter(), TableQueryMappingImpl.class);
-      PhysicalTable t = RolapMappingFactory.eINSTANCE.createPhysicalTable();
+      org.eclipse.daanse.cwm.model.cwm.resource.relational.Table t = org.eclipse.daanse.cwm.model.cwm.resource.relational.RelationalFactory.eINSTANCE.createTable();
       t.setName("getFactTable())");
-      SqlStatement sqlStatement = RolapMappingFactory.eINSTANCE.createSqlStatement();
+      SqlStatement sqlStatement = SourceFactory.eINSTANCE.createSqlStatement();
       sqlStatement.getDialects().add("mysql");
       sqlStatement.setSql("`TableAlias`.`promotion_id` = 112");
       
-      fact = RolapMappingFactory.eINSTANCE.createTableQuery();
+      fact = SourceFactory.eINSTANCE.createTableSource();
       fact.setTable(t);
       fact.setAlias("TableAlias");
       fact.setSqlWhereExpression(sqlStatement);
@@ -90,13 +91,13 @@ class RolapUtilTest {
   @Test
   void makeRolapStarKeyFactTableWithSQLFilter() throws Exception {
     //fact = SchemaUtil.parse(getFactTableWithSQLFilter(), TableQueryMappingImpl.class);
-      PhysicalTable t = RolapMappingFactory.eINSTANCE.createPhysicalTable();
+      org.eclipse.daanse.cwm.model.cwm.resource.relational.Table t = org.eclipse.daanse.cwm.model.cwm.resource.relational.RelationalFactory.eINSTANCE.createTable();
       t.setName("getFactTable())");
-      SqlStatement sqlStatement = RolapMappingFactory.eINSTANCE.createSqlStatement();
+      SqlStatement sqlStatement = SourceFactory.eINSTANCE.createSqlStatement();
       sqlStatement.getDialects().add("mysql");
       sqlStatement.setSql("`TableAlias`.`promotion_id` = 112");
       
-      fact = RolapMappingFactory.eINSTANCE.createTableQuery();
+      fact = SourceFactory.eINSTANCE.createTableSource();
       fact.setTable(t);
       fact.setAlias("TableAlias");
       fact.setSqlWhereExpression(sqlStatement);
@@ -113,12 +114,12 @@ class RolapUtilTest {
   void makeRolapStarKeyFactTableWithEmptyFilter()
       throws Exception {
     //fact = SchemaUtil.parse(getFactTableWithEmptySQLFilter(), TableQueryMappingImpl.class);
-      PhysicalTable t = RolapMappingFactory.eINSTANCE.createPhysicalTable();
+      org.eclipse.daanse.cwm.model.cwm.resource.relational.Table t = org.eclipse.daanse.cwm.model.cwm.resource.relational.RelationalFactory.eINSTANCE.createTable();
       t.setName("getFactTable())");
-      SqlStatement sqlStatement = RolapMappingFactory.eINSTANCE.createSqlStatement();
+      SqlStatement sqlStatement = SourceFactory.eINSTANCE.createSqlStatement();
       sqlStatement.getDialects().add("mysql");
       
-      fact = RolapMappingFactory.eINSTANCE.createTableQuery();
+      fact = SourceFactory.eINSTANCE.createTableSource();
       fact.setTable(t);
       fact.setAlias("TableAlias");
       fact.setSqlWhereExpression(sqlStatement);
@@ -134,10 +135,10 @@ class RolapUtilTest {
   void makeRolapStarKeyFactTableWithoutSQLFilter()
       throws Exception {
     //fact = SchemaUtil.parse(getFactTableWithoutSQLFilter(), TableQueryMappingImpl.class);
-      PhysicalTable t = RolapMappingFactory.eINSTANCE.createPhysicalTable();
+      org.eclipse.daanse.cwm.model.cwm.resource.relational.Table t = org.eclipse.daanse.cwm.model.cwm.resource.relational.RelationalFactory.eINSTANCE.createTable();
       t.setName("getFactTable())");
       
-      fact = RolapMappingFactory.eINSTANCE.createTableQuery();
+      fact = SourceFactory.eINSTANCE.createTableSource();
       fact.setTable(t);
       fact.setAlias("TableAlias");
 
@@ -156,8 +157,8 @@ class RolapUtilTest {
       assertThat(polapStarKey.getFirst()).isEqualTo(RELATION_ALIAS);
   }
 
-  private static org.eclipse.daanse.rolap.mapping.model.RelationalQuery getFactRelationMock() throws Exception {
-	  org.eclipse.daanse.rolap.mapping.model.RelationalQuery factMock = mock(org.eclipse.daanse.rolap.mapping.model.InlineTableQuery.class);
+  private static org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource getFactRelationMock() throws Exception {
+	  org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource factMock = mock(org.eclipse.daanse.rolap.mapping.model.database.source.InlineTableSource.class);
     when(factMock.getAlias()).thenReturn(RELATION_ALIAS);
     return factMock;
   }

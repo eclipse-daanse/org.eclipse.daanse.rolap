@@ -20,8 +20,8 @@ package org.eclipse.daanse.rolap.element;
 
 public class TestPublicRolapDimension extends RolapDimension{
 
-	TestPublicRolapDimension(RolapCatalog schema, RolapCube cube, org.eclipse.daanse.rolap.mapping.model.Dimension xmlDimension,
-			org.eclipse.daanse.rolap.mapping.model.DimensionConnector xmlCubeDimension) {
+	TestPublicRolapDimension(RolapCatalog schema, RolapCube cube, org.eclipse.daanse.rolap.mapping.model.olap.dimension.Dimension xmlDimension,
+			org.eclipse.daanse.rolap.mapping.model.olap.dimension.DimensionConnector xmlCubeDimension) {
 		super(schema, cube, xmlDimension, xmlCubeDimension);
 	}
 

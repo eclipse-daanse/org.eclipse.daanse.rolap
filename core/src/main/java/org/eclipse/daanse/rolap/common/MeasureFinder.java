@@ -113,13 +113,13 @@ public class MeasureFinder extends MdxVisitorImpl
                         virtualCube.getMeasuresHierarchy(),
                         Util.<RolapMember>cast(measuresFound))));
 
-            org.eclipse.daanse.rolap.mapping.model.CalculatedMember mappingCalcMember =
+            org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.CalculatedMember mappingCalcMember =
                 schema.lookupMappingCalculatedMember(
                     calcMember.getName(),
                     baseCube.getName());
             virtualCube.createCalcMembersAndNamedSets(
                 Collections.singletonList(mappingCalcMember),
-                Collections.<org.eclipse.daanse.rolap.mapping.model.NamedSet>emptyList(),
+                Collections.<org.eclipse.daanse.rolap.mapping.model.olap.dimension.NamedSet>emptyList(),
                 new ArrayList<>(),
                 virtualCube,
                 false);

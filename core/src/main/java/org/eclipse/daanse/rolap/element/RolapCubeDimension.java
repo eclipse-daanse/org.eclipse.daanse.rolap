@@ -46,7 +46,7 @@ public class RolapCubeDimension extends RolapDimension {
 
     RolapDimension rolapDimension;
     int cubeOrdinal;
-    org.eclipse.daanse.rolap.mapping.model.DimensionConnector xmlDimension;
+    org.eclipse.daanse.rolap.mapping.model.olap.dimension.DimensionConnector xmlDimension;
 
     /**
      * Creates a RolapCubeDimension.
@@ -61,7 +61,7 @@ public class RolapCubeDimension extends RolapDimension {
     public RolapCubeDimension(
         RolapCube cube,
         RolapDimension rolapDim,
-        org.eclipse.daanse.rolap.mapping.model.DimensionConnector cubeDim,
+        org.eclipse.daanse.rolap.mapping.model.olap.dimension.DimensionConnector cubeDim,
         String name,
         int cubeOrdinal,
         List<RolapHierarchy> hierarchyList)
@@ -108,7 +108,7 @@ public class RolapCubeDimension extends RolapDimension {
     }
 
     public RolapCube lookupFactCube(
-    		org.eclipse.daanse.rolap.mapping.model.DimensionConnector cubeDim, RolapCatalog schema)
+    		org.eclipse.daanse.rolap.mapping.model.olap.dimension.DimensionConnector cubeDim, RolapCatalog schema)
     {
 
       if (cubeDim.getPhysicalCube() != null && cubeDim.getPhysicalCube().getName() != null) {
@@ -179,7 +179,7 @@ public class RolapCubeDimension extends RolapDimension {
         return rolapDimension.getDimensionType();
     }
 
-    public org.eclipse.daanse.rolap.mapping.model.DimensionConnector getDimensionConnector() {
+    public org.eclipse.daanse.rolap.mapping.model.olap.dimension.DimensionConnector getDimensionConnector() {
         return xmlDimension;
     }
 

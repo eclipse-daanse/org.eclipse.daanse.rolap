@@ -26,31 +26,31 @@ public class RelationUtil {
         // constructor
     }
 
-    public static org.eclipse.daanse.rolap.mapping.model.RelationalQuery find(org.eclipse.daanse.rolap.mapping.model.Query relationOrJoin, String tableName) {
+    public static org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource find(org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relationOrJoin, String tableName) {
         switch (relationOrJoin) {
-        case org.eclipse.daanse.rolap.mapping.model.InlineTableQuery inlineTable -> {
-            return tableName.equals(inlineTable.getAlias()) ? (org.eclipse.daanse.rolap.mapping.model.RelationalQuery) relationOrJoin : null;
+        case org.eclipse.daanse.rolap.mapping.model.database.source.InlineTableSource inlineTable -> {
+            return tableName.equals(inlineTable.getAlias()) ? (org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource) relationOrJoin : null;
         }
-        case org.eclipse.daanse.rolap.mapping.model.TableQuery table -> {
+        case org.eclipse.daanse.rolap.mapping.model.database.source.TableSource table -> {
             if (tableName.equals(table.getTable().getName())) {
-                return (org.eclipse.daanse.rolap.mapping.model.RelationalQuery) relationOrJoin;
+                return (org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource) relationOrJoin;
             } else {
                     return null; //old version of code had wrong condition with equals
             }
         }
-        case org.eclipse.daanse.rolap.mapping.model.SqlSelectQuery view -> {
+        case org.eclipse.daanse.rolap.mapping.model.database.source.SqlSelectSource view -> {
             if (tableName.equals(view.getAlias())) {
-                return (org.eclipse.daanse.rolap.mapping.model.RelationalQuery) relationOrJoin;
+                return (org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource) relationOrJoin;
             } else {
                 return null;
             }
         }
-        case org.eclipse.daanse.rolap.mapping.model.JoinQuery join -> {
-        	org.eclipse.daanse.rolap.mapping.model.Query relation = find(left(join), tableName);
+        case org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource join -> {
+        	org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation = find(left(join), tableName);
             if (relation == null) {
                 relation = find(right(join), tableName);
             }
-            return (org.eclipse.daanse.rolap.mapping.model.RelationalQuery) relation;
+            return (org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource) relation;
         }
         case null, default -> {
         }
@@ -59,8 +59,8 @@ public class RelationUtil {
         throw new RolapRuntimeException("Rlation: find error");
     }
 
-    public static String getAlias(org.eclipse.daanse.rolap.mapping.model.RelationalQuery relation) {
-        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery table) {
+    public static String getAlias(org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.TableSource table) {
             return (table.getAlias() != null) ? table.getAlias() : table.getTable() != null ? table.getTable().getName() : null;
         }
         else {
@@ -68,8 +68,8 @@ public class RelationUtil {
         }
     }
 
-    public static String getTableName(org.eclipse.daanse.rolap.mapping.model.RelationalQuery relation) {
-        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery table) {
+    public static String getTableName(org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.TableSource table) {
             return table.getTable() != null ? table.getTable().getName() : null;
         }
         else {
@@ -77,30 +77,30 @@ public class RelationUtil {
         }
     }
 
-    public static boolean equals(org.eclipse.daanse.rolap.mapping.model.RelationalQuery relation, Object o) {
-        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.SqlSelectQuery view) {
-            if (o instanceof org.eclipse.daanse.rolap.mapping.model.SqlSelectQuery that) {
+    public static boolean equals(org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation, Object o) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.SqlSelectSource view) {
+            if (o instanceof org.eclipse.daanse.rolap.mapping.model.database.source.SqlSelectSource that) {
                 if (!Objects.equals(relation.getAlias(), that.getAlias())) {
                     return false;
                 }
                 if (
                     view.getSql() == null || that.getSql() == null
-                    || view.getSql().getSqlStatements() == null || that.getSql().getSqlStatements() == null
-                    || view.getSql().getSqlStatements().size() != that.getSql().getSqlStatements().size()) {
+                    || view.getSql().getDialectStatements() == null || that.getSql().getDialectStatements() == null
+                    || view.getSql().getDialectStatements().size() != that.getSql().getDialectStatements().size()) {
                     return false;
                 }
-                for (int i = 0; i < view.getSql().getSqlStatements().size(); i++) {
-                    if (view.getSql().getSqlStatements().get(i).getSql() == null || that.getSql().getSqlStatements().get(i).getSql() == null || 
-                    		!Objects.equals(view.getSql().getSqlStatements().get(i).getSql(), that.getSql().getSqlStatements().get(i).getSql()))
+                for (int i = 0; i < view.getSql().getDialectStatements().size(); i++) {
+                    if (view.getSql().getDialectStatements().get(i).getSql() == null || that.getSql().getDialectStatements().get(i).getSql() == null || 
+                    		!Objects.equals(view.getSql().getDialectStatements().get(i).getSql(), that.getSql().getDialectStatements().get(i).getSql()))
                     {
                         return false;
                     }
-                    if (view.getSql().getSqlStatements().get(i).getDialects() == null || that.getSql().getSqlStatements().get(i).getDialects() == null
-                        || view.getSql().getSqlStatements().get(i).getDialects().size() != that.getSql().getSqlStatements().get(i).getDialects().size()) {
+                    if (view.getSql().getDialectStatements().get(i).getDialects() == null || that.getSql().getDialectStatements().get(i).getDialects() == null
+                        || view.getSql().getDialectStatements().get(i).getDialects().size() != that.getSql().getDialectStatements().get(i).getDialects().size()) {
                         return false;
                     }
-                    for (int j = 0; j< view.getSql().getSqlStatements().get(i).getDialects().size(); j++) {
-                        if (!view.getSql().getSqlStatements().get(i).getDialects().get(j).equals(that.getSql().getSqlStatements().get(i).getDialects().get(j))) {
+                    for (int j = 0; j< view.getSql().getDialectStatements().get(i).getDialects().size(); j++) {
+                        if (!view.getSql().getDialectStatements().get(i).getDialects().get(j).equals(that.getSql().getDialectStatements().get(i).getDialects().get(j))) {
                             return false;
                         }
                     }
@@ -111,18 +111,18 @@ public class RelationUtil {
                 return false;
             }
         }
-        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery table) {
-            if (o instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery that) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.TableSource table) {
+            if (o instanceof org.eclipse.daanse.rolap.mapping.model.database.source.TableSource that) {
                 return table.getTable() != null &&  that.getTable() != null && 
                 	table.getTable().getName().equals(that.getTable().getName()) &&
                     Objects.equals(relation.getAlias(), that.getAlias()) &&
-                    Objects.equals(table.getTable().getSchema(), that.getTable().getSchema());
+                    Objects.equals(table.getTable().getNamespace(), that.getTable().getNamespace());
             } else {
                 return false;
             }
         }
-        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.InlineTableQuery) {
-            if (o instanceof org.eclipse.daanse.rolap.mapping.model.InlineTableQuery that) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.InlineTableSource) {
+            if (o instanceof org.eclipse.daanse.rolap.mapping.model.database.source.InlineTableSource that) {
                 return relation.getAlias().equals(that.getAlias());
             } else {
                 return false;
@@ -132,28 +132,28 @@ public class RelationUtil {
         return relation == o;
     }
 
-    public static int hashCode(org.eclipse.daanse.rolap.mapping.model.RelationalQuery relation) {
-        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery) {
+    public static int hashCode(org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.TableSource) {
             return toString(relation).hashCode();
         }
-        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.InlineTableQuery) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.InlineTableSource) {
             return toString(relation).hashCode();
         }
         return System.identityHashCode(relation);
     }
 
-    private static Object toString(org.eclipse.daanse.rolap.mapping.model.RelationalQuery relation) {
-        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery table) {
-            return (table.getTable().getSchema() == null || table.getTable().getSchema().getName() == null) ?
+    private static Object toString(org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.TableSource table) {
+            return (table.getTable().getNamespace() == null || table.getTable().getNamespace().getName() == null) ?
                 table.getTable().getName() :
-                new StringBuilder(table.getTable().getSchema().getName()).append(".").append(table.getTable().getName()).toString();
+                new StringBuilder(table.getTable().getNamespace().getName()).append(".").append(table.getTable().getName()).toString();
         }
-        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.JoinQuery join) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource join) {
             return new StringBuilder("(").append(left(join)).append(") join (").append(right(join)).append(") on ")
                 .append(join.getLeft().getAlias()).append(".").append(join.getLeft().getKey()).append(" = ")
                 .append(join.getRight().getAlias()).append(".").append(join.getRight().getKey()).toString();
         }
-        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.InlineTableQuery) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.InlineTableSource) {
             return "<inline data>";
         }
         return relation.toString();

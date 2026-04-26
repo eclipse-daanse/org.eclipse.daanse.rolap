@@ -66,7 +66,7 @@ class RolapCubeHierarchyTest {
     doReturn(context).when(schemaReader).getContext();
 
 
-    org.eclipse.daanse.rolap.mapping.model.DimensionConnector cubeDim = null;
+    org.eclipse.daanse.rolap.mapping.model.olap.dimension.DimensionConnector cubeDim = null;
 
     RolapHierarchy rolapHierarchy = mock(RolapHierarchy.class);
     Hierarchy rolapHierarchy_hierarchy = null;
@@ -118,7 +118,7 @@ class RolapCubeHierarchyTest {
     doReturn(context).when(schemaReader).getContext();
 
 
-    org.eclipse.daanse.rolap.mapping.model.DimensionConnector cubeDim = null;
+    org.eclipse.daanse.rolap.mapping.model.olap.dimension.DimensionConnector cubeDim = null;
 
     RolapHierarchy rolapHierarchy = mock(RolapHierarchy.class);
     Hierarchy rolapHierarchy_hierarchy = null;
@@ -162,14 +162,14 @@ class RolapCubeHierarchyTest {
         mock(Connection.class);
     DataSource cubeDimension_schema_connection_DS = mock(DataSource.class);
 
-    org.eclipse.daanse.rolap.mapping.model.DimensionConnector cubeDim = null;
+    org.eclipse.daanse.rolap.mapping.model.olap.dimension.DimensionConnector cubeDim = null;
 
     RolapHierarchy rolapHierarchy = mock(RolapHierarchy.class);
     Hierarchy rolapHierarchy_hierarchy = null;
     String rolapHierarchy_uniqueName = "TheDimUniqueName";
     String dimName = "DimName";
     List<? extends Level> rolapHierarchy_levels = new ArrayList<>();
-    org.eclipse.daanse.rolap.mapping.model.Query rolapHierarchy_relation = mock(org.eclipse.daanse.rolap.mapping.model.TableQuery.class);
+    org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource rolapHierarchy_relation = mock(org.eclipse.daanse.rolap.mapping.model.database.source.TableSource.class);
     CatalogReader schemaReader = mock(CatalogReader.class);
     Context<?> context = mock(Context.class);
     doReturn(false).when(context).getConfigValue(ConfigConstants.MEMORY_MONITOR, ConfigConstants.MEMORY_MONITOR_DEFAULT_VALUE, Boolean.class);
@@ -180,7 +180,7 @@ class RolapCubeHierarchyTest {
     int ordinal = 0;
 
     RolapCube factCube = mock(RolapCube.class);
-    org.eclipse.daanse.rolap.mapping.model.Query factCube_Fact = mock(org.eclipse.daanse.rolap.mapping.model.TableQuery.class);
+    org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource factCube_Fact = mock(org.eclipse.daanse.rolap.mapping.model.database.source.TableSource.class);
     boolean factCube_Fact_equals = false;
 
       // check
@@ -223,14 +223,14 @@ class RolapCubeHierarchyTest {
     doReturn(false).when(context).getConfigValue(ConfigConstants.MEMORY_MONITOR, ConfigConstants.MEMORY_MONITOR_DEFAULT_VALUE, Boolean.class);
     doReturn(context).when(schemaReader).getContext();
 
-    org.eclipse.daanse.rolap.mapping.model.DimensionConnector cubeDim = null;
+    org.eclipse.daanse.rolap.mapping.model.olap.dimension.DimensionConnector cubeDim = null;
 
     RolapHierarchy rolapHierarchy = mock(RolapHierarchy.class);
     Hierarchy rolapHierarchy_hierarchy = null;
     String rolapHierarchy_uniqueName = "TheDimUniqueName";
     List<? extends Level> rolapHierarchy_levels = new ArrayList<>();
-    org.eclipse.daanse.rolap.mapping.model.TableQuery rolapHierarchy_relation = mock(org.eclipse.daanse.rolap.mapping.model.TableQuery.class);
-    org.eclipse.daanse.rolap.mapping.model.PhysicalTable table = mock(org.eclipse.daanse.rolap.mapping.model.PhysicalTable.class);
+    org.eclipse.daanse.rolap.mapping.model.database.source.TableSource rolapHierarchy_relation = mock(org.eclipse.daanse.rolap.mapping.model.database.source.TableSource.class);
+    org.eclipse.daanse.cwm.model.cwm.resource.relational.Table table = mock(org.eclipse.daanse.cwm.model.cwm.resource.relational.Table.class);
     doReturn("TableName").when(table).getName();
     doReturn(table).when(rolapHierarchy_relation).getTable();
     String subName = null;
@@ -238,7 +238,7 @@ class RolapCubeHierarchyTest {
     int ordinal = 0;
 
     RolapCube factCube = mock(RolapCube.class);
-    org.eclipse.daanse.rolap.mapping.model.Query factCube_Fact = rolapHierarchy_relation;
+    org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource factCube_Fact = rolapHierarchy_relation;
     boolean factCube_Fact_equals = true;
 
       // check

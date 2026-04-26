@@ -33,7 +33,7 @@ public class RolapWritebackAttribute extends RolapWritebackColumn {
 
     public RolapWritebackAttribute(
             Dimension dimension,
-            org.eclipse.daanse.rolap.mapping.model.Column column
+            org.eclipse.daanse.cwm.model.cwm.resource.relational.Column column
     ) {
         super(column);
         this.dimension = dimension;

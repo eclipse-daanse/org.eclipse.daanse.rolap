@@ -120,6 +120,7 @@ import org.eclipse.daanse.rolap.mapping.model.RolapMappingFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.eclipse.daanse.rolap.mapping.model.database.source.SourceFactory;
 /**
  * RolapHierarchy implements {@link Hierarchy} for a ROLAP database.
  *
@@ -150,9 +151,9 @@ public class RolapHierarchy extends HierarchyBase {
      * {@link #createMemberReader(Role)}.
      */
     private MemberReader memberReader;
-    protected org.eclipse.daanse.rolap.mapping.model.Hierarchy hierarchyMapping;
+    protected org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.Hierarchy hierarchyMapping;
     private String memberReaderClass;
-    protected org.eclipse.daanse.rolap.mapping.model.Query relation;
+    protected org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation;
     private Member defaultMember;
     private String defaultMemberName;
     private RolapNullMember nullMember;
@@ -276,8 +277,8 @@ public class RolapHierarchy extends HierarchyBase {
     public RolapHierarchy(
         RolapCube cube,
         RolapDimension dimension,
-        org.eclipse.daanse.rolap.mapping.model.Hierarchy xmlHierarchy,
-        org.eclipse.daanse.rolap.mapping.model.DimensionConnector cubeDimensionMapping)
+        org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.Hierarchy xmlHierarchy,
+        org.eclipse.daanse.rolap.mapping.model.olap.dimension.DimensionConnector cubeDimensionMapping)
     {
         this(
             dimension,
@@ -293,7 +294,7 @@ public class RolapHierarchy extends HierarchyBase {
         assert !(this instanceof RolapCubeHierarchy);
 
         this.hierarchyMapping = xmlHierarchy;
-        org.eclipse.daanse.rolap.mapping.model.Query xmlHierarchyRelation = xmlHierarchy.getQuery();
+        org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource xmlHierarchyRelation = xmlHierarchy.getQuery();
         if (xmlHierarchy.getQuery() == null
             && xmlHierarchy.getMemberReaderClass() == null
             && cube != null)
@@ -311,7 +312,7 @@ public class RolapHierarchy extends HierarchyBase {
         }
 
         this.relation = xmlHierarchyRelation;
-        if (xmlHierarchyRelation instanceof org.eclipse.daanse.rolap.mapping.model.InlineTableQuery inlineTable) {
+        if (xmlHierarchyRelation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.InlineTableSource inlineTable) {
             this.relation =
                 RolapUtil.convertInlineTableToRelation(
                     inlineTable,
@@ -362,14 +363,14 @@ public class RolapHierarchy extends HierarchyBase {
         }
         this.allMember.setOrdinal(0);
 
-        if (xmlHierarchy instanceof org.eclipse.daanse.rolap.mapping.model.ExplicitHierarchy eh) {
+        if (xmlHierarchy instanceof org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.ExplicitHierarchy eh) {
             if (eh.getLevels().isEmpty()) {
                 throw new OlapRuntimeException(MessageFormat.format(hierarchyHasNoLevels,
                         getUniqueName()));
             }
 
             Set<String> levelNameSet = new HashSet<>();
-            for (org.eclipse.daanse.rolap.mapping.model.Level level : eh.getLevels()) {
+            for (org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.Level level : eh.getLevels()) {
                 if (!levelNameSet.add(level.getName())) {
                     throw new OlapRuntimeException(MessageFormat.format(hierarchyLevelNamesNotUnique,
                         getUniqueName(), level.getName()));
@@ -381,7 +382,7 @@ public class RolapHierarchy extends HierarchyBase {
                 this.levels = new ArrayList<Level>();
                 this.levels.add(allLevel);
                 int i = 1;
-                for (org.eclipse.daanse.rolap.mapping.model.Level xmlLevel : eh.getLevels()) {
+                for (org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.Level xmlLevel : eh.getLevels()) {
                     if (getKeyExp(xmlLevel) == null
                         && xmlHierarchy.getMemberReaderClass() == null)
                     {
@@ -395,13 +396,13 @@ public class RolapHierarchy extends HierarchyBase {
             } else {
                 this.levels = new ArrayList<Level>();
                 int i = 0;
-                for (org.eclipse.daanse.rolap.mapping.model.Level xmlLevel : eh.getLevels()) {
+                for (org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.Level xmlLevel : eh.getLevels()) {
                     RolapLevel rl = new RolapLevel(this, i, xmlLevel);
                     levels.add(rl);
                     i++;
                 }
             }
-        } else if (xmlHierarchy instanceof org.eclipse.daanse.rolap.mapping.model.ParentChildHierarchy pch ){
+        } else if (xmlHierarchy instanceof org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.ParentChildHierarchy pch ){
             if (pch.getLevel() == null) {
                 throw new OlapRuntimeException(MessageFormat.format(hierarchyHasNoLevels,
                         getUniqueName()));
@@ -415,7 +416,7 @@ public class RolapHierarchy extends HierarchyBase {
                 this.levels = new ArrayList<Level>();
                 this.levels.add(allLevel);
                 int i = 1;
-                org.eclipse.daanse.rolap.mapping.model.Level xmlLevel = pch.getLevel();
+                org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.Level xmlLevel = pch.getLevel();
                 
                 if (getKeyExp(xmlLevel) == null
                     && xmlHierarchy.getMemberReaderClass() == null)
@@ -426,7 +427,7 @@ public class RolapHierarchy extends HierarchyBase {
                 
                 StringBuilder sb = new StringBuilder();
                 sb.append(xmlLevel.getName()).append(i);
-                RolapLevel l = new RolapLevel(sb.toString(), LevelUtil.getParentExp(pch), pch.getNullParentValue(), pch.getParentChildLink(), this, i,
+                RolapLevel l = new RolapLevel(sb.toString(), LevelUtil.getParentExp(pch, this), pch.getNullParentValue(), pch.getParentChildLink(), this, i,
                         pch.isParentAsLeafEnable(), pch.getParentAsLeafNameFormat(), xmlLevel);
                 levels.add(l);
                 Map<Integer, Set<RolapMember>> childMap = getChildMap((RolapLevel)l);
@@ -442,10 +443,10 @@ public class RolapHierarchy extends HierarchyBase {
             } else {
                 this.levels = new ArrayList<Level>();
                 int i = 0;
-                org.eclipse.daanse.rolap.mapping.model.Level xmlLevel = pch.getLevel();
+                org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.Level xmlLevel = pch.getLevel();
                 StringBuilder sb = new StringBuilder();
                 sb.append(xmlLevel.getName()).append(i+1);
-                RolapLevel l = new RolapLevel(sb.toString(), LevelUtil.getParentExp(pch), pch.getNullParentValue(), pch.getParentChildLink(), this, i,
+                RolapLevel l = new RolapLevel(sb.toString(), LevelUtil.getParentExp(pch, this), pch.getNullParentValue(), pch.getParentChildLink(), this, i,
                         pch.isParentAsLeafEnable(), pch.getParentAsLeafNameFormat(), xmlLevel);
                 levels.add(l);
                 Map<Integer, Set<RolapMember>> childMap = getChildMap((RolapLevel)l);
@@ -561,7 +562,7 @@ public class RolapHierarchy extends HierarchyBase {
     /**
      * Initializes a hierarchy within the context of a cube.
      */
-    void init(org.eclipse.daanse.rolap.mapping.model.DimensionConnector xmlDimension) {
+    void init(org.eclipse.daanse.rolap.mapping.model.olap.dimension.DimensionConnector xmlDimension) {
         // first create memberReader
         if (this.memberReader == null) {
             this.memberReader = getRolapCatalog().createMemberReader(
@@ -658,10 +659,10 @@ public class RolapHierarchy extends HierarchyBase {
      * if this hierarchy has no table, return the cube's fact-table;
      * otherwise, returns null.
      */
-    public org.eclipse.daanse.rolap.mapping.model.RelationalQuery getUniqueTable() {
-        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.RelationalQuery r) {
+    public org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource getUniqueTable() {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource r) {
             return r;
-        } else if (relation instanceof org.eclipse.daanse.rolap.mapping.model.JoinQuery) {
+        } else if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource) {
             return null;
         } else {
             throw Util.newInternal(
@@ -673,27 +674,69 @@ public class RolapHierarchy extends HierarchyBase {
         return (relation != null) && getTable(tableName, relation) != null;
     }
 
-    org.eclipse.daanse.rolap.mapping.model.RelationalQuery getTable(String tableName) {
+    /**
+     * Finds the alias used in this hierarchy's join tree to reference the given
+     * physical table (or view). This lets a level whose column is owned by a
+     * shared physical table resolve to the per-hierarchy alias (e.g. a shared
+     * {@code region} table aliased {@code store_region} in one hierarchy and
+     * {@code customer_region} in another). Returns the owner's bare name when
+     * the tree does not alias it, or when {@code owner} is null.
+     */
+    public String findAliasForOwner(
+        org.eclipse.daanse.cwm.model.cwm.resource.relational.NamedColumnSet owner)
+    {
+        if (owner == null) {
+            return null;
+        }
+        if (relation != null) {
+            String alias = findAliasForOwner(owner, relation);
+            if (alias != null) {
+                return alias;
+            }
+        }
+        return owner.getName();
+    }
+
+    private static String findAliasForOwner(
+        org.eclipse.daanse.cwm.model.cwm.resource.relational.NamedColumnSet owner,
+        org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relationOrJoin)
+    {
+        if (relationOrJoin instanceof org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource join) {
+            String a = findAliasForOwner(owner, left(join));
+            if (a != null) {
+                return a;
+            }
+            return findAliasForOwner(owner, right(join));
+        }
+        if (relationOrJoin instanceof org.eclipse.daanse.rolap.mapping.model.database.source.TableSource table
+            && table.getTable() == owner)
+        {
+            return table.getAlias() != null ? table.getAlias() : owner.getName();
+        }
+        return null;
+    }
+
+    org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource getTable(String tableName) {
         return relation == null ? null : getTable(tableName, relation);
     }
 
-    private static org.eclipse.daanse.rolap.mapping.model.RelationalQuery getTable(
+    private static org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource getTable(
         String tableName,
-        org.eclipse.daanse.rolap.mapping.model.Query relationOrJoin)
+        org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relationOrJoin)
     {
-        if (relationOrJoin instanceof org.eclipse.daanse.rolap.mapping.model.RelationalQuery relation) {
+        if (relationOrJoin instanceof org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource join) {
+        	org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource rel = getTable(tableName, left(join));
+            if (rel != null) {
+                return rel;
+            }
+            return getTable(tableName, right(join));
+        } else {
+            org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation = relationOrJoin;
             if (tableName.equals(RelationUtil.getAlias(relation)) || tableName.equals(RelationUtil.getTableName(relation))) {
                 return relation;
             } else {
                 return null;
             }
-        } else {
-        	org.eclipse.daanse.rolap.mapping.model.JoinQuery join = (org.eclipse.daanse.rolap.mapping.model.JoinQuery) relationOrJoin;
-        	org.eclipse.daanse.rolap.mapping.model.RelationalQuery rel = getTable(tableName, left(join));
-            if (rel != null) {
-                return rel;
-            }
-            return getTable(tableName, right(join));
         }
     }
 
@@ -701,15 +744,15 @@ public class RolapHierarchy extends HierarchyBase {
         return (RolapCatalog) dimension.getCatalog();
     }
 
-    public org.eclipse.daanse.rolap.mapping.model.Query getRelation() {
+    public org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource getRelation() {
         return relation;
     }
 
-    public void setRelation(org.eclipse.daanse.rolap.mapping.model.Query relation) {
+    public void setRelation(org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation) {
         this.relation = relation;
     }
 
-    public org.eclipse.daanse.rolap.mapping.model.Hierarchy getHierarchyMapping() {
+    public org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.Hierarchy getHierarchyMapping() {
         return hierarchyMapping;
     }
 
@@ -838,8 +881,8 @@ public class RolapHierarchy extends HierarchyBase {
                     .append(" to query: it does not have a <Table>, <View> or <Join>").toString());
         }
         final boolean failIfExists = false;
-        org.eclipse.daanse.rolap.mapping.model.Query subRelation = relation;
-        if (getRelation() instanceof org.eclipse.daanse.rolap.mapping.model.JoinQuery &&  expression != null) {
+        org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource subRelation = relation;
+        if (getRelation() instanceof org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource &&  expression != null) {
                 subRelation =
                     relationSubsetInverse(relation, getTableAlias(expression));
         }
@@ -867,8 +910,8 @@ public class RolapHierarchy extends HierarchyBase {
         }
         query.registerRootRelation(getRelation());
         final boolean failIfExists = false;
-        org.eclipse.daanse.rolap.mapping.model.Query subRelation = getRelation();
-        if (getRelation() instanceof org.eclipse.daanse.rolap.mapping.model.JoinQuery && expression != null) {
+        org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource subRelation = getRelation();
+        if (getRelation() instanceof org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource && expression != null) {
             // Suppose relation is
             //   (((A join B) join C) join D)
             // and the fact table is
@@ -907,7 +950,7 @@ public class RolapHierarchy extends HierarchyBase {
                     .append(" to query: it does not have a <Table>, <View> or <Join>").toString());
         }
         final boolean failIfExists = false;
-        org.eclipse.daanse.rolap.mapping.model.Query subRelation = null;
+        org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource subRelation = null;
         if (table != null) {
             // Suppose relation is
             //   (((A join B) join C) join D)
@@ -952,21 +995,21 @@ public class RolapHierarchy extends HierarchyBase {
      * @return the smallest containing relation or null if no matching table
      * is found in relation
      */
-    private static org.eclipse.daanse.rolap.mapping.model.Query relationSubsetInverse(
-        org.eclipse.daanse.rolap.mapping.model.Query relation,
+    private static org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relationSubsetInverse(
+        org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation,
         String alias)
     {
-        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.RelationalQuery table) {
-            return RelationUtil.getAlias(table).equals(alias)
-                ? relation
-                : null;
-
-        } else if (relation instanceof org.eclipse.daanse.rolap.mapping.model.JoinQuery join) {
-        	org.eclipse.daanse.rolap.mapping.model.Query leftRelation =
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource join) {
+        	org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource leftRelation =
                 relationSubsetInverse(left(join), alias);
             return (leftRelation == null)
                 ? relationSubsetInverse(right(join), alias)
                 : join;
+
+        } else if (relation != null) {
+            return RelationUtil.getAlias(relation).equals(alias)
+                ? relation
+                : null;
 
         } else {
             throw Util.newInternal("bad relation type " + relation);
@@ -982,17 +1025,12 @@ public class RolapHierarchy extends HierarchyBase {
      * @return the smallest containing relation or null if no matching table
      * is found in relation
      */
-    private static org.eclipse.daanse.rolap.mapping.model.Query relationSubset(
-    		org.eclipse.daanse.rolap.mapping.model.Query relation,
+    private static org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relationSubset(
+    		org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation,
         String alias)
     {
-        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.RelationalQuery table) {
-            return RelationUtil.getAlias(table).equals(alias)
-                ? relation
-                : null;
-
-        } else if (relation instanceof org.eclipse.daanse.rolap.mapping.model.JoinQuery join) {
-            org.eclipse.daanse.rolap.mapping.model.Query rightRelation =
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource join) {
+            org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource rightRelation =
                 relationSubset(right(join), alias);
             if (rightRelation == null) {
                 return relationSubset(left(join), alias);
@@ -1002,6 +1040,10 @@ public class RolapHierarchy extends HierarchyBase {
                     ? join
                     : rightRelation;
             }
+        } else if (relation != null) {
+            return RelationUtil.getAlias(relation).equals(alias)
+                ? relation
+                : null;
         } else {
             throw Util.newInternal("bad relation type " + relation);
         }
@@ -1017,19 +1059,19 @@ public class RolapHierarchy extends HierarchyBase {
      * @return the smallest containing relation or null if no matching table
      * is found in relation
      */
-    private static org.eclipse.daanse.rolap.mapping.model.Query lookupRelationSubset(
-        org.eclipse.daanse.rolap.mapping.model.Query relation,
+    private static org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource lookupRelationSubset(
+        org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation,
         RolapStar.Table targetTable)
     {
-        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery table) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.TableSource table) {
             if (table.getTable().equals(targetTable.getTable())) {
                 return relation;
             } else {
                 // Not the same table if table names are different
                 return null;
             }
-        } else if (relation instanceof org.eclipse.daanse.rolap.mapping.model.JoinQuery join) {
-        	org.eclipse.daanse.rolap.mapping.model.Query rightRelation =
+        } else if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource join) {
+        	org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource rightRelation =
                 lookupRelationSubset(right(join), targetTable);
             if (rightRelation == null) {
                 // Keep searching left.
@@ -1316,7 +1358,7 @@ public class RolapHierarchy extends HierarchyBase {
      */
     public RolapDimension createClosedPeerDimension(
         RolapLevel src,
-        org.eclipse.daanse.rolap.mapping.model.ParentChildLink clos)
+        org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.ParentChildLink clos)
     {
         // REVIEW (mb): What about attribute primaryKeyTable?
 
@@ -1336,13 +1378,13 @@ public class RolapHierarchy extends HierarchyBase {
         peerHier.allMember = (RolapMemberBase) getAllMember();
         peerHier.allLevelName = getAllLevelName();
         peerHier.sharedHierarchyName = getSharedHierarchyName();
-        org.eclipse.daanse.rolap.mapping.model.JoinQuery join = RolapMappingFactory.eINSTANCE.createJoinQuery();
+        org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource join = SourceFactory.eINSTANCE.createJoinSource();
 
-        org.eclipse.daanse.rolap.mapping.model.JoinedQueryElement leftElement = RolapMappingFactory.eINSTANCE.createJoinedQueryElement();
+        org.eclipse.daanse.rolap.mapping.model.database.source.JoinedQueryElement leftElement = SourceFactory.eINSTANCE.createJoinedQueryElement();
         leftElement.setKey(PojoUtil.getColumn(clos.getParentColumn()));
         leftElement.setQuery(PojoUtil.copy(clos.getTable()));
 
-        org.eclipse.daanse.rolap.mapping.model.JoinedQueryElement rightElement = RolapMappingFactory.eINSTANCE.createJoinedQueryElement();
+        org.eclipse.daanse.rolap.mapping.model.database.source.JoinedQueryElement rightElement = SourceFactory.eINSTANCE.createJoinedQueryElement();
         rightElement.setKey(PojoUtil.getColumn(clos.getChildColumn()));
         rightElement.setQuery(PojoUtil.copy(relation));
 

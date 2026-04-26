@@ -27,26 +27,26 @@ public class Utils {
     private Utils() {
     }
 
-    public static boolean equalsQuery(org.eclipse.daanse.rolap.mapping.model.Query relation, org.eclipse.daanse.rolap.mapping.model.Query q2) {
-        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery t1 && q2 instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery t2) {
+    public static boolean equalsQuery(org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation, org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource q2) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.TableSource t1 && q2 instanceof org.eclipse.daanse.rolap.mapping.model.database.source.TableSource t2) {
             return t1.getTable() != null && t2.getTable() != null &&  t1.getTable().getName().equals(t2.getTable().getName()) &&
                 Objects.equals(t1.getAlias(), t2.getAlias()) &&
-                equalsSchema(t1.getTable().getSchema(), t2.getTable().getSchema());
+                equalsSchema((org.eclipse.daanse.cwm.model.cwm.resource.relational.Schema) t1.getTable().getNamespace(), (org.eclipse.daanse.cwm.model.cwm.resource.relational.Schema) t2.getTable().getNamespace());
         }
-        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.SqlSelectQuery s1 && q2 instanceof org.eclipse.daanse.rolap.mapping.model.SqlSelectQuery s2) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.SqlSelectSource s1 && q2 instanceof org.eclipse.daanse.rolap.mapping.model.database.source.SqlSelectSource s2) {
             if (!Objects.equals(s1.getAlias(), s2.getAlias())) {
                 return false;
             }
             if (s1.getSql() == null || s2.getSql() == null ||
-            	s1.getSql().getSqlStatements() == null || s2.getSql().getSqlStatements() == null ||
-                s1.getSql().getSqlStatements().size() != s2.getSql().getSqlStatements().size()) {
+            	s1.getSql().getDialectStatements() == null || s2.getSql().getDialectStatements() == null ||
+                s1.getSql().getDialectStatements().size() != s2.getSql().getDialectStatements().size()) {
                 return false;
             }
-            for (int i = 0; i < s1.getSql().getSqlStatements().size(); i++) {
-                String statement1 = s1.getSql().getSqlStatements().get(i).getSql();
-                String statement2 = s2.getSql().getSqlStatements().get(i).getSql();
-                List<String> dialects1 = s1.getSql().getSqlStatements().get(i).getDialects();
-                List<String> dialects2 = s2.getSql().getSqlStatements().get(i).getDialects();
+            for (int i = 0; i < s1.getSql().getDialectStatements().size(); i++) {
+                String statement1 = s1.getSql().getDialectStatements().get(i).getSql();
+                String statement2 = s2.getSql().getDialectStatements().get(i).getSql();
+                List<String> dialects1 = s1.getSql().getDialectStatements().get(i).getDialects();
+                List<String> dialects2 = s2.getSql().getDialectStatements().get(i).getDialects();
 
                 if (!Objects.equals(statement1, statement2)) {
                     return false;
@@ -63,13 +63,13 @@ public class Utils {
             }
             return true;
         }
-        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.InlineTableQuery it1 && q2 instanceof org.eclipse.daanse.rolap.mapping.model.InlineTableQuery it2) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.InlineTableSource it1 && q2 instanceof org.eclipse.daanse.rolap.mapping.model.database.source.InlineTableSource it2) {
             return it1.getAlias() != null && it1.getAlias().equals(it2.getAlias()); //old implementation
         }
         return false;
     }
 
-	private static boolean equalsSchema(org.eclipse.daanse.rolap.mapping.model.DatabaseSchema schema1, org.eclipse.daanse.rolap.mapping.model.DatabaseSchema schema2) {
+	private static boolean equalsSchema(org.eclipse.daanse.cwm.model.cwm.resource.relational.Schema schema1, org.eclipse.daanse.cwm.model.cwm.resource.relational.Schema schema2) {
         if (schema1 == null && schema2 == null) {
             return true;
         }

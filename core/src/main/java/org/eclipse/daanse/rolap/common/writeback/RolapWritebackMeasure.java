@@ -33,7 +33,7 @@ public class RolapWritebackMeasure  extends RolapWritebackColumn {
 
     public RolapWritebackMeasure(
             Member measure,
-            org.eclipse.daanse.rolap.mapping.model.Column column
+            org.eclipse.daanse.cwm.model.cwm.resource.relational.Column column
     ) {
         super(column);
         this.measure = measure;

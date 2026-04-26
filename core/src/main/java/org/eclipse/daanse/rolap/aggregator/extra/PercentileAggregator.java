@@ -21,8 +21,8 @@ import org.eclipse.daanse.olap.api.calc.Calc;
 import org.eclipse.daanse.olap.api.calc.tuple.TupleList;
 import org.eclipse.daanse.olap.api.evaluator.Evaluator;
 import org.eclipse.daanse.rolap.element.RolapColumn;
-import org.eclipse.daanse.rolap.mapping.model.PercentType;
-import org.eclipse.daanse.rolap.mapping.model.SortingDirection;
+import org.eclipse.daanse.rolap.mapping.model.olap.cube.measure.PercentType;
+import org.eclipse.daanse.rolap.mapping.model.database.relational.SortingDirection;
 
 
 public class PercentileAggregator implements Aggregator {

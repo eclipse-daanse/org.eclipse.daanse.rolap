@@ -57,6 +57,7 @@ import org.osgi.test.junit5.context.BundleContextExtension;
 
 import aQute.bnd.annotation.spi.ServiceProvider;
 
+import org.eclipse.daanse.rolap.mapping.model.catalog.CatalogFactory;
 @ExtendWith(BundleContextExtension.class)
 @ExtendWith(ConfigurationExtension.class)
 @ExtendWith(MockitoExtension.class)
@@ -92,7 +93,7 @@ class BasicContextServiceTest {
     @Mock
     MdxParserProvider mdxParserProvider;
 
-    org.eclipse.daanse.rolap.mapping.model.Catalog catalogMapping=RolapMappingFactory.eINSTANCE.createCatalog();
+    org.eclipse.daanse.rolap.mapping.model.catalog.Catalog catalogMapping=CatalogFactory.eINSTANCE.createCatalog();
 
     @Mock
     FunctionService functionService;

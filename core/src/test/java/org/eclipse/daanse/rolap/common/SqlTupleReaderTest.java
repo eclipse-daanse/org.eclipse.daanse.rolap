@@ -80,12 +80,12 @@ class SqlTupleReaderTest {
     RolapColumn expression =  mock(org.eclipse.daanse.rolap.element.RolapColumn.class);
     RolapCubeLevel levelIter = mock( RolapCubeLevel.class, Answers.RETURNS_MOCKS );
     RolapProperty rolapProperty = mock( TestPublicRolapProperty.class, Answers.RETURNS_MOCKS );
-    org.eclipse.daanse.rolap.mapping.model.Query queryMapping = mock( org.eclipse.daanse.rolap.mapping.model.Query.class, Answers.RETURNS_MOCKS );
+    org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource queryMapping = mock( org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource.class, Answers.RETURNS_MOCKS );
     String propertyName = "property_1";
     Dialect dialect = mock( Dialect.class );
     when(dialect.getDialectName()).thenReturn( "generic" );
     when(dialect.quoteIdentifier(any(String.class), any(String.class))).thenReturn( "generic" );
-    org.eclipse.daanse.rolap.mapping.model.SqlStatement sql = mock(org.eclipse.daanse.rolap.mapping.model.SqlStatement.class );
+    org.eclipse.daanse.rolap.mapping.model.database.source.SqlStatement sql = mock(org.eclipse.daanse.rolap.mapping.model.database.source.SqlStatement.class );
     when(sql.getDialects()).thenAnswer(setupDummyListAnswer("generic"));
     when(sql.getSql()).thenReturn( "SQL" );
     when(expression.getSqls()).thenAnswer(setupDummyListAnswer(sql));

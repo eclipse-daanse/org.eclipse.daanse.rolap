@@ -103,7 +103,7 @@ public class RolapCubeLevel extends RolapLevel implements CubeLevel {
         if (parentCubeLevel != null) {
             parentCubeLevel.childCubeLevel = this;
         }
-        org.eclipse.daanse.rolap.mapping.model.Query hierarchyRel = cubeHierarchy.getRelation();
+        org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource hierarchyRel = cubeHierarchy.getRelation();
         keyExp = convertExpression(level.getKeyExp(), hierarchyRel);
         nameExp = convertExpression(level.getNameExp(), hierarchyRel);
         captionExp = convertExpression(level.getCaptionExp(), hierarchyRel);
@@ -114,7 +114,7 @@ public class RolapCubeLevel extends RolapLevel implements CubeLevel {
 
     @Override
 	public
-	void init(org.eclipse.daanse.rolap.mapping.model.DimensionConnector xmlDimension) {
+	void init(org.eclipse.daanse.rolap.mapping.model.olap.dimension.DimensionConnector xmlDimension) {
         if (isAll()) {
             this.levelReader = new AllLevelReaderImpl();
         } else if (getLevelType() == LevelType.NULL) {
@@ -159,7 +159,7 @@ public class RolapCubeLevel extends RolapLevel implements CubeLevel {
 
     private RolapProperty[] convertProperties(
         RolapProperty[] properties,
-        org.eclipse.daanse.rolap.mapping.model.Query rel)
+        org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource rel)
     {
         if (properties == null) {
             return new RolapProperty[0];
@@ -193,7 +193,7 @@ public class RolapCubeLevel extends RolapLevel implements CubeLevel {
      */
     private SqlExpression convertExpression(
             SqlExpression exp,
-            org.eclipse.daanse.rolap.mapping.model.Query rel)
+            org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource rel)
     {
         if (getHierarchy().isUsingCubeFact()) {
             // no conversion necessary
@@ -201,12 +201,12 @@ public class RolapCubeLevel extends RolapLevel implements CubeLevel {
         } else if (exp == null || rel == null) {
             return null;
         } else if (exp instanceof org.eclipse.daanse.rolap.element.RolapColumn col) {
-            if (rel instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery table) {
+            if (rel instanceof org.eclipse.daanse.rolap.mapping.model.database.source.TableSource table) {
                 return new org.eclipse.daanse.rolap.element.RolapColumn(
                     RelationUtil.getAlias(table),
                     col.getName(), col.getSortingDirection());
-            } else if (rel instanceof org.eclipse.daanse.rolap.mapping.model.JoinQuery
-                || rel instanceof org.eclipse.daanse.rolap.mapping.model.RelationalQuery)
+            } else if (rel instanceof org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource
+                || rel instanceof org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource)
             {
                 // need to determine correct name of alias for this level.
                 // this may be defined in level

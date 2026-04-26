@@ -120,8 +120,8 @@ public class RolapDimension extends DimensionBase {
     public RolapDimension(
         RolapCatalog schema,
         RolapCube cube,
-        org.eclipse.daanse.rolap.mapping.model.Dimension mappingDimension,
-        org.eclipse.daanse.rolap.mapping.model.DimensionConnector dimensionConnector)
+        org.eclipse.daanse.rolap.mapping.model.olap.dimension.Dimension mappingDimension,
+        org.eclipse.daanse.rolap.mapping.model.olap.dimension.DimensionConnector dimensionConnector)
     {
         this(
             schema,
@@ -186,7 +186,7 @@ public class RolapDimension extends DimensionBase {
         }
     }
 
-    public static String getDimensionName(org.eclipse.daanse.rolap.mapping.model.DimensionConnector mappingCubeDimension) {
+    public static String getDimensionName(org.eclipse.daanse.rolap.mapping.model.olap.dimension.DimensionConnector mappingCubeDimension) {
         return  mappingCubeDimension.getOverrideDimensionName() != null ? mappingCubeDimension.getOverrideDimensionName() : mappingCubeDimension.getDimension().getName();
     }
 
@@ -198,7 +198,7 @@ public class RolapDimension extends DimensionBase {
     /**
      * Initializes a dimension within the context of a cube.
      */
-    void init(org.eclipse.daanse.rolap.mapping.model.DimensionConnector mappingDimension) {
+    void init(org.eclipse.daanse.rolap.mapping.model.olap.dimension.DimensionConnector mappingDimension) {
         for (Hierarchy h : hierarchies) {
             if (h != null) {
                 ((RolapHierarchy) h).init(mappingDimension);

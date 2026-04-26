@@ -111,7 +111,9 @@ import org.eclipse.daanse.rolap.common.member.SqlMemberSource;
 import org.eclipse.daanse.rolap.common.nativize.RolapNativeRegistry;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.star.RolapStarRegistry;
-import org.eclipse.daanse.rolap.mapping.model.ColumnInternalDataType;
+import org.eclipse.daanse.cwm.util.objectmodel.core.Namespaces;
+import org.eclipse.daanse.cwm.util.resource.relational.ColumnSets;
+import org.eclipse.daanse.rolap.mapping.model.database.relational.ColumnInternalDataType;
 import org.eclipse.daanse.rolap.util.ClassResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -142,25 +144,25 @@ public class RolapCatalog implements Catalog {
 	/**
 	 * Holds cubes in this schema.
 	 */
-	private final Map<org.eclipse.daanse.rolap.mapping.model.Cube, RolapCube> mapMappingToRolapCube = new HashMap<>();
+	private final Map<org.eclipse.daanse.rolap.mapping.model.olap.cube.Cube, RolapCube> mapMappingToRolapCube = new HashMap<>();
 
-	private final Map<org.eclipse.daanse.rolap.mapping.model.DatabaseSchema, RolapDatabaseSchema> mapMappingToRolapDatabaseSchema = new HashMap<>();
+	private final Map<org.eclipse.daanse.cwm.model.cwm.resource.relational.Schema, RolapDatabaseSchema> mapMappingToRolapDatabaseSchema = new HashMap<>();
 
-	private final Map<org.eclipse.daanse.rolap.mapping.model.Table, RolapDatabaseTable> mapMappingToRolapDatabaseTable = new HashMap<>();
+	private final Map<org.eclipse.daanse.cwm.model.cwm.resource.relational.NamedColumnSet, RolapDatabaseTable> mapMappingToRolapDatabaseTable = new HashMap<>();
 
-	private final Map<org.eclipse.daanse.rolap.mapping.model.Column, RolapDatabaseColumn> mapMappingToRolapDatabaseColumn = new HashMap<>();
+	private final Map<org.eclipse.daanse.cwm.model.cwm.resource.relational.Column, RolapDatabaseColumn> mapMappingToRolapDatabaseColumn = new HashMap<>();
 
 	/**
 	 * Maps {@link String shared hierarchy name} to {@link MemberReader}. Shared
 	 * between all statements which use this connection.
 	 */
-	private final Map<org.eclipse.daanse.rolap.mapping.model.Dimension, MemberReader> mapSharedHierarchyToReader = new HashMap<>();
+	private final Map<org.eclipse.daanse.rolap.mapping.model.olap.dimension.Dimension, MemberReader> mapSharedHierarchyToReader = new HashMap<>();
 
 	/**
 	 * Maps {@link String names of shared hierarchies} to {@link RolapHierarchy the
 	 * canonical instance of those hierarchies}.
 	 */
-	private final Map<org.eclipse.daanse.rolap.mapping.model.Dimension, RolapHierarchy> mapSharedHierarchyNameToHierarchy = new HashMap<>();
+	private final Map<org.eclipse.daanse.rolap.mapping.model.olap.dimension.Dimension, RolapHierarchy> mapSharedHierarchyNameToHierarchy = new HashMap<>();
 
 	private List<RolapDatabaseSchema> rolapDbSchemas = new ArrayList<>();
 
@@ -185,14 +187,14 @@ public class RolapCatalog implements Catalog {
 	/**
 	 * Maps {@link AccessRoleMapping} to {@link Role roles }.
 	 */
-	private final Map<org.eclipse.daanse.rolap.mapping.model.AccessRole, Role> mapNameToRole = new HashMap<>();
+	private final Map<org.eclipse.daanse.rolap.mapping.model.access.common.AccessRole, Role> mapNameToRole = new HashMap<>();
 
 	/**
 	 * Maps {@link String names of sets} to {@link NamedSet named sets}.
 	 */
 	private final Map<String, NamedSet> mapNameToSet = new HashMap<>();
 
-	private org.eclipse.daanse.rolap.mapping.model.Catalog mappingCatalog;
+	private org.eclipse.daanse.rolap.mapping.model.catalog.Catalog mappingCatalog;
 
 	public final List<RolapCatalogParameter> parameterList = new ArrayList<>();
 
@@ -384,7 +386,7 @@ public class RolapCatalog implements Catalog {
 		return parameterList;
 	}
 	
-	private void load(org.eclipse.daanse.rolap.mapping.model.Catalog mappingCatalog2) {
+	private void load(org.eclipse.daanse.rolap.mapping.model.catalog.Catalog mappingCatalog2) {
 		this.name = mappingCatalog2.getName();
 		if (name == null || name.equals("")) {
 			throw Util.newError("<Schema> name must be set");
@@ -428,15 +430,15 @@ public class RolapCatalog implements Catalog {
 		}
 
 		// Create cubes.
-		for (org.eclipse.daanse.rolap.mapping.model.Cube cubeMapping : mappingCatalog2.getCubes()) {
+		for (org.eclipse.daanse.rolap.mapping.model.olap.cube.Cube cubeMapping : mappingCatalog2.getCubes()) {
 //            if (cubeMapping.isEnabled()) {
 			RolapCube cube = null;
-			if (cubeMapping instanceof org.eclipse.daanse.rolap.mapping.model.PhysicalCube physicalCubeMapping) {
+			if (cubeMapping instanceof org.eclipse.daanse.rolap.mapping.model.olap.cube.PhysicalCube physicalCubeMapping) {
 				cube = new RolapPhysicalCube(this, mappingCatalog2, physicalCubeMapping, context);
 				// addCube(cubeMapping, cube);
 
 			}
-			if (cubeMapping instanceof org.eclipse.daanse.rolap.mapping.model.VirtualCube virtualCubeMapping) {
+			if (cubeMapping instanceof org.eclipse.daanse.rolap.mapping.model.olap.cube.VirtualCube virtualCubeMapping) {
 				cube = new RolapVirtualCube(this, mappingCatalog2, virtualCubeMapping, context);
 				// addCube(cubeMapping, cube);
 			}
@@ -454,27 +456,29 @@ public class RolapCatalog implements Catalog {
 //        }
 
 		// Create named sets.
-		for (org.eclipse.daanse.rolap.mapping.model.NamedSet namedSetsMapping : mappingCatalog2.getNamedSets()) {
+		for (org.eclipse.daanse.rolap.mapping.model.olap.dimension.NamedSet namedSetsMapping : mappingCatalog2.getNamedSets()) {
 			mapNameToSet.put(namedSetsMapping.getName(), createNamedSet(namedSetsMapping));
 		}
 
-	    for (org.eclipse.daanse.rolap.mapping.model.DatabaseSchema dbSchemaMapping : mappingCatalog2.getDbschemas()) {
+	    for (org.eclipse.daanse.cwm.model.cwm.resource.relational.Schema dbSchemaMapping : mappingCatalog2.getDbschemas()) {
 	        RolapDatabaseSchema rolapDbSchema = new RolapDatabaseSchema();
 	        List<DatabaseTable> rolapDbTables = new ArrayList<>();
 	        rolapDbSchema.setName(rolapDbSchema.getName());
 
-	        for (org.eclipse.daanse.rolap.mapping.model.Table table : dbSchemaMapping.getTables()) {
+	        for (org.eclipse.daanse.cwm.model.cwm.resource.relational.NamedColumnSet table : (Iterable<org.eclipse.daanse.cwm.model.cwm.resource.relational.NamedColumnSet>) Namespaces
+	                .ownedElementStream(dbSchemaMapping, org.eclipse.daanse.cwm.model.cwm.resource.relational.NamedColumnSet.class)::iterator) {
 	            RolapDatabaseTable rolapDbTable = new RolapDatabaseTable();
 	            List<DatabaseColumn> rolapDbColumns = new ArrayList<>();
 	            rolapDbTable.setName(table.getName());
 
-	            for (org.eclipse.daanse.rolap.mapping.model.Column column : table.getColumns()) {
+	            for (org.eclipse.daanse.cwm.model.cwm.resource.relational.Column column : ColumnSets.columns(table)) {
 	                RolapDatabaseColumn rolapDbColumn = new RolapDatabaseColumn();
 	                rolapDbColumn.setName(column.getName());
-	                rolapDbColumn.setType(column.getType()!= null ? DataTypeJdbc.fromValue(column.getType().getLiteral()) : null );
-	                rolapDbColumn.setColumnSize(column.getColumnSize());
-	                rolapDbColumn.setNullable(column.getNullable());
-	                rolapDbColumn.setDecimalDigits(column.getDecimalDigits());
+	                rolapDbColumn.setType(column.getType() != null ? DataTypeJdbc.fromValue(column.getType().getName()) : null);
+	                org.eclipse.daanse.cwm.model.cwm.resource.relational.SQLSimpleType _st = column.getType() instanceof org.eclipse.daanse.cwm.model.cwm.resource.relational.SQLSimpleType _s ? _s : null;
+	                rolapDbColumn.setColumnSize(_st != null ? (int) _st.getCharacterMaximumLength() : null);
+	                rolapDbColumn.setNullable(column.getIsNullable() != null ? (Boolean)(column.getIsNullable().getValue() == 1) : null);
+	                rolapDbColumn.setDecimalDigits(_st != null ? (int) _st.getNumericScale() : null);
 	                rolapDbColumns.add(rolapDbColumn);
 	                mapMappingToRolapDatabaseColumn.put(column, rolapDbColumn);
 	            }
@@ -488,7 +492,7 @@ public class RolapCatalog implements Catalog {
 	    }
 
 		// Create roles.
-		for (org.eclipse.daanse.rolap.mapping.model.AccessRole roleMapping : mappingCatalog2.getAccessRoles()) {
+		for (org.eclipse.daanse.rolap.mapping.model.access.common.AccessRole roleMapping : mappingCatalog2.getAccessRoles()) {
 			Role role = createRole(roleMapping);
 			mapNameToRole.put(roleMapping, role);
 		}
@@ -522,7 +526,7 @@ public class RolapCatalog implements Catalog {
 	 * language); }
 	 */
 
-	private NamedSet createNamedSet(org.eclipse.daanse.rolap.mapping.model.NamedSet namedSetsMapping) {
+	private NamedSet createNamedSet(org.eclipse.daanse.rolap.mapping.model.olap.dimension.NamedSet namedSetsMapping) {
 		final String formulaString = namedSetsMapping.getFormula();
 		final Expression exp;
 		try {
@@ -535,13 +539,13 @@ public class RolapCatalog implements Catalog {
 		return formula.getNamedSet();
 	}
 
-	private Role createRole(org.eclipse.daanse.rolap.mapping.model.AccessRole roleMapping) {
+	private Role createRole(org.eclipse.daanse.rolap.mapping.model.access.common.AccessRole roleMapping) {
 		if (!roleMapping.getReferencedAccessRoles().isEmpty()) {
 			return createUnionRole(roleMapping);
 		}
 
 		RoleImpl role = new RoleImpl();
-		for (org.eclipse.daanse.rolap.mapping.model.AccessCatalogGrant catalogGrantMapings : roleMapping.getAccessCatalogGrants()) {
+		for (org.eclipse.daanse.rolap.mapping.model.access.common.AccessCatalogGrant catalogGrantMapings : roleMapping.getAccessCatalogGrants()) {
 			handleCatalogGrant(role, catalogGrantMapings);
 		}
 		role.makeImmutable();
@@ -549,14 +553,14 @@ public class RolapCatalog implements Catalog {
 	}
 
 	// package-local visibility for testing purposes
-	public Role createUnionRole(org.eclipse.daanse.rolap.mapping.model.AccessRole roleMapping) {
+	public Role createUnionRole(org.eclipse.daanse.rolap.mapping.model.access.common.AccessRole roleMapping) {
 		if (!roleMapping.getAccessCatalogGrants().isEmpty()) {
 			throw new RoleUnionGrantsException();
 		}
 
-		List<? extends org.eclipse.daanse.rolap.mapping.model.AccessRole> referencedRoleMappings = roleMapping.getReferencedAccessRoles();
+		List<? extends org.eclipse.daanse.rolap.mapping.model.access.common.AccessRole> referencedRoleMappings = roleMapping.getReferencedAccessRoles();
 		List<Role> roleList = new ArrayList<>(referencedRoleMappings.size());
-		for (org.eclipse.daanse.rolap.mapping.model.AccessRole refRoleMapping : referencedRoleMappings) {
+		for (org.eclipse.daanse.rolap.mapping.model.access.common.AccessRole refRoleMapping : referencedRoleMappings) {
 			Role role = mapNameToRole.get(refRoleMapping);
 			if (role == null) {
 				throw new UnknownRoleException(refRoleMapping.getName());
@@ -567,41 +571,41 @@ public class RolapCatalog implements Catalog {
 	}
 
 	// package-local visibility for testing purposes
-	public void handleCatalogGrant(RoleImpl role, org.eclipse.daanse.rolap.mapping.model.AccessCatalogGrant schemaGrantMapings) {
+	public void handleCatalogGrant(RoleImpl role, org.eclipse.daanse.rolap.mapping.model.access.common.AccessCatalogGrant schemaGrantMapings) {
 		role.grant(this, getAccessCatalog(schemaGrantMapings.getCatalogAccess().getLiteral(), AccessCatalog.ALLOWED_SET));
-		for (org.eclipse.daanse.rolap.mapping.model.AccessCubeGrant cubeGrant : schemaGrantMapings.getCubeGrants()) {
+		for (org.eclipse.daanse.rolap.mapping.model.access.olap.AccessCubeGrant cubeGrant : schemaGrantMapings.getCubeGrants()) {
 			handleCubeGrant(role, cubeGrant);
 		}
-		for (org.eclipse.daanse.rolap.mapping.model.AccessDatabaseSchemaGrant databaseSchemaGrant : schemaGrantMapings.getDatabaseSchemaGrants()) {
+		for (org.eclipse.daanse.rolap.mapping.model.access.database.AccessDatabaseSchemaGrant databaseSchemaGrant : schemaGrantMapings.getDatabaseSchemaGrants()) {
 		    handleDatabaseSchemaGrant(role, databaseSchemaGrant);
 		}
 	}
 
-	public void handleDatabaseSchemaGrant(RoleImpl role, org.eclipse.daanse.rolap.mapping.model.AccessDatabaseSchemaGrant databaseSchemaGrant) {
+	public void handleDatabaseSchemaGrant(RoleImpl role, org.eclipse.daanse.rolap.mapping.model.access.database.AccessDatabaseSchemaGrant databaseSchemaGrant) {
         RolapDatabaseSchema databaseSchema = lookupDatabaseSchema(databaseSchemaGrant.getDatabaseSchema());
         if (databaseSchema == null) {
             throw Util.newError(
                     new StringBuilder("Unknown databaseSchema '").append(databaseSchemaGrant.getDatabaseSchema().getName()).append("'").toString());
         }
         role.grant(databaseSchema, getAccessDatabaseSchema(databaseSchemaGrant.getDatabaseSchemaAccess().name(), AccessDatabaseSchema.ALLOWED_SET));
-        for (org.eclipse.daanse.rolap.mapping.model.AccessTableGrant tableGrant : databaseSchemaGrant.getTableGrants()) {
+        for (org.eclipse.daanse.rolap.mapping.model.access.database.AccessTableGrant tableGrant : databaseSchemaGrant.getTableGrants()) {
             handleTableGrant(role, tableGrant);
         }
     }
 
-    private void handleTableGrant(RoleImpl role, org.eclipse.daanse.rolap.mapping.model.AccessTableGrant tableGrant) {
+    private void handleTableGrant(RoleImpl role, org.eclipse.daanse.rolap.mapping.model.access.database.AccessTableGrant tableGrant) {
         RolapDatabaseTable table = lookupTable(tableGrant.getTable());
         if (table == null) {
             throw Util.newError(
                     new StringBuilder("Unknown table '").append(tableGrant.getTable().getName()).append("'").toString());
         }
         role.grant(table, getAccessTable(tableGrant.getTableAccess().name(), AccessDatabaseTable.ALLOWED_SET));
-        for (org.eclipse.daanse.rolap.mapping.model.AccessColumnGrant columnGrant : tableGrant.getColumnGrants()) {
+        for (org.eclipse.daanse.rolap.mapping.model.access.database.AccessColumnGrant columnGrant : tableGrant.getColumnGrants()) {
             handleColumnGrant(role, columnGrant);
         }
     }
 
-    private void handleColumnGrant(RoleImpl role, org.eclipse.daanse.rolap.mapping.model.AccessColumnGrant columnGrant) {
+    private void handleColumnGrant(RoleImpl role, org.eclipse.daanse.rolap.mapping.model.access.database.AccessColumnGrant columnGrant) {
         RolapDatabaseColumn column = lookupColumn(columnGrant.getColumn());
         if (column == null) {
             throw Util.newError(
@@ -618,7 +622,7 @@ public class RolapCatalog implements Catalog {
         throw Util.newError(new StringBuilder("Bad value access='").append(accessString).append("'").toString());
     }
 
-    private RolapDatabaseColumn lookupColumn(org.eclipse.daanse.rolap.mapping.model.Column column) {
+    private RolapDatabaseColumn lookupColumn(org.eclipse.daanse.cwm.model.cwm.resource.relational.Column column) {
         return mapMappingToRolapDatabaseColumn.get(column);
     }
 
@@ -630,7 +634,7 @@ public class RolapCatalog implements Catalog {
         throw Util.newError(new StringBuilder("Bad value access='").append(accessString).append("'").toString());
     }
 
-    private RolapDatabaseTable lookupTable(org.eclipse.daanse.rolap.mapping.model.Table table) {
+    private RolapDatabaseTable lookupTable(org.eclipse.daanse.cwm.model.cwm.resource.relational.NamedColumnSet table) {
         return mapMappingToRolapDatabaseTable.get(table);
     }
 
@@ -642,12 +646,12 @@ public class RolapCatalog implements Catalog {
         throw Util.newError(new StringBuilder("Bad value access='").append(accessString).append("'").toString());
     }
 
-    private RolapDatabaseSchema lookupDatabaseSchema(org.eclipse.daanse.rolap.mapping.model.DatabaseSchema databaseSchema) {
+    private RolapDatabaseSchema lookupDatabaseSchema(org.eclipse.daanse.cwm.model.cwm.resource.relational.Schema databaseSchema) {
         return mapMappingToRolapDatabaseSchema.get(databaseSchema);
     }
 
     // package-local visibility for testing purposes
-	public void handleCubeGrant(RoleImpl role, org.eclipse.daanse.rolap.mapping.model.AccessCubeGrant cubeGrant) {
+	public void handleCubeGrant(RoleImpl role, org.eclipse.daanse.rolap.mapping.model.access.olap.AccessCubeGrant cubeGrant) {
 		RolapCube cube = lookupCube(cubeGrant.getCube());
 		if (cube == null) {
 			throw Util.newError(
@@ -656,7 +660,7 @@ public class RolapCatalog implements Catalog {
 		role.grant(cube, getAccessCube(cubeGrant.getCubeAccess().name(), AccessCube.ALLOWED_SET));
 
 		CatalogReader reader = cube.getCatalogReader(null);
-		for (org.eclipse.daanse.rolap.mapping.model.AccessDimensionGrant accessDimGrantMapping : cubeGrant.getDimensionGrants()) {
+		for (org.eclipse.daanse.rolap.mapping.model.access.olap.AccessDimensionGrant accessDimGrantMapping : cubeGrant.getDimensionGrants()) {
 			Dimension dimension;
 			if (accessDimGrantMapping.getDimension() != null) {
 				dimension = lookup(cube, reader, DataType.DIMENSION, accessDimGrantMapping.getDimension().getName());// not
@@ -672,14 +676,14 @@ public class RolapCatalog implements Catalog {
 			role.grant(dimension, getAccessDimension(accessDimGrantMapping.getDimensionAccess().name(), AccessDimension.ALLOWED_SET));
 		}
 
-		for (org.eclipse.daanse.rolap.mapping.model.AccessHierarchyGrant hierarchyGrant : cubeGrant.getHierarchyGrants()) {
+		for (org.eclipse.daanse.rolap.mapping.model.access.olap.AccessHierarchyGrant hierarchyGrant : cubeGrant.getHierarchyGrants()) {
 			handleHierarchyGrant(role, cube, reader, hierarchyGrant);
 		}
 	}
 
 	// package-local visibility for testing purposes
 	public void handleHierarchyGrant(RoleImpl role, RolapCube cube, CatalogReader reader,
-			org.eclipse.daanse.rolap.mapping.model.AccessHierarchyGrant hierarchyGrant) {
+			org.eclipse.daanse.rolap.mapping.model.access.olap.AccessHierarchyGrant hierarchyGrant) {
 		Hierarchy hierarchy;
 		if (hierarchyGrant.getHierarchy() != null) {
 			hierarchy = cube.lookupHierarchy(hierarchyGrant.getHierarchy());
@@ -717,7 +721,7 @@ public class RolapCatalog implements Catalog {
 				throw Util.newError("You may only specify <MemberGrant> if <Hierarchy> has access='custom'");
 			}
 
-			for (org.eclipse.daanse.rolap.mapping.model.AccessMemberGrant memberGrant : hierarchyGrant.getMemberGrants()) {
+			for (org.eclipse.daanse.rolap.mapping.model.access.olap.AccessMemberGrant memberGrant : hierarchyGrant.getMemberGrants()) {
 				Member member = reader.withLocus().getMemberByUniqueName(Util.parseIdentifier(memberGrant.getMember()),
 						!ignoreInvalidMembers);
 				if (member == null) {
@@ -753,7 +757,7 @@ public class RolapCatalog implements Catalog {
 	}
 
 	private Level findLevelForHierarchyGrant(RolapCube cube, CatalogReader schemaReader, AccessHierarchy hierarchyAccess,
-			org.eclipse.daanse.rolap.mapping.model.Level levelMapping, String desc) {
+			org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.Level levelMapping, String desc) {
 		if (levelMapping == null) {
 			return null;
 		}
@@ -810,7 +814,7 @@ public class RolapCatalog implements Catalog {
 	 * failIfNotFound controls whether to raise an error or return
 	 * null.
 	 */
-	public Cube lookupCube(final org.eclipse.daanse.rolap.mapping.model.Cube cube, final boolean failIfNotFound) {
+	public Cube lookupCube(final org.eclipse.daanse.rolap.mapping.model.olap.cube.Cube cube, final boolean failIfNotFound) {
 		RolapCube mdxCube = lookupCube(cube);
 		if (mdxCube == null && failIfNotFound) {
 			throw new OlapRuntimeException(MessageFormat.format("MDX cube ''{0}'' not found", cube));
@@ -822,7 +826,7 @@ public class RolapCatalog implements Catalog {
 	 * Finds a cube called 'cube' in the current catalog, or return null if no cube
 	 * exists.
 	 */
-	public RolapCube lookupCube(final org.eclipse.daanse.rolap.mapping.model.Cube cubeMapping) {
+	public RolapCube lookupCube(final org.eclipse.daanse.rolap.mapping.model.olap.cube.Cube cubeMapping) {
 		return mapMappingToRolapCube.get(cubeMapping);
 	}
 
@@ -838,12 +842,12 @@ public class RolapCatalog implements Catalog {
 	 * 'cubeName' or return null if no calculatedMember or xmlCube by those name
 	 * exists.
 	 */
-	public org.eclipse.daanse.rolap.mapping.model.CalculatedMember lookupMappingCalculatedMember(final String calcMemberName, final String cubeName) {
-		for (final org.eclipse.daanse.rolap.mapping.model.Cube cube : mappingCatalog.getCubes()) {
+	public org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.CalculatedMember lookupMappingCalculatedMember(final String calcMemberName, final String cubeName) {
+		for (final org.eclipse.daanse.rolap.mapping.model.olap.cube.Cube cube : mappingCatalog.getCubes()) {
 			if (!Util.equalName(cube.getName(), cubeName)) {
 				continue;
 			}
-			for (org.eclipse.daanse.rolap.mapping.model.CalculatedMember mappingCalcMember : cube.getCalculatedMembers()) {
+			for (org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.CalculatedMember mappingCalcMember : cube.getCalculatedMembers()) {
 				// FIXME: Since fully-qualified names are not unique, we
 				// should compare unique names. Also, the logic assumes that
 				// CalculatedMember.dimension is not quoted (e.g. "Time")
@@ -859,7 +863,7 @@ public class RolapCatalog implements Catalog {
 		return null;
 	}
 
-	public static String calcMemberFqName(org.eclipse.daanse.rolap.mapping.model.CalculatedMember mappingCalcMember) {
+	public static String calcMemberFqName(org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.CalculatedMember mappingCalcMember) {
 		if (mappingCalcMember.getHierarchy() != null) {
 			return Util.makeFqName(mappingCalcMember.getHierarchy().getName(), mappingCalcMember.getName());
 		}
@@ -882,7 +886,7 @@ public class RolapCatalog implements Catalog {
 	 * @param cubeMapping
 	 * @see #lookupCube(String)
 	 */
-	protected void addCube(org.eclipse.daanse.rolap.mapping.model.Cube cubeMapping, final RolapCube cube) {
+	protected void addCube(org.eclipse.daanse.rolap.mapping.model.olap.cube.Cube cubeMapping, final RolapCube cube) {
 		mapMappingToRolapCube.put(cubeMapping, cube);
 	}
 
@@ -896,7 +900,7 @@ public class RolapCatalog implements Catalog {
 		return new ArrayList<>(mapMappingToRolapCube.values());
 	}
 
-	RolapHierarchy getSharedHierarchy(final org.eclipse.daanse.rolap.mapping.model.Dimension name) {
+	RolapHierarchy getSharedHierarchy(final org.eclipse.daanse.rolap.mapping.model.olap.dimension.Dimension name) {
 		return mapSharedHierarchyNameToHierarchy.get(name);
 	}
 
@@ -917,7 +921,7 @@ public class RolapCatalog implements Catalog {
 		return null;
 	}
 
-	public Role lookupRole(final org.eclipse.daanse.rolap.mapping.model.AccessRole accessRoleMapping) {
+	public Role lookupRole(final org.eclipse.daanse.rolap.mapping.model.access.common.AccessRole accessRoleMapping) {
 		return mapNameToRole.get(accessRoleMapping);
 	}
 
@@ -930,7 +934,7 @@ public class RolapCatalog implements Catalog {
 	}
 
 	public Set<String> roleNames() {
-		return mapNameToRole.keySet().stream().map(org.eclipse.daanse.rolap.mapping.model.AccessRole::getName).collect(Collectors.toSet());
+		return mapNameToRole.keySet().stream().map(org.eclipse.daanse.rolap.mapping.model.access.common.AccessRole::getName).collect(Collectors.toSet());
 	}
 
 	@Override
@@ -946,7 +950,7 @@ public class RolapCatalog implements Catalog {
 	 *
 	 * Synchronization: thread safe
 	 */
-	synchronized MemberReader createMemberReader(final org.eclipse.daanse.rolap.mapping.model.Dimension xmlDimension, final RolapHierarchy hierarchy,
+	synchronized MemberReader createMemberReader(final org.eclipse.daanse.rolap.mapping.model.olap.dimension.Dimension xmlDimension, final RolapHierarchy hierarchy,
 			final String memberReaderClass) {
 		MemberReader reader;
 		if (xmlDimension != null) {

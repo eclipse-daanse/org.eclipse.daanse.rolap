@@ -65,6 +65,7 @@ import org.eclipse.daanse.rolap.recorder.MessageRecorder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationFactory;
 /**
  * A class containing a RolapCube's Aggregate tables exclude/include
  * criteria.
@@ -127,26 +128,26 @@ public class ExplicitRules {
          */
         public static ExplicitRules.Group make(
             final RolapCube cube,
-            final org.eclipse.daanse.rolap.mapping.model.PhysicalCube xmlCube)
+            final org.eclipse.daanse.rolap.mapping.model.olap.cube.PhysicalCube xmlCube)
         {
             Group group = new Group(cube);
 
-            org.eclipse.daanse.rolap.mapping.model.Query relation = xmlCube.getQuery();
+            org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation = xmlCube.getQuery();
 
-            if (relation instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery table) {
-                List<? extends org.eclipse.daanse.rolap.mapping.model.AggregationExclude> aggExcludes =
+            if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.TableSource table) {
+                List<? extends org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationExclude> aggExcludes =
                     table.getAggregationExcludes();
                 if (aggExcludes != null) {
-                    for (org.eclipse.daanse.rolap.mapping.model.AggregationExclude aggExclude : aggExcludes) {
+                    for (org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationExclude aggExclude : aggExcludes) {
                         Exclude exclude =
                             ExplicitRules.make(aggExclude);
                         group.addExclude(exclude);
                     }
                 }
-                List<? extends org.eclipse.daanse.rolap.mapping.model.AggregationTable> aggTables =
+                List<? extends org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationTable> aggTables =
                     table.getAggregationTables();
                 if (aggTables != null) {
-                    for (org.eclipse.daanse.rolap.mapping.model.AggregationTable aggTable : aggTables) {
+                    for (org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationTable aggTable : aggTables) {
                         TableDef tableDef = TableDef.make(aggTable, group);
                         group.addTableDef(tableDef);
                     }
@@ -266,7 +267,7 @@ public class ExplicitRules {
          */
         public String getTableName() {
             RolapStar.Table table = getStar().getFactTable();
-            org.eclipse.daanse.rolap.mapping.model.RelationalQuery relation = table.getRelation();
+            org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation = table.getRelation();
             return getAlias(relation);
         }
 
@@ -278,9 +279,9 @@ public class ExplicitRules {
             String schema = null;
 
             RolapStar.Table table = getStar().getFactTable();
-            org.eclipse.daanse.rolap.mapping.model.RelationalQuery relation = table.getRelation();
+            org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation = table.getRelation();
 
-            if (relation instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery mtable) {
+            if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.TableSource mtable) {
                 schema = mtable.getTable().getName();
             }
             return schema;
@@ -337,7 +338,7 @@ public class ExplicitRules {
         }
     }
 
-    private static Exclude make(final org.eclipse.daanse.rolap.mapping.model.AggregationExclude aggExclude) {
+    private static Exclude make(final org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationExclude aggExclude) {
         return (aggExclude.getName() != null)
             ? new ExcludeName(
                 aggExclude.getName(),
@@ -546,14 +547,14 @@ public class ExplicitRules {
          * which is either a NameTableDef or PatternTableDef.
          */
         static ExplicitRules.TableDef make(
-            final org.eclipse.daanse.rolap.mapping.model.AggregationTable aggTable,
+            final org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationTable aggTable,
             final ExplicitRules.Group group)
         {
-            return (aggTable instanceof org.eclipse.daanse.rolap.mapping.model.AggregationName aggName)
+            return (aggTable instanceof org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationName aggName)
                 ? ExplicitRules.NameTableDef.make(aggName, group)
                 : (ExplicitRules.TableDef)
                 ExplicitRules.PatternTableDef.make(
-                    (org.eclipse.daanse.rolap.mapping.model.AggregationPattern) aggTable, group);
+                    (org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationPattern) aggTable, group);
         }
 
         /**
@@ -564,23 +565,23 @@ public class ExplicitRules {
          */
         private static void add(
             final ExplicitRules.TableDef tableDef,
-            final org.eclipse.daanse.rolap.mapping.model.AggregationTable aggTable)
+            final org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationTable aggTable)
         {
 
-            if (aggTable instanceof org.eclipse.daanse.rolap.mapping.model.AggregationName aggName) {
+            if (aggTable instanceof org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationName aggName) {
                 tableDef.setFactCountColumn(
                     aggName.getAggregationFactCount().getColumn());
             }
-            if (aggTable instanceof org.eclipse.daanse.rolap.mapping.model.AggregationPattern aggPattern) {
+            if (aggTable instanceof org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationPattern aggPattern) {
                 tableDef.setFactCountColumn(
                     aggPattern.getAggregationFactCount().getColumn());
             }
 
 
             if (aggTable.getAggregationMeasureFactCounts() != null) {
-                Map<org.eclipse.daanse.rolap.mapping.model.Column, org.eclipse.daanse.rolap.mapping.model.Column> measuresFactCount =
+                Map<org.eclipse.daanse.cwm.model.cwm.resource.relational.Column, org.eclipse.daanse.cwm.model.cwm.resource.relational.Column> measuresFactCount =
                         tableDef.getMeasuresFactCount();
-                for (org.eclipse.daanse.rolap.mapping.model.AggregationMeasureFactCount measureFact
+                for (org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationMeasureFactCount measureFact
                         : aggTable.getAggregationMeasureFactCounts())
                 {
                     measuresFactCount.put
@@ -589,31 +590,31 @@ public class ExplicitRules {
                 }
             }
 
-            List<? extends org.eclipse.daanse.rolap.mapping.model.AggregationColumnName> ignores =
+            List<? extends org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationColumnName> ignores =
                 aggTable.getAggregationIgnoreColumns();
 
             if (ignores != null) {
-                for (org.eclipse.daanse.rolap.mapping.model.AggregationColumnName ignore : ignores) {
+                for (org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationColumnName ignore : ignores) {
                     tableDef.addIgnoreColumn(ignore.getColumn());
                 }
             }
 
-            List<? extends org.eclipse.daanse.rolap.mapping.model.AggregationForeignKey> fks = aggTable.getAggregationForeignKeys();
+            List<? extends org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationForeignKey> fks = aggTable.getAggregationForeignKeys();
             if (fks != null) {
-                for (org.eclipse.daanse.rolap.mapping.model.AggregationForeignKey fk : fks) {
+                for (org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationForeignKey fk : fks) {
                     tableDef.addFK(fk);
                 }
             }
-            List<? extends org.eclipse.daanse.rolap.mapping.model.AggregationMeasure> measures = aggTable.getAggregationMeasures();
+            List<? extends org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationMeasure> measures = aggTable.getAggregationMeasures();
             if (measures != null) {
-                for (org.eclipse.daanse.rolap.mapping.model.AggregationMeasure measure : measures) {
+                for (org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationMeasure measure : measures) {
                     addTo(tableDef, measure);
                 }
             }
 
-            List<? extends org.eclipse.daanse.rolap.mapping.model.AggregationLevel> levels = aggTable.getAggregationLevels();
+            List<? extends org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationLevel> levels = aggTable.getAggregationLevels();
             if (levels != null) {
-                for (org.eclipse.daanse.rolap.mapping.model.AggregationLevel level : levels) {
+                for (org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationLevel level : levels) {
                     addTo(tableDef, level);
                 }
             }
@@ -621,7 +622,7 @@ public class ExplicitRules {
 
         private static void addTo(
             final ExplicitRules.TableDef tableDef,
-            final org.eclipse.daanse.rolap.mapping.model.AggregationLevel aggLevel)
+            final org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationLevel aggLevel)
         {
             if (aggLevel.getNameColumn() != null) {
                 handleNameColumn(aggLevel);
@@ -639,8 +640,8 @@ public class ExplicitRules {
         /**
          * nameColumn is mapped to the internal property $name
          */
-        private static void handleNameColumn(org.eclipse.daanse.rolap.mapping.model.AggregationLevel aggLevel) {
-        	org.eclipse.daanse.rolap.mapping.model.AggregationLevelProperty nameProp = RolapMappingFactory.eINSTANCE.createAggregationLevelProperty();
+        private static void handleNameColumn(org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationLevel aggLevel) {
+        	org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationLevelProperty nameProp = AggregationFactory.eINSTANCE.createAggregationLevelProperty();
         	nameProp.setName(StandardProperty.NAME.getName());
         	nameProp.setColumn(aggLevel.getNameColumn());
         	//TODO
@@ -649,7 +650,7 @@ public class ExplicitRules {
 
         private static void addTo(
             final ExplicitRules.TableDef tableDef,
-            final org.eclipse.daanse.rolap.mapping.model.AggregationMeasure aggMeasure)
+            final org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationMeasure aggMeasure)
         {
             addMeasureTo(
                 tableDef,
@@ -661,11 +662,11 @@ public class ExplicitRules {
         public static void addLevelTo(
             final TableDef tableDef,
             final String name,
-            final org.eclipse.daanse.rolap.mapping.model.Column columnName,
+            final org.eclipse.daanse.cwm.model.cwm.resource.relational.Column columnName,
             final boolean collapsed,
-            List<org.eclipse.daanse.rolap.mapping.model.Column> ordinalColumns,
-            org.eclipse.daanse.rolap.mapping.model.Column captionColumn,
-            List<? extends org.eclipse.daanse.rolap.mapping.model.AggregationLevelProperty> properties)
+            List<org.eclipse.daanse.cwm.model.cwm.resource.relational.Column> ordinalColumns,
+            org.eclipse.daanse.cwm.model.cwm.resource.relational.Column captionColumn,
+            List<? extends org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationLevelProperty> properties)
         {
             Level level = tableDef.new Level(
                 name, columnName, collapsed, ordinalColumns, captionColumn,
@@ -676,7 +677,7 @@ public class ExplicitRules {
         public static void addMeasureTo(
             final ExplicitRules.TableDef tableDef,
             final String name,
-            final org.eclipse.daanse.rolap.mapping.model.Column column,
+            final org.eclipse.daanse.cwm.model.cwm.resource.relational.Column column,
             final String rollupType)
         {
             Measure measure = tableDef.new Measure(name, column, rollupType);
@@ -689,12 +690,12 @@ public class ExplicitRules {
          */
         class Level {
             private final String name;
-            private final org.eclipse.daanse.rolap.mapping.model.Column column;
+            private final org.eclipse.daanse.cwm.model.cwm.resource.relational.Column column;
             private final boolean collapsed;
             private RolapLevel rlevel;
-            private final List<org.eclipse.daanse.rolap.mapping.model.Column> ordinalColumns;
-            private final org.eclipse.daanse.rolap.mapping.model.Column captionColumn;
-            private final Map<String, org.eclipse.daanse.rolap.mapping.model.Column> properties;
+            private final List<org.eclipse.daanse.cwm.model.cwm.resource.relational.Column> ordinalColumns;
+            private final org.eclipse.daanse.cwm.model.cwm.resource.relational.Column captionColumn;
+            private final Map<String, org.eclipse.daanse.cwm.model.cwm.resource.relational.Column> properties;
             private final static String unknownLevelName =
                 "Context ''{0}'': The Hierarchy Level ''{1}'' does not have a Level named ''{2}''";
             private final static String badLevelNameFormat =
@@ -704,11 +705,11 @@ public class ExplicitRules {
 
             Level(
                 final String name,
-                final org.eclipse.daanse.rolap.mapping.model.Column column,
+                final org.eclipse.daanse.cwm.model.cwm.resource.relational.Column column,
                 final boolean collapsed,
-                List<org.eclipse.daanse.rolap.mapping.model.Column> ordinalColumns,
-                org.eclipse.daanse.rolap.mapping.model.Column captionColumn,
-                List<? extends org.eclipse.daanse.rolap.mapping.model.AggregationLevelProperty> properties)
+                List<org.eclipse.daanse.cwm.model.cwm.resource.relational.Column> ordinalColumns,
+                org.eclipse.daanse.cwm.model.cwm.resource.relational.Column captionColumn,
+                List<? extends org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationLevelProperty> properties)
             {
                 this.name = name;
                 this.column = column;
@@ -718,11 +719,11 @@ public class ExplicitRules {
                 this.properties = makePropertyMap(properties);
             }
 
-            private Map<String, org.eclipse.daanse.rolap.mapping.model.Column> makePropertyMap(
-                List<? extends org.eclipse.daanse.rolap.mapping.model.AggregationLevelProperty> properties)
+            private Map<String, org.eclipse.daanse.cwm.model.cwm.resource.relational.Column> makePropertyMap(
+                List<? extends org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationLevelProperty> properties)
             {
-                Map<String, org.eclipse.daanse.rolap.mapping.model.Column> map = new HashMap<>();
-                for (org.eclipse.daanse.rolap.mapping.model.AggregationLevelProperty prop : properties) {
+                Map<String, org.eclipse.daanse.cwm.model.cwm.resource.relational.Column> map = new HashMap<>();
+                for (org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationLevelProperty prop : properties) {
                     map.put(prop.getName(), prop.getColumn());
                 }
                 return Collections.unmodifiableMap(map);
@@ -738,7 +739,7 @@ public class ExplicitRules {
             /**
              * Get the foreign key column name of the aggregate table.
              */
-            public org.eclipse.daanse.rolap.mapping.model.Column getColumn() {
+            public org.eclipse.daanse.cwm.model.cwm.resource.relational.Column getColumn() {
                 return column;
             }
 
@@ -775,7 +776,7 @@ public class ExplicitRules {
                 msgRecorder.pushContextName("Level");
                 try {
                     String nameInner = getName();
-                    org.eclipse.daanse.rolap.mapping.model.Column columnInner = getColumn();
+                    org.eclipse.daanse.cwm.model.cwm.resource.relational.Column columnInner = getColumn();
                     checkAttributeString(msgRecorder, nameInner, "name");
                     checkAttributeString(msgRecorder, columnInner.getName(), "column");
 
@@ -850,15 +851,15 @@ public class ExplicitRules {
             }
 
 
-            public List<org.eclipse.daanse.rolap.mapping.model.Column> getOrdinalColumns() {
+            public List<org.eclipse.daanse.cwm.model.cwm.resource.relational.Column> getOrdinalColumns() {
                 return ordinalColumns;
             }
 
-            public org.eclipse.daanse.rolap.mapping.model.Column getCaptionColumn() {
+            public org.eclipse.daanse.cwm.model.cwm.resource.relational.Column getCaptionColumn() {
                 return captionColumn;
             }
 
-            public Map<String, org.eclipse.daanse.rolap.mapping.model.Column> getProperties() {
+            public Map<String, org.eclipse.daanse.cwm.model.cwm.resource.relational.Column> getProperties() {
                 return properties;
             }
         }
@@ -921,7 +922,7 @@ public class ExplicitRules {
         class Measure {
             private final String name;
             private String symbolicName;
-            private final org.eclipse.daanse.rolap.mapping.model.Column column;
+            private final org.eclipse.daanse.cwm.model.cwm.resource.relational.Column column;
             private final RollupType explicitRollupType;
             private RolapStar.Measure rolapMeasure;
             private final static String badMeasureName =
@@ -934,7 +935,7 @@ public class ExplicitRules {
 
             Measure(
                 final String name,
-                final org.eclipse.daanse.rolap.mapping.model.Column column, final String rollupType)
+                final org.eclipse.daanse.cwm.model.cwm.resource.relational.Column column, final String rollupType)
             {
                 this.name = name;
                 this.column = column;
@@ -960,7 +961,7 @@ public class ExplicitRules {
             /**
              * Get the aggregate table column name.
              */
-            public org.eclipse.daanse.rolap.mapping.model.Column getColumn() {
+            public org.eclipse.daanse.cwm.model.cwm.resource.relational.Column getColumn() {
                 return column;
             }
 
@@ -988,7 +989,7 @@ public class ExplicitRules {
                 msgRecorder.pushContextName("Measure");
                 try {
                     String nameInner = getName();
-                    org.eclipse.daanse.rolap.mapping.model.Column column = getColumn();
+                    org.eclipse.daanse.cwm.model.cwm.resource.relational.Column column = getColumn();
                     checkAttributeString(msgRecorder, nameInner, "name");
                     checkAttributeString(msgRecorder, column.getName(), "column");
 
@@ -1074,10 +1075,10 @@ public class ExplicitRules {
         protected final int id;
         protected final boolean ignoreCase;
         protected final ExplicitRules.Group aggGroup;
-        protected org.eclipse.daanse.rolap.mapping.model.Column factCountColumn;
-        protected Map<org.eclipse.daanse.rolap.mapping.model.Column, org.eclipse.daanse.rolap.mapping.model.Column> measuresFactCount = new HashMap<>();
-        protected List<org.eclipse.daanse.rolap.mapping.model.Column> ignoreColumns;
-        private Map<org.eclipse.daanse.rolap.mapping.model.Column, org.eclipse.daanse.rolap.mapping.model.Column> foreignKeyMap;
+        protected org.eclipse.daanse.cwm.model.cwm.resource.relational.Column factCountColumn;
+        protected Map<org.eclipse.daanse.cwm.model.cwm.resource.relational.Column, org.eclipse.daanse.cwm.model.cwm.resource.relational.Column> measuresFactCount = new HashMap<>();
+        protected List<org.eclipse.daanse.cwm.model.cwm.resource.relational.Column> ignoreColumns;
+        private Map<org.eclipse.daanse.cwm.model.cwm.resource.relational.Column, org.eclipse.daanse.cwm.model.cwm.resource.relational.Column> foreignKeyMap;
         private List<Level> levels;
         private List<Measure> measures;
         protected int approxRowCount = Integer.MIN_VALUE;
@@ -1129,25 +1130,25 @@ public class ExplicitRules {
         /**
          * Get the name of the fact count column.
          */
-        protected org.eclipse.daanse.rolap.mapping.model.Column getFactCountColumn() {
+        protected org.eclipse.daanse.cwm.model.cwm.resource.relational.Column getFactCountColumn() {
             return factCountColumn;
         }
 
         /**
          * Set the name of the fact count column.
          */
-        protected void setFactCountColumn(final org.eclipse.daanse.rolap.mapping.model.Column factCountColumn) {
+        protected void setFactCountColumn(final org.eclipse.daanse.cwm.model.cwm.resource.relational.Column factCountColumn) {
             this.factCountColumn = factCountColumn;
         }
 
-        public Map<org.eclipse.daanse.rolap.mapping.model.Column, org.eclipse.daanse.rolap.mapping.model.Column> getMeasuresFactCount() {
+        public Map<org.eclipse.daanse.cwm.model.cwm.resource.relational.Column, org.eclipse.daanse.cwm.model.cwm.resource.relational.Column> getMeasuresFactCount() {
             return measuresFactCount;
         }
 
         /**
          * Get an Iterator over all ignore column name entries.
          */
-        protected Iterator<org.eclipse.daanse.rolap.mapping.model.Column> getIgnoreColumns() {
+        protected Iterator<org.eclipse.daanse.cwm.model.cwm.resource.relational.Column> getIgnoreColumns() {
             return ignoreColumns.iterator();
         }
 
@@ -1172,11 +1173,11 @@ public class ExplicitRules {
             return new Recognizer.Matcher() {
                 @Override
 				public boolean matches(final String name) {
-                    for (Iterator<org.eclipse.daanse.rolap.mapping.model.Column> it =
+                    for (Iterator<org.eclipse.daanse.cwm.model.cwm.resource.relational.Column> it =
                             ExplicitRules.TableDef.this.getIgnoreColumns();
                         it.hasNext();)
                     {
-                    	org.eclipse.daanse.rolap.mapping.model.Column ignoreName = it.next();
+                    	org.eclipse.daanse.cwm.model.cwm.resource.relational.Column ignoreName = it.next();
                         if (isIgnoreCase()) {
                             if (ignoreName.getName().equalsIgnoreCase(name)) {
                                 return true;
@@ -1200,7 +1201,7 @@ public class ExplicitRules {
                 @Override
 				public boolean matches(String name) {
                     // Match is case insensitive
-                    final org.eclipse.daanse.rolap.mapping.model.Column factCountColumnInner = TableDef.this.factCountColumn;
+                    final org.eclipse.daanse.cwm.model.cwm.resource.relational.Column factCountColumnInner = TableDef.this.factCountColumn;
                     return factCountColumnInner != null && factCountColumnInner.getName() != null
                         && factCountColumnInner.getName().equalsIgnoreCase(name);
                 }
@@ -1211,9 +1212,9 @@ public class ExplicitRules {
             return new Recognizer.Matcher() {
                 @Override
                 public boolean matches(String name) {
-                    HashSet<org.eclipse.daanse.rolap.mapping.model.Column> measuresFactCountSet =
+                    HashSet<org.eclipse.daanse.cwm.model.cwm.resource.relational.Column> measuresFactCountSet =
                             new HashSet<>(measuresFactCount.values());
-                    return measuresFactCountSet.stream().filter(Objects::nonNull).map(org.eclipse.daanse.rolap.mapping.model.Column::getName).anyMatch(n -> name.equals(n));
+                    return measuresFactCountSet.stream().filter(Objects::nonNull).map(org.eclipse.daanse.cwm.model.cwm.resource.relational.Column::getName).anyMatch(n -> name.equals(n));
                 }
             };
         }
@@ -1246,7 +1247,7 @@ public class ExplicitRules {
         /**
          * Adds the name of an aggregate table column that is to be ignored.
          */
-        protected void addIgnoreColumn(final org.eclipse.daanse.rolap.mapping.model.Column ignoreName) {
+        protected void addIgnoreColumn(final org.eclipse.daanse.cwm.model.cwm.resource.relational.Column ignoreName) {
             if (this.ignoreColumns == EMPTY_LIST) {
                 this.ignoreColumns = new ArrayList<>();
             }
@@ -1257,7 +1258,7 @@ public class ExplicitRules {
          * Add foreign key mapping entry (maps from fact table foreign key
          * column name to aggregate table foreign key column name).
          */
-        protected void addFK(final org.eclipse.daanse.rolap.mapping.model.AggregationForeignKey fk) {
+        protected void addFK(final org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationForeignKey fk) {
             if (this.foreignKeyMap == EMPTY_MAP) {
                 this.foreignKeyMap = new HashMap<>();
             }
@@ -1270,8 +1271,8 @@ public class ExplicitRules {
          * Get the name of the aggregate table's foreign key column that matches
          * the base fact table's foreign key column or return null.
          */
-        protected org.eclipse.daanse.rolap.mapping.model.Column getAggregateFK(final String baseFK) {
-        	Optional<Map.Entry<org.eclipse.daanse.rolap.mapping.model.Column, org.eclipse.daanse.rolap.mapping.model.Column>> op = this.foreignKeyMap.entrySet().stream().filter(e -> baseFK.equals(e.getKey().getName())).findFirst();
+        protected org.eclipse.daanse.cwm.model.cwm.resource.relational.Column getAggregateFK(final String baseFK) {
+        	Optional<Map.Entry<org.eclipse.daanse.cwm.model.cwm.resource.relational.Column, org.eclipse.daanse.cwm.model.cwm.resource.relational.Column>> op = this.foreignKeyMap.entrySet().stream().filter(e -> baseFK.equals(e.getKey().getName())).findFirst();
             if (op.isPresent()) {
             	return op.get().getValue();
             }
@@ -1394,9 +1395,9 @@ public class ExplicitRules {
                 RolapStar star = getStar();
                 RolapStar.Table factTable = star.getFactTable();
                 String tableName = factTable.getAlias();
-                for (Map.Entry<org.eclipse.daanse.rolap.mapping.model.Column, org.eclipse.daanse.rolap.mapping.model.Column> e : foreignKeyMap.entrySet()) {
-                	org.eclipse.daanse.rolap.mapping.model.Column baseFKName = e.getKey();
-                	org.eclipse.daanse.rolap.mapping.model.Column aggFKName = e.getValue();
+                for (Map.Entry<org.eclipse.daanse.cwm.model.cwm.resource.relational.Column, org.eclipse.daanse.cwm.model.cwm.resource.relational.Column> e : foreignKeyMap.entrySet()) {
+                	org.eclipse.daanse.cwm.model.cwm.resource.relational.Column baseFKName = e.getKey();
+                	org.eclipse.daanse.cwm.model.cwm.resource.relational.Column aggFKName = e.getValue();
 
                     if (namesToObjects.containsKey(baseFKName.getName())) {
                         msgRecorder.reportError(
@@ -1476,7 +1477,7 @@ public class ExplicitRules {
          * Makes a NameTableDef from the catalog schema.
          */
         static ExplicitRules.NameTableDef make(
-            final org.eclipse.daanse.rolap.mapping.model.AggregationName aggName,
+            final org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationName aggName,
             final ExplicitRules.Group group)
         {
             ExplicitRules.NameTableDef name =
@@ -1491,10 +1492,10 @@ public class ExplicitRules {
             return name;
         }
 
-        private final org.eclipse.daanse.rolap.mapping.model.Table name;
+        private final org.eclipse.daanse.cwm.model.cwm.resource.relational.NamedColumnSet name;
 
         public NameTableDef(
-            final org.eclipse.daanse.rolap.mapping.model.Table name,
+            final org.eclipse.daanse.cwm.model.cwm.resource.relational.NamedColumnSet name,
             final String approxRowCount,
             final boolean ignoreCase,
             final ExplicitRules.Group group)
@@ -1565,7 +1566,7 @@ public class ExplicitRules {
          * Make a PatternTableDef from the catalog schema.
          */
         static ExplicitRules.PatternTableDef make(
-            final org.eclipse.daanse.rolap.mapping.model.AggregationPattern aggPattern,
+            final org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationPattern aggPattern,
             final ExplicitRules.Group group)
         {
             ExplicitRules.PatternTableDef pattern =
@@ -1574,9 +1575,9 @@ public class ExplicitRules {
                     aggPattern.isIgnorecase(),
                     group);
 
-            List<? extends org.eclipse.daanse.rolap.mapping.model.AggregationExclude> excludes = aggPattern.getExcludes();
+            List<? extends org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationExclude> excludes = aggPattern.getExcludes();
             if (excludes != null) {
-                for (org.eclipse.daanse.rolap.mapping.model.AggregationExclude exclude1 : excludes) {
+                for (org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationExclude exclude1 : excludes) {
                     Exclude exclude = ExplicitRules.make(exclude1);
                     pattern.add(exclude);
                 }

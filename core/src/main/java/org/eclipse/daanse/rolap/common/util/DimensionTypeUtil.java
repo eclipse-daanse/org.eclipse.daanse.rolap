@@ -22,11 +22,11 @@ public class DimensionTypeUtil {
     }
 
     // Return the dimension's enumerated type.
-    public static DimensionType getDimensionType(org.eclipse.daanse.rolap.mapping.model.Dimension dimension) {
-        if (dimension instanceof org.eclipse.daanse.rolap.mapping.model.StandardDimension) {
+    public static DimensionType getDimensionType(org.eclipse.daanse.rolap.mapping.model.olap.dimension.Dimension dimension) {
+        if (dimension instanceof org.eclipse.daanse.rolap.mapping.model.olap.dimension.StandardDimension) {
             return DimensionType.STANDARD_DIMENSION;
         }
-        if (dimension instanceof org.eclipse.daanse.rolap.mapping.model.TimeDimension) {
+        if (dimension instanceof org.eclipse.daanse.rolap.mapping.model.olap.dimension.TimeDimension) {
         	return DimensionType.TIME_DIMENSION;
         }
         return null;

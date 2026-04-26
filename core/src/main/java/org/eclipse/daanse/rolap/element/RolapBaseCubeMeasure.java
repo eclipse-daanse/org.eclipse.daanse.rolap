@@ -39,7 +39,7 @@ import org.eclipse.daanse.rolap.aggregator.DistinctCountAggregator;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.result.RolapResult;
 import org.eclipse.daanse.rolap.common.star.RolapSqlExpression;
-import org.eclipse.daanse.rolap.mapping.model.ColumnInternalDataType;
+import org.eclipse.daanse.rolap.mapping.model.database.relational.ColumnInternalDataType;
 
 /**
  * Measure which is computed from a SQL column (or expression) and which is

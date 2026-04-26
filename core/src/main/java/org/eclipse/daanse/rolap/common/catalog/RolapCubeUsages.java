@@ -38,9 +38,9 @@ import java.util.List;
  * @since Nov 22 2007
  */
 public class RolapCubeUsages {
-    private List<? extends org.eclipse.daanse.rolap.mapping.model.CubeConnector> cubeUsages;
+    private List<? extends org.eclipse.daanse.rolap.mapping.model.olap.cube.CubeConnector> cubeUsages;
 
-    public RolapCubeUsages(List<? extends org.eclipse.daanse.rolap.mapping.model.CubeConnector> cubeUsage) {
+    public RolapCubeUsages(List<? extends org.eclipse.daanse.rolap.mapping.model.olap.cube.CubeConnector> cubeUsage) {
         this.cubeUsages = cubeUsage;
     }
 
@@ -48,7 +48,7 @@ public class RolapCubeUsages {
         if (cubeUsages == null) {
             return false;
         }
-        for (org.eclipse.daanse.rolap.mapping.model.CubeConnector usage : cubeUsages) {
+        for (org.eclipse.daanse.rolap.mapping.model.olap.cube.CubeConnector usage : cubeUsages) {
             if (usage.getCube().getName().equals(baseCubeName)
                 && Boolean.TRUE.equals(usage.isIgnoreUnrelatedDimensions()))
             {

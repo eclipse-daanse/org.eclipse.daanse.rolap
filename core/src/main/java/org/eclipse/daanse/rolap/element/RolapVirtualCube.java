@@ -55,7 +55,7 @@ public class RolapVirtualCube extends RolapCube implements VirtualCube {
     /**
      * Creates a RolapCube from a virtual cube.
      */
-    RolapVirtualCube(RolapCatalog catalog, org.eclipse.daanse.rolap.mapping.model.Catalog catalogMapping, org.eclipse.daanse.rolap.mapping.model.VirtualCube virtualCubeMapping,
+    RolapVirtualCube(RolapCatalog catalog, org.eclipse.daanse.rolap.mapping.model.catalog.Catalog catalogMapping, org.eclipse.daanse.rolap.mapping.model.olap.cube.VirtualCube virtualCubeMapping,
             Context context) {
         super(catalog, catalogMapping, virtualCubeMapping, true, null, context);
         // Since Measure and VirtualCubeMeasure cannot
@@ -68,13 +68,13 @@ public class RolapVirtualCube extends RolapCube implements VirtualCube {
 
         this.setCubeUsages(new RolapCubeUsages(virtualCubeMapping.getCubeUsages()));
 
-        HashMap<String, org.eclipse.daanse.rolap.mapping.model.Member> measureHash = new HashMap<>();
+        HashMap<String, org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.Member> measureHash = new HashMap<>();
 
         List<RolapVirtualCubeMeasure> origMeasureList = getOriginMeasureList(catalog, virtualCubeMapping,
             measuresLevel, measureHash);
-        Map<RolapPhysicalCube, List<org.eclipse.daanse.rolap.mapping.model.CalculatedMember>> calculatedMembersMap = getOriginCalculatedMemberMap(catalog,
+        Map<RolapPhysicalCube, List<org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.CalculatedMember>> calculatedMembersMap = getOriginCalculatedMemberMap(catalog,
             virtualCubeMapping, measureHash);
-        List<? extends org.eclipse.daanse.rolap.mapping.model.CalculatedMember> origCalcMeasureList = calculatedMembersMap.entrySet().stream().map(Map.Entry::getValue).flatMap(Collection::stream).toList();
+        List<? extends org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.CalculatedMember> origCalcMeasureList = calculatedMembersMap.entrySet().stream().map(Map.Entry::getValue).flatMap(Collection::stream).toList();
         // Must init the dimensions before dealing with calculated members
         init(virtualCubeMapping.getDimensionConnectors());
 
@@ -88,7 +88,7 @@ public class RolapVirtualCube extends RolapCube implements VirtualCube {
 
         // Add the original calculated members from the base cubes to our
         // list of calculated members
-        List<org.eclipse.daanse.rolap.mapping.model.CalculatedMember> mappingCalculatedMemberList = new ArrayList<>(origCalcMeasureList);
+        List<org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.CalculatedMember> mappingCalculatedMemberList = new ArrayList<>(origCalcMeasureList);
         mappingCalculatedMemberList.addAll(virtualCubeMapping.getCalculatedMembers());
 
         // Resolve all calculated members relative to this virtual cube,
@@ -104,10 +104,10 @@ public class RolapVirtualCube extends RolapCube implements VirtualCube {
         // retrieve calculated member source cube
         // set it appropriate rolap calculated measure
         Map<String, RolapHierarchy.RolapCalculatedMeasure> calcMeasuresWithBaseCube = new HashMap<>();
-        for (Map.Entry<RolapPhysicalCube, List<org.eclipse.daanse.rolap.mapping.model.CalculatedMember>> entry : calculatedMembersMap.entrySet()) {
+        for (Map.Entry<RolapPhysicalCube, List<org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.CalculatedMember>> entry : calculatedMembersMap.entrySet()) {
             RolapCube rolapCube = entry.getKey();
-            List<org.eclipse.daanse.rolap.mapping.model.CalculatedMember> calculatedMembers = entry.getValue();
-            for (org.eclipse.daanse.rolap.mapping.model.CalculatedMember calculatedMember : calculatedMembers) {
+            List<org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.CalculatedMember> calculatedMembers = entry.getValue();
+            for (org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.CalculatedMember calculatedMember : calculatedMembers) {
                 List<Member> measures = rolapCube.getMeasures();
                 for (Member measure : measures) {
                     if (measure instanceof RolapHierarchy.RolapCalculatedMeasure calculatedMeasure
@@ -125,7 +125,7 @@ public class RolapVirtualCube extends RolapCube implements VirtualCube {
                 new MeasureMemberSource(this.getMeasuresHierarchy(), Util.<RolapMember>cast(origMeasureList))));
 
 
-        List<? extends org.eclipse.daanse.rolap.mapping.model.CalculatedMember> mappingVirtualCubeCalculatedMemberList = virtualCubeMapping
+        List<? extends org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.CalculatedMember> mappingVirtualCubeCalculatedMemberList = virtualCubeMapping
                 .getCalculatedMembers();
         if (!vcHasAllCalcMembers(origCalcMeasureList, mappingVirtualCubeCalculatedMemberList)) {
             // Remove from the calculated members array
@@ -161,7 +161,7 @@ public class RolapVirtualCube extends RolapCube implements VirtualCube {
                         .setBaseCube(calcMeasuresWithBaseCube.get(calcMeasure.getUniqueName()).getBaseCube());
             }
 
-            org.eclipse.daanse.rolap.mapping.model.Member mappingMeasure = measureHash.get(calcMeasure.getUniqueName());
+            org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.Member mappingMeasure = measureHash.get(calcMeasure.getUniqueName());
             if (mappingMeasure != null) {
                 Boolean visible = mappingMeasure.isVisible();
                 if (visible != null) {
@@ -183,12 +183,12 @@ public class RolapVirtualCube extends RolapCube implements VirtualCube {
     }
 
     private List<RolapVirtualCubeMeasure> getMesuresFromCalculatedmembers(
-            Map<RolapPhysicalCube, List<org.eclipse.daanse.rolap.mapping.model.CalculatedMember>> calculatedMembersMap, RolapLevel measuresLevel) {
+            Map<RolapPhysicalCube, List<org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.CalculatedMember>> calculatedMembersMap, RolapLevel measuresLevel) {
         List<RolapVirtualCubeMeasure> measureList = new ArrayList<RolapVirtualCubeMeasure>();
-        for (Map.Entry<RolapPhysicalCube, List<org.eclipse.daanse.rolap.mapping.model.CalculatedMember>> entry : calculatedMembersMap.entrySet()) {
+        for (Map.Entry<RolapPhysicalCube, List<org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.CalculatedMember>> entry : calculatedMembersMap.entrySet()) {
             RolapPhysicalCube baseCube = entry.getKey();
-            List<org.eclipse.daanse.rolap.mapping.model.CalculatedMember> mappingCalculatedMemberList = calculatedMembersMap.get(baseCube);
-            Query queryExp = resolveCalcMembers(mappingCalculatedMemberList, Collections.<org.eclipse.daanse.rolap.mapping.model.NamedSet>emptyList(),
+            List<org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.CalculatedMember> mappingCalculatedMemberList = calculatedMembersMap.get(baseCube);
+            Query queryExp = resolveCalcMembers(mappingCalculatedMemberList, Collections.<org.eclipse.daanse.rolap.mapping.model.olap.dimension.NamedSet>emptyList(),
                     baseCube, false);
             MeasureFinder measureFinder = new MeasureFinder(this, baseCube, measuresLevel, getCatalog());
             queryExp.accept(measureFinder);
@@ -197,12 +197,12 @@ public class RolapVirtualCube extends RolapCube implements VirtualCube {
         return measureList;
     }
 
-    private Map<RolapPhysicalCube, List<org.eclipse.daanse.rolap.mapping.model.CalculatedMember>> getOriginCalculatedMemberMap(final RolapCatalog catalog,
-            final org.eclipse.daanse.rolap.mapping.model.VirtualCube virtualCubeMapping, HashMap<String, org.eclipse.daanse.rolap.mapping.model.Member> measureHash) {
-        Map<RolapPhysicalCube, List<org.eclipse.daanse.rolap.mapping.model.CalculatedMember>> calculatedMembersMap = new TreeMap<>(new RolapCubeComparator());
-        List<? extends org.eclipse.daanse.rolap.mapping.model.CalculatedMember> cm = virtualCubeMapping.getReferencedCalculatedMembers();
+    private Map<RolapPhysicalCube, List<org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.CalculatedMember>> getOriginCalculatedMemberMap(final RolapCatalog catalog,
+            final org.eclipse.daanse.rolap.mapping.model.olap.cube.VirtualCube virtualCubeMapping, HashMap<String, org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.Member> measureHash) {
+        Map<RolapPhysicalCube, List<org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.CalculatedMember>> calculatedMembersMap = new TreeMap<>(new RolapCubeComparator());
+        List<? extends org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.CalculatedMember> cm = virtualCubeMapping.getReferencedCalculatedMembers();
         if (cm != null) {
-            for (org.eclipse.daanse.rolap.mapping.model.CalculatedMember calculatedMember : cm) {
+            for (org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.CalculatedMember calculatedMember : cm) {
                 measureHash.put(calculatedMember.getName(), calculatedMember);
                 if (calculatedMember.getCube() != null) {
                     RolapCube cube = catalog.lookupCube(calculatedMember.getCube());
@@ -223,7 +223,7 @@ public class RolapVirtualCube extends RolapCube implements VirtualCube {
                                     this.getMeasuresHierarchy().setDefaultMember(cubeMeasure);
                                 }
                                 found = true;
-                                List<org.eclipse.daanse.rolap.mapping.model.CalculatedMember> memberList = calculatedMembersMap.get(cube);
+                                List<org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.CalculatedMember> memberList = calculatedMembersMap.get(cube);
                                 if (memberList == null) {
                                     memberList = new ArrayList<>();
                                 }
@@ -250,11 +250,11 @@ public class RolapVirtualCube extends RolapCube implements VirtualCube {
         return calculatedMembersMap;
     }
 
-    private List<RolapVirtualCubeMeasure> getOriginMeasureList(RolapCatalog catalog, org.eclipse.daanse.rolap.mapping.model.VirtualCube virtualCubeMapping, RolapLevel measuresLevel,
-            HashMap<String, org.eclipse.daanse.rolap.mapping.model.Member> measureHash) {
+    private List<RolapVirtualCubeMeasure> getOriginMeasureList(RolapCatalog catalog, org.eclipse.daanse.rolap.mapping.model.olap.cube.VirtualCube virtualCubeMapping, RolapLevel measuresLevel,
+            HashMap<String, org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.Member> measureHash) {
         List<RolapVirtualCubeMeasure> origMeasureList = new ArrayList<>();
-        List<? extends org.eclipse.daanse.rolap.mapping.model.BaseMeasure> ms = virtualCubeMapping.getReferencedMeasures();
-        for (org.eclipse.daanse.rolap.mapping.model.BaseMeasure mappingMeasure : ms) {
+        List<? extends org.eclipse.daanse.rolap.mapping.model.olap.cube.measure.BaseMeasure> ms = virtualCubeMapping.getReferencedMeasures();
+        for (org.eclipse.daanse.rolap.mapping.model.olap.cube.measure.BaseMeasure mappingMeasure : ms) {
             measureHash.put(mappingMeasure.getName(), mappingMeasure);
             if (mappingMeasure.getMeasureGroup() != null
                     && mappingMeasure.getMeasureGroup().getPhysicalCube() != null) {
@@ -311,15 +311,15 @@ public class RolapVirtualCube extends RolapCube implements VirtualCube {
         return origMeasureList;
     }
 
-    private boolean vcHasAllCalcMembers(List<? extends org.eclipse.daanse.rolap.mapping.model.CalculatedMember> origCalcMeasureList,
-            List<? extends org.eclipse.daanse.rolap.mapping.model.CalculatedMember> mappingVirtualCubeCalculatedMemberList) {
+    private boolean vcHasAllCalcMembers(List<? extends org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.CalculatedMember> origCalcMeasureList,
+            List<? extends org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.CalculatedMember> mappingVirtualCubeCalculatedMemberList) {
         return getCalculatedMemberList()
                 .size() == (origCalcMeasureList.size() + mappingVirtualCubeCalculatedMemberList.size());
     }
 
-    protected boolean findOriginalMembers(Formula formula, List<? extends org.eclipse.daanse.rolap.mapping.model.CalculatedMember> mappingCalcMembers,
+    protected boolean findOriginalMembers(Formula formula, List<? extends org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.CalculatedMember> mappingCalcMembers,
             List<Formula> calcMembers) {
-        for (org.eclipse.daanse.rolap.mapping.model.CalculatedMember mappingCalcMember : mappingCalcMembers) {
+        for (org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.CalculatedMember mappingCalcMember : mappingCalcMembers) {
             Hierarchy hierarchy = null;
             if (mappingCalcMember.getHierarchy() != null) {
                 hierarchy = lookupHierarchy(

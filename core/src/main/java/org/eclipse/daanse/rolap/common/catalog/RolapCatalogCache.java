@@ -141,7 +141,7 @@ public class RolapCatalogCache implements CatalogCache {
      * @param connectionProps connection properties containing cache and timeout settings
      * @return the cached or newly created catalog
      */
-    public RolapCatalog getOrCreateCatalog(org.eclipse.daanse.rolap.mapping.model.Catalog catalogMapping, final ConnectionProps connectionProps) {
+    public RolapCatalog getOrCreateCatalog(org.eclipse.daanse.rolap.mapping.model.catalog.Catalog catalogMapping, final ConnectionProps connectionProps) {
 
         final boolean useCatalogCache = connectionProps.useCatalogCache();
         final RolapCatalogContentKey catalogContentKey = RolapCatalogContentKey.create(catalogMapping);

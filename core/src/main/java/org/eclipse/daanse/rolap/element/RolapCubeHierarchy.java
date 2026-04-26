@@ -78,7 +78,7 @@ public class RolapCubeHierarchy extends RolapHierarchy {
     private final RolapCubeLevel currentNullLevel;
     private RolapCubeMember currentNullMember;
     private RolapCubeMember currentAllMember;
-    private final org.eclipse.daanse.rolap.mapping.model.Query currentRelation;
+    private final org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource currentRelation;
     private final RolapCubeHierarchyMemberReader reader;
     private HierarchyUsage usage;
     private final Map<String, String> aliases = new HashMap<>();
@@ -111,7 +111,7 @@ public class RolapCubeHierarchy extends RolapHierarchy {
      */
     public RolapCubeHierarchy(
         RolapCubeDimension cubeDimension,
-        org.eclipse.daanse.rolap.mapping.model.DimensionConnector cubeDim,
+        org.eclipse.daanse.rolap.mapping.model.olap.dimension.DimensionConnector cubeDim,
         RolapHierarchy rolapHierarchy,
         String subName,
         int ordinal)
@@ -136,7 +136,7 @@ public class RolapCubeHierarchy extends RolapHierarchy {
      */
     public RolapCubeHierarchy(
         RolapCubeDimension cubeDimension,
-        org.eclipse.daanse.rolap.mapping.model.DimensionConnector cubeDim,
+        org.eclipse.daanse.rolap.mapping.model.olap.dimension.DimensionConnector cubeDim,
         RolapHierarchy rolapHierarchy,
         String subName,
         int ordinal,
@@ -260,7 +260,7 @@ public class RolapCubeHierarchy extends RolapHierarchy {
      * @return Caption or description, possibly prefixed by dimension role name
      */
     private static String applyPrefix(
-    	org.eclipse.daanse.rolap.mapping.model.DimensionConnector cubeDim,
+    	org.eclipse.daanse.rolap.mapping.model.olap.dimension.DimensionConnector cubeDim,
         String caption)
     {
         if (caption == null) {
@@ -336,19 +336,19 @@ public class RolapCubeHierarchy extends RolapHierarchy {
      * shared between all cubes with similar structure
      */
     protected void extractNewAliases(
-        org.eclipse.daanse.rolap.mapping.model.Query oldrel,
-        org.eclipse.daanse.rolap.mapping.model.Query newrel)
+        org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource oldrel,
+        org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource newrel)
     {
         if (oldrel != null && newrel != null) {
-            if (oldrel instanceof org.eclipse.daanse.rolap.mapping.model.RelationalQuery oldrelRelation
-                && newrel instanceof org.eclipse.daanse.rolap.mapping.model.RelationalQuery newrelRelation) {
-                aliases.put(
-                    RelationUtil.getAlias(oldrelRelation),
-                    RelationUtil.getAlias(newrelRelation));
-            } else if (oldrel instanceof org.eclipse.daanse.rolap.mapping.model.JoinQuery oldjoin
-                && newrel instanceof org.eclipse.daanse.rolap.mapping.model.JoinQuery newjoin) {
+            if (oldrel instanceof org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource oldjoin
+                && newrel instanceof org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource newjoin) {
                 extractNewAliases(left(oldjoin), left(newjoin));
                 extractNewAliases(right(oldjoin), right(newjoin));
+            } else if (!(oldrel instanceof org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource)
+                && !(newrel instanceof org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource)) {
+                aliases.put(
+                    RelationUtil.getAlias(oldrel),
+                    RelationUtil.getAlias(newrel));
             } else {
                 throw new UnsupportedOperationException();
             }
@@ -427,7 +427,7 @@ public class RolapCubeHierarchy extends RolapHierarchy {
      * @return rolap cube hierarchy relation
      */
     @Override
-	public org.eclipse.daanse.rolap.mapping.model.Query getRelation() {
+	public org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource getRelation() {
         return currentRelation;
     }
 
@@ -513,7 +513,7 @@ public class RolapCubeHierarchy extends RolapHierarchy {
     }
 
     @Override
-	void init(org.eclipse.daanse.rolap.mapping.model.DimensionConnector xmlDimension) {
+	void init(org.eclipse.daanse.rolap.mapping.model.olap.dimension.DimensionConnector xmlDimension) {
         // first init shared hierarchy
         rolapHierarchy.init(xmlDimension);
         // second init cube hierarchy

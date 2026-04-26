@@ -402,8 +402,17 @@ public class SqlStatement implements SqlStatementI {
    * @return Runtime exception
    */
   public RuntimeException handle( Throwable e ) {
+    // Use the high-level operation description from the execution metadata
+    // when available (e.g. "while building member cache"), falling back to a
+    // generic "executing SQL" otherwise. Tests like
+    // SchemaTest#testHierarchyTableNotFound match against the metadata phrase.
+    String description = (executionContext != null
+            && executionContext.metadata() != null
+            && executionContext.metadata().message() != null)
+        ? executionContext.metadata().message()
+        : "executing SQL";
     RuntimeException runtimeException =
-      Util.newError( e, new StringBuilder("executing SQL").append("; sql=[").append(sql).append("]").toString() );
+      Util.newError( e, new StringBuilder(description).append("; sql=[").append(sql).append("]").toString() );
     try {
       close();
     } catch (RuntimeException ignored) {

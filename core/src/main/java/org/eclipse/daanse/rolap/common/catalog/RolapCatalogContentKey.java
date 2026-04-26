@@ -14,7 +14,7 @@
 package org.eclipse.daanse.rolap.common.catalog;
 
 public record RolapCatalogContentKey(String catalogName, int catalogMappingHash) {
-	public static RolapCatalogContentKey create(org.eclipse.daanse.rolap.mapping.model.Catalog catalogMapping) {
+	public static RolapCatalogContentKey create(org.eclipse.daanse.rolap.mapping.model.catalog.Catalog catalogMapping) {
 
 		int hash = System.identityHashCode(catalogMapping);
 		return new RolapCatalogContentKey(catalogMapping.getName(), hash);

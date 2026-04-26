@@ -94,8 +94,8 @@ import org.eclipse.daanse.rolap.element.RolapCubeLevel;
 import org.eclipse.daanse.rolap.element.RolapLevel;
 import org.eclipse.daanse.rolap.element.RolapProperty;
 import org.eclipse.daanse.rolap.element.RolapStoredMeasure;
-import org.eclipse.daanse.rolap.mapping.model.JoinQuery;
-import org.eclipse.daanse.rolap.mapping.model.Query;
+import org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource;
+import org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource;
 import org.eclipse.daanse.rolap.mapping.model.RolapMappingFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -103,6 +103,8 @@ import org.slf4j.LoggerFactory;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
+import org.eclipse.daanse.rolap.mapping.model.database.source.SourceFactory;
+import org.eclipse.daanse.rolap.mapping.model.database.source.SourceFactory;
 /**
  * A RolapStar is a star schema. It is the means to read cell
  * values.
@@ -165,7 +167,7 @@ public class RolapStar {
     protected RolapStar(
         final RolapCatalog catalog,
         final Context context,
-        final org.eclipse.daanse.rolap.mapping.model.RelationalQuery fact)
+        final org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource fact)
     {
         this.cacheAggregations = true;
         this.catalog = catalog;
@@ -299,13 +301,13 @@ public class RolapStar {
 
     private static class StarNetworkNode {
         private StarNetworkNode parent;
-        private org.eclipse.daanse.rolap.mapping.model.RelationalQuery origRel;
+        private org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource origRel;
         private String foreignKey;
         private String joinKey;
 
         private StarNetworkNode(
             StarNetworkNode parent,
-            org.eclipse.daanse.rolap.mapping.model.RelationalQuery origRel,
+            org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource origRel,
             String foreignKey,
             String joinKey)
         {
@@ -317,7 +319,7 @@ public class RolapStar {
 
         private boolean isCompatible(
             StarNetworkNode compatibleParent,
-            org.eclipse.daanse.rolap.mapping.model.RelationalQuery rel,
+            org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource rel,
             String compatibleForeignKey,
             String compatibleJoinKey)
         {
@@ -328,25 +330,25 @@ public class RolapStar {
         }
     }
 
-    protected org.eclipse.daanse.rolap.mapping.model.Query cloneRelation(
-        org.eclipse.daanse.rolap.mapping.model.RelationalQuery rel,
+    protected org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource cloneRelation(
+        org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource rel,
         String possibleName)
     {
-        if (rel instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery tbl) {
+        if (rel instanceof org.eclipse.daanse.rolap.mapping.model.database.source.TableSource tbl) {
         	String aliasOrName = tbl.getAlias() == null ? tbl.getTable().getName() : tbl.getAlias();
-        	org.eclipse.daanse.rolap.mapping.model.TableQuery q = RolapMappingFactory.eINSTANCE.createTableQuery();
+        	org.eclipse.daanse.rolap.mapping.model.database.source.TableSource q = SourceFactory.eINSTANCE.createTableSource();
         	q.setAlias(possibleName);
         	q.setTable(PojoUtil.getPhysicalTable(tbl.getTable()));
         	q.getOptimizationHints().addAll(tableQueryOptimizationHints(tbl.getOptimizationHints()));
         	q.setSqlWhereExpression(sql(tbl.getSqlWhereExpression(), possibleName, aliasOrName));
         	return q;
-        } else if (rel instanceof org.eclipse.daanse.rolap.mapping.model.SqlSelectQuery view) {
-        	org.eclipse.daanse.rolap.mapping.model.SqlSelectQuery sqlSelectQuery = RolapMappingFactory.eINSTANCE.createSqlSelectQuery();
+        } else if (rel instanceof org.eclipse.daanse.rolap.mapping.model.database.source.SqlSelectSource view) {
+        	org.eclipse.daanse.rolap.mapping.model.database.source.SqlSelectSource sqlSelectQuery = SourceFactory.eINSTANCE.createSqlSelectSource();
         	sqlSelectQuery.setAlias(possibleName);
         	sqlSelectQuery.setSql(view.getSql());
             return sqlSelectQuery;
-        } else if (rel instanceof org.eclipse.daanse.rolap.mapping.model.InlineTableQuery inlineTable) {
-        	org.eclipse.daanse.rolap.mapping.model.InlineTableQuery inlineTableQuery = RolapMappingFactory.eINSTANCE.createInlineTableQuery();
+        } else if (rel instanceof org.eclipse.daanse.rolap.mapping.model.database.source.InlineTableSource inlineTable) {
+        	org.eclipse.daanse.rolap.mapping.model.database.source.InlineTableSource inlineTableQuery = SourceFactory.eINSTANCE.createInlineTableSource();
         	inlineTableQuery.setAlias(possibleName);
         	inlineTableQuery.setTable(PojoUtil.getInlineTable(inlineTable.getTable()));
             return inlineTableQuery;
@@ -355,11 +357,11 @@ public class RolapStar {
         }
     }
 
-    protected org.eclipse.daanse.rolap.mapping.model.SqlStatement sql(org.eclipse.daanse.rolap.mapping.model.SqlStatement sql, String possibleName, String aliasOrName) {
+    protected org.eclipse.daanse.rolap.mapping.model.database.source.SqlStatement sql(org.eclipse.daanse.rolap.mapping.model.database.source.SqlStatement sql, String possibleName, String aliasOrName) {
         if (sql != null) {
             List<String> dialects = sql.getDialects();
             String statement = sql.getSql();
-            org.eclipse.daanse.rolap.mapping.model.SqlStatement sqlStatement = RolapMappingFactory.eINSTANCE.createSqlStatement();
+            org.eclipse.daanse.rolap.mapping.model.database.source.SqlStatement sqlStatement = SourceFactory.eINSTANCE.createSqlStatement();
             sqlStatement.setSql(statement != null ?
                     statement.replace(aliasOrName, possibleName) : null);
             sqlStatement.getDialects().addAll(dialects);
@@ -368,8 +370,8 @@ public class RolapStar {
         return null;
     }
 
-    protected List<? extends org.eclipse.daanse.rolap.mapping.model.TableQueryOptimizationHint> tableQueryOptimizationHints(
-            List<? extends org.eclipse.daanse.rolap.mapping.model.TableQueryOptimizationHint> optimizationHints
+    protected List<? extends org.eclipse.daanse.rolap.mapping.model.database.source.TableQueryOptimizationHint> tableQueryOptimizationHints(
+            List<? extends org.eclipse.daanse.rolap.mapping.model.database.source.TableQueryOptimizationHint> optimizationHints
         ) {
             if (optimizationHints != null) {
                 return optimizationHints;
@@ -377,13 +379,13 @@ public class RolapStar {
             return List.of();
     }
 
-    protected org.eclipse.daanse.rolap.mapping.model.TableQueryOptimizationHint tableQueryOptimizationHint(
-    		org.eclipse.daanse.rolap.mapping.model.TableQueryOptimizationHint tableQueryOptimizationHint
+    protected org.eclipse.daanse.rolap.mapping.model.database.source.TableQueryOptimizationHint tableQueryOptimizationHint(
+    		org.eclipse.daanse.rolap.mapping.model.database.source.TableQueryOptimizationHint tableQueryOptimizationHint
         ) {
             if (tableQueryOptimizationHint != null) {
                 String value = tableQueryOptimizationHint.getValue();
                 String type = tableQueryOptimizationHint.getType();
-                org.eclipse.daanse.rolap.mapping.model.TableQueryOptimizationHint tableQueryOptimizationHintr = RolapMappingFactory.eINSTANCE.createTableQueryOptimizationHint();
+                org.eclipse.daanse.rolap.mapping.model.database.source.TableQueryOptimizationHint tableQueryOptimizationHintr = SourceFactory.eINSTANCE.createTableQueryOptimizationHint();
                 tableQueryOptimizationHintr.setValue(value);
                 tableQueryOptimizationHintr.setType(type);
                 return tableQueryOptimizationHintr;
@@ -404,8 +406,8 @@ public class RolapStar {
      * @param primaryKeyTable the join table of the relation
      * @return if necessary a new relation that has been re-aliased
      */
-    public org.eclipse.daanse.rolap.mapping.model.Query getUniqueRelation(
-        org.eclipse.daanse.rolap.mapping.model.Query rel,
+    public org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource getUniqueRelation(
+        org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource rel,
         String factForeignKey,
         String primaryKey,
         String primaryKeyTable)
@@ -414,16 +416,17 @@ public class RolapStar {
             factNode, rel, factForeignKey, primaryKey, primaryKeyTable);
     }
 
-    private org.eclipse.daanse.rolap.mapping.model.Query getUniqueRelation(
+    private org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource getUniqueRelation(
         StarNetworkNode parent,
-        org.eclipse.daanse.rolap.mapping.model.Query relOrJoin,
+        org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relOrJoin,
         String foreignKey,
         String joinKey,
         String joinKeyTable)
     {
         if (relOrJoin == null) {
             return null;
-        } else if (relOrJoin instanceof org.eclipse.daanse.rolap.mapping.model.RelationalQuery rel) {
+        } else if (!(relOrJoin instanceof org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource)
+                   && relOrJoin instanceof org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource rel) {
             int val = 0;
             String newAlias =
                 joinKeyTable != null ? joinKeyTable : RelationUtil.getAlias(rel);
@@ -431,7 +434,7 @@ public class RolapStar {
                 StarNetworkNode node = nodeLookup.get(newAlias);
                 if (node == null) {
                     if (val != 0) {
-                        rel = (org.eclipse.daanse.rolap.mapping.model.RelationalQuery)
+                        rel = (org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource)
                             cloneRelation(rel, newAlias);
                     }
                     node =
@@ -446,12 +449,12 @@ public class RolapStar {
                 }
                 newAlias = new StringBuilder(RelationUtil.getAlias(rel)).append("_").append(++val).toString();
             }
-        } else if (relOrJoin instanceof org.eclipse.daanse.rolap.mapping.model.JoinQuery join) {
-            if (left(join) instanceof org.eclipse.daanse.rolap.mapping.model.JoinQuery) {
+        } else if (relOrJoin instanceof org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource join) {
+            if (left(join) instanceof org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource) {
                 throw new OlapRuntimeException(illegalLeftDeepJoin);
             }
-            final org.eclipse.daanse.rolap.mapping.model.Query left;
-            final org.eclipse.daanse.rolap.mapping.model.Query right;
+            final org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource left;
+            final org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource right;
             if (getLeftAlias(join).equals(joinKeyTable)) {
                 // first manage left then right
                 left =
@@ -459,7 +462,7 @@ public class RolapStar {
                         parent, left(join), foreignKey,
                         joinKey, joinKeyTable);
                 parent = nodeLookup.get(
-                    RelationUtil.getAlias(((org.eclipse.daanse.rolap.mapping.model.RelationalQuery) left)));
+                    RelationUtil.getAlias(((org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource) left)));
                 right =
                     getUniqueRelation(
                         parent, right(join), join.getLeft().getKey() != null ? join.getLeft().getKey().getName() : null,
@@ -471,7 +474,7 @@ public class RolapStar {
                         parent, right(join), foreignKey,
                         joinKey, joinKeyTable);
                 parent = nodeLookup.get(
-                    RelationUtil.getAlias(((org.eclipse.daanse.rolap.mapping.model.RelationalQuery) right)));
+                    RelationUtil.getAlias(((org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource) right)));
                 left =
                     getUniqueRelation(
                         parent, left(join), join.getRight().getKey() != null ? join.getRight().getKey().getName() : null,
@@ -482,15 +485,15 @@ public class RolapStar {
             }
 
             if (left(join) != left || right(join) != right) {
-                JoinQuery joinNew = RolapMappingFactory.eINSTANCE.createJoinQuery();
+                org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource joinNew = SourceFactory.eINSTANCE.createJoinSource();
 
-                org.eclipse.daanse.rolap.mapping.model.JoinedQueryElement leftElement = RolapMappingFactory.eINSTANCE.createJoinedQueryElement();
-                leftElement.setAlias(left instanceof org.eclipse.daanse.rolap.mapping.model.RelationalQuery relation ? RelationUtil.getAlias(relation) : null);
+                org.eclipse.daanse.rolap.mapping.model.database.source.JoinedQueryElement leftElement = SourceFactory.eINSTANCE.createJoinedQueryElement();
+                leftElement.setAlias(left instanceof org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation ? RelationUtil.getAlias(relation) : null);
                 leftElement.setKey(PojoUtil.getColumn(join.getLeft().getKey()));
                 leftElement.setQuery(PojoUtil.copy(left));
 
-                org.eclipse.daanse.rolap.mapping.model.JoinedQueryElement rightElement = RolapMappingFactory.eINSTANCE.createJoinedQueryElement();
-                rightElement.setAlias(right instanceof org.eclipse.daanse.rolap.mapping.model.RelationalQuery relation ? RelationUtil.getAlias(relation) : null);
+                org.eclipse.daanse.rolap.mapping.model.database.source.JoinedQueryElement rightElement = SourceFactory.eINSTANCE.createJoinedQueryElement();
+                rightElement.setAlias(right instanceof org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation ? RelationUtil.getAlias(relation) : null);
                 rightElement.setKey(PojoUtil.getColumn(join.getRight().getKey()));
                 rightElement.setQuery(PojoUtil.copy(right));
                 
@@ -1316,7 +1319,7 @@ public class RolapStar {
      */
     public static class Table {
         private final RolapStar star;
-        private final org.eclipse.daanse.rolap.mapping.model.RelationalQuery relation;
+        private final org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation;
         private final List<Column> columnList;
         private final Table parent;
         private List<Table> children;
@@ -1325,7 +1328,7 @@ public class RolapStar {
 
         private Table(
             RolapStar star,
-            org.eclipse.daanse.rolap.mapping.model.RelationalQuery relation,
+            org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation,
             Table parent,
             Condition joinCondition)
         {
@@ -1390,7 +1393,7 @@ public class RolapStar {
             List<Column> l = new ArrayList<>();
             for (Column column : getColumns()) {
                 if (column.getExpression() instanceof org.eclipse.daanse.rolap.element.RolapColumn columnExpr) {
-                    if (columnExpr.getName().equals(columnName)) {
+                    if (java.util.Objects.equals(columnExpr.getName(), columnName)) {
                         l.add(column);
                     }
                 } else if (column.getExpression() != null && column.getExpression().toString().equals(columnName))
@@ -1404,7 +1407,7 @@ public class RolapStar {
         public Column lookupColumn(String columnName) {
             for (Column column : getColumns()) {
                 if (column.getExpression() instanceof org.eclipse.daanse.rolap.element.RolapColumn columnExpr) {
-                    if (columnExpr.getName().equals(columnName)) {
+                    if (java.util.Objects.equals(columnExpr.getName(), columnName)) {
                         return column;
                     }
                 } else if (column.getExpression() != null)
@@ -1412,7 +1415,7 @@ public class RolapStar {
                     if (column.getExpression().toString().equals(columnName)) {
                         return column;
                     }
-                } else if (column.getName().equals(columnName)) {
+                } else if (java.util.Objects.equals(column.getName(), columnName)) {
                     return column;
                 }
             }
@@ -1459,7 +1462,7 @@ public class RolapStar {
         private SqlQuery getSqlQuery() {
             return getStar().getSqlQuery();
         }
-        public org.eclipse.daanse.rolap.mapping.model.RelationalQuery getRelation() {
+        public org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource getRelation() {
             return relation;
         }
 
@@ -1486,15 +1489,15 @@ public class RolapStar {
          * been given an alias.
          */
         public String getTableName() {
-            if (relation instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery t) {
+            if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.TableSource t) {
                 return t.getTable().getName();
             } else {
                 return null;
             }
         }
 
-        public org.eclipse.daanse.rolap.mapping.model.Table getTable() {
-            if (relation instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery t) {
+        public org.eclipse.daanse.cwm.model.cwm.resource.relational.NamedColumnSet getTable() {
+            if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.TableSource t) {
                 return t.getTable();
             } else {
                 return null;
@@ -1758,28 +1761,16 @@ public class RolapStar {
          */
         public synchronized Table addJoin(
             RolapCube cube,
-            org.eclipse.daanse.rolap.mapping.model.Query relationOrJoin,
+            org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relationOrJoin,
             RolapStar.Condition joinCondition)
         {
-            if (relationOrJoin instanceof org.eclipse.daanse.rolap.mapping.model.RelationalQuery relationInner) {
-                RolapStar.Table starTable =
-                    findChild(relationInner, joinCondition);
-                if (starTable == null) {
-                    starTable = new RolapStar.Table(
-                        star, relationInner, this, joinCondition);
-                    if (this.children.isEmpty()) {
-                        this.children = new ArrayList<>();
-                    }
-                    this.children.add(starTable);
-                }
-                return starTable;
-            } else if (relationOrJoin instanceof org.eclipse.daanse.rolap.mapping.model.JoinQuery join) {
+            if (relationOrJoin instanceof org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource join) {
                 RolapStar.Table leftTable =
                     addJoin(cube, left(join), joinCondition);
                 String leftAlias = getLeftAlias(join);
                 if (leftAlias == null) {
                     // REVIEW: is cast to Relation valid?
-                    leftAlias = RelationUtil.getAlias(((org.eclipse.daanse.rolap.mapping.model.RelationalQuery) left(join)));
+                    leftAlias = RelationUtil.getAlias(((org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource) left(join)));
                     if (leftAlias == null) {
                         throw Util.newError(
                             "missing leftKeyAlias in " + relationOrJoin);
@@ -1794,14 +1785,14 @@ public class RolapStar {
                     // the right relation of a join may be a join
                     // if so, we need to use the right relation join's
                     // left relation's alias.
-                    if (right(join) instanceof org.eclipse.daanse.rolap.mapping.model.JoinQuery joinright) {
+                    if (right(join) instanceof org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource joinright) {
                         // REVIEW: is cast to Relation valid?
                         rightAlias =
-                            RelationUtil.getAlias(((org.eclipse.daanse.rolap.mapping.model.RelationalQuery) left(joinright)));
+                            RelationUtil.getAlias(((org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource) left(joinright)));
                     } else {
                         // REVIEW: is cast to Relation valid?
                         rightAlias =
-                            RelationUtil.getAlias(((org.eclipse.daanse.rolap.mapping.model.RelationalQuery) right(join)));
+                            RelationUtil.getAlias(((org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource) right(join)));
                     }
                     if (rightAlias == null) {
                         throw Util.newError(
@@ -1814,6 +1805,19 @@ public class RolapStar {
                 return leftTable.addJoin(
                     cube, right(join), joinCondition);
 
+            } else if (relationOrJoin != null) {
+                org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relationInner = relationOrJoin;
+                RolapStar.Table starTable =
+                    findChild(relationInner, joinCondition);
+                if (starTable == null) {
+                    starTable = new RolapStar.Table(
+                        star, relationInner, this, joinCondition);
+                    if (this.children.isEmpty()) {
+                        this.children = new ArrayList<>();
+                    }
+                    this.children.add(starTable);
+                }
+                return starTable;
             } else {
                 throw Util.newInternal("bad relation type " + relationOrJoin);
             }
@@ -1824,7 +1828,7 @@ public class RolapStar {
          * if there is none.
          */
         public Table findChild(
-        		org.eclipse.daanse.rolap.mapping.model.RelationalQuery relation,
+        		org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation,
             Condition joinCondition)
         {
             for (Table child : getChildren()) {
@@ -1875,7 +1879,7 @@ public class RolapStar {
         }
 
         public boolean equalsTableName(String tableName) {
-            return (this.relation instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery mt && mt.getTable().getName().equals(tableName));
+            return (this.relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.TableSource mt && mt.getTable().getName().equals(tableName));
         }
 
         /**
@@ -2020,12 +2024,14 @@ public class RolapStar {
          * Returns whether this table has a column with the given name.
          */
         public boolean containsColumn(String columnName) {
-            if (relation instanceof org.eclipse.daanse.rolap.mapping.model.RelationalQuery) {
+            if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource) {
+                // todo: Deal with join.
+                return false;
+            } else if (relation != null) {
                 return containsColumn(
                     RelationUtil.getAlias((relation)),
                     columnName);
             } else {
-                // todo: Deal with join.
                 return false;
             }
         }

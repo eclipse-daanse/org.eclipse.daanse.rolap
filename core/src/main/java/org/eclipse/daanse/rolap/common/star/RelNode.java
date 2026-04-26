@@ -26,11 +26,11 @@ public class RelNode {
      * @param map Names of tables and RelNode pairs
      */
     public static RelNode lookup(
-        org.eclipse.daanse.rolap.mapping.model.RelationalQuery table,
+        org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource table,
         Map<String, RelNode> map)
     {
         RelNode relNode;
-        if (table instanceof org.eclipse.daanse.rolap.mapping.model.TableQuery t) {
+        if (table instanceof org.eclipse.daanse.rolap.mapping.model.database.source.TableSource t) {
             relNode = map.get(t.getTable().getName());
             if (relNode != null) {
                 return relNode;
@@ -41,14 +41,14 @@ public class RelNode {
 
     private int depth;
     private String alias;
-    private org.eclipse.daanse.rolap.mapping.model.RelationalQuery table;
+    private org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource table;
 
     public RelNode(String alias, int depth) {
         this.alias = alias;
         this.depth = depth;
     }
 
-    public void setTable(org.eclipse.daanse.rolap.mapping.model.RelationalQuery table) {
+    public void setTable(org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource table) {
         this.table = table;
     }
 

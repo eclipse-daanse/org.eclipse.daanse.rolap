@@ -34,6 +34,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import java.sql.Types;
+
+import org.eclipse.daanse.cwm.model.cwm.resource.relational.SQLSimpleType;
+import org.eclipse.daanse.cwm.util.resource.relational.SqlSimpleTypes;
 import org.eclipse.daanse.jdbc.db.dialect.api.type.BestFitColumnType;
 import org.eclipse.daanse.jdbc.db.dialect.api.type.Datatype;
 import org.eclipse.daanse.olap.api.agg.Segment;
@@ -65,7 +69,7 @@ import org.eclipse.daanse.rolap.common.star.RolapSqlExpression;
 import org.eclipse.daanse.rolap.common.util.ExpressionUtil;
 import org.eclipse.daanse.rolap.common.util.LevelUtil;
 import org.eclipse.daanse.rolap.common.util.RelationUtil;
-import org.eclipse.daanse.rolap.mapping.model.ColumnInternalDataType;
+import org.eclipse.daanse.rolap.mapping.model.database.relational.ColumnInternalDataType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -125,13 +129,13 @@ public class RolapLevel extends LevelBase {
 
     /** Condition under which members are hidden. */
     private final HideMemberCondition hideMemberCondition;
-    protected final org.eclipse.daanse.rolap.mapping.model.ParentChildLink xmlClosure;
+    protected final org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.ParentChildLink xmlClosure;
     private final MetaData metaData;
     private final BestFitColumnType internalType; // may be null
 
     private final boolean parentAsLeafEnable;
     private final String parentAsLeafNameFormat;
-    protected org.eclipse.daanse.rolap.mapping.model.Level levelMapping;
+    protected org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.Level levelMapping;
 
     /**
      * Creates a level.
@@ -154,7 +158,7 @@ public class RolapLevel extends LevelBase {
         List<SqlExpression> ordinalExps,
         SqlExpression parentExp,
         String nullParentValue,
-        org.eclipse.daanse.rolap.mapping.model.ParentChildLink mappingClosure,
+        org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.ParentChildLink mappingClosure,
         RolapProperty[] properties,
         int flags,
         Datatype datatype,
@@ -209,7 +213,7 @@ public class RolapLevel extends LevelBase {
         List<? extends SqlExpression> ordinalExps,
         SqlExpression parentExp,
         String nullParentValue,
-        org.eclipse.daanse.rolap.mapping.model.ParentChildLink mappingClosure,
+        org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.ParentChildLink mappingClosure,
         RolapProperty[] properties,
         int flags,
         Datatype datatype,
@@ -443,12 +447,12 @@ public class RolapLevel extends LevelBase {
             String name,
             RolapSqlExpression parentExp,
             String nullParentValue,
-            org.eclipse.daanse.rolap.mapping.model.ParentChildLink parentChildLink,
+            org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.ParentChildLink parentChildLink,
             RolapHierarchy hierarchy,
             int depth,
             boolean parentAsLeafEnable,
             String parentAsLeafNameFormat,
-            org.eclipse.daanse.rolap.mapping.model.Level mappingLevel)
+            org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.Level mappingLevel)
     {
 
         this(
@@ -458,14 +462,14 @@ public class RolapLevel extends LevelBase {
             mappingLevel.isVisible(),
             mappingLevel.getDescription(),
             depth,
-            LevelUtil.getKeyExp(mappingLevel),
-            LevelUtil.getNameExp(mappingLevel),
-            LevelUtil.getCaptionExp(mappingLevel),
-            LevelUtil.getOrdinalExp(mappingLevel),
+            LevelUtil.getKeyExp(mappingLevel, hierarchy),
+            LevelUtil.getNameExp(mappingLevel, hierarchy),
+            LevelUtil.getCaptionExp(mappingLevel, hierarchy),
+            LevelUtil.getOrdinalExp(mappingLevel, hierarchy),
             parentExp,
             nullParentValue,
             parentChildLink,
-            createProperties(mappingLevel),
+            createProperties(mappingLevel, hierarchy),
             (mappingLevel.isUniqueMembers() ? FLAG_UNIQUE : 0),
             getType(mappingLevel),
             null,
@@ -498,7 +502,7 @@ public class RolapLevel extends LevelBase {
     public RolapLevel(
         RolapHierarchy hierarchy,
         int depth,
-        org.eclipse.daanse.rolap.mapping.model.Level mappingLevel)
+        org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.Level mappingLevel)
     {
 
         this(mappingLevel.getName(),
@@ -518,7 +522,7 @@ public class RolapLevel extends LevelBase {
             int depth,
             boolean parentAsLeafEnable,
             String parentAsLeafNameFormat,
-            org.eclipse.daanse.rolap.mapping.model.Level mappingLevel){
+            org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.Level mappingLevel){
 
             this(name,
                     null,
@@ -531,14 +535,42 @@ public class RolapLevel extends LevelBase {
 
     }
 
-    private static Datatype getType(org.eclipse.daanse.rolap.mapping.model.Level mappingLevel) {
+    private static Datatype getType(org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.Level mappingLevel) {
         if (mappingLevel.getColumnType() != null && !ColumnInternalDataType.UNDEFINED.equals(mappingLevel.getColumnType()) ) {
             if (ColumnInternalDataType.STRING.equals(mappingLevel.getColumnType())) {
-                return org.eclipse.daanse.jdbc.db.dialect.api.type.Datatype.VARCHAR;
+                return Datatype.VARCHAR;
             }
-            return org.eclipse.daanse.jdbc.db.dialect.api.type.Datatype.fromValue(mappingLevel.getColumnType().getLiteral());
+            return Datatype.fromValue(mappingLevel.getColumnType().getLiteral());
         }
-        return org.eclipse.daanse.jdbc.db.dialect.api.type.Datatype.fromValue(mappingLevel.getColumn().getType().getLiteral());
+        // Classify by JDBC type code from CWM SQLSimpleType. Names vary
+        // (SQL-99 "CHARACTER VARYING" vs RDBMS "VARCHAR") but the JDBC code
+        // is stable, so we map through java.sql.Types.
+        if (mappingLevel.getColumn() != null
+                && mappingLevel.getColumn().getType() instanceof SQLSimpleType st) {
+            return jdbcTypeToDatatype(SqlSimpleTypes.jdbcType(st));
+        }
+        return Datatype.NUMERIC;
+    }
+
+    private static Datatype jdbcTypeToDatatype(int jdbcType) {
+        return switch (jdbcType) {
+            case Types.CHAR, Types.VARCHAR, Types.LONGVARCHAR,
+                 Types.NCHAR, Types.NVARCHAR, Types.LONGNVARCHAR,
+                 Types.CLOB, Types.NCLOB -> Datatype.VARCHAR;
+            case Types.TINYINT, Types.SMALLINT -> Datatype.SMALLINT;
+            case Types.INTEGER -> Datatype.INTEGER;
+            case Types.BIGINT -> Datatype.BIGINT;
+            case Types.NUMERIC -> Datatype.NUMERIC;
+            case Types.DECIMAL -> Datatype.DECIMAL;
+            case Types.FLOAT -> Datatype.FLOAT;
+            case Types.REAL -> Datatype.REAL;
+            case Types.DOUBLE -> Datatype.DOUBLE;
+            case Types.BOOLEAN, Types.BIT -> Datatype.BOOLEAN;
+            case Types.DATE -> Datatype.DATE;
+            case Types.TIME, Types.TIME_WITH_TIMEZONE -> Datatype.TIME;
+            case Types.TIMESTAMP, Types.TIMESTAMP_WITH_TIMEZONE -> Datatype.TIMESTAMP;
+            default -> Datatype.NUMERIC;
+        };
     }
 
     private void setLevelInProperties() {
@@ -551,10 +583,10 @@ public class RolapLevel extends LevelBase {
     }
 
     // helper for constructor
-    private static RolapProperty[] createProperties(org.eclipse.daanse.rolap.mapping.model.Level xmlLevel)
+    private static RolapProperty[] createProperties(org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.Level xmlLevel, RolapHierarchy hierarchy)
     {
         List<RolapProperty> list = new ArrayList<>();
-        final RolapSqlExpression nameExp = LevelUtil.getNameExp(xmlLevel);
+        final RolapSqlExpression nameExp = LevelUtil.getNameExp(xmlLevel, hierarchy);
 
         if (nameExp != null) {
             list.add(
@@ -564,7 +596,7 @@ public class RolapLevel extends LevelBase {
                     StandardProperty.NAME.getDescription(), null));
         }
         for (int i = 0; i < xmlLevel.getMemberProperties().size(); i++) {
-        	org.eclipse.daanse.rolap.mapping.model.MemberProperty xmlProperty = xmlLevel.getMemberProperties().get(i);
+        	org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.MemberProperty xmlProperty = xmlLevel.getMemberProperties().get(i);
 
             FormatterCreateContext formatterContext =
                     new FormatterCreateContext.Builder(xmlProperty.getName())
@@ -621,7 +653,7 @@ public class RolapLevel extends LevelBase {
     private void checkColumn(org.eclipse.daanse.rolap.element.RolapColumn nameColumn) {
         final RolapHierarchy rolapHierarchy = (RolapHierarchy) hierarchy;
         if (nameColumn.getTable() == null) {
-            final org.eclipse.daanse.rolap.mapping.model.RelationalQuery table = rolapHierarchy.getUniqueTable();
+            final org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource table = rolapHierarchy.getUniqueTable();
             if (table == null) {
                 throw Util.newError(
                     new StringBuilder("must specify a table for level ").append(getUniqueName())
@@ -637,7 +669,7 @@ public class RolapLevel extends LevelBase {
         }
     }
 
-    public void init(org.eclipse.daanse.rolap.mapping.model.DimensionConnector xmlDimension) {
+    public void init(org.eclipse.daanse.rolap.mapping.model.olap.dimension.DimensionConnector xmlDimension) {
         if (xmlClosure != null) {
             final RolapDimension dimension = ((RolapHierarchy) hierarchy)
                 .createClosedPeerDimension(this, xmlClosure);
@@ -687,7 +719,7 @@ public class RolapLevel extends LevelBase {
         return members != null ? members: List.of();
     }
 
-    public org.eclipse.daanse.rolap.mapping.model.Level getLevelMapping() {
+    public org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.Level getLevelMapping() {
         return levelMapping;
     }
 

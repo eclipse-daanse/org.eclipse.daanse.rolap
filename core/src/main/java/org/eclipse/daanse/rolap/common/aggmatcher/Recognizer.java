@@ -563,7 +563,7 @@ public abstract class Recognizer {
                         // Search through the notSeenForeignKeys list
                         // making sure that this HierarchyUsage's
                         // foreign key is not in the list.
-                    	org.eclipse.daanse.rolap.mapping.model.Column foreignKey = hierarchyUsage.getForeignKey();
+                    	org.eclipse.daanse.cwm.model.cwm.resource.relational.Column foreignKey = hierarchyUsage.getForeignKey();
                         boolean b = foreignKey == null
                             || inNotSeenForeignKeys(
                             foreignKey,
@@ -585,7 +585,7 @@ public abstract class Recognizer {
      * foreign keys.
      */
     boolean inNotSeenForeignKeys(
-        org.eclipse.daanse.rolap.mapping.model.Column foreignKey,
+        org.eclipse.daanse.cwm.model.cwm.resource.relational.Column foreignKey,
         List<JdbcSchema.Table.Column.Usage> notSeenForeignKeys
     ) {
         for (JdbcSchema.Table.Column.Usage usage : notSeenForeignKeys) {
@@ -672,7 +672,7 @@ public abstract class Recognizer {
                      uit.hasNext(); ) {
                     JdbcSchema.Table.Column.Usage aggUsage = uit.next();
 
-                    org.eclipse.daanse.rolap.mapping.model.RelationalQuery rel = hierarchyUsage.getJoinTable();
+                    org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource rel = hierarchyUsage.getJoinTable();
 
                     if (!aggUsageMatchesHierarchyUsage(aggUsage,
                         hierarchyUsage, levelColumnName)) {
@@ -807,7 +807,7 @@ public abstract class Recognizer {
         HierarchyUsage hierarchyUsage,
         String levelColumnName
     ) {
-    	org.eclipse.daanse.rolap.mapping.model.RelationalQuery rel = hierarchyUsage.getJoinTable();
+    	org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource rel = hierarchyUsage.getJoinTable();
 
         JdbcSchema.Table.Column aggColumn = aggUsage.getColumn();
         String aggColumnName = aggColumn.column.getName();

@@ -59,7 +59,7 @@ public class RolapStarRegistry {
 	 *
 	 * {@link RolapStar.Table#addJoin} works in a similar way.
 	 */
-	public synchronized RolapStar getOrCreateStar(final org.eclipse.daanse.rolap.mapping.model.RelationalQuery fact) {
+	public synchronized RolapStar getOrCreateStar(final org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource fact) {
 		final List<String> rolapStarKey = RolapUtil.makeRolapStarKey(fact);
 		RolapStar star = stars.get(rolapStarKey);
 		if (star == null) {
@@ -79,7 +79,7 @@ public class RolapStarRegistry {
 		return getStar(makeRolapStarKey(factTableName));
 	}
 
-	public RolapStar makeRolapStar(final org.eclipse.daanse.rolap.mapping.model.RelationalQuery fact) {
+	public RolapStar makeRolapStar(final org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource fact) {
 		return new RolapStar(schema, context, fact);
 	}
 

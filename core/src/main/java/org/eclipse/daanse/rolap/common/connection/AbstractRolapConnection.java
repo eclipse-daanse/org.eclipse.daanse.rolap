@@ -145,7 +145,7 @@ public abstract class AbstractRolapConnection extends ConnectionBase {
 
             catalog = ExecutionContext.where(execution.asContext(), () -> {
                 // TODO: switch from schemareader to catalogreader;
-                org.eclipse.daanse.rolap.mapping.model.Catalog catalogMapping = context.getCatalogMapping();
+                org.eclipse.daanse.rolap.mapping.model.catalog.Catalog catalogMapping = context.getCatalogMapping();
                 return ((RolapCatalogCache) context.getCatalogCache()).getOrCreateCatalog(catalogMapping, connectionProps);
             });
             bootstrapStatement.close();

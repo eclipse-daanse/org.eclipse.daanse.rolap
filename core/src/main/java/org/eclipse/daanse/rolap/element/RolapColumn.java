@@ -77,12 +77,12 @@ public class RolapColumn extends RolapSqlExpression {
         if (!(obj instanceof RolapColumn that)) {
             return false;
         }
-        return getName().equals(that.getName()) &&
+        return Objects.equals(getName(), that.getName()) &&
             Objects.equals(getTable(), that.getTable());
     }
 
     @Override
 	public int hashCode() {
-        return getName().hashCode() ^ (getTable()==null ? 0 : getTable().hashCode());
+        return (getName() == null ? 0 : getName().hashCode()) ^ (getTable()==null ? 0 : getTable().hashCode());
     }
 }

@@ -18,16 +18,16 @@ import java.util.stream.Collectors;
 
 
 public class TableUtil {
-	public static Map<String, String> getHintMap(org.eclipse.daanse.rolap.mapping.model.TableQuery table) {
+	public static Map<String, String> getHintMap(org.eclipse.daanse.rolap.mapping.model.database.source.TableSource table) {
 
 		if (table.getOptimizationHints() == null) {
 			return Map.of();
 		}
 		return table.getOptimizationHints().stream()
-				.collect(Collectors.toMap(org.eclipse.daanse.rolap.mapping.model.TableQueryOptimizationHint::getType, org.eclipse.daanse.rolap.mapping.model.TableQueryOptimizationHint::getValue));
+				.collect(Collectors.toMap(org.eclipse.daanse.rolap.mapping.model.database.source.TableQueryOptimizationHint::getType, org.eclipse.daanse.rolap.mapping.model.database.source.TableQueryOptimizationHint::getValue));
 	}
 
-    public static String getFilter(org.eclipse.daanse.rolap.mapping.model.TableQuery table) {
+    public static String getFilter(org.eclipse.daanse.rolap.mapping.model.database.source.TableSource table) {
         return (table.getSqlWhereExpression() == null) ? null : table.getSqlWhereExpression().getSql();
     }
 }

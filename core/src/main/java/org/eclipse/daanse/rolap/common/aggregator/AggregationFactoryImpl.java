@@ -46,52 +46,52 @@ public class AggregationFactoryImpl implements AggregationFactory{
     @Override
     public Aggregator getAggregator(Object measure) {
         return switch (measure) {
-            case org.eclipse.daanse.rolap.mapping.model.SumMeasure i -> SumAggregator.INSTANCE;
-            case org.eclipse.daanse.rolap.mapping.model.MaxMeasure i -> MaxAggregator.INSTANCE;
-            case org.eclipse.daanse.rolap.mapping.model.MinMeasure i -> MinAggregator.INSTANCE;
-            case org.eclipse.daanse.rolap.mapping.model.AvgMeasure i  -> AvgAggregator.INSTANCE;
-            case org.eclipse.daanse.rolap.mapping.model.CountMeasure i -> getCountAggregator(i);
-            case org.eclipse.daanse.rolap.mapping.model.TextAggMeasure i -> getListAggAggregator(i);
-            case org.eclipse.daanse.rolap.mapping.model.NoneMeasure i -> NoneAggregator.INSTANCE;
-            case org.eclipse.daanse.rolap.mapping.model.BitAggMeasure i -> getBitAggAggregator(i);
-            case org.eclipse.daanse.rolap.mapping.model.PercentileMeasure i -> getPercentileAggregator(i);
-            case org.eclipse.daanse.rolap.mapping.model.CustomMeasure i -> findCustomAggregator(i);
-            case org.eclipse.daanse.rolap.mapping.model.NthAggMeasure i -> getNthValueAggregator(i);
+            case org.eclipse.daanse.rolap.mapping.model.olap.cube.measure.SumMeasure i -> SumAggregator.INSTANCE;
+            case org.eclipse.daanse.rolap.mapping.model.olap.cube.measure.MaxMeasure i -> MaxAggregator.INSTANCE;
+            case org.eclipse.daanse.rolap.mapping.model.olap.cube.measure.MinMeasure i -> MinAggregator.INSTANCE;
+            case org.eclipse.daanse.rolap.mapping.model.olap.cube.measure.AvgMeasure i  -> AvgAggregator.INSTANCE;
+            case org.eclipse.daanse.rolap.mapping.model.olap.cube.measure.CountMeasure i -> getCountAggregator(i);
+            case org.eclipse.daanse.rolap.mapping.model.olap.cube.measure.TextAggMeasure i -> getListAggAggregator(i);
+            case org.eclipse.daanse.rolap.mapping.model.olap.cube.measure.NoneMeasure i -> NoneAggregator.INSTANCE;
+            case org.eclipse.daanse.rolap.mapping.model.olap.cube.measure.BitAggMeasure i -> getBitAggAggregator(i);
+            case org.eclipse.daanse.rolap.mapping.model.olap.cube.measure.PercentileMeasure i -> getPercentileAggregator(i);
+            case org.eclipse.daanse.rolap.mapping.model.olap.cube.measure.CustomMeasure i -> findCustomAggregator(i);
+            case org.eclipse.daanse.rolap.mapping.model.olap.cube.measure.NthAggMeasure i -> getNthValueAggregator(i);
             default -> throw new RuntimeException("Incorect aggregation type");
         };
     }
 
-    private Aggregator getCountAggregator(org.eclipse.daanse.rolap.mapping.model.CountMeasure i) {
+    private Aggregator getCountAggregator(org.eclipse.daanse.rolap.mapping.model.olap.cube.measure.CountMeasure i) {
         return (i.isDistinct() ? DistinctCountAggregator.INSTANCE : CountAggregator.INSTANCE);
     }
 
-    private Aggregator getListAggAggregator(org.eclipse.daanse.rolap.mapping.model.TextAggMeasure i) {
+    private Aggregator getListAggAggregator(org.eclipse.daanse.rolap.mapping.model.olap.cube.measure.TextAggMeasure i) {
         return new ListAggAggregator(i.isDistinct(), i.getSeparator(), getOrderedColumns(i.getOrderByColumns()), i.getCoalesce(), i.getOnOverflowTruncate(), dialect);
     }
 
-    private Aggregator getNthValueAggregator(org.eclipse.daanse.rolap.mapping.model.NthAggMeasure i) {
+    private Aggregator getNthValueAggregator(org.eclipse.daanse.rolap.mapping.model.olap.cube.measure.NthAggMeasure i) {
         return new NthValueAggregator(i.isIgnoreNulls(), i.getN(),
                 getOrderedColumns(i.getOrderByColumns()), dialect);
     }
 
-    private Aggregator getPercentileAggregator(org.eclipse.daanse.rolap.mapping.model.PercentileMeasure measure) {
-    	org.eclipse.daanse.rolap.mapping.model.OrderedColumn oc = measure.getColumn();
+    private Aggregator getPercentileAggregator(org.eclipse.daanse.rolap.mapping.model.olap.cube.measure.PercentileMeasure measure) {
+    	org.eclipse.daanse.rolap.mapping.model.database.relational.OrderedColumn oc = measure.getColumn();
             return new PercentileAggregator(measure.getPercentType(), measure.getPercentile(),
-                    new RolapColumn(oc.getColumn().getTable().getName(), oc.getColumn().getName(), SortingDirection.valueOf(oc.getDirection().name())), dialect);
+                    new RolapColumn(((org.eclipse.daanse.cwm.model.cwm.resource.relational.NamedColumnSet) oc.getColumn().getOwner()).getName(), oc.getColumn().getName(), SortingDirection.valueOf(oc.getDirection().name())), dialect);
     }
 
-    private Aggregator getBitAggAggregator(org.eclipse.daanse.rolap.mapping.model.BitAggMeasure measure) {
+    private Aggregator getBitAggAggregator(org.eclipse.daanse.rolap.mapping.model.olap.cube.measure.BitAggMeasure measure) {
         return new BitAggAggregator(measure.isNot(), measure.getAggType(), dialect);
     }
 
-    private List<RolapColumn> getOrderedColumns(List<? extends org.eclipse.daanse.rolap.mapping.model.OrderedColumn> orderByColumns) {
+    private List<RolapColumn> getOrderedColumns(List<? extends org.eclipse.daanse.rolap.mapping.model.database.relational.OrderedColumn> orderByColumns) {
         if (orderByColumns != null) {
-            return orderByColumns.stream().map(oc -> new RolapColumn(oc.getColumn().getTable().getName(), oc.getColumn().getName(), SortingDirection.valueOf(oc.getDirection().name()))).toList();
+            return orderByColumns.stream().map(oc -> new RolapColumn(((org.eclipse.daanse.cwm.model.cwm.resource.relational.NamedColumnSet) oc.getColumn().getOwner()).getName(), oc.getColumn().getName(), SortingDirection.valueOf(oc.getDirection().name()))).toList();
         }
         return List.of();
     }
 
-    private Aggregator findCustomAggregator(org.eclipse.daanse.rolap.mapping.model.CustomMeasure i) {
+    private Aggregator findCustomAggregator(org.eclipse.daanse.rolap.mapping.model.olap.cube.measure.CustomMeasure i) {
         Optional<CustomAggregatorFactory> oAggregator = customAggregators.stream().filter(ca -> i.getName().equals(ca.getName())).findAny();
         if (oAggregator.isPresent()) {
             List<Object> l = (i.getColumns() == null) ? List.of() : i.getColumns().stream().map(Object.class::cast).toList();

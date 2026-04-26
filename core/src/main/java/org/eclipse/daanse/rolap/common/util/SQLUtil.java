@@ -23,9 +23,9 @@ public class SQLUtil {
      * Converts an array of SQL to a
      * {@link org.eclipse.daanse.rolap.common.sql.SqlQuery.CodeSet} object.
      */
-    public static SqlQuery.CodeSet toCodeSetSqlStatement(List<? extends org.eclipse.daanse.rolap.mapping.model.SqlStatement> sqls) {
+    public static SqlQuery.CodeSet toCodeSetSqlStatement(List<? extends org.eclipse.daanse.rolap.mapping.model.database.source.SqlStatement> sqls) {
         SqlQuery.CodeSet codeSet = new SqlQuery.CodeSet();
-        for (org.eclipse.daanse.rolap.mapping.model.SqlStatement sql : sqls) {
+        for (org.eclipse.daanse.rolap.mapping.model.database.source.SqlStatement sql : sqls) {
             for (String dialect : sql.getDialects()) {
                 codeSet.put(dialect, sql.getSql());
             }
@@ -47,8 +47,8 @@ public class SQLUtil {
         return sql.getDialects().hashCode();
     }
 
-    public boolean equals(org.eclipse.daanse.rolap.mapping.model.SqlStatement sql, Object obj) {
-        if (!(obj instanceof org.eclipse.daanse.rolap.mapping.model.SqlStatement that)) {
+    public boolean equals(org.eclipse.daanse.rolap.mapping.model.database.source.SqlStatement sql, Object obj) {
+        if (!(obj instanceof org.eclipse.daanse.rolap.mapping.model.database.source.SqlStatement that)) {
             return false;
         }
         if (sql.getDialects().size() != that.getDialects().size()) {

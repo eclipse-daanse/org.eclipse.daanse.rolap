@@ -96,7 +96,7 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
     @Reference(name = BASIC_CONTEXT_REF_NAME_CATALOG_MAPPING_SUPPLIER, target = UNRESOLVABLE_FILTER)
     private CatalogMappingSupplier catalogMappingSupplier;
 
-    private volatile org.eclipse.daanse.rolap.mapping.model.Catalog cachedCatalogMapping;
+    private volatile org.eclipse.daanse.rolap.mapping.model.catalog.Catalog cachedCatalogMapping;
 
     @Reference(name = BASIC_CONTEXT_REF_NAME_EXPRESSION_COMPILER_FACTORY)
     private ExpressionCompilerFactory expressionCompilerFactory;
@@ -193,7 +193,7 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
     }
 
     @Override
-    public org.eclipse.daanse.rolap.mapping.model.Catalog getCatalogMapping() {
+    public org.eclipse.daanse.rolap.mapping.model.catalog.Catalog getCatalogMapping() {
         if (cachedCatalogMapping == null) {
             cachedCatalogMapping = catalogMappingSupplier.get();
         }
@@ -243,9 +243,9 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
 
     @Override
     public List<String> getAccessRoles() {
-    	org.eclipse.daanse.rolap.mapping.model.Catalog catalogMapping = getCatalogMapping();
+    	org.eclipse.daanse.rolap.mapping.model.catalog.Catalog catalogMapping = getCatalogMapping();
         if (catalogMapping != null && catalogMapping.getAccessRoles() != null) {
-            return catalogMapping.getAccessRoles().stream().map(org.eclipse.daanse.rolap.mapping.model.AccessRole::getName).toList();
+            return catalogMapping.getAccessRoles().stream().map(org.eclipse.daanse.rolap.mapping.model.access.common.AccessRole::getName).toList();
         }
         return List.of();// may take from mapping
     }

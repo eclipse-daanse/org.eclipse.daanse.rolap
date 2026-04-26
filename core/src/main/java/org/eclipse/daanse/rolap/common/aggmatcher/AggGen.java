@@ -185,7 +185,7 @@ public class AggGen {
      * create lost create and insert commands.
      */
     private void init() {
-    org.eclipse.daanse.rolap.mapping.model.DatabaseSchema dbschema=	((RolapContext) star.getContext()).getCatalogMapping().getDbschemas().getFirst();
+    org.eclipse.daanse.cwm.model.cwm.resource.relational.Schema dbschema=	((RolapContext) star.getContext()).getCatalogMapping().getDbschemas().getFirst();
         JdbcSchema db =   new JdbcSchema(dbschema);
 
         JdbcSchema.Table factTable = getTable(db, getFactTableName());

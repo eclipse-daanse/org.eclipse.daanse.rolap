@@ -34,8 +34,8 @@ import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.star.RolapStar.Column;
 import org.eclipse.daanse.rolap.element.RolapCatalog;
 import org.eclipse.daanse.rolap.element.RolapCube;
-import org.eclipse.daanse.rolap.mapping.model.Query;
-import org.eclipse.daanse.rolap.mapping.model.RelationalQuery;
+import org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource;
+import org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -49,13 +49,13 @@ class RolapStarTest {
         public RolapStarForTests(
             final RolapCatalog schema,
             final Context<?> context,
-            final RelationalQuery fact)
+            final RelationalSource fact)
         {
             super(schema, context, fact);
         }
 
-        public Query cloneRelationForTests(
-            RelationalQuery rel,
+        public RelationalSource cloneRelationForTests(
+            RelationalSource rel,
             String possibleName)
         {
             return cloneRelation(rel, possibleName);
