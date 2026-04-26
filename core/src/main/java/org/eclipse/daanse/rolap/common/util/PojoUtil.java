@@ -75,7 +75,7 @@ public class PojoUtil {
 //	}
 
 	/**
-     * Copies a {@link Query}.
+     * Copies a relational source.
      *
      * @param relation A table or a join
      */

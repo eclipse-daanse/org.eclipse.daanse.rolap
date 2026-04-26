@@ -1309,7 +1309,7 @@ public class RolapStar {
      * Definition of a table in a star schema.
      *
      * A 'table' is defined by a
-     * {@link Query} so may, in fact, be a
+     * relational source so may, in fact, be a
      * view.
      *
      * Every table in the star schema except the fact table has a parent
