@@ -49,6 +49,7 @@ import org.eclipse.daanse.cwm.model.cwm.resource.relational.RowSet;
 import org.eclipse.daanse.cwm.util.resource.relational.ColumnSets;
 import org.eclipse.daanse.cwm.util.resource.relational.RowSets;
 import org.eclipse.daanse.cwm.util.resource.relational.Rows;
+import org.eclipse.daanse.cwm.util.resource.relational.SqlSimpleTypes;
 import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.jdbc.db.dialect.api.type.BestFitColumnType;
 import org.eclipse.daanse.olap.api.Context;
@@ -477,13 +478,41 @@ public class RolapUtil {
         return bestMatch;
     }
 
+    /**
+     * Resolve a column type name for inline-table SQL generation.
+     * Why: a missing/unrecognized type historically defaulted to NUMERIC,
+     * which silently emits string values unquoted and produces broken
+     * SQL (e.g., {@code Promo0 as `promo_name`}). Defaulting to VARCHAR
+     * is safe for any value: numeric values get string-quoted but many
+     * JDBC driver coerces them, while string values are correctly
+     * delimited.
+     */
+    private static String safeTypeName(
+        org.eclipse.daanse.cwm.model.cwm.objectmodel.core.Classifier type)
+    {
+        if (type instanceof org.eclipse.daanse.cwm.model.cwm.resource.relational.SQLSimpleType simple) {
+            String name = SqlSimpleTypes.typeName(simple);
+            if (name != null) {
+                return name;
+            }
+        } else if (type != null) {
+            String name = type.getName();
+            if (name != null && !name.isBlank()) {
+                return name;
+            }
+        }
+        return "CHARACTER VARYING";
+    }
+
     public static org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource convertInlineTableToRelation(
     		org.eclipse.daanse.rolap.mapping.model.database.source.InlineTableSource inlineTable,
         final Dialect dialect)
     {
         List<Column> cols = ColumnSets.columns(inlineTable.getTable());
         List<String> columnNames = cols.stream().map(Column::getName).toList();
-        List<String> columnTypes = cols.stream().map(c -> c.getType().getName()).toList();
+        List<String> columnTypes = cols.stream()
+            .map(c -> safeTypeName(c.getType()))
+            .toList();
         final int columnCount = cols.size();
 
         List<String[]> valueList = new ArrayList<>();
@@ -530,7 +559,7 @@ public class RolapUtil {
             
             for (org.eclipse.daanse.cwm.model.cwm.resource.relational.Column columnMapping : columns) {
             		columnNames.add(columnMapping.getName());
-            		columnTypes.add(columnMapping.getType().getName());
+            		columnTypes.add(safeTypeName(columnMapping.getType()));
             }
             List<String[]> valueList = new ArrayList<>();
             List<? extends org.eclipse.daanse.cwm.model.cwm.resource.relational.Row> rows =
