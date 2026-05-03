@@ -146,7 +146,7 @@ public abstract class AbstractQuerySpec implements QuerySpec {
             // there and *not* used in a subsequent order by/group by
             final Dialect dialect = sqlQuery.getDialect();
             final String alias =
-                    sqlQuery.addSelect(expr, column.getInternalType(), dialect.allowsFieldAs() ? getColumnAlias(i) : null);
+                    sqlQuery.addSelect(expr, column.getInternalType(), dialect.allowsFieldAlias() ? getColumnAlias(i) : null);
 
             if (isAggregate()) {
                 sqlQuery.addGroupBy(expr, alias);
@@ -324,8 +324,8 @@ public abstract class AbstractQuerySpec implements QuerySpec {
             if (!dialect.allowsInnerDistinct()) {
                 innerSqlQuery.addGroupBy(expr, alias);
             }
-            final StringBuilder quotedAlias = dialect.quoteIdentifier(alias);
-            outerSqlQuery.addSelectGroupBy(quotedAlias.toString(), null);
+            final String quotedAlias = dialect.quoteIdentifier(alias);
+            outerSqlQuery.addSelectGroupBy(quotedAlias, null);
             // Add this alias to the map of grouping sets aliases
             groupingSetsAliases.put(
                 expr,

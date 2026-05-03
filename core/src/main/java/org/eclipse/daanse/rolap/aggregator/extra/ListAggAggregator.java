@@ -16,8 +16,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
-import org.eclipse.daanse.jdbc.db.dialect.api.order.OrderedColumn;
-import org.eclipse.daanse.jdbc.db.dialect.api.order.SortDirection;
+import org.eclipse.daanse.jdbc.db.dialect.api.sql.OrderedColumn;
+import org.eclipse.daanse.jdbc.db.dialect.api.generator.SortDirection;
 import org.eclipse.daanse.olap.api.DataTypeJdbc;
 import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.olap.api.calc.Calc;
@@ -69,7 +69,7 @@ public class ListAggAggregator implements Aggregator {
                     Optional.empty()))
                 .toList();
         }
-        return dialect.generateListAgg(operand, distinct, separator, coalesce, onOverflowTruncate, columnsList);
+        return dialect.aggregationGenerator().generateListAgg(operand, distinct, separator, coalesce, onOverflowTruncate, columnsList).map(StringBuilder::new).orElse(null);
     }
 
     @Override

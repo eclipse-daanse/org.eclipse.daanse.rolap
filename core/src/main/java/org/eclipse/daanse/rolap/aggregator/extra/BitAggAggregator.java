@@ -60,15 +60,15 @@ public class BitAggAggregator implements Aggregator {
     }
 
     private StringBuilder and(CharSequence operand) {
-        return dialect.generateBitAggregation(not ? BitOperation.NAND : BitOperation.AND, operand);
+        return dialect.aggregationGenerator().generateBitAggregation(not ? BitOperation.NAND : BitOperation.AND, operand).map(StringBuilder::new).orElse(null);
     }
 
     private StringBuilder or(CharSequence operand) {
-        return dialect.generateBitAggregation(not ? BitOperation.NOR : BitOperation.OR, operand);
+        return dialect.aggregationGenerator().generateBitAggregation(not ? BitOperation.NOR : BitOperation.OR, operand).map(StringBuilder::new).orElse(null);
     }
 
     private StringBuilder xor(CharSequence operand) {
-        return dialect.generateBitAggregation(not ? BitOperation.NXOR : BitOperation.XOR, operand);
+        return dialect.aggregationGenerator().generateBitAggregation(not ? BitOperation.NXOR : BitOperation.XOR, operand).map(StringBuilder::new).orElse(null);
     }
 
     @Override

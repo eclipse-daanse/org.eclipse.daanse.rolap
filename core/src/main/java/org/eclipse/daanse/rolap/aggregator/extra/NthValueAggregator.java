@@ -16,8 +16,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
-import org.eclipse.daanse.jdbc.db.dialect.api.order.OrderedColumn;
-import org.eclipse.daanse.jdbc.db.dialect.api.order.SortDirection;
+import org.eclipse.daanse.jdbc.db.dialect.api.sql.OrderedColumn;
+import org.eclipse.daanse.jdbc.db.dialect.api.generator.SortDirection;
 import org.eclipse.daanse.olap.api.DataTypeJdbc;
 import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.olap.api.calc.Calc;
@@ -57,7 +57,7 @@ public class NthValueAggregator implements Aggregator {
                                 Optional.empty()))
                 .toList();
         }
-        return dialect.generateNthValueAgg(operand, ignoreNulls, n, columnsList);
+        return dialect.aggregationGenerator().generateNthValueAgg(operand, ignoreNulls, n, columnsList).map(StringBuilder::new).orElse(null);
     }
 
     @Override

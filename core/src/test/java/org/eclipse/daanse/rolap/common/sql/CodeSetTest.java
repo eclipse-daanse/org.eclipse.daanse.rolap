@@ -65,7 +65,7 @@ class CodeSetTest {
     throws Exception
     {
     Dialect postgreSqlDialect =  mock(Dialect.class);
-    when(postgreSqlDialect.getDialectName()).thenReturn(
+    when(postgreSqlDialect.name()).thenReturn(
             "postgres");
     codeSet = new SqlQuery.CodeSet();
     codeSet.put(POSTGRES_DIALECT, SQL_CODE_FOR_POSTGRES_DIALECT);
@@ -90,7 +90,7 @@ class CodeSetTest {
     throws Exception
     {
       Dialect postgreSqlDialect =  mock(Dialect.class);
-      when(postgreSqlDialect.getDialectName()).thenReturn(
+      when(postgreSqlDialect.name()).thenReturn(
               "postgres");
     codeSet = new SqlQuery.CodeSet();
     codeSet.put(POSTGRES_DIALECT, SQL_CODE_FOR_POSTGRES_DIALECT);
@@ -116,7 +116,7 @@ class CodeSetTest {
         throws Exception
       {
 	  Dialect postgreSqlDialect =  mock(Dialect.class);
-      when(postgreSqlDialect.getDialectName()).thenReturn(
+      when(postgreSqlDialect.name()).thenReturn(
               "postgres");
     codeSet = new SqlQuery.CodeSet();
     codeSet.put(POSTGRES_DIALECT, SQL_CODE_FOR_POSTGRES_DIALECT);

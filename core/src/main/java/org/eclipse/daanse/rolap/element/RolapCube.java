@@ -2522,7 +2522,7 @@ public abstract class RolapCube extends CubeBase {
                         org.eclipse.daanse.rolap.mapping.model.database.source.SqlStatement sqlStatement = SourceFactory.eINSTANCE.createSqlStatement();
                         sqlStatement.setSql(sql.toString());
                         sqlStatement.getDialects().add("generic");
-                        sqlStatement.getDialects().add(dialect.getDialectName());
+                        sqlStatement.getDialects().add(dialect.name());
                         
                         org.eclipse.daanse.cwm.model.cwm.resource.relational.Schema schema = org.eclipse.daanse.cwm.model.cwm.resource.relational.RelationalFactory.eINSTANCE.createSchema();
                         schema.setName(mappingTable.getTable().getNamespace().getName());
@@ -2578,7 +2578,7 @@ public abstract class RolapCube extends CubeBase {
             .collect(Collectors.joining(", "))).append(" from ")
             .append(writebackTable.getName());
         if (sessionValues != null && !sessionValues.isEmpty()) {
-            sql.append(dialect.generateUnionAllSql(sessionValues));
+            sql.append(dialect.sqlGenerator().generateUnionAllSql(sessionValues));
         }
         return sql;
     }

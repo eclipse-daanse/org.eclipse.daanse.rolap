@@ -83,7 +83,7 @@ class SqlTupleReaderTest {
     org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource queryMapping = mock( org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource.class, Answers.RETURNS_MOCKS );
     String propertyName = "property_1";
     Dialect dialect = mock( Dialect.class );
-    when(dialect.getDialectName()).thenReturn( "generic" );
+    when(dialect.name()).thenReturn( "generic" );
     when(dialect.quoteIdentifier(any(String.class), any(String.class))).thenReturn( "generic" );
     org.eclipse.daanse.rolap.mapping.model.database.source.SqlStatement sql = mock(org.eclipse.daanse.rolap.mapping.model.database.source.SqlStatement.class );
     when(sql.getDialects()).thenAnswer(setupDummyListAnswer("generic"));

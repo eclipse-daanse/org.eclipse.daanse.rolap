@@ -54,8 +54,8 @@ public class PercentileAggregator implements Aggregator {
         String name = rolapOrderedColumn.getName();
 
         return switch (percentileType) {
-        case PercentType.DISC -> dialect.generatePercentileDisc(percentile, desc, table, name);
-        case PercentType.CONT -> dialect.generatePercentileCont(percentile, desc, table, name);
+        case PercentType.DISC -> dialect.aggregationGenerator().generatePercentileDisc(percentile, desc, table, name).map(StringBuilder::new).orElse(null);
+        case PercentType.CONT -> dialect.aggregationGenerator().generatePercentileCont(percentile, desc, table, name).map(StringBuilder::new).orElse(null);
         };
     }
 

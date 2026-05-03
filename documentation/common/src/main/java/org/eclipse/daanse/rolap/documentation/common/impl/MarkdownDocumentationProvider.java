@@ -42,8 +42,6 @@ import org.eclipse.daanse.jdbc.db.api.schema.ColumnMetaData;
 import org.eclipse.daanse.jdbc.db.api.schema.SchemaReference;
 import org.eclipse.daanse.jdbc.db.api.schema.TableDefinition;
 import org.eclipse.daanse.jdbc.db.api.schema.TableReference;
-import org.eclipse.daanse.jdbc.db.record.schema.SchemaReferenceR;
-import org.eclipse.daanse.jdbc.db.record.schema.TableReferenceR;
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.SqlStatement;
 import org.eclipse.daanse.olap.api.catalog.CatalogReader;
@@ -240,7 +238,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
         try {
         	org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation = c.getQuery();
             if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.TableSource mt) {
-                TableReference tableReference = new TableReferenceR(mt.getTable().getName());
+                TableReference tableReference = new TableReference(mt.getTable().getName());
                 return getTableCardinality(tableReference);
             }
             if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.InlineTableSource it) {
@@ -254,7 +252,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
             if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource mj) {
                 Optional<String> tableName = getFactTableName(mj);
                 if (tableName.isPresent()) {
-                    TableReference tableReference = new TableReferenceR(tableName.get());
+                    TableReference tableReference = new TableReference(tableName.get());
                     return getTableCardinality(tableReference);
                 }
             }
@@ -823,8 +821,9 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
                 List<? extends org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationTable> aggregationTables = tableQuery.get().getAggregationTables();
                 DatabaseMetaData databaseMetaData = connection.getMetaData();
                 List<? extends DatabaseSchema> dbschemas = catalogReader.getDatabaseSchemas();
-                SchemaReference schemaReference = new SchemaReferenceR(connection.getSchema());
-                List<TableDefinition> tables = databaseService.getTableDefinitions(databaseMetaData, schemaReference);
+                SchemaReference schemaReference = new SchemaReference(connection.getSchema());
+                List<TableDefinition> tables = databaseService.getTableDefinitions(connection,
+                        org.eclipse.daanse.jdbc.db.api.MetadataProvider.EMPTY, schemaReference);
 
                 writeTables(writer, context, tables, databaseMetaData, dbschemas);
 
@@ -1222,8 +1221,9 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
         try (Connection connection = context.getDataSource().getConnection()) {
             DatabaseMetaData databaseMetaData = connection.getMetaData();
             List<? extends DatabaseSchema> dbschemas = catalogReader.getDatabaseSchemas();
-            SchemaReference schemaReference = new SchemaReferenceR(connection.getSchema());
-            List<TableDefinition> tables = databaseService.getTableDefinitions(databaseMetaData, schemaReference);
+            SchemaReference schemaReference = new SchemaReference(connection.getSchema());
+            List<TableDefinition> tables = databaseService.getTableDefinitions(connection,
+                    org.eclipse.daanse.jdbc.db.api.MetadataProvider.EMPTY, schemaReference);
             writeTables(writer, context, tables, databaseMetaData, dbschemas);
         } catch (SQLException e) {
             LOGGER.error("Error writing database info", e);
@@ -1347,7 +1347,8 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
             List<String> missedTableNames) {
         try {
             List<ColumnDefinition> columnList = tableReference.isPresent()
-                    ? databaseService.getColumnDefinitions(databaseMetaData, tableReference.get())
+                    ? databaseService.getColumnDefinitions(databaseMetaData.getConnection(),
+                            org.eclipse.daanse.jdbc.db.api.MetadataProvider.EMPTY, tableReference.get())
                     : List.of();
             String name = table.getName();
             List<DatabaseColumn> missedColumns = getMissedColumnsFromDbStructureFromSchema(databaseSchemaList, name,
@@ -1405,7 +1406,8 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
     private void writeTablesDiagram(FileWriter writer, TableReference tableReference, DatabaseMetaData databaseMetaData,
             List<? extends DatabaseSchema> databaseSchemaList, List<String> missedTableNames) {
         try {
-            List<ColumnDefinition> columnList = databaseService.getColumnDefinitions(databaseMetaData, tableReference);
+            List<ColumnDefinition> columnList = databaseService.getColumnDefinitions(databaseMetaData.getConnection(),
+                    org.eclipse.daanse.jdbc.db.api.MetadataProvider.EMPTY, tableReference);
             String name = tableReference.name();
             List<DatabaseColumn> missedColumns = getMissedColumnsFromDbStructureFromSchema(databaseSchemaList, name,
                     columnList);
@@ -1502,7 +1504,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
     }
 
     private String getNullable(ColumnMetaData columnMetaData) {
-        return columnMetaData.nullable().isPresent() && columnMetaData.nullable().getAsInt() > 0 ? "is null "
+        return columnMetaData.nullability() == ColumnMetaData.Nullability.NULLABLE ? "is null "
                 : "not null ";
     }
 

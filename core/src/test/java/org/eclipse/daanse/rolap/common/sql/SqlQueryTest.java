@@ -33,8 +33,8 @@ class SqlQueryTest {
     @BeforeEach
     void setUp() {
         dialect = mock(Dialect.class);
-        when(dialect.allowsAs()).thenReturn(true);
-        when(dialect.allowsFieldAs()).thenReturn(true);
+        when(dialect.allowsFromAlias()).thenReturn(true);
+        when(dialect.allowsFieldAlias()).thenReturn(true);
         when(dialect.quoteIdentifier(org.mockito.ArgumentMatchers.anyString()))
             .thenAnswer(invocation -> "\"" + invocation.getArgument(0) + "\"");
         sqlQuery = new SqlQuery(dialect, false);

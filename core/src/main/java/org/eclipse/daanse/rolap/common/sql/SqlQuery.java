@@ -278,7 +278,7 @@ public class SqlQuery {
 
         buf.setLength(0);
         buf.append('(').append(query).append(')');
-        if (dialect.allowsAs()) {
+        if (dialect.allowsFromAlias()) {
             buf.append(" as ");
         } else {
             buf.append(' ');
@@ -327,7 +327,7 @@ public class SqlQuery {
             if (alias.isBlank()) {
                 throw new IllegalArgumentException(ALIAS_NULL_OR_BLANK_ERROR);
             }
-            if (dialect.allowsAs()) {
+            if (dialect.allowsFromAlias()) {
                 buf.append(" as ");
             } else {
                 buf.append(' ');
@@ -337,7 +337,7 @@ public class SqlQuery {
         }
 
         if (this.allowHints) {
-            dialect.appendHintsAfterFromClause(buf, hints);
+            dialect.hintGenerator().appendHintsAfterFromClause(buf, hints);
         }
 
         from.add(buf.toString());
@@ -514,7 +514,7 @@ public class SqlQuery {
         // Some DB2 versions (AS/400) throw an error if a column alias is
         //  *not* used in a subsequent order by (Group by).
         // Derby fails on 'SELECT... HAVING' if column has alias.
-        return addSelect(expression, type, dialect.allowsFieldAs() ? nextColumnAlias() : null);
+        return addSelect(expression, type, dialect.allowsFieldAlias() ? nextColumnAlias() : null);
     }
 
     /**
@@ -670,7 +670,7 @@ public class SqlQuery {
         if (!SortingDirection.NONE.equals(sortingDirection)) {
             boolean ascending = SortingDirection.ASC.equals(sortingDirection);
             String orderExpr =
-                dialect.generateOrderItem(
+                dialect.orderByGenerator().generateOrderItem(
                     dialect.requiresOrderByAlias() && alias != null
                         ? dialect.quoteIdentifier(alias)
                         : expr,
@@ -701,7 +701,7 @@ public class SqlQuery {
         if (!SortingDirection.NONE.equals(sortingDirection)) {
             boolean ascending = SortingDirection.ASC.equals(sortingDirection);
             String orderExpr =
-                    dialect.generateOrderItemForOrderValue(
+                    dialect.orderByGenerator().generateOrderItemForOrderValue(
                         dialect.requiresOrderByAlias() && alias != null
                             ? dialect.quoteIdentifier(alias)
                             : expr,
@@ -1097,7 +1097,7 @@ public class SqlQuery {
          * Chooses the code variant which best matches the given Dialect.
          */
         public String chooseQuery(Dialect dialect) {
-            String best = dialect.getDialectName();
+            String best = dialect.name();
             String bestCode = dialectCodes.get(best);
             if (bestCode != null) {
                 return bestCode;

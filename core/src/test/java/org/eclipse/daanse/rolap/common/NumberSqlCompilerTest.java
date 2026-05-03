@@ -53,7 +53,7 @@ class NumberSqlCompilerTest {
 
     @BeforeAll static void beforeAll() throws Exception {
         Dialect dialect = mock(Dialect.class);
-        when(dialect.getDialectName())
+        when(dialect.name())
             .thenReturn("mysql");
 
         when(dialect.quoteDecimalLiteral("1"))

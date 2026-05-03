@@ -397,11 +397,13 @@ public class RolapNativeSql {
                     sourceExp = sqlQuery.getAlias(sourceExp);
                 }
                 return
-                    dialect.generateRegularExpression(
+                    dialect.regexGenerator().generateRegularExpression(
                         sourceExp,
                         String.valueOf(
                             evaluator.getCachedResult(
-                                new ExpCacheDescriptorImpl(arg1, evaluator))));
+                                new ExpCacheDescriptorImpl(arg1, evaluator))))
+                        .map(StringBuilder::new)
+                        .orElse(null);
             } else {
                 return null;
             }
@@ -662,7 +664,7 @@ public class RolapNativeSql {
             if (cond == null || val1 == null || val2 == null) {
                 return null;
             }
-            return sqlQuery.getDialect().wrapIntoSqlIfThenElseFunction(cond, val1, val2);
+            return sqlQuery.getDialect().functionGenerator().wrapIntoSqlIfThenElseFunction(cond, val1, val2);
         }
     }
 

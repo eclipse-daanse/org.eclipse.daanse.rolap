@@ -330,7 +330,7 @@ public class SqlMemberSource
             if (mustCount[0]) {
                 for (String colDef : columnList) {
                     final StringBuilder exp =
-                        sqlQuery.getDialect().generateCountExpression(colDef);
+                        sqlQuery.getDialect().functionGenerator().generateCountExpression(colDef);
                     sqlQuery.addSelect(exp, null);
                     sqlQuery.addOrderBy(exp, SortingDirection.ASC, false, true);
                 }
@@ -343,7 +343,7 @@ public class SqlMemberSource
                     }
                     i++;
                     sb.append(
-                        sqlQuery.getDialect()
+                        sqlQuery.getDialect().functionGenerator()
                             .generateCountExpression(colDef));
                 }
                 sqlQuery.addSelect(
