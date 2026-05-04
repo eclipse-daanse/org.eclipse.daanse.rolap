@@ -96,11 +96,11 @@ class RolapDimensionTest {
   void hierarchyRelation() {
 	  org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource hierarchyTable = (org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource) Mockito
             .mock(org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource.class);
-    hierarchy.setQuery(hierarchyTable);
+    hierarchy.setSource(hierarchyTable);
 
     new RolapDimension(schema, cube, xmlDimension, xmlCubeDimension);
       assertThat(hierarchy).isNotNull();
-      assertThat(hierarchy.getQuery()).isEqualTo(hierarchyTable);
+      assertThat(hierarchy.getSource()).isEqualTo(hierarchyTable);
   }
 
   /**
@@ -112,7 +112,7 @@ class RolapDimensionTest {
     new RolapDimension(schema, cube, xmlDimension, xmlCubeDimension);
 
       assertThat(hierarchy).isNotNull();
-      assertThat(hierarchy.getQuery()).isNull();
+      assertThat(hierarchy.getSource()).isNull();
   }
 
 }

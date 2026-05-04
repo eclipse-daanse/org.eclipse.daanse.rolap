@@ -132,7 +132,7 @@ public class ExplicitRules {
         {
             Group group = new Group(cube);
 
-            org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation = xmlCube.getQuery();
+            org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation = xmlCube.getSource();
 
             if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.TableSource table) {
                 List<? extends org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationExclude> aggExcludes =

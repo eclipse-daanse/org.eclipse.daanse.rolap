@@ -111,12 +111,12 @@ public class PojoUtil {
             org.eclipse.daanse.rolap.mapping.model.database.source.JoinedQueryElement leftElement = SourceFactory.eINSTANCE.createJoinedQueryElement();
             leftElement.setAlias(getLeftAlias(join));
             leftElement.setKey(getColumn(join.getLeft().getKey()));
-            leftElement.setQuery(left);
+            leftElement.setSource(left);
             
             org.eclipse.daanse.rolap.mapping.model.database.source.JoinedQueryElement rightElement = SourceFactory.eINSTANCE.createJoinedQueryElement();
             rightElement.setAlias(getRightAlias(join));
             rightElement.setKey(getColumn(join.getRight().getKey()));
-            rightElement.setQuery(right);
+            rightElement.setSource(right);
             
             joinQuery.setLeft(leftElement);
             joinQuery.setRight(rightElement);

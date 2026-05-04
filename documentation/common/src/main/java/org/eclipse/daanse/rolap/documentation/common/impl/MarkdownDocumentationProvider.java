@@ -236,7 +236,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
     private long getFactCount(org.eclipse.daanse.rolap.mapping.model.olap.cube.PhysicalCube c) {
         long result = 0l;
         try {
-        	org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation = c.getQuery();
+        	org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation = c.getSource();
             if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.TableSource mt) {
                 TableReference tableReference = new TableReference(mt.getTable().getName());
                 return getTableCardinality(tableReference);
@@ -344,9 +344,9 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
 
         List<String> result = new ArrayList<>();
         if (cube instanceof org.eclipse.daanse.rolap.mapping.model.olap.cube.PhysicalCube c) {
-            Optional<String> optionalFactTable = getFactTableName(c.getQuery());
+            Optional<String> optionalFactTable = getFactTableName(c.getSource());
             if (optionalFactTable.isPresent()) {
-                result.addAll(getFactTableConnections(c.getQuery(), missedTableNames));
+                result.addAll(getFactTableConnections(c.getSource(), missedTableNames));
                 result.addAll(dimensionsTablesConnections(catalog, c.getDimensionConnectors(), optionalFactTable.get(),
                         missedTableNames));
             }
@@ -451,7 +451,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
         List<String> result = new ArrayList<>();
         String primaryKeyTable = getTableName(((org.eclipse.daanse.cwm.model.cwm.resource.relational.Table) h.getPrimaryKey().getOwner()));
         if (primaryKeyTable == null) {
-            Optional<String> optionalTable = getFactTableName(h.getQuery());
+            Optional<String> optionalTable = getFactTableName(h.getSource());
             if (optionalTable.isPresent()) {
                 primaryKeyTable = optionalTable.get();
             }
@@ -464,7 +464,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
                         connection(fact, primaryKeyTable, flag1, flag2, foreignKey, getColumnName(h.getPrimaryKey())));
             }
         }
-        result.addAll(getFactTableConnections(h.getQuery(), missedTableNames));
+        result.addAll(getFactTableConnections(h.getSource(), missedTableNames));
         return result;
     }
 
@@ -685,7 +685,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
             if (cube instanceof org.eclipse.daanse.rolap.mapping.model.olap.cube.PhysicalCube pc) {
                 String description = cube.getDescription() != null ? cube.getDescription() : EMPTY_STRING;
                 String name = cube.getName() != null ? cube.getName() : "";
-                String table = getTable(pc.getQuery());
+                String table = getTable(pc.getSource());
                 writer.write("---");
                 writer.write(ENTER);
                 writer.write("#### Cube \"");
@@ -1123,8 +1123,8 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
             return Optional.ofNullable(mv.getAlias());
         }
         if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource mj) {
-            if (mj.getLeft() != null && mj.getLeft().getQuery() != null) {
-                return getFactTableName(mj.getLeft().getQuery());
+            if (mj.getLeft() != null && mj.getLeft().getSource() != null) {
+                return getFactTableName(mj.getLeft().getSource());
             }
         }
         return Optional.empty();
@@ -1148,18 +1148,18 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
             return List.of();
         }
         if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource mj) {
-            if (mj.getLeft() != null && mj.getRight() != null && mj.getLeft().getQuery() != null
-                    && mj.getRight().getQuery() != null) {
+            if (mj.getLeft() != null && mj.getRight() != null && mj.getLeft().getSource() != null
+                    && mj.getRight().getSource() != null) {
                 ArrayList<String> res = new ArrayList<>();
-                String t1 = getFirstTable(mj.getLeft().getQuery());
+                String t1 = getFirstTable(mj.getLeft().getSource());
                 String flag1 = missedTableNames.contains(t1) ? NEGATIVE_FLAG : POSITIVE_FLAG;
-                String t2 = getFirstTable(mj.getRight().getQuery());
+                String t2 = getFirstTable(mj.getRight().getSource());
                 String flag2 = missedTableNames.contains(t2) ? NEGATIVE_FLAG : POSITIVE_FLAG;
                 if (t1 != null && !t1.equals(t2)) {
                     res.add(connection(t1, t2, flag1, flag2, getColumnName(mj.getLeft().getKey()),
                             getColumnName(mj.getRight().getKey())));
                 }
-                res.addAll(getFactTableConnections(mj.getRight().getQuery(), missedTableNames));
+                res.addAll(getFactTableConnections(mj.getRight().getSource(), missedTableNames));
                 return res;
             }
         }
@@ -1183,8 +1183,8 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
             return getTableName(mt.getTable());
         }
         if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource mj) {
-            if (mj.getLeft() != null && mj.getLeft().getQuery() != null) {
-                return getFirstTable(mj.getLeft().getQuery());
+            if (mj.getLeft() != null && mj.getLeft().getSource() != null) {
+                return getFirstTable(mj.getLeft().getSource());
             }
         }
         return null;
@@ -1208,9 +1208,9 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
         }
         if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource mj) {
             StringBuilder sb = new StringBuilder();
-            if (mj.getLeft() != null && mj.getRight() != null && mj.getLeft().getQuery() != null
-                    && mj.getRight().getQuery() != null) {
-                sb.append(getTable(mj.getLeft().getQuery())).append(",").append(getTable(mj.getRight().getQuery()));
+            if (mj.getLeft() != null && mj.getRight() != null && mj.getLeft().getSource() != null
+                    && mj.getRight().getSource() != null) {
+                sb.append(getTable(mj.getLeft().getSource())).append(",").append(getTable(mj.getRight().getSource()));
                 return sb.toString();
             }
         }

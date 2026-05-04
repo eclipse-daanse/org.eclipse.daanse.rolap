@@ -294,8 +294,8 @@ public class RolapHierarchy extends HierarchyBase {
         assert !(this instanceof RolapCubeHierarchy);
 
         this.hierarchyMapping = xmlHierarchy;
-        org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource xmlHierarchyRelation = xmlHierarchy.getQuery();
-        if (xmlHierarchy.getQuery() == null
+        org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource xmlHierarchyRelation = xmlHierarchy.getSource();
+        if (xmlHierarchy.getSource() == null
             && xmlHierarchy.getMemberReaderClass() == null
             && cube != null)
         {
@@ -1382,11 +1382,11 @@ public class RolapHierarchy extends HierarchyBase {
 
         org.eclipse.daanse.rolap.mapping.model.database.source.JoinedQueryElement leftElement = SourceFactory.eINSTANCE.createJoinedQueryElement();
         leftElement.setKey(PojoUtil.getColumn(clos.getParentColumn()));
-        leftElement.setQuery(PojoUtil.copy(clos.getTable()));
+        leftElement.setSource(PojoUtil.copy(clos.getTable()));
 
         org.eclipse.daanse.rolap.mapping.model.database.source.JoinedQueryElement rightElement = SourceFactory.eINSTANCE.createJoinedQueryElement();
         rightElement.setKey(PojoUtil.getColumn(clos.getChildColumn()));
-        rightElement.setQuery(PojoUtil.copy(relation));
+        rightElement.setSource(PojoUtil.copy(relation));
 
         join.setLeft(leftElement);
         join.setRight(rightElement);
