@@ -24,21 +24,21 @@ public class JoinUtil {
 
     public static org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource left(org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource join) {
         if (join != null && join.getLeft() != null) {
-            return join.getLeft().getQuery();
+            return join.getLeft().getSource();
         }
         throw new RolapRuntimeException("Join left error");
     }
 
     public static org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource right(org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource join) {
         if (join != null && join.getRight() != null) {
-            return join.getRight().getQuery();
+            return join.getRight().getSource();
         }
         throw new RolapRuntimeException("Join right error");
     }
 
     public static void changeLeftRight(org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource join, org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource left, org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource right) {
-        join.getLeft().setQuery(left);
-        join.getRight().setQuery(right);
+        join.getLeft().setSource(left);
+        join.getRight().setSource(right);
     }
 
     /**

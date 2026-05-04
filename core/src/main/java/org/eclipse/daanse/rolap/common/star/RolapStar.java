@@ -490,12 +490,12 @@ public class RolapStar {
                 org.eclipse.daanse.rolap.mapping.model.database.source.JoinedQueryElement leftElement = SourceFactory.eINSTANCE.createJoinedQueryElement();
                 leftElement.setAlias(left instanceof org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation ? RelationUtil.getAlias(relation) : null);
                 leftElement.setKey(PojoUtil.getColumn(join.getLeft().getKey()));
-                leftElement.setQuery(PojoUtil.copy(left));
+                leftElement.setSource(PojoUtil.copy(left));
 
                 org.eclipse.daanse.rolap.mapping.model.database.source.JoinedQueryElement rightElement = SourceFactory.eINSTANCE.createJoinedQueryElement();
                 rightElement.setAlias(right instanceof org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation ? RelationUtil.getAlias(relation) : null);
                 rightElement.setKey(PojoUtil.getColumn(join.getRight().getKey()));
-                rightElement.setQuery(PojoUtil.copy(right));
+                rightElement.setSource(PojoUtil.copy(right));
                 
                 joinNew.setLeft(leftElement);
                 joinNew.setRight(rightElement);

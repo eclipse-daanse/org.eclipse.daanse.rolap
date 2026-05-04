@@ -1499,11 +1499,11 @@ public abstract class RolapCube extends CubeBase {
                         
                         leftElement.setAlias(getRightAlias(join));
                         leftElement.setKey(join.getRight().getKey());
-                        leftElement.setQuery(PojoUtil.copy(right(join)));
+                        leftElement.setSource(PojoUtil.copy(right(join)));
 
                         rightElement.setAlias(getLeftAlias(join));
                         rightElement.setKey(join.getLeft().getKey());
-                        rightElement.setQuery(PojoUtil.copy(left(join)));
+                        rightElement.setSource(PojoUtil.copy(left(join)));
 
                         newRelation.setLeft(leftElement);
                         newRelation.setRight(rightElement);
@@ -1915,12 +1915,12 @@ public abstract class RolapCube extends CubeBase {
                 org.eclipse.daanse.rolap.mapping.model.database.source.JoinedQueryElement leftElement = SourceFactory.eINSTANCE.createJoinedQueryElement();
                 leftElement.setAlias(getLeftAlias(join));
                 leftElement.setKey(join.getLeft().getKey());
-                leftElement.setQuery(PojoUtil.copy(right(jleft)));
+                leftElement.setSource(PojoUtil.copy(right(jleft)));
 
                 org.eclipse.daanse.rolap.mapping.model.database.source.JoinedQueryElement rightElement = SourceFactory.eINSTANCE.createJoinedQueryElement();
                 rightElement.setAlias(getRightAlias(join));
                 rightElement.setKey(join.getRight().getKey());
-                rightElement.setQuery(PojoUtil.copy(right(join)));
+                rightElement.setSource(PojoUtil.copy(right(join)));
                 
                 joinQuery.setLeft(leftElement);
                 joinQuery.setRight(rightElement);
