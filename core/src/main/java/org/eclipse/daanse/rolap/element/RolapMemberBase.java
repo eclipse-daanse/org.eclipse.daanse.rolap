@@ -267,7 +267,7 @@ public class RolapMemberBase
         assert that != null; // public method should have checked
         // Do not use equalsIgnoreCase; unique names should be identical, and
         // hashCode assumes this.
-        return this.getUniqueName().equals(that.getUniqueName());
+        return this.getUniqueName().equals(that.getUniqueName()) && this.getKey().equals(that.getKey());
     }
 
     public void makeUniqueName(HierarchyUsage hierarchyUsage) {
