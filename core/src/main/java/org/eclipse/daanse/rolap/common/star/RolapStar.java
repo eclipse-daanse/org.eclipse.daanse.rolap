@@ -1426,12 +1426,24 @@ public class RolapStar {
          * Given a Expression return a column with that expression
          * or null.
          */
-        public Column lookupColumnByExpression(SqlExpression expr) {
+        private Column lookupColumnByExpression(SqlExpression expr) {
             for (Column column : getColumns()) {
                 if (column instanceof Measure) {
                     continue;
                 }
                 if (column.getExpression().equals(expr)) {
+                    return column;
+                }
+            }
+            return null;
+        }
+
+        private Column lookupColumnByExpression(SqlExpression expr, String name) {
+            for (Column column : getColumns()) {
+                if (column instanceof Measure) {
+                    continue;
+                }
+                if (column.getNameColumn() != null &&  column.getNameColumn().getName().equals(name) && column.getExpression().equals(expr)) {
                     return column;
                 }
             }
@@ -1658,7 +1670,12 @@ public class RolapStar {
                 expr = aliasReplacer.visit(expr);
             }
             // does the column already exist??
-            Column c = lookupColumnByExpression(expr);
+            Column c = null;
+            if (nameColumn != null) {
+                c = lookupColumnByExpression(expr, nameColumn.getName());
+            } else {
+            	c = lookupColumnByExpression(expr);
+            }
 
             RolapStar.Column column;
             // Verify Column is not null and not the same as the
@@ -1722,7 +1739,12 @@ public class RolapStar {
                 expr = aliasReplacer.visit(expr);
             }
             // does the column already exist??
-            Column c = lookupColumnByExpression(expr);
+            Column c = null;
+            if (nameColumn != null) {
+                c = lookupColumnByExpression(expr, nameColumn.getName());
+            } else {
+                c = lookupColumnByExpression(expr);
+            }
 
             RolapStar.Column column;
             // Verify Column is not null and not the same as the
