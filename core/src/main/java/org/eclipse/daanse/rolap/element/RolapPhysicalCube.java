@@ -59,6 +59,8 @@ import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.member.CacheMemberReader;
 import org.eclipse.daanse.rolap.common.member.MeasureMemberSource;
 import org.eclipse.daanse.rolap.common.star.RolapSqlExpression;
+import org.eclipse.daanse.jdbc.db.dialect.api.type.Datatype;
+import org.eclipse.daanse.rolap.aggregator.extra.ListAggAggregator;
 import org.eclipse.daanse.rolap.common.writeback.RolapWritebackAttribute;
 import org.eclipse.daanse.rolap.common.writeback.RolapWritebackColumn;
 import org.eclipse.daanse.rolap.common.writeback.RolapWritebackMeasure;
@@ -184,6 +186,10 @@ public class RolapPhysicalCube extends RolapCube implements PhysicalCube {
     private void initWritebackTables(org.eclipse.daanse.rolap.mapping.model.olap.cube.PhysicalCube cubeMapping) {
         if (cubeMapping.getWritebackTable() != null) {
         	org.eclipse.daanse.rolap.mapping.model.database.writeback.WritebackTable writebackTable = cubeMapping.getWritebackTable();
+            LOGGER.debug("Writeback[init] cube='{}' writebackTable='{}' attributes={} measures={}",
+                    this.getName(), writebackTable.getName(),
+                    writebackTable.getWritebackAttribute().size(),
+                    writebackTable.getWritebackMeasure().size());
             List<RolapWritebackColumn> columns = new ArrayList<>();
 
             for (org.eclipse.daanse.rolap.mapping.model.database.writeback.WritebackAttribute writebackAttribute : writebackTable.getWritebackAttribute()) {
@@ -202,15 +208,25 @@ public class RolapPhysicalCube extends RolapCube implements PhysicalCube {
                             .append("' not found").toString());
                 }
 
+                LOGGER.debug("Writeback[init]   attribute dimension='{}' -> column='{}'",
+                        dimension.getName(), writebackAttribute.getColumn().getName());
                 columns.add(new RolapWritebackAttribute(dimension, writebackAttribute.getColumn()));
 
             }
-            for (org.eclipse.daanse.rolap.mapping.model.database.writeback.WritebackMeasure writebackMeasure : writebackTable.getWritebackMeasure()) {
+            for (org.eclipse.daanse.rolap.mapping.model.olap.cube.measure.WritebackMeasure writebackMeasure : writebackTable.getWritebackMeasure()) {
                 Member measure = null;
+                Datatype datatype = Datatype.NUMERIC;
                 for (Member currentMeasure : this.getMeasures()) {
                     if (currentMeasure instanceof RolapBaseCubeMeasure rbcm
                             && rbcm.getKey().equals(writebackMeasure.getName())) {
                         measure = currentMeasure;
+                        // Derive the SQL bind type from the OLAP measure: a TextAggMeasure
+                        // resolves to a ListAggAggregator and must be written as VARCHAR.
+                        if (rbcm.getAggregator() instanceof ListAggAggregator) {
+                            datatype = Datatype.VARCHAR;
+                        } else if (rbcm.getDatatype() != null) {
+                            datatype = rbcm.getDatatype();
+                        }
                         break;
                     }
                 }
@@ -218,11 +234,18 @@ public class RolapPhysicalCube extends RolapCube implements PhysicalCube {
                     throw Util.newError(new StringBuilder("Error while creating DrillThrough  action. Measure '")
                             .append(writebackMeasure.getName()).append("' not found").toString());
                 }
-                columns.add(new RolapWritebackMeasure(measure, writebackMeasure.getColumn()));
+                LOGGER.debug("Writeback[init]   measure  name='{}' -> column='{}' datatype={} aggregator={}",
+                        writebackMeasure.getName(), writebackMeasure.getColumn().getName(), datatype,
+                        ((RolapBaseCubeMeasure) measure).getAggregator().getClass().getSimpleName());
+                columns.add(new RolapWritebackMeasure(measure, writebackMeasure.getColumn(), datatype));
             }
             RolapWritebackTable rolapWritebackTable = new RolapWritebackTable(writebackTable.getName(),
                     writebackTable.getSchema(), columns);
             this.setWritebackTable(Optional.of(rolapWritebackTable));
+            LOGGER.debug("Writeback[init] cube='{}' writebackTable='{}' ready with {} columns",
+                    this.getName(), writebackTable.getName(), columns.size());
+        } else {
+            LOGGER.debug("Writeback[init] cube='{}' has no writeback table configured", this.getName());
         }
     }
 

@@ -13,10 +13,14 @@
  */
 package org.eclipse.daanse.rolap.common.writeback;
 
+import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
+import org.eclipse.daanse.jdbc.db.dialect.api.type.Datatype;
 import org.eclipse.daanse.olap.api.DataTypeJdbc;
 import org.eclipse.daanse.olap.api.calc.Calc;
 import org.eclipse.daanse.olap.api.connection.Connection;
@@ -43,8 +47,12 @@ import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.element.RolapCubeLevel;
 import org.eclipse.daanse.rolap.element.RolapCubeMember;
 import org.eclipse.daanse.rolap.element.RolapStoredMeasure;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ScenarioImpl implements Scenario {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ScenarioImpl.class);
 
     private final int id;
 
@@ -104,14 +112,60 @@ public class ScenarioImpl implements Scenario {
     public void setCellValue(
         Connection connection,
         List<Member> members,
-        double newValue,
-        double currentValue,
+        Object newValue,
+        Object currentValue,
         AllocationPolicy allocationPolicy,
         Object[] allocationArgs)
     {
-//        discard(connection); // for future use
-        assert allocationPolicy != null;
+        LOGGER.debug("Writeback[scenario.setCellValue] members={} newValue={} currentValue={} policy={}",
+                members.stream().map(Member::getUniqueName).toList(),
+                newValue, currentValue, allocationPolicy);
         assert allocationArgs != null;
+
+        // Resolve the writeback measure that backs this cell so we know its bind
+        // datatype. If the target is text (TextAggMeasure → VARCHAR) we take a
+        // short path that bypasses allocation and writes one row directly to
+        // sessionValues.
+        final RolapStoredMeasure measure = (RolapStoredMeasure) members.getFirst();
+        final RolapCube baseCube = measure.getCube();
+        final Optional<RolapWritebackTable> oWritebackTable = baseCube.getWritebackTable();
+        RolapWritebackMeasure targetWb = null;
+        if (oWritebackTable.isPresent()) {
+            for (RolapWritebackColumn col : oWritebackTable.get().getColumns()) {
+                if (col instanceof RolapWritebackMeasure rwm
+                        && rwm.getMeasure().getUniqueName().equals(measure.getUniqueName())) {
+                    targetWb = rwm;
+                    break;
+                }
+            }
+            if (targetWb == null) {
+                LOGGER.warn(
+                        "Writeback[scenario.setCellValue] cube '{}' has a writebackTable but no WritebackMeasure"
+                                + " matches '{}'. Falling back to the numeric allocation path — if the measure is"
+                                + " not numeric this is almost certainly a misconfigured catalog.",
+                        baseCube.getName(), measure.getUniqueName());
+            }
+        }
+        // INFO so the operator can see, per cell edit, whether the TEXT short
+        // path or the NUMERIC allocation path is taken. Diagnoses "I typed
+        // text in Excel but it went to the numeric path" misconfigurations.
+        LOGGER.info(
+                "Writeback[scenario.setCellValue] measure='{}' newValue='{}' resolvedWritebackMeasure={} datatype={}",
+                measure.getUniqueName(), newValue,
+                targetWb == null ? "<none>" : targetWb.getColumn().getName(),
+                targetWb == null ? "<none>" : targetWb.getDatatype());
+        if (targetWb != null && targetWb.getDatatype() == Datatype.VARCHAR) {
+            LOGGER.info("Writeback[scenario.setCellValue] -> TEXT path for measure '{}' (column '{}')",
+                    measure.getUniqueName(), targetWb.getColumn().getName());
+            writeTextRow(oWritebackTable.get(), targetWb, members, newValue);
+            return;
+        }
+
+        // Numeric path — keep allocation behavior unchanged.
+        if (allocationPolicy == null) {
+            // user error
+            throw Util.newError("Allocation policy must not be null");
+        }
         switch (allocationPolicy) {
             case EQUAL_ALLOCATION:
             case EQUAL_INCREMENT:
@@ -127,6 +181,13 @@ public class ScenarioImpl implements Scenario {
                     new StringBuilder("Allocation policy ")
                         .append(allocationPolicy).append(" is not supported").toString());
         }
+        // Numeric narrowing only on this branch. RolapCell now hands us the raw
+        // cell value untouched, so null / non-Number means "treat as zero" for
+        // the purposes of allocation maths.
+        final double doubleNewValue = newValue instanceof Number n ? n.doubleValue() : 0d;
+        final double doubleCurrentValue = currentValue instanceof Number n ? n.doubleValue() : 0d;
+        LOGGER.info("Writeback[scenario.setCellValue] -> NUMERIC path for measure '{}' newValue={} currentValue={}",
+                measure.getUniqueName(), doubleNewValue, doubleCurrentValue);
 
         // Compute the set of columns which are constrained by the cell's
         // coordinates.
@@ -137,8 +198,8 @@ public class ScenarioImpl implements Scenario {
         // calculated members, compound members, parent-child hierarchies,
         // hierarchies whose default member is not the 'all' member, and so
         // forth.
-        final RolapStoredMeasure measure = (RolapStoredMeasure) members.getFirst();
-        final RolapCube baseCube = measure.getCube();
+        // (`measure` and `baseCube` were resolved at the top of this method when
+        // we looked up the target writeback measure's datatype.)
         final RolapStar.Measure starMeasure =
             (RolapStar.Measure) measure.getStarMeasure();
         assert starMeasure != null;
@@ -186,10 +247,91 @@ public class ScenarioImpl implements Scenario {
                 new ArrayList<Member>(members),
                 constrainedColumnsBitKey,
                 compactKeyValues,
-                newValue,
-                currentValue,
+                doubleNewValue,
+                doubleCurrentValue,
                 allocationPolicy);
         writebackCells.add(writebackCell);
+    }
+
+    /**
+     * Short-circuit writeback path for text-typed measures (e.g. a
+     * TextAggMeasure). Builds a single row tied to the cell's exact dimensional
+     * coordinates, fills only the target text column plus the writeback
+     * attributes, and pushes it onto {@code sessionValues}. Allocation policies
+     * are ignored — text cells are not "spread" across descendants the way
+     * numeric values are; the per-level rollup happens on the read side via
+     * the {@code TextAggMeasure}'s ListAgg aggregator.
+     */
+    private void writeTextRow(
+            RolapWritebackTable writebackTable,
+            RolapWritebackMeasure target,
+            List<Member> members,
+            Object value)
+    {
+        // SimpleEntry (not Map.entry) so that NULL values for non-target measures
+        // are allowed — Map.entry() rejects null values.
+        Map<String, Map.Entry<DataTypeJdbc, Object>> row = new LinkedHashMap<>();
+        for (RolapWritebackColumn col : writebackTable.getColumns()) {
+            if (col instanceof RolapWritebackAttribute attr) {
+                // Find the member on members[1..N] that belongs to the attribute's
+                // dimension. We walk parent chains so that members at any level of
+                // a multi-level hierarchy still resolve to the leaf-key value the
+                // fact table joins on.
+                Object key = findKeyForDimension(attr, members);
+                row.put(attr.getColumn().getName(),
+                        new AbstractMap.SimpleEntry<>(DataTypeJdbc.VARCHAR, key));
+                LOGGER.debug("Writeback[text]   attribute column='{}' key={}",
+                        attr.getColumn().getName(), key);
+            } else if (col instanceof RolapWritebackMeasure m && m == target) {
+                row.put(m.getColumn().getName(),
+                        new AbstractMap.SimpleEntry<>(DataTypeJdbc.VARCHAR, value));
+                LOGGER.debug("Writeback[text]   measure   column='{}' value='{}'",
+                        m.getColumn().getName(), value);
+            } else if (col instanceof RolapWritebackMeasure other) {
+                // Other measures must still appear in the row so the INSERT's
+                // column/value lists line up. We write NULL using their native
+                // bind datatype.
+                DataTypeJdbc otherBind = other.getDatatype() == Datatype.VARCHAR
+                        ? DataTypeJdbc.VARCHAR
+                        : DataTypeJdbc.NUMERIC;
+                row.put(other.getColumn().getName(),
+                        new AbstractMap.SimpleEntry<>(otherBind, null));
+                LOGGER.debug("Writeback[text]   measure   column='{}' value=NULL (other measure, datatype={})",
+                        other.getColumn().getName(), otherBind);
+            }
+        }
+        sessionValues.add(row);
+        LOGGER.debug("Writeback[text] row pushed to sessionValues (now {} pending rows)",
+                sessionValues.size());
+    }
+
+    /**
+     * Resolves the database key value to write for a writeback attribute, given
+     * the cell's coordinate. The cell's selected member <em>is</em> the
+     * coordinate — we just unwrap its key.
+     *
+     * Returning {@code null} for the "all" level (or for a missing member)
+     * produces a {@code NULL} value in the INSERT, which the fact-side FK
+     * column must allow if that path is exercised.
+     *
+     * Works uniformly for single-level explicit hierarchies, multi-level
+     * snowflake hierarchies and parent-child hierarchies — for parent-child,
+     * intermediate (non-leaf) members are written verbatim because that's
+     * exactly what the user clicked on; the read-side {@code TextAggMeasure}
+     * aggregator rolls descendants in via the standard SQL aggregation path.
+     */
+    private Object findKeyForDimension(RolapWritebackAttribute attr, List<Member> members) {
+        String dimName = attr.getDimension().getName();
+        for (int i = 1; i < members.size(); i++) {
+            Member member = members.get(i);
+            if (member.getDimension().getName().equals(dimName)) {
+                if (member.isAll()) {
+                    return null;
+                }
+                return (member instanceof RolapCubeMember rcm) ? rcm.getKey() : member.getName();
+            }
+        }
+        return null;
     }
 
     @Override
