@@ -13,6 +13,7 @@
  */
 package org.eclipse.daanse.rolap.common;
 
+import java.util.AbstractMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,7 +42,11 @@ public class EnumConvertor {
     }
 
     private static Entry<Datatype, Object> toEntry(Entry<DataTypeJdbc, Object> e) {
-        return Map.entry(Datatype.fromValue(e.getKey().getValue()), e.getValue());
+        // SimpleEntry — not Map.entry — because writeback session-value rows
+        // legitimately carry null for "other" measure columns (typed-NULL bind
+        // for measures the current writeback isn't targeting). Map.entry(...)
+        // rejects null values via Objects.requireNonNull.
+        return new AbstractMap.SimpleEntry<>(Datatype.fromValue(e.getKey().getValue()), e.getValue());
     }
 
     public static BestFitColumnType toBestFitColumnType(String type) {

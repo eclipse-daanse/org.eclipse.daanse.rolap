@@ -15,6 +15,7 @@ package org.eclipse.daanse.rolap.common.writeback;
 
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -49,45 +50,66 @@ public class WritebackUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(WritebackUtil.class);
 
     public static void commit(RolapCube cube, Connection con, List<Map<String, Map.Entry<Datatype, Object>>> sessionValues, String userId) {
-        if (cube.getWritebackTable().isPresent()) {
+        int rowCount = sessionValues == null ? 0 : sessionValues.size();
+        // INFO so operators can confirm the commit path is reached without
+        // turning on DEBUG. Logs unconditionally — even when the cube has no
+        // writeback table (helps diagnose "I clicked Publish but nothing
+        // happened" cases).
+        LOGGER.info("Writeback[commit] cube='{}' rows={} userId='{}' hasWritebackTable={}",
+                cube.getName(), rowCount, userId, cube.getWritebackTable().isPresent());
 
-            RolapWritebackTable writebackTable = cube.getWritebackTable().get();
-            DataSource dataSource = con.getDataSource();
-            Dialect dialect = con.getContext().getDialect();
-            try (final java.sql.Connection connection = dataSource.getConnection(); final Statement statement =
-                connection.createStatement()) {
-                for (Map<String, Map.Entry<Datatype, Object>> wbc : sessionValues) {
-                    StringBuilder sql = new StringBuilder("INSERT INTO ").append(writebackTable.getName()).append(" (");
-                    sql.append(writebackTable.getColumns().stream().map(c -> dialect.quoteIdentifier(c.getColumn().getName()))
-                        .collect(Collectors.joining(", ")));
-                    sql.append(", ").append(dialect.quoteIdentifier("ID"));
-                    if (userId != null) {
-                        sql.append(", ").append(dialect.quoteIdentifier("USER"));
-                    }
-                    sql.append(") values (");
-                    boolean flag = true;
-                    for (Map.Entry<String, Map.Entry<Datatype, Object>> en : wbc.entrySet()) {
-                        if (flag) {
-                            flag = false;
-                        } else {
-                            sql.append(", ");
-                        }
-                        dialect.quote(sql, en.getValue().getValue(), en.getValue().getKey());
-                    }
-                    sql.append(", ");
-                    dialect.quote(sql, UUID.randomUUID(), Datatype.VARCHAR);
-                    if (userId != null) {
-                        sql.append(", ");
-                        dialect.quote(sql, userId, Datatype.VARCHAR);
-                    }
-                    sql.append(")");
-                    statement.execute(sql.toString());
-                }
-            } catch (SQLException e) {
-                LOGGER.error("Error committing writeback values to table: {}", writebackTable.getName(), e);
-            }
+        if (!cube.getWritebackTable().isPresent()) {
+            return;
         }
 
+        RolapWritebackTable writebackTable = cube.getWritebackTable().get();
+        if (rowCount == 0) {
+            LOGGER.info("Writeback[commit] cube='{}' writebackTable='{}' — no rows to write",
+                    cube.getName(), writebackTable.getName());
+            return;
+        }
+
+        DataSource dataSource = con.getDataSource();
+        Dialect dialect = con.getContext().getDialect();
+        LOGGER.info("Writeback[commit] cube='{}' writebackTable='{}' writing {} row(s)",
+                cube.getName(), writebackTable.getName(), rowCount);
+        try (final java.sql.Connection connection = dataSource.getConnection(); final Statement statement =
+            connection.createStatement()) {
+            int rowIdx = 0;
+            for (Map<String, Map.Entry<Datatype, Object>> wbc : sessionValues) {
+                StringBuilder sql = new StringBuilder("INSERT INTO ")
+                    .append(dialect.quoteIdentifier(writebackTable.getName())).append(" (");
+                sql.append(writebackTable.getColumns().stream().map(c -> dialect.quoteIdentifier(c.getColumn().getName()))
+                    .collect(Collectors.joining(", ")));
+                sql.append(", ").append(dialect.quoteIdentifier("ID"));
+                if (userId != null) {
+                    sql.append(", ").append(dialect.quoteIdentifier("USER"));
+                }
+                sql.append(") values (");
+                boolean flag = true;
+                for (Map.Entry<String, Map.Entry<Datatype, Object>> en : wbc.entrySet()) {
+                    if (flag) {
+                        flag = false;
+                    } else {
+                        sql.append(", ");
+                    }
+                    dialect.quote(sql, en.getValue().getValue(), en.getValue().getKey());
+                }
+                sql.append(", ");
+                dialect.quote(sql, UUID.randomUUID(), Datatype.VARCHAR);
+                if (userId != null) {
+                    sql.append(", ");
+                    dialect.quote(sql, userId, Datatype.VARCHAR);
+                }
+                sql.append(")");
+                LOGGER.info("Writeback[commit] row {} SQL: {}", rowIdx++, sql);
+                statement.execute(sql.toString());
+            }
+            LOGGER.info("Writeback[commit] cube='{}' writebackTable='{}' committed {} row(s)",
+                    cube.getName(), writebackTable.getName(), rowCount);
+        } catch (SQLException e) {
+            LOGGER.error("Error committing writeback values to table: {}", writebackTable.getName(), e);
+        }
     }
 
     public static List<Map<String, Map.Entry<DataTypeJdbc, Object>>> getAllocationValues(RolapCube rolapCube,
@@ -368,6 +390,26 @@ public class WritebackUtil {
             return allocateData(res, measureName, writebackTable);
         }
 
+    /**
+     * Builds a {@code (datatype, null)} entry for a writeback measure column
+     * that is NOT the one being written in this allocation. The datatype is
+     * the measure's native bind type — VARCHAR for text-aggregation
+     * (LISTAGG/TextAggMeasure) columns, NUMERIC otherwise.
+     *
+     * <p>Using a literal {@code 0} of NUMERIC type here (the previous
+     * behaviour) collides with H2's UNION ALL type inference when the
+     * read-side column is VARCHAR: H2 picks the NUMERIC branch as the
+     * inferred type and then fails to convert the VARCHAR rows from the
+     * writeback table. {@link AbstractMap.SimpleEntry} is used because
+     * {@link Map#entry} rejects {@code null} values.
+     */
+    private static Map.Entry<DataTypeJdbc, Object> nullEntryForOtherMeasure(RolapWritebackMeasure other) {
+        DataTypeJdbc otherBind = other.getDatatype() == Datatype.VARCHAR
+                ? DataTypeJdbc.VARCHAR
+                : DataTypeJdbc.NUMERIC;
+        return new AbstractMap.SimpleEntry<>(otherBind, null);
+    }
+
     private static List<Map<String, Map.Entry<DataTypeJdbc, Object>>> allocateData(
             List<Map<Member, Double>> l,
             String measureName,
@@ -387,7 +429,8 @@ public class WritebackUtil {
                                 if (rolapWritebackMeasure.getMeasure().getUniqueName().equals(measureName)) {
                                     mRes.put(rolapWritebackMeasure.getColumn().getName(), Map.entry(DataTypeJdbc.NUMERIC, value));
                                 } else {
-                                    mRes.put(rolapWritebackMeasure.getColumn().getName(), Map.entry(DataTypeJdbc.NUMERIC,0));
+                                    mRes.put(rolapWritebackMeasure.getColumn().getName(),
+                                            nullEntryForOtherMeasure(rolapWritebackMeasure));
                                 }
                             }
                             if (column instanceof RolapWritebackAttribute rolapWritebackAttribute) {
@@ -405,7 +448,8 @@ public class WritebackUtil {
                                 if (rolapWritebackMeasure.getMeasure().getUniqueName().equals(measureName)) {
                                     mRes.put(rolapWritebackMeasure.getColumn().getName(), Map.entry(DataTypeJdbc.NUMERIC, value));
                                 } else {
-                                    mRes.put(rolapWritebackMeasure.getColumn().getName(), Map.entry(DataTypeJdbc.NUMERIC,0));
+                                    mRes.put(rolapWritebackMeasure.getColumn().getName(),
+                                            nullEntryForOtherMeasure(rolapWritebackMeasure));
                                 }
                             }
                             if (column instanceof RolapWritebackAttribute rolapWritebackAttribute) {

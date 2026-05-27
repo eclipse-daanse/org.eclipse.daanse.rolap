@@ -36,6 +36,7 @@ import org.eclipse.daanse.olap.exceptions.CastInvalidTypeException;
 import org.eclipse.daanse.olap.query.component.StringLiteralImpl;
 import org.eclipse.daanse.rolap.aggregator.CountAggregator;
 import org.eclipse.daanse.rolap.aggregator.DistinctCountAggregator;
+import org.eclipse.daanse.rolap.aggregator.extra.ListAggAggregator;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.result.RolapResult;
 import org.eclipse.daanse.rolap.common.star.RolapSqlExpression;
@@ -149,6 +150,8 @@ public class RolapBaseCubeMeasure
                 || aggregator == DistinctCountAggregator.INSTANCE)
             {
                 datatype = ColumnInternalDataType.INTEGER;
+            } else if (aggregator instanceof ListAggAggregator) {
+                datatype = ColumnInternalDataType.STRING;
             } else {
                 datatype = ColumnInternalDataType.NUMERIC;
             }
@@ -199,9 +202,28 @@ public class RolapBaseCubeMeasure
     }
 
     public Datatype getDatatype() {
-        Object datatype = getPropertyValue(StandardProperty.DATATYPE.getName());
+        return toDialectDatatype(getPropertyValue(StandardProperty.DATATYPE.getName()));
+    }
+
+    /**
+     * Maps the locally-stored DATATYPE property literal (from the EMF
+     * {@code ColumnInternalDataType} / inner {@code DataType} enum, e.g.
+     * {@code "Integer"} / {@code "Numeric"} / {@code "String"}) to the jdbc
+     * dialect {@link Datatype} enum.
+     *
+     * <p>The two enums use different value names — most importantly the local
+     * {@code "String"} corresponds to {@link Datatype#VARCHAR}, but
+     * {@link Datatype#fromValue} only knows {@code "Varchar"} and silently
+     * falls back to {@link Datatype#NUMERIC} for {@code "String"}. That
+     * fallback masked text-aggregation (LISTAGG) measures as numeric and
+     * broke {@code SegmentLoader} on their result rows.
+     */
+    static Datatype toDialectDatatype(Object stored) {
+        if ("String".equals(stored)) {
+            return Datatype.VARCHAR;
+        }
         try {
-            return Datatype.fromValue((String) datatype);
+            return Datatype.fromValue((String) stored);
         } catch (ClassCastException | IllegalArgumentException e) {
             return Datatype.VARCHAR;
         }

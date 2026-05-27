@@ -2516,8 +2516,8 @@ public abstract class RolapCube extends CubeBase {
                     List<Map<String, Entry<Datatype, Object>>> rolapSessionValues = EnumConvertor.convertSessionValues(sessionValues);
                     if (fact instanceof org.eclipse.daanse.rolap.mapping.model.database.source.TableSource mappingTable) {
                         String alias = mappingTable.getAlias() != null ? mappingTable.getAlias() : mappingTable.getTable().getName();
-                        StringBuilder sql = new StringBuilder("select ").append(writebackTable.getColumns().stream().map( c -> c.getColumn().getName() )
-                        .collect(Collectors.joining(", "))).append(" from ").append(mappingTable.getTable().getName());
+                        StringBuilder sql = new StringBuilder("select ").append(writebackTable.getColumns().stream().map( c -> dialect.quoteIdentifier(c.getColumn().getName()) )
+                        .collect(Collectors.joining(", "))).append(" from ").append(dialect.quoteIdentifier(mappingTable.getTable().getName()));
                         sql.append(getWriteBackSql(dialect, writebackTable, rolapSessionValues));
                         org.eclipse.daanse.rolap.mapping.model.database.source.SqlStatement sqlStatement = SourceFactory.eINSTANCE.createSqlStatement();
                         sqlStatement.setSql(sql.toString());
@@ -2571,12 +2571,12 @@ public abstract class RolapCube extends CubeBase {
         register();
     }
 
-    private CharSequence getWriteBackSql(Dialect dialect, RolapWritebackTable writebackTable, List<Map<String, Map.Entry<Datatype, Object>>> sessionValues) {
+    static CharSequence getWriteBackSql(Dialect dialect, RolapWritebackTable writebackTable, List<Map<String, Map.Entry<Datatype, Object>>> sessionValues) {
         StringBuilder sql = new StringBuilder();
         sql.append(" union all select ");
-        sql.append(writebackTable.getColumns().stream().map( c -> c.getColumn().getName() )
+        sql.append(writebackTable.getColumns().stream().map( c -> dialect.quoteIdentifier(c.getColumn().getName()) )
             .collect(Collectors.joining(", "))).append(" from ")
-            .append(writebackTable.getName());
+            .append(dialect.quoteIdentifier(writebackTable.getName()));
         if (sessionValues != null && !sessionValues.isEmpty()) {
             sql.append(dialect.sqlGenerator().generateUnionAllSql(sessionValues));
         }

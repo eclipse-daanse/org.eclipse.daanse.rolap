@@ -751,25 +751,18 @@ public class RolapCell implements Cell {
         if (allocationArgs == null) {
             allocationArgs = new Object[0];
         }
-        final Object currentValue = getValue();
-        double doubleCurrentValue;
-        if (currentValue == null) {
-            doubleCurrentValue = 0d;
-        } else if (currentValue instanceof Number) {
-            doubleCurrentValue = ((Number) currentValue).doubleValue();
-        } else {
-            // Cell is not a number. Likely it is a string or a
-            // MondrianEvaluationException. Do not attempt to change the value
-            // in this case. (REVIEW: Is this the correct behavior?)
-            return;
-        }
-        double doubleNewValue = ((Number) newValue).doubleValue();
+        // The Scenario.setCellValue signature accepts Object for both the new
+        // and current values. We pass them through verbatim — the numeric
+        // narrowing happens inside ScenarioImpl on the numeric branch only,
+        // where a null currentValue is interpreted as 0. Text writeback
+        // ignores currentValue entirely, so leaving it null/String here is
+        // the right shape.
         scenario.setCellValue(
             result.getExecution().getDaanseStatement()
                 .getDaanseConnection(),
             Arrays.asList(members),
-            doubleNewValue,
-            doubleCurrentValue,
+            newValue,
+            getValue(),
             allocationPolicy,
             allocationArgs);
     }

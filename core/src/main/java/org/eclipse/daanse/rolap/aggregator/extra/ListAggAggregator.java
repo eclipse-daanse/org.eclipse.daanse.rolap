@@ -12,8 +12,11 @@
 */
 package org.eclipse.daanse.rolap.aggregator.extra;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.StringJoiner;
+import java.util.regex.Pattern;
 
 import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.jdbc.db.dialect.api.sql.OrderedColumn;
@@ -46,17 +49,15 @@ public class ListAggAggregator implements Aggregator {
 
     @Override
     public Object aggregate(Evaluator evaluator, TupleList members, Calc<?> exp) {
-        // We iterate in the natural order in which the members appear in the TupleList.
+        // MDX-set aggregation: evaluate the expression for every tuple, then
+        // join the values with the configured separator (deduped if DISTINCT).
+        // Same algorithm as the in-memory segment rollup below.
+        java.util.List<Object> raw = new java.util.ArrayList<>(members.size());
         for (int i = 0; i < members.size(); i++) {
             evaluator.setContext(members.get(i));
-            Object value = exp.evaluate(evaluator);
-            // Return the first encountered non-null value
-            if (value != null) {
-                return value;
-            }
+            raw.add(exp.evaluate(evaluator));
         }
-        // If everything is null or the collection is empty, return null
-        return null;
+        return aggregate(raw, DataTypeJdbc.VARCHAR);
     }
 
     @Override
@@ -74,9 +75,13 @@ public class ListAggAggregator implements Aggregator {
 
     @Override
     public boolean supportsFastAggregates(DataTypeJdbc dataType) {
-        // Usually no, because we need the actual "first" item, which
-        // cannot be computed by typical pre-aggregation statistics.
-        return false;
+        // Enable in-memory rollup of LISTAGG segment results so parent-level
+        // cells (e.g. an "All Categories" total) actually aggregate the
+        // child-level concatenated strings, in parallel with SumAggregator's
+        // rollup of numeric segments. Without this, only leaf-level segments
+        // populate the LISTAGG measure and Excel/MDX parent rows come out
+        // empty.
+        return DataTypeJdbc.VARCHAR.equals(dataType);
     }
 
     @Override
@@ -91,7 +96,49 @@ public class ListAggAggregator implements Aggregator {
 
     @Override
     public Object aggregate(List<Object> rawData, DataTypeJdbc datatype) {
-        throw new UnsupportedOperationException();
+        if (rawData == null || rawData.isEmpty()) {
+            return null;
+        }
+        String sep = separator != null ? separator : ",";
+        if (distinct) {
+            // Each input may itself be the result of a leaf-level LISTAGG
+            // (e.g. "a|b" rolling up with "c|d"); split by separator so
+            // DISTINCT deduplicates individual elements rather than whole
+            // pre-aggregated strings.
+            LinkedHashSet<String> uniq = new LinkedHashSet<>();
+            for (Object o : rawData) {
+                String s = coalesceValue(o);
+                if (s == null) {
+                    continue;
+                }
+                for (String elem : s.split(Pattern.quote(sep))) {
+                    if (!elem.isEmpty()) {
+                        uniq.add(elem);
+                    }
+                }
+            }
+            return uniq.isEmpty() ? null : String.join(sep, uniq);
+        }
+        StringJoiner joiner = new StringJoiner(sep);
+        boolean any = false;
+        for (Object o : rawData) {
+            String s = coalesceValue(o);
+            if (s == null) {
+                continue;
+            }
+            joiner.add(s);
+            any = true;
+        }
+        return any ? joiner.toString() : null;
+    }
+
+    private String coalesceValue(Object o) {
+        if (o != null) {
+            return o.toString();
+        }
+        // SQL LISTAGG ... ON OVERFLOW / NULL ON ... lets the caller substitute
+        // a placeholder for null cells. If no coalesce is configured, skip.
+        return coalesce;
     }
 
     @Override
