@@ -366,7 +366,7 @@ public abstract class RolapCube extends CubeBase {
             // the register Dimension call was moved here
             // to keep the RolapStar in sync with the realiasing
             // within the RolapCubeHierarchy objects.
-            registerDimension(dimension);
+            //registerDimension(dimension);
         }
     }
 
@@ -1039,6 +1039,13 @@ public abstract class RolapCube extends CubeBase {
         }
 
         RolapStar starInner = getStar();
+        if (dimensions != null) {
+            for (Dimension d : getDimensions()) {
+                if (d instanceof RolapCubeDimension rcd) {
+                    this.registerDimension(rcd);
+                }
+            }
+         }
         RolapStar.Table table = starInner.getFactTable();
 
         // create measures (and stars for them, if necessary)
