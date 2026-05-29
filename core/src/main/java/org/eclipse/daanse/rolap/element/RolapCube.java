@@ -2513,7 +2513,11 @@ public abstract class RolapCube extends CubeBase {
 
 	@Override
     public void modifyFact(List<Map<String, Entry<DataTypeJdbc, Object>>> sessionValues) {
-		org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource fact = getFact();
+            if (restoreFact != null) {
+                setFact(restoreFact);
+                register();
+            }
+            org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource fact = getFact();
             restoreFact = fact;
             Optional<RolapWritebackTable> oWritebackTable = getWritebackTable();
             Dialect dialect = getContext().getDialect();
@@ -2607,11 +2611,11 @@ public abstract class RolapCube extends CubeBase {
     }
 
     @Override
-    public List<Map<String, Entry<DataTypeJdbc, Object>>> getAllocationValues(String tupleString, Object value, AllocationPolicy allocationPolicy) {
+    public List<Map<String, Entry<DataTypeJdbc, Object>>> getAllocationValues(String tupleString, Object value, AllocationPolicy allocationPolicy, Role role) {
         return WritebackUtil.getAllocationValues(this,
                 tupleString,
                 value,
-                allocationPolicy);
+                allocationPolicy, role);
     }
 
 }

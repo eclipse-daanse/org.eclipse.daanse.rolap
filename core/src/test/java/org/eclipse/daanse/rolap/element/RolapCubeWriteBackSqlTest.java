@@ -26,6 +26,7 @@ import java.util.Map;
 
 import org.eclipse.daanse.cwm.model.cwm.resource.relational.Column;
 import org.eclipse.daanse.cwm.model.cwm.resource.relational.RelationalFactory;
+import org.eclipse.daanse.cwm.util.resource.relational.SqlSimpleTypes;
 import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.jdbc.db.dialect.api.generator.SqlGenerator;
 import org.eclipse.daanse.jdbc.db.dialect.api.type.Datatype;
@@ -55,6 +56,7 @@ class RolapCubeWriteBackSqlTest {
     private static Column column(String name) {
         Column c = RelationalFactory.eINSTANCE.createColumn();
         c.setName(name);
+        c.setType(SqlSimpleTypes.Sql99.varcharType());
         return c;
     }
 

@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.eclipse.daanse.cwm.model.cwm.resource.relational.Column;
+import org.eclipse.daanse.cwm.util.resource.relational.SqlSimpleTypes;
 import org.eclipse.daanse.jdbc.db.dialect.api.type.Datatype;
 import org.eclipse.daanse.olap.api.DataTypeJdbc;
 import org.eclipse.daanse.olap.api.element.Dimension;
@@ -50,12 +51,15 @@ class ScenarioImplTextWritebackTest {
         // ----- columns on the writeback table -----
         Column wbCategoryColumn = mock(Column.class);
         when(wbCategoryColumn.getName()).thenReturn("CATEGORY");
+        when(wbCategoryColumn.getType()).thenReturn(SqlSimpleTypes.Sql99.integerType());
 
         Column wbAmountColumn = mock(Column.class);
         when(wbAmountColumn.getName()).thenReturn("AMOUNT");
+        when(wbAmountColumn.getType()).thenReturn(SqlSimpleTypes.Sql99.integerType());
 
         Column wbCommentColumn = mock(Column.class);
         when(wbCommentColumn.getName()).thenReturn("COMMENT");
+        when(wbCommentColumn.getType()).thenReturn(SqlSimpleTypes.Sql99.varcharType());
 
         // ----- dimension + (unused) connector for the attribute -----
         Dimension categoryDim = mock(Dimension.class);
@@ -158,8 +162,10 @@ class ScenarioImplTextWritebackTest {
         // configured as the [All] level.
         Column wbCategoryColumn = mock(Column.class);
         when(wbCategoryColumn.getName()).thenReturn("CATEGORY");
+        when(wbCategoryColumn.getType()).thenReturn(SqlSimpleTypes.Sql99.varcharType());
         Column wbCommentColumn = mock(Column.class);
         when(wbCommentColumn.getName()).thenReturn("COMMENT");
+        when(wbCommentColumn.getType()).thenReturn(SqlSimpleTypes.Sql99.varcharType());
 
         Dimension categoryDim = mock(Dimension.class);
         when(categoryDim.getName()).thenReturn("Category");
@@ -199,6 +205,7 @@ class ScenarioImplTextWritebackTest {
     @Test void noMatchingWritebackMeasure_noTextRowPushed() {
         Column wbAmountColumn = mock(Column.class);
         when(wbAmountColumn.getName()).thenReturn("AMOUNT");
+        when(wbAmountColumn.getType()).thenReturn(SqlSimpleTypes.Sql99.integerType());
 
         Member amountMember = mock(Member.class);
         when(amountMember.getUniqueName()).thenReturn("[Measures].[Amount]");
@@ -236,8 +243,10 @@ class ScenarioImplTextWritebackTest {
     private static ScenarioImpl pushTextRow(String dimensionName, String memberKey, String value) {
         Column wbCategoryColumn = mock(Column.class);
         when(wbCategoryColumn.getName()).thenReturn("CATEGORY");
+        when(wbCategoryColumn.getType()).thenReturn(SqlSimpleTypes.Sql99.varcharType());
         Column wbCommentColumn = mock(Column.class);
         when(wbCommentColumn.getName()).thenReturn("COMMENT");
+        when(wbCommentColumn.getType()).thenReturn(SqlSimpleTypes.Sql99.varcharType());
 
         Dimension categoryDim = mock(Dimension.class);
         when(categoryDim.getName()).thenReturn(dimensionName);
