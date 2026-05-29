@@ -26,6 +26,7 @@
 
 package org.eclipse.daanse.rolap.common.writeback;
 
+import org.eclipse.daanse.olap.api.DataTypeJdbc;
 import org.eclipse.daanse.olap.api.element.db.DatabaseColumn;
 import org.eclipse.daanse.rolap.element.RolapDatabaseColumn;
 
@@ -36,6 +37,7 @@ public abstract class RolapWritebackColumn{
     protected RolapWritebackColumn(org.eclipse.daanse.cwm.model.cwm.resource.relational.Column column) {
         this.column = new RolapDatabaseColumn();
         this.column.setName(column.getName());
+        this.column.setType(DataTypeJdbc.fromValue(column.getType().getName()));
     }
 
     public DatabaseColumn getColumn() {

@@ -20,6 +20,7 @@ import java.lang.reflect.Method;
 
 import org.eclipse.daanse.cwm.model.cwm.resource.relational.Column;
 import org.eclipse.daanse.cwm.model.cwm.resource.relational.RelationalFactory;
+import org.eclipse.daanse.cwm.util.resource.relational.SqlSimpleTypes;
 import org.eclipse.daanse.jdbc.db.dialect.api.type.Datatype;
 import org.eclipse.daanse.olap.api.DataTypeJdbc;
 import org.eclipse.daanse.olap.api.element.Member;
@@ -44,6 +45,7 @@ class WritebackUtilNullOtherMeasureTest {
     void textMeasureGetsTypedNullVarcharEntry() throws Exception {
         Column commentColumn = RelationalFactory.eINSTANCE.createColumn();
         commentColumn.setName("COMMENT");
+        commentColumn.setType(SqlSimpleTypes.Sql99.varcharType());
 
         RolapWritebackMeasure textMeasure = new RolapWritebackMeasure(
                 mock(Member.class), commentColumn, Datatype.VARCHAR);
@@ -58,6 +60,7 @@ class WritebackUtilNullOtherMeasureTest {
     void numericMeasureGetsTypedNullNumericEntry() throws Exception {
         Column priceColumn = RelationalFactory.eINSTANCE.createColumn();
         priceColumn.setName("PRICE");
+        priceColumn.setType(SqlSimpleTypes.Sql99.integerType());
 
         RolapWritebackMeasure numericMeasure = new RolapWritebackMeasure(
                 mock(Member.class), priceColumn, Datatype.NUMERIC);
@@ -73,6 +76,7 @@ class WritebackUtilNullOtherMeasureTest {
         // INTEGER, DECIMAL, etc. all bind via the NUMERIC JDBC path.
         Column countColumn = RelationalFactory.eINSTANCE.createColumn();
         countColumn.setName("CNT");
+        countColumn.setType(SqlSimpleTypes.Sql99.integerType());
 
         Member m = mock(Member.class);
         // Bypass the convenience ctor — set datatype to anything non-VARCHAR.
@@ -88,7 +92,7 @@ class WritebackUtilNullOtherMeasureTest {
     /** Helper to call the package-private static method via reflection. */
     @SuppressWarnings("unchecked")
     private static java.util.Map.Entry<DataTypeJdbc, Object> invokeNullEntry(RolapWritebackMeasure other) throws Exception {
-        Method m = WritebackUtil.class.getDeclaredMethod("nullEntryForOtherMeasure", RolapWritebackMeasure.class);
+        Method m = WritebackRowBuilder.class.getDeclaredMethod("nullEntryForOtherMeasure", RolapWritebackMeasure.class);
         m.setAccessible(true);
         return (java.util.Map.Entry<DataTypeJdbc, Object>) m.invoke(null, other);
     }
