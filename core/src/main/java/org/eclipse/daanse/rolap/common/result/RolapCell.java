@@ -40,6 +40,7 @@ import java.util.Optional;
 
 import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.olap.api.Context;
+import org.eclipse.daanse.olap.api.access.Role;
 import org.eclipse.daanse.olap.api.connection.Connection;
 import org.eclipse.daanse.olap.api.element.Cube;
 import org.eclipse.daanse.olap.api.element.Hierarchy;
@@ -92,6 +93,7 @@ import org.eclipse.daanse.rolap.common.agg.MemberColumnPredicate;
 import org.eclipse.daanse.rolap.common.agg.OrPredicate;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.star.StarPredicate;
+import org.eclipse.daanse.rolap.common.updateable.UpdateabilityResolver;
 import org.eclipse.daanse.rolap.common.writeback.ScenarioImpl;
 import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.element.RolapCubeMember;
@@ -647,6 +649,8 @@ public class RolapCell implements Cell {
                     }
                 }
                 return ci.formatString;
+            }else if(property == StandardProperty.UPDATEABLE) {
+                return UpdateabilityResolver.resolve(this, getConnectionRoleOrNull(), result.getCube()).getUpdateable();
             }else if(property == StandardProperty.FORMATTED_VALUE) {
                 return getFormattedValue();
             }else if(property == StandardProperty.FONT_FLAGS) {
@@ -714,7 +718,15 @@ public class RolapCell implements Cell {
         }
     }
 
-    @Override
+    private Optional<Role> getConnectionRoleOrNull() {
+        if (result.getExecution() != null
+             && result.getExecution().getDaanseStatement() != null && result.getExecution().getDaanseStatement().getDaanseConnection() != null) {
+            return Optional.of(result.getExecution().getDaanseStatement().getDaanseConnection().getRole());
+        }
+		return Optional.empty();
+	}
+
+	@Override
 	public Member getContextMember(Hierarchy hierarchy) {
         return result.getMember(pos, hierarchy);
     }
@@ -894,4 +906,12 @@ public class RolapCell implements Cell {
             throw bomb;
         }
     }
+
+    public List<Member> getMembersInCell() {
+        Member[] arr = result.getCellMembers(pos);
+        if (arr != null) {
+            return Collections.unmodifiableList(Arrays.asList(arr));
+        }
+        return List.of();
+	}
 }
