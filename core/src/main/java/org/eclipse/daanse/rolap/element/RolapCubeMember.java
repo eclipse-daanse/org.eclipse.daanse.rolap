@@ -236,6 +236,10 @@ public class RolapCubeMember
                 return this == this.getHierarchy().getAllMember() ? 0
                     : getKey();}
             else {
+            	StandardProperty p = StandardProperty.lookup(propertyName, matchCase);
+                if (member instanceof RolapParentChildMemberNoClosure && p != null && StandardProperty.LEVEL_NUMBER.equals(property)) {
+                    return getLevel().getDepth();
+                }
                 return member.getPropertyValue(propertyName, matchCase);
             }
         }

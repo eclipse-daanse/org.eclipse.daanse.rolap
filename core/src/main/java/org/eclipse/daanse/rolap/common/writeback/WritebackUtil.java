@@ -42,8 +42,10 @@ import org.eclipse.daanse.olap.impl.IdentifierParser;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.element.RolapBaseCubeMeasure;
 import org.eclipse.daanse.rolap.element.RolapCube;
+import org.eclipse.daanse.rolap.element.RolapCubeMember;
 import org.eclipse.daanse.rolap.element.RolapHierarchy;
 import org.eclipse.daanse.rolap.element.RolapLevel;
+import org.eclipse.daanse.rolap.element.RolapParentChildMemberNoClosure;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -140,6 +142,7 @@ public class WritebackUtil {
                                         }
                                         if (!filterList.isEmpty()) {
                                             List<IdentifierSegment> fIdentifierSegment = filterList.getFirst();
+                                            String filterUnicalName = getUnicalNameFromIdentifierSegment(fIdentifierSegment);
                                             Optional<Hierarchy> oHierarchy = hs.stream()
                                                     .filter(h -> (!h.getDimension().isMeasures() && 
                                                         !h.getDimension().getName().equals(fIdentifierSegment.get(0).getName()) && 
@@ -163,8 +166,9 @@ public class WritebackUtil {
                                                             if (levels != null && !levels.isEmpty()) {
                                                                 Set<Member> columnMembers = getLevelLeafMembers(levels, Optional.empty(),
                                                                     rolapCube, rolapCubeHierarchy, role);
+                                                                Set<Member> filterColumnMembers = columnMembers.stream().filter(m -> m.getUniqueName().startsWith(filterUnicalName)).collect(Collectors.toSet());
                                                                 List<Set<Member>> rowMembers = getRowMembers(writebackTable, rolapCubeHierarchy.getDimension(), rolapCube, List.of(), role);
-                                                                Map<List<Member>, Object> data = getData(columnMembers, rowMembers, rolapBaseCubeMeasure.getUniqueName(), rolapCube);
+                                                                Map<List<Member>, Object> data = getData(filterColumnMembers, rowMembers, rolapBaseCubeMeasure.getUniqueName(), rolapCube);
                                                                 res.addAll(AllocationPolicyApplier.allocateData(data, measureName, (Double) value, allocationPolicy,
                                                                     writebackTable));
                                                                 break;
@@ -314,7 +318,9 @@ public class WritebackUtil {
         } else {
             if (levels != null) {
                 for (Level level : levels) {
-                    result.addAll(getLevelLeafMembers(level, Optional.empty(), rolapCube, hierarchy, role));
+                    if (!level.isAll()) {
+                        result.addAll(getLevelLeafMembers(level, Optional.empty(), rolapCube, hierarchy, role));
+                    }
                 }
             }
         }
@@ -323,7 +329,8 @@ public class WritebackUtil {
 
     private static Set<Member> getLevelLeafMembers(Level level, Optional<Member> oRolapMember, Cube rolapCube, Hierarchy hierarchy, Role role) {
         Set<Member> result = new HashSet<>();
-        if (level.getChildLevel() != null) {
+        boolean isParentChild = isParentChild(level); 
+        if (!isParentChild && level.getChildLevel() != null) {
             result.addAll(getLevelLeafMembers(level.getChildLevel(), oRolapMember, rolapCube, hierarchy, role));
         } else {
             List<RolapMember> members = ((RolapHierarchy)hierarchy).createMemberReader(role).getMembersInLevel((RolapLevel)level);
@@ -331,10 +338,26 @@ public class WritebackUtil {
                 for (Member member : members) {
                     if (oRolapMember.isPresent()) {
                         if (member.getUniqueName().startsWith(oRolapMember.get().getUniqueName())) {
-                            result.add(member);
+                            if (isParentChild) {
+                                if (member.getDimension().getCatalog().getCatalogReaderWithDefaultRole() .getMemberChildren(member).isEmpty()
+                                        && member instanceof RolapCubeMember rolapCubeMember
+                                        && rolapCubeMember.getRolapMember() instanceof RolapParentChildMemberNoClosure) {
+                                    result.add(member);
+                                }
+                            } else {
+                                result.add(member);
+                            }
                         }
                     } else {
-                        result.add(member);
+                        if (isParentChild) {
+                            if (member.getDimension().getCatalog().getCatalogReaderWithDefaultRole() .getMemberChildren(member).isEmpty()
+                                    && member instanceof RolapCubeMember rolapCubeMember
+                                    && rolapCubeMember.getRolapMember() instanceof RolapParentChildMemberNoClosure) {
+                                result.add(member);
+                            }
+                        } else {
+                            result.add(member);
+                        }
                     }
                 }
             }
@@ -342,7 +365,21 @@ public class WritebackUtil {
         return result;
     }
 
-    private static Map<List<Member>, Object> getData(Member measure, Cube cube) {
+    private static boolean isParentChild(Level level) {
+        if (level.isParentChild() || isParentChildParent(level.getParentLevel())) {
+           return true;
+        }
+        return false;
+    }
+
+    private static boolean isParentChildParent(Level parentLevel) {
+        if (parentLevel != null) {
+            return (parentLevel.isParentChild() || isParentChildParent(parentLevel.getParentLevel()));
+        }
+        return false;
+	}
+
+	private static Map<List<Member>, Object> getData(Member measure, Cube cube) {
         //example
         //SELECT
         //{
