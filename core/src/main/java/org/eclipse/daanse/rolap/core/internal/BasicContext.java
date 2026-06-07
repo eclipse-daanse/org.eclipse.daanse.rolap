@@ -87,30 +87,22 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BasicContext.class);
 
-    @Reference(name = BASIC_CONTEXT_REF_NAME_DATA_SOURCE, target = UNRESOLVABLE_FILTER)
     private DataSource dataSource;
 
-    @Reference(name = BASIC_CONTEXT_REF_NAME_DIALECT_FACTORY, target = UNRESOLVABLE_FILTER)
     private DialectFactory dialectFactory;
 
-    @Reference(name = BASIC_CONTEXT_REF_NAME_CATALOG_MAPPING_SUPPLIER, target = UNRESOLVABLE_FILTER)
     private CatalogMappingSupplier catalogMappingSupplier;
 
     private volatile org.eclipse.daanse.rolap.mapping.model.catalog.Catalog cachedCatalogMapping;
 
-    @Reference(name = BASIC_CONTEXT_REF_NAME_EXPRESSION_COMPILER_FACTORY)
     private ExpressionCompilerFactory expressionCompilerFactory;
 
-    @Reference(name = BASIC_CONTEXT_REF_NAME_MDX_PARSER_PROVIDER)
     private MdxParserProvider mdxParserProvider;
 
-    @Reference(name = BASIC_CONTEXT_REF_NAME_FUNCTION_SERVICE)
     private FunctionService functionService;
 
-    @Reference(cardinality = OPTIONAL)
     private SqlGuardFactory sqlGuardFactory;
 
-    @Reference(cardinality = OPTIONAL)
     private AggregationMatchRulesSupplier aggMatchRulesSupplier;
 
     private Dialect dialect = null;
@@ -121,10 +113,103 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
 
     private List<CustomAggregatorFactory> customAggregators = new ArrayList<CustomAggregatorFactory>();
 
+    public BasicContext() {
+    }
+
     @Activate
     public void activate(Map<String, Object> configuration) throws Exception {
         updateConfiguration(configuration);
         activate1();
+    }
+
+    @Reference(name = BASIC_CONTEXT_REF_NAME_DATA_SOURCE, target = UNRESOLVABLE_FILTER)
+    protected void setDataSource(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
+
+    protected void unsetDataSource(DataSource dataSource) {
+        if (this.dataSource == dataSource) {
+            this.dataSource = null;
+        }
+    }
+
+    @Reference(name = BASIC_CONTEXT_REF_NAME_DIALECT_FACTORY, target = UNRESOLVABLE_FILTER)
+    protected void setDialectFactory(DialectFactory dialectFactory) {
+        this.dialectFactory = dialectFactory;
+    }
+
+    protected void unsetDialectFactory(DialectFactory dialectFactory) {
+        if (this.dialectFactory == dialectFactory) {
+            this.dialectFactory = null;
+        }
+    }
+
+    @Reference(name = BASIC_CONTEXT_REF_NAME_CATALOG_MAPPING_SUPPLIER, target = UNRESOLVABLE_FILTER)
+    protected void setCatalogMappingSupplier(CatalogMappingSupplier catalogMappingSupplier) {
+        this.catalogMappingSupplier = catalogMappingSupplier;
+        this.cachedCatalogMapping = null;
+    }
+
+    protected void unsetCatalogMappingSupplier(CatalogMappingSupplier catalogMappingSupplier) {
+        if (this.catalogMappingSupplier == catalogMappingSupplier) {
+            this.catalogMappingSupplier = null;
+            this.cachedCatalogMapping = null;
+        }
+    }
+
+    @Reference(name = BASIC_CONTEXT_REF_NAME_EXPRESSION_COMPILER_FACTORY)
+    protected void setExpressionCompilerFactory(ExpressionCompilerFactory expressionCompilerFactory) {
+        this.expressionCompilerFactory = expressionCompilerFactory;
+    }
+
+    protected void unsetExpressionCompilerFactory(ExpressionCompilerFactory expressionCompilerFactory) {
+        if (this.expressionCompilerFactory == expressionCompilerFactory) {
+            this.expressionCompilerFactory = null;
+        }
+    }
+
+    @Reference(name = BASIC_CONTEXT_REF_NAME_MDX_PARSER_PROVIDER)
+    protected void setMdxParserProvider(MdxParserProvider mdxParserProvider) {
+        this.mdxParserProvider = mdxParserProvider;
+    }
+
+    protected void unsetMdxParserProvider(MdxParserProvider mdxParserProvider) {
+        if (this.mdxParserProvider == mdxParserProvider) {
+            this.mdxParserProvider = null;
+        }
+    }
+
+    @Reference(name = BASIC_CONTEXT_REF_NAME_FUNCTION_SERVICE)
+    protected void setFunctionService(FunctionService functionService) {
+        this.functionService = functionService;
+    }
+
+    protected void unsetFunctionService(FunctionService functionService) {
+        if (this.functionService == functionService) {
+            this.functionService = null;
+        }
+    }
+
+    @Reference(cardinality = OPTIONAL)
+    protected void setSqlGuardFactory(SqlGuardFactory sqlGuardFactory) {
+        this.sqlGuardFactory = sqlGuardFactory;
+    }
+
+    protected void unsetSqlGuardFactory(SqlGuardFactory sqlGuardFactory) {
+        if (this.sqlGuardFactory == sqlGuardFactory) {
+            this.sqlGuardFactory = null;
+        }
+    }
+
+    @Reference(cardinality = OPTIONAL)
+    protected void setAggMatchRulesSupplier(AggregationMatchRulesSupplier aggMatchRulesSupplier) {
+        this.aggMatchRulesSupplier = aggMatchRulesSupplier;
+    }
+
+    protected void unsetAggMatchRulesSupplier(AggregationMatchRulesSupplier aggMatchRulesSupplier) {
+        if (this.aggMatchRulesSupplier == aggMatchRulesSupplier) {
+            this.aggMatchRulesSupplier = null;
+        }
     }
 
     @Reference(name = BASIC_CONTEXT_REF_NAME_CUSTOM_AGGREGATOR, cardinality = MULTIPLE, policy = DYNAMIC)
@@ -136,7 +221,7 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
         customAggregators.remove(aggregator);
     }
 
-    public void activate1() throws Exception {
+    private void activate1() throws Exception {
 
         this.eventBus = new LoggingEventBus();
 
@@ -281,7 +366,7 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
 
     @Override
     public List<CustomAggregatorFactory> getCustomAggregators() {
-        return this.customAggregators;
+        return List.copyOf(this.customAggregators);
     };
 
     @Override

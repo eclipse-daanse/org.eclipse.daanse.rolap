@@ -59,6 +59,7 @@
     <module>core</module>
     <module>aggmatch</module>
     <module>documentation</module>
+    <module>testkit</module>
   </modules>
 
   <dependencies>
