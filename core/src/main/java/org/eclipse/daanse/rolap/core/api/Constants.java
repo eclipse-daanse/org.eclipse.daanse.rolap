@@ -27,6 +27,7 @@ public class Constants {
     public static final String BASIC_CONTEXT_REF_NAME_EXPRESSION_COMPILER_FACTORY = "expressionCompilerFactory";
     public static final String BASIC_CONTEXT_REF_NAME_FUNCTION_SERVICE = "functionService";
     public static final String BASIC_CONTEXT_REF_NAME_SQL_GUARD_FACTORY = "sqlGuardFactory";
+    public static final String BASIC_CONTEXT_REF_NAME_AGG_MATCH_RULES_SUPPLIER = "aggMatchRulesSupplier";
     public static final String BASIC_CONTEXT_REF_NAME_CUSTOM_AGGREGATOR = "customAggregator";
 
     // OCD related constants
