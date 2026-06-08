@@ -20,8 +20,13 @@ import org.eclipse.daanse.rolap.mapping.model.provider.CatalogMappingSupplier;
 
 /**
  * Hand-built escape hatch for bespoke tests that don't fit the published
- * {@link CatalogTestInstance} discovery pattern. Caller provides an
- * explicit CSV map — no auto-detection.
+ * {@link org.eclipse.daanse.rolap.mapping.instance.api.CatalogTestInstance}
+ * discovery pattern. Caller provides an explicit CSV map — no auto-detection.
+ *
+ * @param name display name for the test
+ * @param mappingSupplier supplies the ROLAP catalog mapping
+ * @param checkSuiteSupplier supplies the OLAP check suite to evaluate
+ * @param csvResources table-name → CSV resource URL map (header + data only)
  */
 public record CatalogTestSpec(
         String name,

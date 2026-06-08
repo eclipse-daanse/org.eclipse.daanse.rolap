@@ -53,10 +53,12 @@ import org.eclipse.daanse.cwm.testkit.database.DatabaseLayer;
 import org.junit.jupiter.api.DynamicTest;
 
 /**
- * @TestFactory entry point. {@link #discoveredTests()} runs every
- *              {@link CatalogTestInstance} on the classpath;
- *              {@link #dynamicTests(CatalogTestSpec...)} runs hand-built specs.
- *              The DB is picked by {@link DatabaseProvider#selected()}.
+ * JUnit {@code @TestFactory} entry point. {@link #discoveredTests()} runs
+ * every
+ * {@link org.eclipse.daanse.rolap.mapping.instance.api.CatalogTestInstance}
+ * on the classpath; {@link #dynamicTests(CatalogTestSpec...)} runs
+ * hand-built specs. The DB is picked by
+ * {@link DatabaseProvider#selected()}.
  */
 public final class CatalogTestHarness {
 
