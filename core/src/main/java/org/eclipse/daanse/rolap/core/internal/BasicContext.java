@@ -14,6 +14,7 @@
 package org.eclipse.daanse.rolap.core.internal;
 
 import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_PID;
+import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_REF_NAME_AGG_MATCH_RULES_SUPPLIER;
 import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_REF_NAME_CATALOG_MAPPING_SUPPLIER;
 import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_REF_NAME_CUSTOM_AGGREGATOR;
 import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_REF_NAME_DATA_SOURCE;
@@ -21,6 +22,7 @@ import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_REF_NAME
 import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_REF_NAME_EXPRESSION_COMPILER_FACTORY;
 import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_REF_NAME_FUNCTION_SERVICE;
 import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_REF_NAME_MDX_PARSER_PROVIDER;
+import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_REF_NAME_SQL_GUARD_FACTORY;
 import static org.osgi.namespace.unresolvable.UnresolvableNamespace.UNRESOLVABLE_FILTER;
 import static org.osgi.service.component.annotations.ReferenceCardinality.MULTIPLE;
 import static org.osgi.service.component.annotations.ReferenceCardinality.OPTIONAL;
@@ -190,7 +192,7 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
         }
     }
 
-    @Reference(cardinality = OPTIONAL)
+    @Reference(name = BASIC_CONTEXT_REF_NAME_SQL_GUARD_FACTORY, cardinality = OPTIONAL)
     protected void setSqlGuardFactory(SqlGuardFactory sqlGuardFactory) {
         this.sqlGuardFactory = sqlGuardFactory;
     }
@@ -201,7 +203,7 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
         }
     }
 
-    @Reference(cardinality = OPTIONAL)
+    @Reference(name = BASIC_CONTEXT_REF_NAME_AGG_MATCH_RULES_SUPPLIER, cardinality = OPTIONAL)
     protected void setAggMatchRulesSupplier(AggregationMatchRulesSupplier aggMatchRulesSupplier) {
         this.aggMatchRulesSupplier = aggMatchRulesSupplier;
     }
