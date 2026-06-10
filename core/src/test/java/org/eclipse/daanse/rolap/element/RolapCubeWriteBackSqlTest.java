@@ -86,8 +86,8 @@ class RolapCubeWriteBackSqlTest {
 
         List<RolapWritebackColumn> columns = List.of(new RolapWritebackAttribute(productDim, productColumn),
                 new RolapWritebackAttribute(cityDim, cityColumn),
-                new RolapWritebackMeasure(amountMeasure, amountColumn, Datatype.NUMERIC),
-                new RolapWritebackMeasure(textMeasure, textColumn, Datatype.VARCHAR));
+                new RolapWritebackMeasure(amountMeasure, amountColumn, Datatype.NUMERIC, true),
+                new RolapWritebackMeasure(textMeasure, textColumn, Datatype.VARCHAR, true));
 
         RolapWritebackTable writebackTable = new RolapWritebackTable("FACTWB", null, columns);
 
@@ -121,7 +121,7 @@ class RolapCubeWriteBackSqlTest {
         Member amountMeasure = mock(Member.class);
 
         RolapWritebackTable writebackTable = new RolapWritebackTable("FACTWB", "WB",
-                List.of(new RolapWritebackMeasure(amountMeasure, amountColumn, Datatype.NUMERIC)));
+                List.of(new RolapWritebackMeasure(amountMeasure, amountColumn, Datatype.NUMERIC, true)));
 
         CharSequence sql = RolapCube.getWriteBackSql(dialect, writebackTable, null);
 
@@ -145,7 +145,7 @@ class RolapCubeWriteBackSqlTest {
         Dialect dialect = dialectQuotingWith("\"", "\"");
 
         RolapWritebackTable writebackTable = new RolapWritebackTable("FACTWB", null,
-                List.of(new RolapWritebackMeasure(mock(Member.class), column("AMOUNT"), Datatype.NUMERIC)));
+                List.of(new RolapWritebackMeasure(mock(Member.class), column("AMOUNT"), Datatype.NUMERIC, true)));
 
         RolapCube.getWriteBackSql(dialect, writebackTable, null);
 
@@ -162,7 +162,7 @@ class RolapCubeWriteBackSqlTest {
                 .thenReturn(new StringBuilder(" union all select 1, 2, 3, 'foo' from dual"));
 
         RolapWritebackTable writebackTable = new RolapWritebackTable("FACTWB", null,
-                List.of(new RolapWritebackMeasure(mock(Member.class), column("AMOUNT"), Datatype.NUMERIC)));
+                List.of(new RolapWritebackMeasure(mock(Member.class), column("AMOUNT"), Datatype.NUMERIC, true)));
 
         @SuppressWarnings("unchecked")
         List<Map<String, Map.Entry<Datatype, Object>>> sessionValues = (List<Map<String, Map.Entry<Datatype, Object>>>) (List<?>) List

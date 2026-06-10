@@ -237,7 +237,7 @@ public class RolapPhysicalCube extends RolapCube implements PhysicalCube {
                 LOGGER.debug("Writeback[init]   measure  name='{}' -> column='{}' datatype={} aggregator={}",
                         writebackMeasure.getName(), writebackMeasure.getColumn().getName(), datatype,
                         ((RolapBaseCubeMeasure) measure).getAggregator().getClass().getSimpleName());
-                columns.add(new RolapWritebackMeasure(measure, writebackMeasure.getColumn(), datatype));
+                columns.add(new RolapWritebackMeasure(measure, writebackMeasure.getColumn(), datatype, writebackMeasure.isEditable()));
             }
             RolapWritebackTable rolapWritebackTable = new RolapWritebackTable(writebackTable.getName(),
                     writebackTable.getSchema(), columns);
