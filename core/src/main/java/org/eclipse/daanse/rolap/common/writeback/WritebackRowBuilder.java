@@ -46,7 +46,7 @@ public class WritebackRowBuilder {
                                 mRes.put(rolapWritebackMeasure.getColumn().getName(), Map.entry(rolapWritebackMeasure.getColumn().getType() != null ? rolapWritebackMeasure.getColumn().getType() : DataTypeJdbc.NUMERIC, round(value, rolapWritebackMeasure.getColumn().getType())));
                             } else {
                                 mRes.put(rolapWritebackMeasure.getColumn().getName(),
-                                        nullEntryForOtherMeasure(rolapWritebackMeasure));
+                                        nullEntryForOtherMeasureOr0(rolapWritebackMeasure));
                             }
                         }
                         else if (column instanceof RolapWritebackAttribute rolapWritebackAttribute) {
@@ -92,11 +92,12 @@ public class WritebackRowBuilder {
      * writeback table. {@link AbstractMap.SimpleEntry} is used because
      * {@link Map#entry} rejects {@code null} values.
      */
-    private static Map.Entry<DataTypeJdbc, Object> nullEntryForOtherMeasure(RolapWritebackMeasure other) {
+    private static Map.Entry<DataTypeJdbc, Object> nullEntryForOtherMeasureOr0(RolapWritebackMeasure other) {
         DataTypeJdbc otherBind = other.getDatatype() == Datatype.VARCHAR
                 ? DataTypeJdbc.VARCHAR
                 : DataTypeJdbc.NUMERIC;
-        return new AbstractMap.SimpleEntry<>(otherBind, null);
+        Object value = other.getDatatype() == Datatype.VARCHAR ? null : 0d;
+        return new AbstractMap.SimpleEntry<>(otherBind, value);
     }
 
 
