@@ -68,7 +68,7 @@ class WritebackUtilNullOtherMeasureTest {
         var entry = invokeNullEntry(numericMeasure);
 
         assertThat(entry.getKey()).isEqualTo(DataTypeJdbc.NUMERIC);
-        assertThat(entry.getValue()).isNull();
+        assertThat(entry.getValue()).isEqualTo(0d);
     }
 
     @Test
@@ -86,13 +86,13 @@ class WritebackUtilNullOtherMeasureTest {
         var entry = invokeNullEntry(intMeasure);
 
         assertThat(entry.getKey()).isEqualTo(DataTypeJdbc.NUMERIC);
-        assertThat(entry.getValue()).isNull();
+        assertThat(entry.getValue()).isEqualTo(0d);
     }
 
     /** Helper to call the package-private static method via reflection. */
     @SuppressWarnings("unchecked")
     private static java.util.Map.Entry<DataTypeJdbc, Object> invokeNullEntry(RolapWritebackMeasure other) throws Exception {
-        Method m = WritebackRowBuilder.class.getDeclaredMethod("nullEntryForOtherMeasure", RolapWritebackMeasure.class);
+        Method m = WritebackRowBuilder.class.getDeclaredMethod("nullEntryForOtherMeasureOr0", RolapWritebackMeasure.class);
         m.setAccessible(true);
         return (java.util.Map.Entry<DataTypeJdbc, Object>) m.invoke(null, other);
     }

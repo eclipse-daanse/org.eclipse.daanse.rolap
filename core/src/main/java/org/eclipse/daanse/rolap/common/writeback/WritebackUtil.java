@@ -450,7 +450,7 @@ public class WritebackUtil {
             return getData(members, measureUniqueName, cube);
         } else {
             final StringBuilder buf = new StringBuilder();
-            buf.append("select NON EMPTY ");
+            buf.append("select ");
             boolean starFlag = false;
             for (Set<Member> ms : rowMembers) {
                 if (!starFlag) {
@@ -470,7 +470,7 @@ public class WritebackUtil {
                 }
                 buf.append(" }");
             }
-            buf.append(" ON ROWS, NON EMPTY { ");
+            buf.append(" ON ROWS, { ");
             boolean commaFlag = false;
             for (Member m : members) {
                 if (!commaFlag) {
@@ -496,7 +496,7 @@ public class WritebackUtil {
                 List<Member> rowTuple = rows.get(rIdx);
                 for (int cIdx = 0; cIdx < cols.size(); cIdx++) {
                     Object value = result.getCell(new int[]{rIdx, cIdx}).getValue();
-                    if (value == null) continue;
+                    if (value == null) value = 0d;
 
                     List<Member> fullTuple = new ArrayList<>(rowTuple);
                     for (Member colMember : cols.get(cIdx)) {
