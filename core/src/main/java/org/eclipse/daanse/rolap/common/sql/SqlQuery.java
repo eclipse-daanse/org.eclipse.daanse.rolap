@@ -1104,7 +1104,7 @@ public class SqlQuery {
             }
             String genericCode = dialectCodes.get("generic");
             if (genericCode == null) {
-                throw Util.newError("View has no 'generic' variant");
+                throw Util.newError("View has not the dialect of db " + best + "  and no the fall back dialect 'generic'");
             }
             return genericCode;
         }
