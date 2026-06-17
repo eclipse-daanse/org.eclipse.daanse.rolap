@@ -103,6 +103,10 @@ public class WritebackUtil {
                             String measureName = measure;
                             Optional<Member> oMember =
                                 rolapCube.getMeasures().stream().filter(m -> m.getUniqueName().equals(measureName)).findFirst();
+                            //check that measure is editable
+                            if (writebackTable.getColumns().stream().noneMatch(c -> (c instanceof RolapWritebackMeasure rwbm && rwbm.isEditable() && rwbm.getMeasure().getUniqueName().equals(measure)))) {
+                                return res;
+                            }
                             if (oMember.isPresent() && oMember.get() instanceof RolapBaseCubeMeasure rolapBaseCubeMeasure) {
                                 if (!tuples.isEmpty()) {
                                     String hierarchyName = tuples.get(1);

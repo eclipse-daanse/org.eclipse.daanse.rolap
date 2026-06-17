@@ -72,8 +72,8 @@ class ScenarioImplTextWritebackTest {
         when(amountMember.getUniqueName()).thenReturn("[Measures].[Amount]");
 
         RolapWritebackAttribute categoryAttr = new RolapWritebackAttribute(categoryDim, wbCategoryColumn);
-        RolapWritebackMeasure amountWb = new RolapWritebackMeasure(amountMember, wbAmountColumn, Datatype.NUMERIC);
-        RolapWritebackMeasure commentsWb = new RolapWritebackMeasure(commentsMember, wbCommentColumn, Datatype.VARCHAR);
+        RolapWritebackMeasure amountWb = new RolapWritebackMeasure(amountMember, wbAmountColumn, Datatype.NUMERIC, true);
+        RolapWritebackMeasure commentsWb = new RolapWritebackMeasure(commentsMember, wbCommentColumn, Datatype.VARCHAR, true);
 
         RolapWritebackTable writebackTable = new RolapWritebackTable(
                 "FACTWB", null, List.of(categoryAttr, amountWb, commentsWb));
@@ -172,7 +172,7 @@ class ScenarioImplTextWritebackTest {
         Member commentsMember = mock(Member.class);
         when(commentsMember.getUniqueName()).thenReturn("[Measures].[Comments]");
         RolapWritebackAttribute attr = new RolapWritebackAttribute(categoryDim, wbCategoryColumn);
-        RolapWritebackMeasure commentsWb = new RolapWritebackMeasure(commentsMember, wbCommentColumn, Datatype.VARCHAR);
+        RolapWritebackMeasure commentsWb = new RolapWritebackMeasure(commentsMember, wbCommentColumn, Datatype.VARCHAR, true);
         RolapWritebackTable wbTable = new RolapWritebackTable("FACTWB", null, List.of(attr, commentsWb));
 
         RolapCube cube = mock(RolapCube.class);
@@ -209,7 +209,7 @@ class ScenarioImplTextWritebackTest {
 
         Member amountMember = mock(Member.class);
         when(amountMember.getUniqueName()).thenReturn("[Measures].[Amount]");
-        RolapWritebackMeasure amountWb = new RolapWritebackMeasure(amountMember, wbAmountColumn, Datatype.NUMERIC);
+        RolapWritebackMeasure amountWb = new RolapWritebackMeasure(amountMember, wbAmountColumn, Datatype.NUMERIC, true);
         RolapWritebackTable wbTable = new RolapWritebackTable("FACTWB", null, List.of(amountWb));
 
         RolapCube cube = mock(RolapCube.class);
@@ -254,7 +254,7 @@ class ScenarioImplTextWritebackTest {
         when(commentsMember.getUniqueName()).thenReturn("[Measures].[Comments]");
 
         RolapWritebackAttribute attr = new RolapWritebackAttribute(categoryDim, wbCategoryColumn);
-        RolapWritebackMeasure commentsWb = new RolapWritebackMeasure(commentsMember, wbCommentColumn, Datatype.VARCHAR);
+        RolapWritebackMeasure commentsWb = new RolapWritebackMeasure(commentsMember, wbCommentColumn, Datatype.VARCHAR, true);
         RolapWritebackTable wbTable = new RolapWritebackTable("FACTWB", null, List.of(attr, commentsWb));
 
         RolapCube cube = mock(RolapCube.class);

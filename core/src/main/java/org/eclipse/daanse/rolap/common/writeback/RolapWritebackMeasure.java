@@ -32,15 +32,18 @@ import org.eclipse.daanse.olap.api.element.Member;
 public class RolapWritebackMeasure  extends RolapWritebackColumn {
     private final Member measure;
     private final Datatype datatype;
+    private final boolean editable;
 
     public RolapWritebackMeasure(
             Member measure,
             org.eclipse.daanse.cwm.model.cwm.resource.relational.Column column,
-            Datatype datatype
+            Datatype datatype,
+            boolean editable
     ) {
         super(column);
         this.measure = measure;
         this.datatype = datatype;
+        this.editable = editable;
     }
 
     public Member getMeasure() { return this.measure; }
@@ -52,4 +55,9 @@ public class RolapWritebackMeasure  extends RolapWritebackColumn {
      * every other measure yields {@link Datatype#NUMERIC}.
      */
     public Datatype getDatatype() { return this.datatype; }
+
+    public boolean isEditable() {
+        return editable;
+    }
+
 }

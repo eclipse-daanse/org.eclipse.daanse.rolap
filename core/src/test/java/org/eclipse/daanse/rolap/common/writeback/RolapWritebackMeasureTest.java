@@ -33,7 +33,7 @@ class RolapWritebackMeasureTest {
 
         Member measure = mock(Member.class);
 
-        RolapWritebackMeasure m = new RolapWritebackMeasure(measure, column, Datatype.NUMERIC);
+        RolapWritebackMeasure m = new RolapWritebackMeasure(measure, column, Datatype.NUMERIC, true);
 
         assertThat(m.getDatatype()).isEqualTo(Datatype.NUMERIC);
         assertThat(m.getMeasure()).isSameAs(measure);
@@ -46,7 +46,7 @@ class RolapWritebackMeasureTest {
         when(column.getType()).thenReturn(SqlSimpleTypes.Sql99.varcharType());
         Member measure = mock(Member.class);
 
-        RolapWritebackMeasure m = new RolapWritebackMeasure(measure, column, Datatype.VARCHAR);
+        RolapWritebackMeasure m = new RolapWritebackMeasure(measure, column, Datatype.VARCHAR, true);
 
         assertThat(m.getDatatype()).isEqualTo(Datatype.VARCHAR);
     }

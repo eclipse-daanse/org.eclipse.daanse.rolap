@@ -48,7 +48,7 @@ class WritebackUtilNullOtherMeasureTest {
         commentColumn.setType(SqlSimpleTypes.Sql99.varcharType());
 
         RolapWritebackMeasure textMeasure = new RolapWritebackMeasure(
-                mock(Member.class), commentColumn, Datatype.VARCHAR);
+                mock(Member.class), commentColumn, Datatype.VARCHAR, true);
 
         var entry = invokeNullEntry(textMeasure);
 
@@ -63,7 +63,7 @@ class WritebackUtilNullOtherMeasureTest {
         priceColumn.setType(SqlSimpleTypes.Sql99.integerType());
 
         RolapWritebackMeasure numericMeasure = new RolapWritebackMeasure(
-                mock(Member.class), priceColumn, Datatype.NUMERIC);
+                mock(Member.class), priceColumn, Datatype.NUMERIC, true);
 
         var entry = invokeNullEntry(numericMeasure);
 
@@ -81,7 +81,7 @@ class WritebackUtilNullOtherMeasureTest {
         Member m = mock(Member.class);
         // Bypass the convenience ctor — set datatype to anything non-VARCHAR.
         RolapWritebackMeasure intMeasure = new RolapWritebackMeasure(
-                m, countColumn, Datatype.INTEGER);
+                m, countColumn, Datatype.INTEGER, true);
 
         var entry = invokeNullEntry(intMeasure);
 
