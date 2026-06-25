@@ -40,7 +40,7 @@ import org.junit.jupiter.api.Test;
 class CodeSetTest {
 
   private static final String MONDRIAN_ERROR_NO_GENERIC_VARIANT =
-      "Internal error: View has no 'generic' variant";
+      "Internal error: View has not the dialect of db null  and no the fall back dialect 'generic'";
   private static final String POSTGRESQL_DIALECT = "postgresql";
   private static final String SQL_CODE_FOR_POSTGRESQL_DIALECT =
       "Code for dialect='postgresql'";

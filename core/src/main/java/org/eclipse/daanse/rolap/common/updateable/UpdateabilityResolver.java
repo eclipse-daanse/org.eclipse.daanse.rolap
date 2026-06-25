@@ -18,6 +18,7 @@ import org.eclipse.daanse.olap.api.access.AccessCube;
 import org.eclipse.daanse.olap.api.element.Dimension;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.rolap.aggregator.SumAggregator;
+import org.eclipse.daanse.rolap.aggregator.extra.ListAggAggregator;
 import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.element.RolapVirtualCube;
 import org.eclipse.daanse.rolap.element.RolapVirtualCubeMeasure;
@@ -25,7 +26,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.eclipse.daanse.rolap.element.RolapStoredMeasure;
 import org.eclipse.daanse.rolap.common.result.RolapCell;
-import org.eclipse.daanse.rolap.common.writeback.WritebackUtil;
 
 import java.util.List;
 import java.util.Optional;
@@ -35,7 +35,8 @@ public final class UpdateabilityResolver {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UpdateabilityResolver.class);
     private static final Set<Class<?>> UPDATEABLE_AGGREGATORS = Set.of(
-        SumAggregator.class
+        SumAggregator.class,
+        ListAggAggregator.class
     );
 
     public static Updateable resolve(RolapCell cell, Optional<Role> oRole, RolapCube cube) {
