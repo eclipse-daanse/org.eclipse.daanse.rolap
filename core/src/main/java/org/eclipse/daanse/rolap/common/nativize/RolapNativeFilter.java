@@ -139,7 +139,7 @@ public class RolapNativeFilter extends RolapNativeSet {
     }
 
     /**
-     * The builder counterpart of {@link #addConstraint} for a SIMPLE measure-comparison filter
+     * The builder counterpart of {@code addConstraint} for a SIMPLE measure-comparison filter
      * ({@code [Measures].<stored measure> <op> <numeric literal>}): the inherited {@link SetConstraint}
      * contribution plus a {@code nativeHaving} predicate {@code ((agg(measure) op value))}. The measure node
      * is built exactly as {@code AbstractQuerySpec.addMeasure}, so it matches

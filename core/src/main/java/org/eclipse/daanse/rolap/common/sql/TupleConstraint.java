@@ -86,12 +86,12 @@ public interface TupleConstraint extends SqlConstraint {
     public boolean supportsAggTables();
 
     /**
-     * B1 SPI-inversion bridge for {@link #addConstraint}: instead of mutating the driver's query, the
+     * B1 SPI-inversion bridge for {@code addConstraint}: instead of mutating the driver's query, the
      * constraint receives a {@link QueryRecorder.Fork} (a snapshot of the driver's current recorder
      * state with an empty tape) and RETURNS the {@link QueryTape} it contributes; the driver merges
      * them back via {@code recorder.append(fork, ops)}.
      * <p>
-     * This default executes the legacy void {@link #addConstraint} against the retired query facade
+     * This default executes the legacy void {@code addConstraint} against the retired query facade
      * view of the fork — the same legacy code runs in the same order against the same visible state,
      * so the merged SQL is byte-identical. Implementations converted in later batches (B2/B3)
      * override this to build their ops directly.
@@ -103,7 +103,7 @@ public interface TupleConstraint extends SqlConstraint {
         AggStar aggStar);
 
     /**
-     * B1 SPI-inversion bridge for {@link #addLevelConstraint} — see {@link #addConstraintOps}. Called
+     * B1 SPI-inversion bridge for {@code addLevelConstraint} — see {@link #addConstraintOps}. Called
      * per "group by" level; the driver hands each call a FRESH fork of the CURRENT recorder state, so
      * sequential level constraints see the prior calls' merged effects exactly as the legacy in-place
      * mutation did.
@@ -116,7 +116,7 @@ public interface TupleConstraint extends SqlConstraint {
         RolapLevel level);
 
     /**
-     * The generic-builder counterpart of {@link #addConstraint}: this constraint's restriction as a
+     * The generic-builder counterpart of {@code addConstraint}: this constraint's restriction as a
      * {@link ConstraintContribution} (builder {@code WHERE} predicate + tables to join), so the
      * {@code sqlbuild} mappers can build the level/tuple-members SELECT without the retired query facade.
      * <p>

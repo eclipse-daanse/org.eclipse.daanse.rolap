@@ -125,7 +125,7 @@ public class MemberKeyConstraint
     }
 
     /**
-     * The generic-builder counterpart of {@link #addConstraint}: each {@code column = value} (or
+     * The generic-builder counterpart of {@code addConstraint}: each {@code column = value} (or
      * {@code IS NULL}) as a builder {@code WHERE} predicate, with no fact join (a dimension-only key
      * restriction). Mirrors {@link LevelConstraintGenerator#constrainKeyValue}.
      */

@@ -93,7 +93,7 @@ public class MemberExcludeConstraint implements TupleConstraint {
     }
 
     /**
-     * B3 ops-SPI form of {@link #addLevelConstraint}: the same body against the fork directly (no
+     * B3 ops-SPI form of {@code addLevelConstraint}: the same body against the fork directly (no
      * the retired query facade view) — byte-identical to the bridge.
      */
     @Override
@@ -143,9 +143,9 @@ public class MemberExcludeConstraint implements TupleConstraint {
     }
 
     /**
-     * B2 ops-SPI form: the exclude filter is applied per level ({@link #addLevelConstraint}), so
+     * B2 ops-SPI form: the exclude filter is applied per level ({@code addLevelConstraint}), so
      * this contributes nothing — the fork's empty tape, byte-identical to the bridge running the
-     * empty legacy {@link #addConstraint} against a view of the fork.
+     * empty legacy {@code addConstraint} against a view of the fork.
      */
     @Override
     public QueryTape addConstraintOps(
@@ -158,7 +158,7 @@ public class MemberExcludeConstraint implements TupleConstraint {
     }
 
     /**
-     * The generic-builder counterpart of the legacy {@link #addLevelConstraint} for the common
+     * The generic-builder counterpart of the legacy {@code addLevelConstraint} for the common
      * pure-exclude shape ({@code csc == null}: no native cross-join, so no {@code CrossJoinArg} or role
      * sub-constraints, base star only). It reproduces the single
      * {@code MemberConstraintWriter.addMemberConstraint(excludes, restrictMemberTypes=true, crossJoin=false,

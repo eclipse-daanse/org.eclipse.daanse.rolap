@@ -410,7 +410,7 @@ public class SqlContextConstraint
     }
 
     /**
-     * The generic-builder counterpart of {@link #addConstraint} (level members): the current context
+     * The generic-builder counterpart of {@code addConstraint} (level members): the current context
      * as a {@link ConstraintContribution}, no parent-key restriction.
      */
     @Override

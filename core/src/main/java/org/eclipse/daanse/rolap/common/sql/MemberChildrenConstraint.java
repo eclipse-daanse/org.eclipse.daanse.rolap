@@ -69,7 +69,7 @@ public interface MemberChildrenConstraint extends SqlConstraint {
         RolapLevel level);
 
     /**
-     * The generic-builder counterpart of {@link #addMemberConstraint}: the parent restriction as a
+     * The generic-builder counterpart of {@code addMemberConstraint}: the parent restriction as a
      * {@link ConstraintContribution} (builder {@code WHERE} predicate + tables to join), so the
      * {@code sqlbuild} mappers can build the member-children SELECT without the retired query facade.
      * <p>
