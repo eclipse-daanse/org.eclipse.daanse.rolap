@@ -27,6 +27,12 @@ public class AvgAggregator extends AbstractAggregator {
     }
 
     @Override
+    public org.eclipse.daanse.sql.statement.api.expression.SqlExpression getExpression(
+            org.eclipse.daanse.sql.statement.api.expression.SqlExpression inner) {
+        return org.eclipse.daanse.sql.statement.api.Expressions.aggregate(getName(), inner);
+    }
+
+    @Override
     public Aggregator getRollup() {
         return INSTANCE;
     }

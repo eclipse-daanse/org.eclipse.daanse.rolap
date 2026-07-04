@@ -27,8 +27,9 @@ package org.eclipse.daanse.rolap.aggregator.countbased;
  */
 public class SumFromAvgAggregator extends AbstractFactCountBasedAggregator {
 
-    public SumFromAvgAggregator(String factCountExpr) {
-        super("SumFromAvg", factCountExpr);
+    public SumFromAvgAggregator(String factCountExpr,
+            org.eclipse.daanse.sql.statement.api.expression.SqlExpression factCountNode) {
+        super("SumFromAvg", factCountExpr, factCountNode);
     }
 
     @Override
@@ -43,6 +44,17 @@ public class SumFromAvgAggregator extends AbstractFactCountBasedAggregator {
     }
 
     @Override
+    public org.eclipse.daanse.sql.statement.api.expression.SqlExpression getExpression(
+            org.eclipse.daanse.sql.statement.api.expression.SqlExpression inner) {
+        // sum(<inner> * <factCount>) — the multiply is non-parenthesized (inside sum(...))
+        return org.eclipse.daanse.sql.statement.api.Expressions.aggregate("sum",
+            org.eclipse.daanse.sql.statement.api.Expressions.infix(
+                inner,
+                org.eclipse.daanse.sql.statement.api.expression.ArithmeticOperator.MULTIPLY,
+                factCountNode));
+    }
+
+    @Override
     public boolean alwaysRequiresFactColumn() {
         return true;
     }
@@ -51,5 +63,16 @@ public class SumFromAvgAggregator extends AbstractFactCountBasedAggregator {
     public String getScalarExpression(String operand) {
         return new StringBuilder(64).append('(').append(operand).append(") * (").append(factCountExpr).append(')')
                 .toString();
+    }
+
+    @Override
+    public org.eclipse.daanse.sql.statement.api.expression.SqlExpression getScalarNode(
+            org.eclipse.daanse.sql.statement.api.expression.SqlExpression operand) {
+        // (<operand>) * (<factCount>) — each side individually parenthesized (empty-name Function renders
+        // exactly "(x)"), joined by a NON-parenthesized infix "*" — byte-identical to getScalarExpression.
+        return org.eclipse.daanse.sql.statement.api.Expressions.infix(
+            org.eclipse.daanse.sql.statement.api.Expressions.function("", operand),
+            org.eclipse.daanse.sql.statement.api.expression.ArithmeticOperator.MULTIPLY,
+            org.eclipse.daanse.sql.statement.api.Expressions.function("", factCountNode));
     }
 }

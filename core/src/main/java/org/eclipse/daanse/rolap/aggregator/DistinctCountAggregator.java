@@ -49,6 +49,13 @@ public class DistinctCountAggregator extends AbstractAggregator {
     }
 
     @Override
+    public org.eclipse.daanse.sql.statement.api.expression.SqlExpression getExpression(
+            org.eclipse.daanse.sql.statement.api.expression.SqlExpression inner) {
+        // legacy renders "count(distinct <operand>)" (NOT "distinct-count(...)") — use the literal "count".
+        return org.eclipse.daanse.sql.statement.api.Expressions.aggregateDistinct("count", inner);
+    }
+
+    @Override
     public boolean supportsFastAggregates( DataTypeJdbc dataType ) {
       // We can't rollup using the raw data, because this is
       // a distinct-count operation.

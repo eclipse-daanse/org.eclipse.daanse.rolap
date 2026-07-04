@@ -29,7 +29,7 @@
 
 package org.eclipse.daanse.rolap.common.star;
 
-import static org.eclipse.daanse.rolap.common.util.ExpressionUtil.getTableAlias;
+import static org.eclipse.daanse.rolap.common.util.SqlExpressionResolver.getTableAlias;
 import static org.eclipse.daanse.rolap.common.util.RelationUtil.find;
 import static org.eclipse.daanse.rolap.common.util.RelationUtil.getAlias;
 

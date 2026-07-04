@@ -29,9 +29,11 @@ package org.eclipse.daanse.rolap.common.constraint;
 import java.util.Arrays;
 import java.util.List;
 
+import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.olap.api.query.NameSegment;
 import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;
-import org.eclipse.daanse.rolap.common.sql.SqlQuery;
+import org.eclipse.daanse.rolap.common.sql.QueryTape;
+import org.eclipse.daanse.rolap.common.sql.QueryRecorder;
 import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.element.RolapLevel;
 
@@ -78,17 +80,30 @@ public class ChildByNameConstraint extends DefaultMemberChildrenConstraint {
             && getCacheKey().equals(childByNameConstraint.getCacheKey());
     }
 
+    /**
+     * Adds the by-name filter for the level being read to the fork. The inherited level
+     * constraint contributes nothing, so only the name filter is recorded.
+     */
     @Override
-	public void addLevelConstraint(
-        SqlQuery query,
+    public QueryTape addMemberLevelConstraintOps(
+        Dialect dialect,
+        QueryRecorder.Fork fork,
         RolapCube baseCube,
         AggStar aggStar,
         RolapLevel level)
     {
-        super.addLevelConstraint(query, baseCube, aggStar, level);
-        query.addWhere(
-            SqlConstraintUtils.constrainLevel(
-                level, query, baseCube, aggStar, childNames, true).toString());
+        // Dialect-free: build the name-column constraint as a Predicate (computed columns -> RawVariant,
+        // resolved per dialect at render); fall back to the raw string only when the column has no node.
+        java.util.Optional<org.eclipse.daanse.sql.statement.api.expression.Predicate> pred =
+            LevelConstraintGenerator.constrainLevelPredicate(level, baseCube, aggStar, childNames, true);
+        if (pred.isPresent()) {
+            fork.addWhere(pred.get());
+        } else {
+            fork.addWhere(
+                LevelConstraintGenerator.constrainLevel(
+                    dialect, level, fork, baseCube, aggStar, childNames, true).toString());
+        }
+        return fork.ops();
     }
 
     @Override
@@ -103,6 +118,48 @@ public class ChildByNameConstraint extends DefaultMemberChildrenConstraint {
 
     public List<String> getChildNames() {
         return List.of(childNames);
+    }
+
+    /**
+     * The dimension-only contribution: the inherited parent-key restriction AND the by-name filter on the
+     * child level being read — the same {@code memberKeyConstraint(parent)} +
+     * {@link LevelConstraintGenerator#constrainLevelPredicate} predicates the recorded
+     * {@code addMemberConstraint(parent)} + level-constraint path applies, so the mapper reproduces the
+     * member-children query. No fact join (empty {@code joinTables}), so the caller builds it authoritatively
+     * (result-verified, like {@link DefaultMemberChildrenConstraint}); only the WHERE parenthesization may
+     * differ from the recorded form (a semantic no-op).
+     * <p>
+     * Returns {@link java.util.Optional#empty()} (→ the recorder path via the byte-equal guard) when the
+     * child level / name column cannot be expressed as a node (computed column), or the inherited
+     * contribution carries a fact join.
+     */
+    @Override
+    public java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution> toContribution(
+        org.eclipse.daanse.rolap.element.RolapCube baseCube,
+        org.eclipse.daanse.rolap.common.aggmatcher.AggStar aggStar,
+        org.eclipse.daanse.rolap.api.element.RolapMember parent)
+    {
+        java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution> base =
+            super.toContribution(baseCube, aggStar, parent);
+        if (base.isEmpty() || !base.get().joinTables().isEmpty()) {
+            return java.util.Optional.empty();
+        }
+        // The level whose members are being read (the level the name filter applies to).
+        if (parent == null || !(parent.getLevel().getChildLevel() instanceof RolapLevel childLevel)) {
+            return java.util.Optional.empty();
+        }
+        java.util.Optional<org.eclipse.daanse.sql.statement.api.expression.Predicate> namePred =
+            LevelConstraintGenerator.constrainLevelPredicate(childLevel, baseCube, aggStar, childNames, true);
+        if (namePred.isEmpty()) {
+            return java.util.Optional.empty();
+        }
+        // Parent key (a parenthesized group, when present) AND the name filter, as the WHERE.
+        org.eclipse.daanse.sql.statement.api.expression.Predicate where = base.get().where().isPresent()
+            ? org.eclipse.daanse.sql.statement.api.Predicates.and(
+                java.util.List.of(base.get().where().get(), namePred.get()))
+            : namePred.get();
+        return java.util.Optional.of(new org.eclipse.daanse.rolap.common.sql.ConstraintContribution(
+            java.util.Optional.of(where), java.util.List.of()));
     }
 
 }

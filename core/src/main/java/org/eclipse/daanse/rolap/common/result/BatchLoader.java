@@ -13,7 +13,7 @@
  */
 package org.eclipse.daanse.rolap.common.result;
 
-import static org.eclipse.daanse.rolap.common.util.ExpressionUtil.genericExpression;
+import static org.eclipse.daanse.rolap.common.util.SqlExpressionResolver.genericSql;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -866,13 +866,13 @@ public class BatchLoader {
                     break;
                 }
                 final String expr =
-                    genericExpression(distinctMeasure.getExpression());
+                    genericSql(distinctMeasure.getExpression());
                 final List<RolapStar.Measure> distinctMeasuresList =
                     new ArrayList<>();
                 for (int i = 0; i < measuresList.size();) {
                     final RolapStar.Measure measure = measuresList.get(i);
                     if (measure.getAggregator().isDistinct()
-                        && genericExpression(measure.getExpression())
+                        && genericSql(measure.getExpression())
                         .equals(expr))
                     {
                         measuresList.remove(i);

@@ -15,7 +15,6 @@ package org.eclipse.daanse.rolap.aggregator.extra;
 import java.util.List;
 import java.util.Optional;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.jdbc.db.dialect.api.sql.OrderedColumn;
 import org.eclipse.daanse.jdbc.db.dialect.api.generator.SortDirection;
 import org.eclipse.daanse.olap.api.DataTypeJdbc;
@@ -23,22 +22,36 @@ import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.olap.api.calc.Calc;
 import org.eclipse.daanse.olap.api.calc.tuple.TupleList;
 import org.eclipse.daanse.olap.api.evaluator.Evaluator;
+import org.eclipse.daanse.rolap.aggregator.NodeAggregate;
 import org.eclipse.daanse.rolap.element.RolapColumn;
+import org.eclipse.daanse.sql.statement.api.expression.SqlExpression;
 
-public class NthValueAggregator implements Aggregator {
+public class NthValueAggregator implements Aggregator, NodeAggregate {
 
     private boolean ignoreNulls;
     private Integer n;
     private List<RolapColumn> rolapOrderedColumnList;
-    private Dialect dialect;
 
 
     public NthValueAggregator(boolean ignoreNulls, Integer n,
-                              List<RolapColumn> rolapOrderedColumnList, Dialect dialect) {
+                              List<RolapColumn> rolapOrderedColumnList) {
         this.ignoreNulls = ignoreNulls;
         this.n = n;
         this.rolapOrderedColumnList = rolapOrderedColumnList;
-        this.dialect = dialect;
+    }
+
+    @Override
+    public SqlExpression toNode(SqlExpression operand) {
+        List<OrderedColumn> columnsList = List.of();
+        if (rolapOrderedColumnList != null) {
+            columnsList = rolapOrderedColumnList.stream()
+                .map(c -> new OrderedColumn(c.getName(), c.getTable(),
+                        org.eclipse.daanse.olap.api.sql.SortingDirection.NONE.equals(c.getSortingDirection()) ? Optional.empty() : Optional.of(SortDirection.valueOf(c.getSortingDirection().name())),
+                                Optional.empty()))
+                .toList();
+        }
+        return new SqlExpression.ExtraAggregate(Optional.ofNullable(operand),
+                new SqlExpression.ExtraAggregate.Spec.NthValue(ignoreNulls, n, columnsList));
     }
 
     @Override
@@ -49,15 +62,7 @@ public class NthValueAggregator implements Aggregator {
 
     @Override
     public StringBuilder getExpression(CharSequence operand) {
-        List<OrderedColumn> columnsList = List.of();
-        if (rolapOrderedColumnList != null) {
-            columnsList = rolapOrderedColumnList.stream()
-                .map(c -> new OrderedColumn(c.getName(), c.getTable(),
-                        org.eclipse.daanse.olap.api.sql.SortingDirection.NONE.equals(c.getSortingDirection()) ? Optional.empty() : Optional.of(SortDirection.valueOf(c.getSortingDirection().name())),
-                                Optional.empty()))
-                .toList();
-        }
-        return dialect.aggregationGenerator().generateNthValueAgg(operand, ignoreNulls, n, columnsList).map(StringBuilder::new).orElse(null);
+        return new StringBuilder(getName()).append('(').append(operand).append(')');
     }
 
     @Override

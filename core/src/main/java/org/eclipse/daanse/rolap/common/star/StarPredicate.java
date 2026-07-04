@@ -27,8 +27,8 @@ package org.eclipse.daanse.rolap.common.star;
 
 import java.util.List;
 
+import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.olap.key.BitKey;
-import org.eclipse.daanse.rolap.common.sql.SqlQuery;
 
 /**
  * Condition which constrains a set of values of a single
@@ -130,5 +130,5 @@ public interface StarPredicate {
      */
     Object WILDCARD = new Object();
 
-    void toSql(SqlQuery sqlQuery, StringBuilder buf);
+    void toSql(Dialect dialect, StringBuilder buf);
 }

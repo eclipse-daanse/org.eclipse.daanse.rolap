@@ -26,11 +26,13 @@
 
 package org.eclipse.daanse.rolap.common.constraint;
 
+import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.olap.api.evaluator.Evaluator;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;
 import org.eclipse.daanse.rolap.common.sql.MemberChildrenConstraint;
-import org.eclipse.daanse.rolap.common.sql.SqlQuery;
+import org.eclipse.daanse.rolap.common.sql.QueryTape;
+import org.eclipse.daanse.rolap.common.sql.QueryRecorder;
 import org.eclipse.daanse.rolap.common.sql.TupleConstraint;
 import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.element.RolapLevel;
@@ -46,23 +48,31 @@ public class DefaultTupleConstraint implements TupleConstraint {
     protected DefaultTupleConstraint() {
     }
 
+    /**
+     * No restriction: the contribution is the fork's empty tape.
+     */
     @Override
-	public void addConstraint(
-        SqlQuery sqlQuery,
+    public QueryTape addConstraintOps(
+        Dialect dialect,
+        QueryRecorder.Fork fork,
         RolapCube baseCube,
         AggStar aggStar)
     {
-        //empty
+        return fork.ops();
     }
 
+    /**
+     * No per-level restriction — see {@link #addConstraintOps}.
+     */
     @Override
-	public void addLevelConstraint(
-        SqlQuery sqlQuery,
+    public QueryTape addLevelConstraintOps(
+        Dialect dialect,
+        QueryRecorder.Fork fork,
         RolapCube baseCube,
         AggStar aggStar,
         RolapLevel level)
     {
-        //empty
+        return fork.ops();
     }
 
     @Override
@@ -70,6 +80,15 @@ public class DefaultTupleConstraint implements TupleConstraint {
         RolapMember parent)
     {
         return DefaultMemberChildrenConstraint.instance();
+    }
+
+    @Override
+    public java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution> toContribution(
+        RolapCube baseCube,
+        AggStar aggStar)
+    {
+        // Unrestricted level members — no predicate, no extra tables.
+        return java.util.Optional.of(org.eclipse.daanse.rolap.common.sql.ConstraintContribution.EMPTY);
     }
 
     @Override

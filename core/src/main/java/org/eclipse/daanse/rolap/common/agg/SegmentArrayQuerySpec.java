@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.eclipse.daanse.rolap.common.sql.SqlQuery;
+import org.eclipse.daanse.rolap.common.sql.QueryRecorder;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.star.StarColumnPredicate;
 import org.eclipse.daanse.rolap.common.star.StarPredicate;
@@ -122,9 +122,9 @@ class SegmentArrayQuerySpec extends AbstractQuerySpec {
     }
 
     /**
-     * SqlQuery relies on "c" and index. All this should go into SqlQuery!
+     * QueryRecorder relies on "c" and index. All this should go into QueryRecorder!
      *
-     * @see org.eclipse.daanse.rolap.common.sql.SqlQuery#addOrderBy
+     * @see org.eclipse.daanse.rolap.common.sql.QueryRecorder#addOrderBy
      */
     @Override
 	public String getColumnAlias(final int i) {
@@ -146,29 +146,29 @@ class SegmentArrayQuerySpec extends AbstractQuerySpec {
     }
 
     @Override
-	protected void addGroupingFunction(SqlQuery sqlQuery) {
+	protected void addGroupingFunction(QueryRecorder sqlQuery) {
         List<RolapStar.Column> list = groupingSetsList.getRollupColumns();
         for (RolapStar.Column column : list) {
-            sqlQuery.addGroupingFunction(column.generateExprString(sqlQuery));
+            sqlQuery.addGroupingFunction(column.generateExprString(getStar().getDialect()));
         }
     }
 
     @Override
 	protected void addGroupingSets(
-        SqlQuery sqlQuery,
-        Map<String, String> groupingSetsAliases)
+        QueryRecorder sqlQuery,
+        Map<RolapStar.Column, String> groupingSetsAliases)
     {
         List<RolapStar.Column[]> groupingSetsColumns =
             groupingSetsList.getGroupingSetsColumns();
         for (RolapStar.Column[] groupingSetsColumn : groupingSetsColumns) {
             ArrayList<String> groupingColumnsExpr = new ArrayList<>();
             for (RolapStar.Column aColumn : groupingSetsColumn) {
-                final String columnExpr = aColumn.generateExprString(sqlQuery);
-                if (groupingSetsAliases.containsKey(columnExpr)) {
+                // Look up by the column (dialect-free); only render when it's not an inner-query alias.
+                if (groupingSetsAliases.containsKey(aColumn)) {
                     groupingColumnsExpr.add(
-                        groupingSetsAliases.get(columnExpr));
+                        groupingSetsAliases.get(aColumn));
                 } else {
-                    groupingColumnsExpr.add(columnExpr);
+                    groupingColumnsExpr.add(aColumn.generateExprString(getStar().getDialect()));
                 }
             }
             sqlQuery.addGroupingSet(groupingColumnsExpr);
@@ -178,5 +178,10 @@ class SegmentArrayQuerySpec extends AbstractQuerySpec {
     @Override
 	protected boolean isAggregate() {
         return true;
+    }
+
+    @Override
+    protected boolean hasGroupingSets() {
+        return groupingSetsList.useGroupingSets();
     }
 }

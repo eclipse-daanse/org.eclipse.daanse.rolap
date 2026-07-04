@@ -30,10 +30,11 @@ package org.eclipse.daanse.rolap.common.sql;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;
-import org.eclipse.daanse.rolap.common.constraint.SqlConstraintUtils;
+import org.eclipse.daanse.rolap.common.constraint.MemberConstraintWriter;
 import org.eclipse.daanse.rolap.common.evaluator.RolapEvaluator;
 import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.element.RolapLevel;
@@ -229,6 +230,18 @@ public class MemberListCrossJoinArg implements CrossJoinArg {
         return members;
     }
 
+    /** Whether this arg excludes (rather than includes) its members — mirrors the {@code exclude} flag the
+     *  {@link #addConstraint} passes to {@code MemberConstraintWriter.addMemberConstraint}. */
+    public boolean isExclude() {
+        return exclude;
+    }
+
+    /** Whether calculated members are restricted — the {@code restrictMemberTypes} flag {@link #addConstraint}
+     *  passes to {@code MemberConstraintWriter.addMemberConstraint}. */
+    public boolean isRestrictMemberTypes() {
+        return restrictMemberTypes;
+    }
+
     @Override
 	public boolean isPreferInterpreter(boolean joinArg) {
         if (joinArg) {
@@ -244,12 +257,13 @@ public class MemberListCrossJoinArg implements CrossJoinArg {
 
     @Override
 	public void addConstraint(
-        SqlQuery sqlQuery,
+        Dialect dialect,
+        QueryRecorder sqlQuery,
         RolapCube baseCube,
         AggStar aggStar)
     {
-        SqlConstraintUtils.addMemberConstraint(
-            sqlQuery, baseCube, aggStar,
+        MemberConstraintWriter.addMemberConstraint(
+            dialect, sqlQuery, baseCube, aggStar,
             members, restrictMemberTypes, true, exclude);
     }
 

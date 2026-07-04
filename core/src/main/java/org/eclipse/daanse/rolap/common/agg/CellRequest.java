@@ -28,7 +28,7 @@
 
 package org.eclipse.daanse.rolap.common.agg;
 
-import static org.eclipse.daanse.rolap.common.util.ExpressionUtil.genericExpression;
+import static org.eclipse.daanse.rolap.common.util.SqlExpressionResolver.genericSql;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -413,7 +413,7 @@ public class CellRequest {
             RolapStar.Column column = columns[i];
             final Object o = values[i];
             map.put(
-                genericExpression(column.getExpression()),
+                genericSql(column.getExpression()),
                 (Comparable) o);
         }
         return map;

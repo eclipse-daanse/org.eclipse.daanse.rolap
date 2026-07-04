@@ -26,7 +26,7 @@
 
 package org.eclipse.daanse.rolap.common.result;
 
-import static org.eclipse.daanse.rolap.common.util.ExpressionUtil.genericExpression;
+import static org.eclipse.daanse.rolap.common.util.SqlExpressionResolver.genericSql;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -342,7 +342,7 @@ public class FastBatchingCellReader implements CellReader {
                 final Set<String> keepColumns = new HashSet<>();
                 for (RolapStar.Column column : rollup.constrainedColumns) {
                     keepColumns.add(
-                        genericExpression(column.getExpression()));
+                        genericSql(column.getExpression()));
                 }
                 Pair<SegmentHeader, SegmentBody> rollupHeaderBody =
                     SegmentBuilder.rollup(
@@ -574,7 +574,7 @@ public class FastBatchingCellReader implements CellReader {
 
         final RolapStar star = cube.getStar();
         if (star != null) {
-            return star.getSqlQueryDialect();
+            return star.getDialect();
         } else {
             return execution.getDaanseStatement().getDaanseConnection().getContext().getDialect();
         }

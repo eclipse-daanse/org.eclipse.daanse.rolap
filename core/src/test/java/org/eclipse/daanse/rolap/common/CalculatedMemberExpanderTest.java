@@ -71,18 +71,18 @@ import org.eclipse.daanse.olap.function.def.aggregate.AggregateFunDef;
 import org.eclipse.daanse.olap.function.def.parentheses.ParenthesesFunDef;
 import org.eclipse.daanse.olap.query.component.MemberExpressionImpl;
 import org.eclipse.daanse.olap.query.component.ResolvedFunCallImpl;
-import org.eclipse.daanse.rolap.common.constraint.SqlConstraintUtils;
+import org.eclipse.daanse.rolap.common.constraint.CalculatedMemberExpander;
 import org.eclipse.daanse.rolap.common.constraint.TupleConstraintStruct;
 import org.eclipse.daanse.rolap.common.evaluator.RolapEvaluator;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 /**
- * <code>SqlConstraintUtilsTest</code> tests the functions defined in
- * {@link SqlConstraintUtils}.
+ * <code>CalculatedMemberExpanderTest</code> tests the functions defined in
+ * {@link CalculatedMemberExpander}.
  *
  */
-class SqlConstraintUtilsTest {
+class CalculatedMemberExpanderTest {
 
     private void assertSameContent(
         String msg, Collection<Member> expected, Collection<Member> actual)
@@ -106,7 +106,7 @@ class SqlConstraintUtilsTest {
 
     /**
     * Used to suppress a series of asserts on
-    * {@code SqlConstraintUtils.expandSupportedCalculatedMembers}
+    * {@code CalculatedMemberExpander.expandSupportedCalculatedMembers}
     * when they are supposed to result identically.
     * @param msg message for asserts
     * @param expectedMembersArray expected result
@@ -125,17 +125,17 @@ class SqlConstraintUtilsTest {
       assertSameContent(
           msg + " - (list, eval)",
           expectedMembersList,
-          SqlConstraintUtils.expandSupportedCalculatedMembers(
+          CalculatedMemberExpander.expandSupportedCalculatedMembers(
               argMembersList, evaluator).getMembers());
       assertSameContent(
           msg + " - (list, eval, false)",
           expectedMembersList,
-          SqlConstraintUtils.expandSupportedCalculatedMembers(
+          CalculatedMemberExpander.expandSupportedCalculatedMembers(
               argMembersList, evaluator, false).getMembers());
       assertSameContent(
           msg + " - (list, eval, true)",
           expectedMembersList,
-          SqlConstraintUtils.expandSupportedCalculatedMembers(
+          CalculatedMemberExpander.expandSupportedCalculatedMembers(
               argMembersList, evaluator, true).getMembers());
     }
 
@@ -155,17 +155,17 @@ class SqlConstraintUtilsTest {
       assertSameContent(
           msg + " - (list, eval)",
           expectedListByDefault,
-          SqlConstraintUtils.expandSupportedCalculatedMembers(
+          CalculatedMemberExpander.expandSupportedCalculatedMembers(
               argMembersList, evaluator).getMembers());
       assertSameContent(
           msg + " - (list, eval, false)",
           expectedListByDefault,
-          SqlConstraintUtils.expandSupportedCalculatedMembers(
+          CalculatedMemberExpander.expandSupportedCalculatedMembers(
               argMembersList, evaluator, false).getMembers());
       assertSameContent(
           msg + " - (list, eval, true)",
           expectedListOnDisjoin,
-          SqlConstraintUtils.expandSupportedCalculatedMembers(
+          CalculatedMemberExpander.expandSupportedCalculatedMembers(
               argMembersList, evaluator, true).getMembers());
     }
 
@@ -178,7 +178,7 @@ class SqlConstraintUtilsTest {
 
     private Expression makeSupportedExpressionForCalculatedMember() {
         Expression memberExpr = new MemberExpressionImpl(Mockito.mock(Member.class));
-        assertThat(SqlConstraintUtils.isSupportedExpressionForCalculatedMember(
+        assertThat(CalculatedMemberExpander.isSupportedExpressionForCalculatedMember(
             memberExpr)).isTrue();
         return memberExpr;
     }
@@ -186,7 +186,7 @@ class SqlConstraintUtilsTest {
     private Expression makeUnsupportedExpressionForCalculatedMember() {
         Expression nullFunDefExpr = new ResolvedFunCallImpl(
             new NullFunDef(), new Expression[]{}, NullType.INSTANCE);
-        assertThat(SqlConstraintUtils.isSupportedExpressionForCalculatedMember(
+        assertThat(CalculatedMemberExpander.isSupportedExpressionForCalculatedMember(
             nullFunDefExpr)).isFalse();
         return nullFunDefExpr;
     }
@@ -199,7 +199,7 @@ class SqlConstraintUtilsTest {
         Mockito.doReturn(memberExp).when(member).getExpression();
 
         assertThat(member.isCalculated()).isTrue();
-        assertThat(SqlConstraintUtils.isSupportedCalculatedMember(member)).isFalse();
+        assertThat(CalculatedMemberExpander.isSupportedCalculatedMember(member)).isFalse();
 
         return member;
     }
@@ -243,7 +243,7 @@ class SqlConstraintUtilsTest {
             .when(setEvaluator).evaluateTupleIterable();
 
         assertThat(member.isCalculated()).isTrue();
-        assertThat(SqlConstraintUtils.isSupportedCalculatedMember(member)).isTrue();
+        assertThat(CalculatedMemberExpander.isSupportedCalculatedMember(member)).isTrue();
 
         return member;
     }
@@ -265,7 +265,7 @@ class SqlConstraintUtilsTest {
         Mockito.doReturn(memberExp).when(member).getExpression();
 
         assertThat(member.isCalculated()).isTrue();
-        assertThat(SqlConstraintUtils.isSupportedCalculatedMember(member)).isTrue();
+        assertThat(CalculatedMemberExpander.isSupportedCalculatedMember(member)).isTrue();
 
         return member;
     }
@@ -273,24 +273,24 @@ class SqlConstraintUtilsTest {
     // ~ Test methods ----------------------------------------------------------
     @Test
     void isSupportedExpressionForCalculatedMember() {
-        assertThat(SqlConstraintUtils.isSupportedExpressionForCalculatedMember(null)).as("null expression").isFalse();
+        assertThat(CalculatedMemberExpander.isSupportedExpressionForCalculatedMember(null)).as("null expression").isFalse();
 
         Expression memberExpr = new MemberExpressionImpl(Mockito.mock(Member.class));
-        assertThat(SqlConstraintUtils.isSupportedExpressionForCalculatedMember(
+        assertThat(CalculatedMemberExpander.isSupportedExpressionForCalculatedMember(
             memberExpr)).as("MemberExpr").isTrue();
 
         Expression nullFunDefExpr = new ResolvedFunCallImpl(
             new NullFunDef(), new Expression[]{}, NullType.INSTANCE);
-        assertThat(SqlConstraintUtils.isSupportedExpressionForCalculatedMember(
+        assertThat(CalculatedMemberExpander.isSupportedExpressionForCalculatedMember(
             nullFunDefExpr)).as("ResolvedFunCall-NullFunDef").isFalse();
 
         // ResolvedFunCall arguments
         final Expression argUnsupported = new ResolvedFunCallImpl(
             new NullFunDef(), new Expression[]{}, NullType.INSTANCE);
         final Expression argSupported = new MemberExpressionImpl(Mockito.mock(Member.class));
-        assertThat(SqlConstraintUtils.isSupportedExpressionForCalculatedMember(
+        assertThat(CalculatedMemberExpander.isSupportedExpressionForCalculatedMember(
             argUnsupported)).isFalse();
-        assertThat(SqlConstraintUtils.isSupportedExpressionForCalculatedMember(
+        assertThat(CalculatedMemberExpander.isSupportedExpressionForCalculatedMember(
             argSupported)).isTrue();
         final Expression[] noArgs = new Expression[]{};
         final Expression[] args1Unsupported = new Expression[]{argUnsupported};
@@ -302,22 +302,22 @@ class SqlConstraintUtilsTest {
         Type parenthesesReturnType = new DecimalType(1, 1);
         Expression parenthesesExpr = new ResolvedFunCallImpl(
             parenthesesFunDef, noArgs, parenthesesReturnType);
-        assertThat(SqlConstraintUtils.isSupportedExpressionForCalculatedMember(
+        assertThat(CalculatedMemberExpander.isSupportedExpressionForCalculatedMember(
             parenthesesExpr)).as("ResolvedFunCall-Parentheses()").isTrue();
 
         parenthesesExpr = new ResolvedFunCallImpl(
             parenthesesFunDef, args1Unsupported, parenthesesReturnType);
-        assertThat(SqlConstraintUtils.isSupportedExpressionForCalculatedMember(
+        assertThat(CalculatedMemberExpander.isSupportedExpressionForCalculatedMember(
             parenthesesExpr)).as("ResolvedFunCall-Parentheses(N)").isFalse();
 
         parenthesesExpr = new ResolvedFunCallImpl(
             parenthesesFunDef, args1Supported, parenthesesReturnType);
-        assertThat(SqlConstraintUtils.isSupportedExpressionForCalculatedMember(
+        assertThat(CalculatedMemberExpander.isSupportedExpressionForCalculatedMember(
             parenthesesExpr)).as("ResolvedFunCall-Parentheses(Y)").isTrue();
 
         parenthesesExpr = new ResolvedFunCallImpl(
             parenthesesFunDef, args2Different, parenthesesReturnType);
-        assertThat(SqlConstraintUtils.isSupportedExpressionForCalculatedMember(
+        assertThat(CalculatedMemberExpander.isSupportedExpressionForCalculatedMember(
             parenthesesExpr)).as("ResolvedFunCall-Parentheses(N,Y)").isTrue();
 
         FunctionMetaData functionInformation = Mockito.mock(FunctionMetaData.class);
@@ -329,22 +329,22 @@ class SqlConstraintUtilsTest {
 
         Expression aggregateExpr = new ResolvedFunCallImpl(
             aggregateFunDef, noArgs, aggregateReturnType);
-        assertThat(SqlConstraintUtils.isSupportedExpressionForCalculatedMember(
+        assertThat(CalculatedMemberExpander.isSupportedExpressionForCalculatedMember(
             aggregateExpr)).as("ResolvedFunCall-Aggregate()").isTrue();
 
         aggregateExpr = new ResolvedFunCallImpl(
             aggregateFunDef, args1Unsupported, aggregateReturnType);
-        assertThat(SqlConstraintUtils.isSupportedExpressionForCalculatedMember(
+        assertThat(CalculatedMemberExpander.isSupportedExpressionForCalculatedMember(
             aggregateExpr)).as("ResolvedFunCall-Aggregate(N)").isTrue();
 
         aggregateExpr = new ResolvedFunCallImpl(
             aggregateFunDef, args1Supported, aggregateReturnType);
-        assertThat(SqlConstraintUtils.isSupportedExpressionForCalculatedMember(
+        assertThat(CalculatedMemberExpander.isSupportedExpressionForCalculatedMember(
             aggregateExpr)).as("ResolvedFunCall-Aggregate(Y)").isTrue();
 
         aggregateExpr = new ResolvedFunCallImpl(
             aggregateFunDef, args2Different, aggregateReturnType);
-        assertThat(SqlConstraintUtils.isSupportedExpressionForCalculatedMember(
+        assertThat(CalculatedMemberExpander.isSupportedExpressionForCalculatedMember(
             aggregateExpr)).as("ResolvedFunCall-Aggregate(N,Y)").isTrue();
     }
 
@@ -352,20 +352,20 @@ class SqlConstraintUtilsTest {
     void isSupportedCalculatedMember() {
         Member member = Mockito.mock(Member.class);
         assertThat(member.isCalculated()).isFalse();
-        assertThat(SqlConstraintUtils.isSupportedCalculatedMember(member)).isFalse();
+        assertThat(CalculatedMemberExpander.isSupportedCalculatedMember(member)).isFalse();
 
         Mockito.doReturn(true).when(member).isCalculated();
 
         assertThat(member.getExpression()).isNull();
-        assertThat(SqlConstraintUtils.isSupportedCalculatedMember(member)).isFalse();
+        assertThat(CalculatedMemberExpander.isSupportedCalculatedMember(member)).isFalse();
 
         Mockito.doReturn(makeUnsupportedExpressionForCalculatedMember())
         .when(member).getExpression();
-        assertThat(SqlConstraintUtils.isSupportedCalculatedMember(member)).isFalse();
+        assertThat(CalculatedMemberExpander.isSupportedCalculatedMember(member)).isFalse();
 
         Mockito.doReturn(makeSupportedExpressionForCalculatedMember())
         .when(member).getExpression();
-        assertThat(SqlConstraintUtils.isSupportedCalculatedMember(member)).isTrue();
+        assertThat(CalculatedMemberExpander.isSupportedCalculatedMember(member)).isTrue();
     }
 
     @Test
@@ -377,7 +377,7 @@ class SqlConstraintUtilsTest {
 
         // tested call
         TupleConstraintStruct constraint = new TupleConstraintStruct();
-        SqlConstraintUtils.expandSupportedCalculatedMember(
+        CalculatedMemberExpander.expandSupportedCalculatedMember(
             member, evaluator, constraint);
         List<Member> r = constraint.getMembers();
         // test
@@ -395,7 +395,7 @@ class SqlConstraintUtilsTest {
 
         // tested call
         TupleConstraintStruct constraint = new TupleConstraintStruct();
-        SqlConstraintUtils.expandSupportedCalculatedMember(
+        CalculatedMemberExpander.expandSupportedCalculatedMember(
             member, evaluator, constraint);
         List<Member> r = constraint.getMembers();
         // test
@@ -413,7 +413,7 @@ class SqlConstraintUtilsTest {
 
         // tested call
         TupleConstraintStruct constraint = new TupleConstraintStruct();
-        SqlConstraintUtils.expandSupportedCalculatedMember(
+        CalculatedMemberExpander.expandSupportedCalculatedMember(
             member, evaluator, constraint);
         List<Member> r = constraint.getMembers();
         // test
@@ -439,7 +439,7 @@ class SqlConstraintUtilsTest {
         member = makeAggregateExprMember(evaluator, aggregatedMembers);
         // tested call
         TupleConstraintStruct constraint = new TupleConstraintStruct();
-        SqlConstraintUtils.expandSupportedCalculatedMember(
+        CalculatedMemberExpander.expandSupportedCalculatedMember(
             member, evaluator, true, constraint);
         r = constraint.getMembers();
         // test
@@ -450,7 +450,7 @@ class SqlConstraintUtilsTest {
         member = makeAggregateExprMember(evaluator, aggregatedMembers);
         // tested call
         constraint = new TupleConstraintStruct();
-        SqlConstraintUtils.expandSupportedCalculatedMember(
+        CalculatedMemberExpander.expandSupportedCalculatedMember(
             member, evaluator, constraint);
         r = constraint.getMembers();
         // test
@@ -462,7 +462,7 @@ class SqlConstraintUtilsTest {
         member = makeAggregateExprMember(evaluator, aggregatedMembers);
         // tested call
         constraint = new TupleConstraintStruct();
-        SqlConstraintUtils.expandSupportedCalculatedMember(
+        CalculatedMemberExpander.expandSupportedCalculatedMember(
             member, evaluator, constraint);
         r = constraint.getMembers();
         // test
@@ -474,7 +474,7 @@ class SqlConstraintUtilsTest {
         member = makeAggregateExprMember(evaluator, aggregatedMembers);
         // tested call
         constraint = new TupleConstraintStruct();
-        SqlConstraintUtils.expandSupportedCalculatedMember(
+        CalculatedMemberExpander.expandSupportedCalculatedMember(
             member, evaluator, constraint);
         r = constraint.getMembers();
         // test
@@ -491,7 +491,7 @@ class SqlConstraintUtilsTest {
 
         // tested call
         TupleConstraintStruct constraint = new TupleConstraintStruct();
-        SqlConstraintUtils.expandSupportedCalculatedMember(
+        CalculatedMemberExpander.expandSupportedCalculatedMember(
             member, evaluator, constraint);
         List<Member> r = constraint.getMembers();
         // test
@@ -669,7 +669,7 @@ class SqlConstraintUtilsTest {
             .thenReturn(setEvaluatorMock);
 
         TupleConstraintStruct constraint = new TupleConstraintStruct();
-        SqlConstraintUtils.expandSetFromCalculatedMember(
+        CalculatedMemberExpander.expandSetFromCalculatedMember(
             evaluatorMock, memberMock, constraint);
         return constraint;
     }
@@ -691,7 +691,7 @@ class SqlConstraintUtilsTest {
 
         when(hierarchy.getDefaultMember()).thenReturn(members.get(4));
 
-        List<Member> newMembers = SqlConstraintUtils
+        List<Member> newMembers = CalculatedMemberExpander
             .removeCalculatedAndDefaultMembers(members);
 
         assertThat(newMembers.size()).isEqualTo(4);

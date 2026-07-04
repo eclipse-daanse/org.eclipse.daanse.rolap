@@ -29,7 +29,7 @@ import java.util.Collection;
 
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.key.BitKey;
-import org.eclipse.daanse.rolap.common.sql.SqlQuery;
+import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.star.StarColumnPredicate;
 import org.eclipse.daanse.rolap.common.star.StarPredicate;
@@ -179,16 +179,16 @@ public class ValueColumnPredicate
     }
 
     @Override
-	public void toSql(SqlQuery sqlQuery, StringBuilder buf) {
+	public void toSql(Dialect dialect, StringBuilder buf) {
         final RolapStar.Column column = getConstrainedColumn();
-        String expr = column.generateExprString(sqlQuery);
+        String expr = column.generateExprString(dialect);
         buf.append(expr);
         Object key = getValue();
         if (key == Util.sqlNullValue) {
             buf.append(" is null");
         } else {
             buf.append(" = ");
-            sqlQuery.getDialect().quote(buf, key, column.getDatatype());
+            dialect.quote(buf, key, column.getDatatype());
         }
     }
 
@@ -209,8 +209,8 @@ public class ValueColumnPredicate
         return inListRHSBitKey;
     }
 
-    public void toInListSql(SqlQuery sqlQuery, StringBuilder buf) {
-        sqlQuery.getDialect().quote(
+    public void toInListSql(Dialect dialect, StringBuilder buf) {
+        dialect.quote(
             buf, value, getConstrainedColumn().getDatatype());
     }
 }

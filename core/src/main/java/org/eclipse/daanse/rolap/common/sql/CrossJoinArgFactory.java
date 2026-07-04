@@ -998,7 +998,6 @@ public class CrossJoinArgFactory {
 
     private boolean shouldExpandNonEmpty(Expression exp, boolean expandNonNative) {
         return expandNonNative
-//               && !MondrianProperties.instance().EnableNativeCrossJoin.get()
             || isCheapSet(exp);
     }
 

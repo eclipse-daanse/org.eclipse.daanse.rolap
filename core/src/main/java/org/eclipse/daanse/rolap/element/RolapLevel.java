@@ -25,7 +25,7 @@
  */
 package org.eclipse.daanse.rolap.element;
 
-import static org.eclipse.daanse.rolap.common.util.ExpressionUtil.genericExpression;
+import static org.eclipse.daanse.rolap.common.util.SqlExpressionResolver.genericSql;
 import static org.eclipse.daanse.rolap.common.util.LevelUtil.getPropertyExp;
 
 import java.util.AbstractList;
@@ -66,7 +66,7 @@ import org.eclipse.daanse.olap.query.component.IdImpl;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.RolapUtil;
 import org.eclipse.daanse.rolap.common.star.RolapSqlExpression;
-import org.eclipse.daanse.rolap.common.util.ExpressionUtil;
+import org.eclipse.daanse.rolap.common.util.SqlExpressionResolver;
 import org.eclipse.daanse.rolap.common.util.LevelUtil;
 import org.eclipse.daanse.rolap.common.util.RelationUtil;
 import org.eclipse.daanse.rolap.mapping.model.database.relational.ColumnInternalDataType;
@@ -361,7 +361,7 @@ public class RolapLevel extends LevelBase {
 
         SqlExpression expr = getKeyExp();
         if (expr instanceof RolapColumn mc) {
-            tableName = ExpressionUtil.getTableAlias(mc);
+            tableName = SqlExpressionResolver.getTableAlias(mc);
         }
         return tableName;
     }
@@ -689,7 +689,7 @@ public class RolapLevel extends LevelBase {
     }
 
     public String getTableAlias() {
-        return ExpressionUtil.getTableAlias(keyExp);
+        return SqlExpressionResolver.getTableAlias(keyExp);
     }
 
     @Override
@@ -721,6 +721,20 @@ public class RolapLevel extends LevelBase {
 
     public org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.Level getLevelMapping() {
         return levelMapping;
+    }
+
+    /**
+     * Physical datatype of the level's key column as declared in the database mapping
+     * (CWM SQLSimpleType), or {@code null} when unknown. May differ from
+     * {@link #getDatatype()}, which reflects the level's declared/logical type (e.g. a
+     * level declared {@code type="String"} over an {@code INTEGER} key column).
+     */
+    public Datatype getKeyColumnPhysicalDatatype() {
+        if (levelMapping != null && levelMapping.getColumn() != null
+                && levelMapping.getColumn().getType() instanceof SQLSimpleType st) {
+            return jdbcTypeToDatatype(SqlSimpleTypes.jdbcType(st));
+        }
+        return null;
     }
 
     private static final Map<String, BestFitColumnType> VALUES =
@@ -806,7 +820,7 @@ public class RolapLevel extends LevelBase {
                         .append(new AbstractList<String>() {
                             @Override
 							public String get(int index) {
-                                return genericExpression(keyExps.get(index));
+                                return genericSql(keyExps.get(index));
                             }
                             @Override
 							public int size() {

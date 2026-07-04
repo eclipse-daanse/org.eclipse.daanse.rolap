@@ -35,11 +35,11 @@ import org.junit.jupiter.api.Test;
 class ListAggAggregatorRollupTest {
 
     private static ListAggAggregator nonDistinct(String sep) {
-        return new ListAggAggregator(false, sep, null, null, null, null);
+        return new ListAggAggregator(false, sep, null, null, null);
     }
 
     private static ListAggAggregator distinct(String sep) {
-        return new ListAggAggregator(true, sep, null, null, null, null);
+        return new ListAggAggregator(true, sep, null, null, null);
     }
 
     @Test
@@ -106,7 +106,7 @@ class ListAggAggregatorRollupTest {
 
     @Test
     void coalesceReplacesNullCells() {
-        ListAggAggregator agg = new ListAggAggregator(false, ",", null, "<empty>", null, null);
+        ListAggAggregator agg = new ListAggAggregator(false, ",", null, "<empty>", null);
 
         Object out = agg.aggregate(Arrays.asList("a", null, "b"), DataTypeJdbc.VARCHAR);
 
@@ -117,7 +117,7 @@ class ListAggAggregatorRollupTest {
     void separatorDefaultsToCommaWhenNull() {
         // If the configured separator is null, fall back to "," rather than
         // throwing NullPointerException via String.join.
-        ListAggAggregator agg = new ListAggAggregator(false, null, null, null, null, null);
+        ListAggAggregator agg = new ListAggAggregator(false, null, null, null, null);
 
         Object out = agg.aggregate(Arrays.asList("x", "y"), DataTypeJdbc.VARCHAR);
 

@@ -32,7 +32,7 @@ import java.util.TreeSet;
 
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.key.BitKey;
-import org.eclipse.daanse.rolap.common.sql.SqlQuery;
+import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.star.StarPredicate;
 
@@ -184,9 +184,9 @@ public abstract class ListPredicate implements StarPredicate {
     }
 
     @Override
-	public void toSql(SqlQuery sqlQuery, StringBuilder buf) {
+	public void toSql(Dialect dialect, StringBuilder buf) {
         if (children.size() == 1) {
-            children.getFirst().toSql(sqlQuery, buf);
+            children.getFirst().toSql(dialect, buf);
         } else {
             int k = 0;
             buf.append("(");
@@ -194,7 +194,7 @@ public abstract class ListPredicate implements StarPredicate {
                 if (k++ > 0) {
                     buf.append(" ").append(getOp()).append(" ");
                 }
-                child.toSql(sqlQuery, buf);
+                child.toSql(dialect, buf);
             }
             buf.append(")");
         }

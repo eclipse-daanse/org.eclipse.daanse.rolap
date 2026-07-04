@@ -30,6 +30,12 @@ public class SumAggregator extends AbstractAggregator {
     }
 
     @Override
+    public org.eclipse.daanse.sql.statement.api.expression.SqlExpression getExpression(
+            org.eclipse.daanse.sql.statement.api.expression.SqlExpression inner) {
+        return org.eclipse.daanse.sql.statement.api.Expressions.aggregate(getName(), inner);
+    }
+
+    @Override
     public Object aggregate(Evaluator evaluator, TupleList members, Calc<?> exp) {
         return FunUtil.sum(evaluator, members, exp);
     }

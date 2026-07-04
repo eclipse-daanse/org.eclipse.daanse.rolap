@@ -80,7 +80,7 @@ import org.eclipse.daanse.olap.query.component.NullLiteralImpl;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.RolapUtil;
 import org.eclipse.daanse.rolap.common.constraint.SqlConstraintFactory;
-import org.eclipse.daanse.rolap.common.constraint.SqlConstraintUtils;
+import org.eclipse.daanse.rolap.common.constraint.CalculatedMemberExpander;
 import org.eclipse.daanse.rolap.common.evaluator.RolapEvaluator;
 import org.eclipse.daanse.rolap.common.member.MemberCache;
 import org.eclipse.daanse.rolap.common.member.MemberCacheHelper;
@@ -596,7 +596,7 @@ public class RolapCatalogReader
                         matchType);
             }
         } catch (NumberFormatException e) {
-            // this was thrown in SqlQuery#quote(boolean numeric, Object
+            // this was thrown in the retired query facade#quote(boolean numeric, Object
             // value). This happens when Mondrian searches for unqualified Olap
             // Elements like [Month], because it tries to look up a member with
             // that name in all dimensions. Then it generates for example
@@ -664,7 +664,7 @@ public class RolapCatalogReader
     {
         List<Member> members = getLevelMembers(level, context);
         if (!includeCalculated) {
-            members = SqlConstraintUtils.removeCalculatedMembers(members);
+            members = CalculatedMemberExpander.removeCalculatedMembers(members);
         }
         return members;
     }

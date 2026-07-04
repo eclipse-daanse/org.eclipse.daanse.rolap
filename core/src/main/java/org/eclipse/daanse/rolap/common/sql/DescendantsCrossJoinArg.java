@@ -30,9 +30,10 @@ package org.eclipse.daanse.rolap.common.sql;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;
-import org.eclipse.daanse.rolap.common.constraint.SqlConstraintUtils;
+import org.eclipse.daanse.rolap.common.constraint.MemberConstraintWriter;
 import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.element.RolapLevel;
 
@@ -72,13 +73,14 @@ public class DescendantsCrossJoinArg implements CrossJoinArg {
 
     @Override
 	public void addConstraint(
-        SqlQuery sqlQuery,
+        Dialect dialect,
+        QueryRecorder sqlQuery,
         RolapCube baseCube,
         AggStar aggStar)
     {
         if (member != null) {
-            SqlConstraintUtils.addMemberConstraint(
-                sqlQuery, baseCube, aggStar, member, true);
+            MemberConstraintWriter.addMemberConstraint(
+                dialect, sqlQuery, baseCube, aggStar, member, true);
         }
     }
 

@@ -28,6 +28,7 @@ package org.eclipse.daanse.rolap.common.sql;
 
 import java.util.List;
 
+import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;
 import org.eclipse.daanse.rolap.element.RolapCube;
@@ -43,52 +44,44 @@ import org.eclipse.daanse.rolap.element.RolapLevel;
  */
 public interface MemberChildrenConstraint extends SqlConstraint {
 
-    /**
-     * Modifies a Member.Children query so that only the children
-     * of parent will be returned in the result set.
-     *
-     * @param sqlQuery the query to modify
-     * @param baseCube base cube for virtual members
-     * @param aggStar Aggregate star, if we are reading from an aggregate table,
-     * @param parent the parent member that restricts the returned children
-     */
-    public void addMemberConstraint(
-        SqlQuery sqlQuery,
+
+
+
+    QueryTape addMemberConstraintOps(
+        Dialect dialect,
+        QueryRecorder.Fork fork,
         RolapCube baseCube,
         AggStar aggStar,
         RolapMember parent);
 
-    /**
-     * Modifies a Member.Children query so that (all or some)
-     * children of <em>all</em> parent members contained in parents
-     * will be returned in the result set.
-     *
-     * @param sqlQuery Query to modify
-     * @param baseCube Base cube for virtual members
-     * @param aggStar Aggregate table, or null if query is against fact table
-     * @param parents List of parent members that restrict the returned
-     *        children
-     */
-    public void addMemberConstraint(
-        SqlQuery sqlQuery,
+    QueryTape addMemberConstraintOps(
+        Dialect dialect,
+        QueryRecorder.Fork fork,
         RolapCube baseCube,
         AggStar aggStar,
         List<RolapMember> parents);
 
-    /**
-     * Will be called once for the level that contains the
-     * children of a Member.Children query. If the condition requires so,
-     * it may join the levels table to the fact table.
-     *
-     * @param query the query to modify
-     * @param baseCube base cube for virtual members
-     * @param aggStar Aggregate table, or null if query is against fact table
-     * @param level the level that contains the children
-     */
-    public void addLevelConstraint(
-        SqlQuery query,
+    QueryTape addMemberLevelConstraintOps(
+        Dialect dialect,
+        QueryRecorder.Fork fork,
         RolapCube baseCube,
         AggStar aggStar,
         RolapLevel level);
+
+    /**
+     * The generic-builder counterpart of {@link #addMemberConstraint}: the parent restriction as a
+     * {@link ConstraintContribution} (builder {@code WHERE} predicate + tables to join), so the
+     * {@code sqlbuild} mappers can build the member-children SELECT without the retired query facade.
+     * <p>
+     * Default returns {@link java.util.Optional#empty()} — "not expressible on the builder; use the
+     * the retired query facade path". Constraints that can translate override this.
+     */
+    default java.util.Optional<ConstraintContribution> toContribution(
+        RolapCube baseCube,
+        AggStar aggStar,
+        RolapMember parent)
+    {
+        return java.util.Optional.empty();
+    }
 
 }

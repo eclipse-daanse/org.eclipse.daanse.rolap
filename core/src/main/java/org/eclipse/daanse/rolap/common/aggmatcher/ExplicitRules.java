@@ -868,25 +868,28 @@ public class ExplicitRules {
             AVG_FROM_SUM("AvgFromSum") {
                 @Override
                 public AvgFromSumAggregator getAggregator(
-                    String factCountColumnExpr)
+                    String factCountColumnExpr,
+                    org.eclipse.daanse.sql.statement.api.expression.SqlExpression factCountNode)
                 {
-                    return new AvgFromSumAggregator(factCountColumnExpr);
+                    return new AvgFromSumAggregator(factCountColumnExpr, factCountNode);
                 }
             },
             AVG_FROM_AVG("AvgFromAvg") {
                 @Override
                 public AvgFromAvgAggregator getAggregator(
-                    String factCountColumnExpr)
+                    String factCountColumnExpr,
+                    org.eclipse.daanse.sql.statement.api.expression.SqlExpression factCountNode)
                 {
-                    return new AvgFromAvgAggregator(factCountColumnExpr);
+                    return new AvgFromAvgAggregator(factCountColumnExpr, factCountNode);
                 }
             },
             SUM_FROM_AVG("SumFromAvg") {
                 @Override
                 public SumFromAvgAggregator getAggregator(
-                    String factCountColumnExpr)
+                    String factCountColumnExpr,
+                    org.eclipse.daanse.sql.statement.api.expression.SqlExpression factCountNode)
                 {
-                    return new SumFromAvgAggregator(factCountColumnExpr);
+                    return new SumFromAvgAggregator(factCountColumnExpr, factCountNode);
                 }
             };
 
@@ -897,7 +900,8 @@ public class ExplicitRules {
             }
 
             public abstract AbstractFactCountBasedAggregator getAggregator(
-                String factCountColumnExpr);
+                String factCountColumnExpr,
+                org.eclipse.daanse.sql.statement.api.expression.SqlExpression factCountNode);
 
             public String getFriendlyName() {
                 return friendlyName;

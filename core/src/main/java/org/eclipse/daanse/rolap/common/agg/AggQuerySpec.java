@@ -32,9 +32,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.daanse.jdbc.db.dialect.api.type.BestFitColumnType;
-import  org.eclipse.daanse.olap.util.Pair;
+import org.eclipse.daanse.sql.statement.api.render.RenderedSql;
 import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;
-import org.eclipse.daanse.rolap.common.sql.SqlQuery;
+import org.eclipse.daanse.rolap.common.sql.QueryRecorder;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.star.StarColumnPredicate;
 import org.slf4j.Logger;
@@ -70,8 +70,8 @@ class AggQuerySpec {
         this.groupingSetsList = groupingSetsList;
     }
 
-    protected SqlQuery newSqlQuery() {
-        return getStar().getSqlQuery();
+    protected QueryRecorder newQuery() {
+        return getStar().newQueryRecorder();
     }
 
     public RolapStar getStar() {
@@ -124,71 +124,106 @@ class AggQuerySpec {
         return segment0.predicates[i];
     }
 
-    public Pair<String, List<BestFitColumnType>> generateSqlQuery() {
-        SqlQuery sqlQuery = newSqlQuery();
-        generateSql(sqlQuery);
-        return sqlQuery.toSqlAndTypes();
+    public RenderedSql generateSql() {
+        QueryRecorder query = newQuery();
+        generateSql(query);
+        return query.toSqlAndTypes(getStar().getDialect());
     }
 
-    private void addGroupingSets(SqlQuery sqlQuery) {
+    private void addGroupingSets(QueryRecorder query) {
         List<RolapStar.Column[]> groupingSetsColumns =
             groupingSetsList.getGroupingSetsColumns();
         for (RolapStar.Column[] groupingSetColumns : groupingSetsColumns) {
             ArrayList<String> groupingColumnsExpr = new ArrayList<>();
 
             for (RolapStar.Column aColumnArr : groupingSetColumns) {
-                groupingColumnsExpr.add(findColumnExpr(aColumnArr, sqlQuery));
+                groupingColumnsExpr.add(findColumnExpr(aColumnArr, query));
             }
-            sqlQuery.addGroupingSet(groupingColumnsExpr);
+            query.addGroupingSet(groupingColumnsExpr);
         }
     }
 
-    private String findColumnExpr(RolapStar.Column columnj, SqlQuery sqlQuery) {
+    private String findColumnExpr(RolapStar.Column columnj, QueryRecorder query) {
         AggStar.Table.Column column =
             aggStar.lookupColumn(columnj.getBitPosition());
-        return column.generateExprString(sqlQuery);
+        return column.generateExprString(getStar().getDialect());
     }
 
-    protected void addMeasure(final int i, final SqlQuery query) {
+    protected void addMeasure(final int i, final QueryRecorder query) {
         AggStar.FactTable.Measure column =
                 (AggStar.FactTable.Measure) getMeasureAsColumn(i);
 
         column.getTable().addToFrom(query, false, true);
+        {
+            // The measure lives on an aggregate fact table (an agg-table rewrite of the base star).
+            query.commentFrom(column.getTable().getName(), "agg table " + column.getTable().getName());
+        }
         String alias = getMeasureAlias(i);
 
+        // Dialect-free when the (rollup or plain) measure column yields a simple node; else string.
+        org.eclipse.daanse.sql.statement.api.expression.SqlExpression node =
+            rollup ? column.generateRollupExpression() : column.generateExpression();
+        if (node != null) {
+            // Keep the explicit measure alias (m{i}); comment is added only when on (diagnostic copy only).
+            String measureComment = null;
+            {
+                RolapStar.Measure measure = segments.get(i).measure;
+                measureComment = "measure " + measure.getName()
+                        + " (" + measure.getAggregator().getName() + ")";
+            }
+            query.addSelectNodeCommented(node, null, alias, measureComment);
+            return;
+        }
         String expr;
         if (rollup) {
-            expr = column.generateRollupString(query);
+            expr = column.generateRollupString(getStar().getDialect());
         } else {
-            expr = column.generateExprString(query);
+            expr = column.generateExprString(getStar().getDialect());
         }
         query.addSelect(expr, null, alias);
     }
 
-    protected void generateSql(final SqlQuery sqlQuery) {
+    protected void generateSql(final QueryRecorder query) {
+        if (getMeasureCount() > 0) {
+            query.setHeaderComment(
+                "segment cube " + segments.get(0).measure.getCubeName() + " (agg table)");
+            query.setFooterComment("segment request (agg table)");
+        }
         // add constraining dimensions
         int columnCnt = getColumnCount();
         for (int i = 0; i < columnCnt; i++) {
             AggStar.Table.Column column = getColumn(i);
             AggStar.Table table = column.getTable();
-            table.addToFrom(sqlQuery, false, true);
-
-            String expr = column.generateExprString(sqlQuery);
+            table.addToFrom(query, false, true);
 
             StarColumnPredicate predicate = getPredicate(i);
-            final String where = RolapStar.Column.createInExpr(
-                expr,
-                predicate,
-                column.getDatatype(),
-                sqlQuery);
-            if (!where.equals("true")) {
-                sqlQuery.addWhere(where);
-            }
-
-            final String alias =
-                sqlQuery.addSelect(expr, column.getInternalType());
-            if (rollup) {
-                sqlQuery.addGroupBy(expr, alias);
+            org.eclipse.daanse.sql.statement.api.expression.SqlExpression node = column.toSqlExpression();
+            if (node != null && predicate.getConstrainedColumn() != null) {
+                // Dialect-free: use the agg column node for WHERE / SELECT / GROUP BY.
+                if (!org.eclipse.daanse.rolap.common.sqlbuild.StarPredicateTranslator.isAlwaysTrue(predicate)) {
+                    query.addWhere(
+                        org.eclipse.daanse.rolap.common.sqlbuild.StarPredicateTranslator.toColumnPredicate(predicate, node));
+                }
+                final String alias = query.addSelectNode(node, column.getInternalType());
+                if (rollup) {
+                    query.addGroupByNode(node, alias);
+                }
+            } else {
+                // Computed agg column, or a predicate without a constrained column: raw-string path.
+                String expr = column.generateExprString(getStar().getDialect());
+                final String where = RolapStar.Column.createInExpr(
+                    expr,
+                    predicate,
+                    column.getDatatype(),
+                    getStar().getDialect());
+                if (!where.equals("true")) {
+                    query.addWhere(where);
+                }
+                final String alias =
+                    query.addSelect(expr, column.getInternalType());
+                if (rollup) {
+                    query.addGroupBy(expr, alias);
+                }
             }
         }
 
@@ -196,16 +231,16 @@ class AggQuerySpec {
         // This can also add non-shared local dimension columns, which are
         // not measures.
         for (int i = 0, count = getMeasureCount(); i < count; i++) {
-            addMeasure(i, sqlQuery);
+            addMeasure(i, query);
         }
-        addGroupingSets(sqlQuery);
-        addGroupingFunction(sqlQuery);
+        addGroupingSets(query);
+        addGroupingFunction(query);
     }
 
-    private void addGroupingFunction(SqlQuery sqlQuery) {
+    private void addGroupingFunction(QueryRecorder query) {
         List<RolapStar.Column> list = groupingSetsList.getRollupColumns();
         for (RolapStar.Column column : list) {
-            sqlQuery.addGroupingFunction(findColumnExpr(column, sqlQuery));
+            query.addGroupingFunction(findColumnExpr(column, query));
         }
     }
 }

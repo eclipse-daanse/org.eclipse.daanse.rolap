@@ -98,10 +98,19 @@ public class RolapUtil {
         // constructor
     }
 
-    public static final Logger MDX_LOGGER = LoggerFactory.getLogger("daanse.mdx");
-    public static final Logger SQL_LOGGER = LoggerFactory.getLogger("daanse.sql");
+    /** Channel name constants — one source of truth, reusable in logback samples and level config. */
+    public static final String MDX_LOGGER_NAME = "daanse.mdx";
+    public static final String SQL_LOGGER_NAME = "daanse.sql";
+    /** The "why/how it was built" trace for statement generation, switchable independently of
+     *  {@link #SQL_LOGGER} (which logs the executed statement). */
+    public static final String SQL_GEN_LOGGER_NAME = "daanse.sql.gen";
+    public static final String MONITOR_LOGGER_NAME = "daanse.server.monitor";
+
+    public static final Logger MDX_LOGGER = LoggerFactory.getLogger(MDX_LOGGER_NAME);
+    public static final Logger SQL_LOGGER = LoggerFactory.getLogger(SQL_LOGGER_NAME);
+    public static final Logger SQL_GEN_LOGGER = LoggerFactory.getLogger(SQL_GEN_LOGGER_NAME);
     public static final Logger MONITOR_LOGGER =
-        LoggerFactory.getLogger("daanse.server.monitor");
+        LoggerFactory.getLogger(MONITOR_LOGGER_NAME);
 
     static final Logger LOGGER = LoggerFactory.getLogger(RolapUtil.class);
 
@@ -475,6 +484,42 @@ public class RolapUtil {
             return null;
         }
         return bestMatch;
+    }
+
+    /**
+     * The dialect-free inline-table payload — column names, column type names, and rows of raw cell values.
+     * This is the extraction half of {@link #convertInlineTableToRelation} WITHOUT the dialect-specific SQL
+     * generation, so a caller can build a render-time {@code FromInline} node (the dialect generates the
+     * {@code VALUES} SQL at render) instead of carrying a {@link Dialect} to resolve the FROM while building.
+     */
+    public record InlineTableData(List<String> columnNames, List<String> columnTypes, List<String[]> rows) {
+    }
+
+    /** Extracts the {@link InlineTableData} from an inline-table source (no dialect — see {@link InlineTableData}). */
+    public static InlineTableData inlineTableData(
+            org.eclipse.daanse.rolap.mapping.model.database.source.InlineTableSource inlineTable) {
+        List<Column> cols = ColumnSets.columns(inlineTable.getTable());
+        List<String> columnNames = cols.stream().map(Column::getName).toList();
+        List<String> columnTypes = cols.stream().map(c -> c.getType().getName()).toList();
+        final int columnCount = cols.size();
+
+        List<String[]> valueList = new ArrayList<>();
+        RowSet extent = inlineTable.getTable().getExtent();
+        List<Row> rows = extent == null ? List.of() : RowSets.rows(extent);
+        for (Row row : rows) {
+            String[] values = new String[columnCount];
+            for (DataSlot value : Rows.slots(row)) {
+                Column col = (Column) value.getFeature();
+                final int columnOrdinal = columnNames.indexOf(col.getName());
+                if (columnOrdinal < 0) {
+                    throw Util.newError(
+                        new StringBuilder("Unknown column '").append(col.getName()).append("'").toString());
+                }
+                values[columnOrdinal] = value.getDataValue();
+            }
+            valueList.add(values);
+        }
+        return new InlineTableData(columnNames, columnTypes, valueList);
     }
 
     public static org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource convertInlineTableToRelation(

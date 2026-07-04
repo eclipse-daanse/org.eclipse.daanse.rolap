@@ -28,7 +28,7 @@
 
 package org.eclipse.daanse.rolap.common.star;
 
-import static org.eclipse.daanse.rolap.common.util.ExpressionUtil.genericExpression;
+import static org.eclipse.daanse.rolap.common.util.SqlExpressionResolver.genericSql;
 import static org.eclipse.daanse.rolap.common.util.JoinUtil.getLeftAlias;
 import static org.eclipse.daanse.rolap.common.util.JoinUtil.getRightAlias;
 import static org.eclipse.daanse.rolap.common.util.JoinUtil.left;
@@ -58,6 +58,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import javax.sql.DataSource;
 
 import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
+import org.eclipse.daanse.rolap.common.util.ViewCodeSet;
 import org.eclipse.daanse.jdbc.db.dialect.api.type.BestFitColumnType;
 import org.eclipse.daanse.jdbc.db.dialect.api.type.Datatype;
 import org.eclipse.daanse.olap.api.Context;
@@ -84,7 +85,7 @@ import org.eclipse.daanse.rolap.common.agg.CellRequest;
 import org.eclipse.daanse.rolap.common.agg.SegmentCacheManager;
 import org.eclipse.daanse.rolap.common.agg.SegmentWithData;
 import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;
-import org.eclipse.daanse.rolap.common.sql.SqlQuery;
+import org.eclipse.daanse.rolap.common.sql.QueryRecorder;
 import org.eclipse.daanse.rolap.common.util.PojoUtil;
 import org.eclipse.daanse.rolap.common.util.RelationUtil;
 import org.eclipse.daanse.rolap.element.RolapBaseCubeMeasure;
@@ -268,15 +269,18 @@ public class RolapStar {
     public void remove() {
         localBars.remove();
     }
-    public static String generateExprString(SqlExpression expression, SqlQuery query) {
+    /** Renders {@code expression} with only a {@link Dialect}. */
+    public static String generateExprString(SqlExpression expression, Dialect dialect) {
         if(expression instanceof org.eclipse.daanse.rolap.element.RolapColumn col) {
-            return query.getDialect().quoteIdentifier(col.getTable(),
-            		col.getName());
+            return dialect.quoteIdentifier(col.getTable(), col.getName());
         }
         if(expression != null) {
-            SqlQuery.CodeSet codeSet = new SqlQuery.CodeSet();
-            expression.getSqls().forEach(e -> e.getDialects().forEach(d -> codeSet.put(d, e.getSql())));
-            return codeSet.chooseQuery(query.getDialect());
+            // A computed expression is rendered as a dialect-free RawVariant node (the renderer's chooseVariant
+            // resolves it per dialect). Reaching this removed legacy dialect-string path means a SQL producer
+            // still feeds a computed column as a string — convert that producer to a node.
+            throw new IllegalStateException(
+                "computed SQL expression must be a RawVariant node, not the removed legacy dialect-string path: "
+                    + expression);
         }
         return null;
     }
@@ -593,17 +597,18 @@ public class RolapStar {
     }
 
     /**
-     * Clones an existing SqlQuery to create a new one (this cloning creates one
-     * with an empty sql query).
+     * Creates an empty {@link QueryRecorder} for a query against this star (P4-B5: the recorder
+     * replaced the the retired query facade facade as the accumulation surface; same formatted-flag read).
      */
-    public SqlQuery getSqlQuery() {
-        return new SqlQuery(getSqlQueryDialect(), context.getConfigValue(ConfigConstants.GENERATE_FORMATTED_SQL, ConfigConstants.GENERATE_FORMATTED_SQL_DEFAULT_VALUE, Boolean.class));
+    public QueryRecorder newQueryRecorder() {
+        return new QueryRecorder(
+            context.getConfigValue(ConfigConstants.GENERATE_FORMATTED_SQL, ConfigConstants.GENERATE_FORMATTED_SQL_DEFAULT_VALUE, Boolean.class));
     }
 
     /**
      * Returns this RolapStar's SQL dialect.
      */
-    public Dialect getSqlQueryDialect() {
+    public Dialect getDialect() {
         return context.getDialect();
     }
 
@@ -821,44 +826,6 @@ public class RolapStar {
         return catalog;
     }
 
-    /**
-     * Generates a SQL statement to read all instances of the given attributes.
-     *
-     * The SQL statement is of the form {@code SELECT ... FROM ... JOIN ...
-     * GROUP BY ...}. It is useful for populating an aggregate table.
-     *
-     * @param columnList List of columns (attributes and measures)
-     * @param columnNameList List of column names (must have same cardinality
-     *     as {@code columnList})
-     * @return SQL SELECT statement
-     */
-    public String generateSql(
-        List<Column> columnList,
-        List<String> columnNameList)
-    {
-        final SqlQuery query = new SqlQuery(context.getDialect(), true);
-        query.addFrom(
-            factTable.relation,
-            RelationUtil.getAlias(factTable.relation),
-            false);
-        int k = -1;
-        for (Column column : columnList) {
-            ++k;
-            column.table.addToFrom(query,  false, true);
-            String columnExpr = column.generateExprString(query);
-            if (column instanceof Measure measure) {
-                columnExpr = measure.getAggregator().getExpression(columnExpr).toString();
-            }
-            final String columnName = columnNameList.get(k);
-            String alias = query.addSelect(columnExpr, null, columnName);
-            if (!(column instanceof Measure)) {
-                query.addGroupBy(columnExpr, alias);
-            }
-        }
-        // remove whitespace from query - in particular, the trailing newline
-        return query.toString().trim();
-    }
-
     @Override
 	public String toString() {
         StringWriter sw = new StringWriter(256);
@@ -972,7 +939,7 @@ public class RolapStar {
             this.table = table;
             this.expression = expression;
             assert expression == null
-                || genericExpression(expression) != null;
+                || genericSql(expression) != null;
             this.datatype = datatype;
             this.internalType = internalType;
             this.bitPosition = bitPosition;
@@ -1044,9 +1011,6 @@ public class RolapStar {
             return table;
         }
 
-        public SqlQuery getSqlQuery() {
-            return getTable().getStar().getSqlQuery();
-        }
 
         public RolapStar.Column getNameColumn() {
             return nameColumn;
@@ -1072,8 +1036,8 @@ public class RolapStar {
          * Generates a SQL expression, which typically this looks like
          * this: <i>tableName</i>.<i>columnName</i>.
          */
-        public String generateExprString(SqlQuery query) {
-            return RolapStar.generateExprString(getExpression(), query);
+        public String generateExprString(Dialect dialect) {
+            return RolapStar.generateExprString(getExpression(), dialect);
         }
 
         /**
@@ -1117,7 +1081,7 @@ public class RolapStar {
             final String expr,
             StarColumnPredicate predicate,
             Datatype datatype,
-            SqlQuery sqlQuery)
+            Dialect dialect)
         {
             // Sometimes a column predicate is created without a column. This
             // is unfortunate, and we will fix it some day. For now, create
@@ -1129,7 +1093,11 @@ public class RolapStar {
             {
                 Column column = new Column(datatype) {
                     @Override
-					public String generateExprString(SqlQuery query) {
+                    public String generateExprString(Dialect dialect) {
+                        // This fake column has no real expression; the override must return the
+                        // caller-supplied expr. (Reached when a predicate renders via toSql(Dialect) —
+                        // without this override it would fall to the base method and emit "null" for the
+                        // missing expression.)
                         return expr;
                     }
                 };
@@ -1137,7 +1105,7 @@ public class RolapStar {
             }
 
             StringBuilder buf = new StringBuilder(64);
-            predicate.toSql(sqlQuery, buf);
+            predicate.toSql(dialect, buf);
             return buf.toString();
         }
 
@@ -1157,75 +1125,16 @@ public class RolapStar {
          * @param prefix Prefix to print first, such as spaces for indentation
          */
         public void print(PrintWriter pw, String prefix) {
-            SqlQuery sqlQuery = getSqlQuery();
             pw.print(prefix);
             pw.print(getName());
             pw.print(" (");
             pw.print(getBitPosition());
             pw.print("): ");
-            pw.print(generateExprString(sqlQuery));
+            pw.print(generateExprString(getTable().getStar().getDialect()));
         }
 
         public Datatype getDatatype() {
             return datatype;
-        }
-
-        /**
-         * Returns a string representation of the datatype of this column, in
-         * the dialect specified. For example, 'DECIMAL(10, 2) NOT NULL'.
-         *
-         * @param dialect Dialect
-         * @return String representation of column's datatype
-         */
-        @Deprecated(since = "StefanBischof - thios seems not to be used may be removed after check")
-        public String getDatatypeString(Dialect dialect, boolean formatted) {
-            final SqlQuery query = new SqlQuery(dialect, formatted);
-            query.addFrom(
-                table.star.factTable.relation, table.star.factTable.alias,
-                false);
-            query.addFrom(table.relation, table.alias, false);
-            query.addSelect(RolapStar.generateExprString(expression, query), null);
-            final String sql = query.toString();
-            Connection jdbcConnection = null;
-            try {
-                jdbcConnection = table.star.context.getDataSource().getConnection();
-                final PreparedStatement pstmt =
-                    jdbcConnection.prepareStatement(sql);
-                final ResultSetMetaData resultSetMetaData =
-                    pstmt.getMetaData();
-                assert resultSetMetaData.getColumnCount() == 1;
-                final String type = resultSetMetaData.getColumnTypeName(1);
-                int precision = resultSetMetaData.getPrecision(1);
-                final int scale = resultSetMetaData.getScale(1);
-                if (type.equals("DOUBLE")) {
-                    precision = 0;
-                }
-                String typeString;
-                if (precision == 0) {
-                    typeString = type;
-                } else if (scale == 0) {
-                    typeString = new StringBuilder(type).append("(").append(precision).append(")").toString();
-                } else {
-                    typeString = new StringBuilder(type).append("(")
-                        .append(precision).append(", ").append(scale).append(")").toString();
-                }
-                pstmt.close();
-                jdbcConnection.close();
-                jdbcConnection = null;
-                return typeString;
-            } catch (SQLException e) {
-                throw Util.newError(
-                    e,
-                    "Error while deriving type of column " + toString());
-            } finally {
-                if (jdbcConnection != null) {
-                    try {
-                        jdbcConnection.close();
-                    } catch (SQLException e) {
-                        // ignore
-                    }
-                }
-            }
         }
 
         public BestFitColumnType getInternalType() {
@@ -1287,7 +1196,6 @@ public class RolapStar {
 
         @Override
 		public void print(PrintWriter pw, String prefix) {
-            SqlQuery sqlQuery = super.getSqlQuery();
             pw.print(prefix);
             pw.print(getName());
             pw.print(" (");
@@ -1297,7 +1205,7 @@ public class RolapStar {
                 aggregator.getExpression(
                     getExpression() == null
                         ? null
-                        : super.generateExprString(sqlQuery)));
+                        : super.generateExprString(getTable().getStar().getDialect())));
         }
 
         public String getCubeName() {
@@ -1468,11 +1376,8 @@ public class RolapStar {
             return null;
         }
 
-        RolapStar getStar() {
+        public RolapStar getStar() {
             return star;
-        }
-        private SqlQuery getSqlQuery() {
-            return getStar().getSqlQuery();
         }
         public org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource getRelation() {
             return relation;
@@ -1579,13 +1484,26 @@ public class RolapStar {
                 ? level.getName()
                 : new StringBuilder(level.getName()).append(" (Key)").toString();
 
+            // The star column renders key-value literals with this datatype. A level may
+            // declare a logical String type over a physically numeric key column (e.g.
+            // type="String" on customer_id INTEGER); quoting the key values as strings
+            // ('3') is invalid against the numeric column on strictly-typed dialects
+            // (Derby: "Comparisons between INTEGER and CHAR not supported"), so prefer
+            // the physical datatype for SQL generation when it is known and numeric.
+            Datatype keyDatatype = level.getDatatype();
+            Datatype physicalKeyDatatype = level.getKeyColumnPhysicalDatatype();
+            if (keyDatatype == Datatype.VARCHAR
+                    && physicalKeyDatatype != null && physicalKeyDatatype.isNumeric()) {
+                keyDatatype = physicalKeyDatatype;
+            }
+
             // If the nameColumn is not null, then it is associated with this
             // column.
             Column column = makeColumnForLevelExpr(
                 level,
                 name,
                 level.getKeyExp(),
-                level.getDatatype(),
+                keyDatatype,
                 level.getInternalType(),
                 nameColumn,
                 parentColumn,
@@ -1915,7 +1833,7 @@ public class RolapStar {
          *     calculation, false if you are retrieving members.
          */
         public void addToFrom(
-            SqlQuery query,
+            QueryRecorder query,
             boolean failIfExists,
             boolean joinToParent)
         {
@@ -1926,10 +1844,13 @@ public class RolapStar {
                     parent.addToFrom(query, failIfExists, joinToParent);
                 }
                 if (joinCondition != null) {
-                    query.addWhere(joinCondition.toString(query));
+                    // Feed the structured join condition (dialect-free FromJoin edge → ANSI JOIN…ON), not a
+                    // dialect-rendered WHERE string.
+                    query.addWhere(joinCondition);
                 }
             }
         }
+
 
         /**
          * Returns a list of child {@link Table}s.
@@ -2112,18 +2033,34 @@ public class RolapStar {
         public SqlExpression getLeft() {
             return left;
         }
-        public String getLeft(final SqlQuery query) {
-            return RolapStar.generateExprString(this.left, query);
-        }
         public SqlExpression getRight() {
             return right;
         }
-        public String getRight(final SqlQuery query) {
-            return RolapStar.generateExprString(this.right, query);
+
+        /** A join-condition side resolved to a query alias + column name (plain column case). */
+        public record JoinColumn(String tableAlias, String columnName) {
         }
-        public String toString(SqlQuery query) {
-            return new StringBuilder(RolapStar.generateExprString(left, query)).append(" = ")
-                .append(RolapStar.generateExprString(right, query)).toString();
+
+        /** The left side as a {@link JoinColumn} when it is a plain column reference, else empty. */
+        public java.util.Optional<JoinColumn> leftColumn() {
+            return asColumn(left);
+        }
+
+        /** The right side as a {@link JoinColumn} when it is a plain column reference, else empty. */
+        public java.util.Optional<JoinColumn> rightColumn() {
+            return asColumn(right);
+        }
+
+        private static java.util.Optional<JoinColumn> asColumn(SqlExpression expr) {
+            if (expr instanceof org.eclipse.daanse.rolap.element.RolapColumn rc) {
+                return java.util.Optional.of(new JoinColumn(rc.getTable(), rc.getName()));
+            }
+            return java.util.Optional.empty();
+        }
+        /** The {@code left = right} condition rendered with only a {@link Dialect}. */
+        public String toString(Dialect dialect) {
+            return new StringBuilder(RolapStar.generateExprString(left, dialect)).append(" = ")
+                .append(RolapStar.generateExprString(right, dialect)).toString();
         }
         @Override
 		public int hashCode() {
@@ -2152,7 +2089,7 @@ public class RolapStar {
          * Prints this table and its children.
          */
         public void print(PrintWriter pw, String prefix) {
-            SqlQuery sqlQueuy = table.getSqlQuery();
+            Dialect dialect = table.star.getDialect();
             pw.print(prefix);
             pw.println("Condition:");
             String subprefix = new StringBuilder(prefix).append("  ").toString();
@@ -2168,11 +2105,11 @@ public class RolapStar {
                     pw.print(") ");
                 }
              }
-            pw.println(RolapStar.generateExprString(left, sqlQueuy));
+            pw.println(RolapStar.generateExprString(left, dialect));
 
             pw.print(subprefix);
             pw.print("right=");
-            pw.println(RolapStar.generateExprString(right,sqlQueuy));
+            pw.println(RolapStar.generateExprString(right, dialect));
         }
     }
 

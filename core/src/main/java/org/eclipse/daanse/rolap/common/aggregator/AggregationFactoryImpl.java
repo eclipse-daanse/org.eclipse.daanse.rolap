@@ -15,7 +15,6 @@ package org.eclipse.daanse.rolap.common.aggregator;
 import java.util.List;
 import java.util.Optional;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.olap.api.agg.AggregationFactory;
 import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.olap.api.aggregator.CustomAggregatorFactory;
@@ -35,11 +34,9 @@ import org.eclipse.daanse.rolap.element.RolapColumn;
 
 public class AggregationFactoryImpl implements AggregationFactory{
 
-    private Dialect dialect;
     private List<CustomAggregatorFactory> customAggregators;
 
-    public AggregationFactoryImpl(Dialect dialect, List<CustomAggregatorFactory> customAggregators) {
-        this.dialect = dialect;
+    public AggregationFactoryImpl(List<CustomAggregatorFactory> customAggregators) {
         this.customAggregators = customAggregators;
     }
 
@@ -66,22 +63,22 @@ public class AggregationFactoryImpl implements AggregationFactory{
     }
 
     private Aggregator getListAggAggregator(org.eclipse.daanse.rolap.mapping.model.olap.cube.measure.TextAggMeasure i) {
-        return new ListAggAggregator(i.isDistinct(), i.getSeparator(), getOrderedColumns(i.getOrderByColumns()), i.getCoalesce(), i.getOnOverflowTruncate(), dialect);
+        return new ListAggAggregator(i.isDistinct(), i.getSeparator(), getOrderedColumns(i.getOrderByColumns()), i.getCoalesce(), i.getOnOverflowTruncate());
     }
 
     private Aggregator getNthValueAggregator(org.eclipse.daanse.rolap.mapping.model.olap.cube.measure.NthAggMeasure i) {
         return new NthValueAggregator(i.isIgnoreNulls(), i.getN(),
-                getOrderedColumns(i.getOrderByColumns()), dialect);
+                getOrderedColumns(i.getOrderByColumns()));
     }
 
     private Aggregator getPercentileAggregator(org.eclipse.daanse.rolap.mapping.model.olap.cube.measure.PercentileMeasure measure) {
     	org.eclipse.daanse.rolap.mapping.model.database.relational.OrderedColumn oc = measure.getColumn();
             return new PercentileAggregator(measure.getPercentType(), measure.getPercentile(),
-                    new RolapColumn(((org.eclipse.daanse.cwm.model.cwm.resource.relational.NamedColumnSet) oc.getColumn().getOwner()).getName(), oc.getColumn().getName(), SortingDirection.valueOf(oc.getDirection().name())), dialect);
+                    new RolapColumn(((org.eclipse.daanse.cwm.model.cwm.resource.relational.NamedColumnSet) oc.getColumn().getOwner()).getName(), oc.getColumn().getName(), SortingDirection.valueOf(oc.getDirection().name())));
     }
 
     private Aggregator getBitAggAggregator(org.eclipse.daanse.rolap.mapping.model.olap.cube.measure.BitAggMeasure measure) {
-        return new BitAggAggregator(measure.isNot(), measure.getAggType(), dialect);
+        return new BitAggAggregator(measure.isNot(), measure.getAggType());
     }
 
     private List<RolapColumn> getOrderedColumns(List<? extends org.eclipse.daanse.rolap.mapping.model.database.relational.OrderedColumn> orderByColumns) {

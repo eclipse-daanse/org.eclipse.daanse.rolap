@@ -32,7 +32,7 @@ import java.util.List;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.key.BitKey;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
-import org.eclipse.daanse.rolap.common.sql.SqlQuery;
+import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.star.StarPredicate;
 import org.eclipse.daanse.rolap.element.RolapCube;
@@ -336,7 +336,7 @@ public class MemberTuplePredicate implements StarPredicate {
     }
 
     @Override
-	public void toSql(SqlQuery sqlQuery, StringBuilder buf) {
+	public void toSql(Dialect dialect, StringBuilder buf) {
         throw Util.needToImplement(this);
     }
 }

@@ -16,6 +16,7 @@ import org.eclipse.daanse.olap.api.calc.Calc;
 import org.eclipse.daanse.olap.api.calc.tuple.TupleList;
 import org.eclipse.daanse.olap.api.evaluator.Evaluator;
 import org.eclipse.daanse.rolap.aggregator.AbstractAggregator;
+import org.eclipse.daanse.sql.statement.api.expression.SqlExpression;
 
 /**
  * This is the base class for implementing aggregators over sum and average
@@ -29,9 +30,14 @@ public abstract class AbstractFactCountBasedAggregator extends AbstractAggregato
 
     protected final String factCountExpr;
 
-    protected AbstractFactCountBasedAggregator(final String name, final String factCountExpr) {
+    /** Dialect-free node twin of {@link #factCountExpr}: the agg table's fact-count column. */
+    protected final SqlExpression factCountNode;
+
+    protected AbstractFactCountBasedAggregator(final String name, final String factCountExpr,
+            final SqlExpression factCountNode) {
         super(name, false);
         this.factCountExpr = factCountExpr;
+        this.factCountNode = factCountNode;
     }
 
     @Override
@@ -42,4 +48,12 @@ public abstract class AbstractFactCountBasedAggregator extends AbstractAggregato
     public abstract boolean alwaysRequiresFactColumn();
 
     public abstract String getScalarExpression(String operand);
+
+    /**
+     * Dialect-free node twin of {@link #getScalarExpression(String)}: composes {@code operand} with
+     * {@link #factCountNode} so the render is byte-identical to the string form (each side individually
+     * parenthesized via the empty-name Function paren wrapper, joined by a non-parenthesized infix).
+     * Only defined where {@link #alwaysRequiresFactColumn()} is {@code true}.
+     */
+    public abstract SqlExpression getScalarNode(SqlExpression operand);
 }

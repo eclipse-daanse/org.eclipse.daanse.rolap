@@ -25,13 +25,14 @@ package org.eclipse.daanse.rolap.common.sql;
 
 import java.util.List;
 
+import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.jdbc.db.dialect.api.type.Datatype;
 import org.eclipse.daanse.olap.api.evaluator.Evaluator;
 import org.eclipse.daanse.olap.api.sql.SqlExpression;
 import  org.eclipse.daanse.olap.util.Pair;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;
-import org.eclipse.daanse.rolap.common.constraint.SqlConstraintUtils;
+import org.eclipse.daanse.rolap.common.constraint.LevelConstraintGenerator;
 import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.element.RolapLevel;
 
@@ -60,30 +61,39 @@ public class MemberKeyConstraint
         cacheKey = Pair.of(columnList, valueList);
     }
 
+    /**
+     * Records one {@code constrainKeyValue} WHERE conjunct per key column on the fork.
+     */
     @Override
-	public void addConstraint(
-        SqlQuery sqlQuery, RolapCube baseCube, AggStar aggStar)
+    public QueryTape addConstraintOps(
+        Dialect dialect, QueryRecorder.Fork fork, RolapCube baseCube, AggStar aggStar)
     {
         for (int i = 0; i < columnList.size(); i++) {
             SqlExpression expression = columnList.get(i);
             final Comparable value = valueList.get(i);
             final Datatype datatype = datatypeList.get(i);
-            sqlQuery.addWhere(
-                SqlConstraintUtils.constrainLevel2(
-                    sqlQuery,
+            fork.addWhere(
+                LevelConstraintGenerator.constrainKeyValue(
+                    dialect,
                     expression,
                     datatype,
                     value));
         }
+        return fork.ops();
     }
 
+    /**
+     * No per-level restriction: the contribution is the fork's empty tape.
+     */
     @Override
-	public void addLevelConstraint(
-        SqlQuery sqlQuery,
+    public QueryTape addLevelConstraintOps(
+        Dialect dialect,
+        QueryRecorder.Fork fork,
         RolapCube baseCube,
         AggStar aggStar,
         RolapLevel level)
     {
+        return fork.ops();
     }
 
     @Override
@@ -112,5 +122,36 @@ public class MemberKeyConstraint
     @Override
     public boolean supportsAggTables() {
         return true;
+    }
+
+    /**
+     * The generic-builder counterpart of {@link #addConstraint}: each {@code column = value} (or
+     * {@code IS NULL}) as a builder {@code WHERE} predicate, with no fact join (a dimension-only key
+     * restriction). Mirrors {@link LevelConstraintGenerator#constrainKeyValue}.
+     */
+    @Override
+    public java.util.Optional<ConstraintContribution> toContribution(RolapCube baseCube, AggStar aggStar) {
+        java.util.List<org.eclipse.daanse.sql.statement.api.expression.Predicate> predicates =
+            new java.util.ArrayList<>();
+        for (int i = 0; i < columnList.size(); i++) {
+            org.eclipse.daanse.sql.statement.api.expression.SqlExpression col =
+                org.eclipse.daanse.rolap.common.sqlbuild.JoinPlanner.expressionFor(columnList.get(i));
+            Comparable value = valueList.get(i);
+            if (value == org.eclipse.daanse.olap.common.Util.sqlNullValue) {
+                predicates.add(org.eclipse.daanse.sql.statement.api.Predicates.isNull(col));
+            } else {
+                predicates.add(org.eclipse.daanse.sql.statement.api.Predicates.comparison(col,
+                    org.eclipse.daanse.sql.statement.api.expression.ComparisonOperator.EQ,
+                    org.eclipse.daanse.sql.statement.api.Expressions.literal(value, datatypeList.get(i))));
+            }
+        }
+        if (predicates.isEmpty()) {
+            // No key columns to constrain — fall back rather than build unconstrained authoritatively.
+            return java.util.Optional.empty();
+        }
+        org.eclipse.daanse.sql.statement.api.expression.Predicate where = (predicates.size() == 1)
+            ? predicates.get(0)
+            : org.eclipse.daanse.sql.statement.api.Predicates.and(predicates);
+        return java.util.Optional.of(new ConstraintContribution(java.util.Optional.of(where), java.util.List.of()));
     }
 }

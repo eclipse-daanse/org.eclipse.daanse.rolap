@@ -68,6 +68,7 @@ import org.eclipse.daanse.olap.spi.SegmentColumn;
 import org.eclipse.daanse.olap.spi.SegmentHeader;
 import  org.eclipse.daanse.olap.util.CancellationChecker;
 import  org.eclipse.daanse.olap.util.Pair;
+import org.eclipse.daanse.sql.statement.api.render.RenderedSql;
 import org.eclipse.daanse.rolap.common.RolapUtil;
 import org.eclipse.daanse.rolap.common.SqlStatement;
 import org.eclipse.daanse.rolap.common.agg.SegmentCacheManager.AbortException;
@@ -485,7 +486,7 @@ public class SegmentLoader {
   public SqlStatement createExecuteSql( int cellRequestCount, final GroupingSetsList groupingSetsList,
       List<StarPredicate> compoundPredicateList, boolean useAggregates ) {
     RolapStar star = groupingSetsList.getStar();
-    Pair<String, List<BestFitColumnType>> pair =
+    RenderedSql pair =
         AggregationManager.generateSql( groupingSetsList, compoundPredicateList, useAggregates );
     ExecutionMetadata metadata = ExecutionMetadata.of(
         "Segment.load",
@@ -543,7 +544,7 @@ public class SegmentLoader {
     };
 
     try {
-      return RolapUtil.executeQuery( star.getContext(), pair.left, pair.right, 0, 0, executionContext, -1, -1,
+      return RolapUtil.executeQuery( star.getContext(), pair.sql(), pair.columnTypes(), 0, 0, executionContext, -1, -1,
           // Only one of the two callbacks are required, depending if we
           // cache the segments or not.
           cacheMgr.getContext().getConfigValue(ConfigConstants.DISABLE_CACHING, ConfigConstants.DISABLE_CACHING_DEFAULT_VALUE, Boolean.class) ? callbackNoCaching : callbackWithCaching );

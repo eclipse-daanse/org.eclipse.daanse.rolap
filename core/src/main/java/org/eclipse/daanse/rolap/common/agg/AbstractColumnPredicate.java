@@ -27,7 +27,7 @@
 
 package org.eclipse.daanse.rolap.common.agg;
 
-import static org.eclipse.daanse.rolap.common.util.ExpressionUtil.genericExpression;
+import static org.eclipse.daanse.rolap.common.util.SqlExpressionResolver.genericSql;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -35,7 +35,7 @@ import java.util.List;
 
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.key.BitKey;
-import org.eclipse.daanse.rolap.common.sql.SqlQuery;
+import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.star.StarColumnPredicate;
 import org.eclipse.daanse.rolap.common.star.StarPredicate;
@@ -60,7 +60,7 @@ public abstract class AbstractColumnPredicate implements StarColumnPredicate {
     @Override
 	public String toString() {
         final StringBuilder buf = new StringBuilder();
-        buf.append(genericExpression(constrainedColumn.getExpression()));
+        buf.append(genericSql(constrainedColumn.getExpression()));
         describe(buf);
         return buf.toString();
     }
@@ -151,7 +151,7 @@ public abstract class AbstractColumnPredicate implements StarColumnPredicate {
     }
 
     @Override
-	public void toSql(SqlQuery sqlQuery, StringBuilder buf) {
+	public void toSql(Dialect dialect, StringBuilder buf) {
         throw Util.needToImplement(this);
     }
 

@@ -18,7 +18,6 @@ import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.regex.Pattern;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.jdbc.db.dialect.api.sql.OrderedColumn;
 import org.eclipse.daanse.jdbc.db.dialect.api.generator.SortDirection;
 import org.eclipse.daanse.olap.api.DataTypeJdbc;
@@ -26,25 +25,39 @@ import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.olap.api.calc.Calc;
 import org.eclipse.daanse.olap.api.calc.tuple.TupleList;
 import org.eclipse.daanse.olap.api.evaluator.Evaluator;
+import org.eclipse.daanse.rolap.aggregator.NodeAggregate;
 import org.eclipse.daanse.rolap.element.RolapColumn;
+import org.eclipse.daanse.sql.statement.api.expression.SqlExpression;
 
-public class ListAggAggregator implements Aggregator {
+public class ListAggAggregator implements Aggregator, NodeAggregate {
 
     private boolean distinct;
     private String separator;
     private List<RolapColumn> columns;
     private String coalesce;
     private String onOverflowTruncate;
-    private Dialect dialect;
-    
+
     //
-    public ListAggAggregator(boolean distinct, String separator, List<RolapColumn> columns, String coalesce, String onOverflowTruncate, Dialect dialect) {
+    public ListAggAggregator(boolean distinct, String separator, List<RolapColumn> columns, String coalesce, String onOverflowTruncate) {
         this.distinct = distinct;
         this.separator = separator;
         this.columns = columns;
         this.coalesce = coalesce;
         this.onOverflowTruncate = onOverflowTruncate;
-        this.dialect = dialect;
+    }
+
+    @Override
+    public SqlExpression toNode(SqlExpression operand) {
+        List<OrderedColumn> columnsList = List.of();
+        if (columns != null) {
+            columnsList = columns.stream()
+                .map(c -> new OrderedColumn(c.getName(), c.getTable(),
+                    org.eclipse.daanse.olap.api.sql.SortingDirection.NONE.equals(c.getSortingDirection()) ? Optional.empty() : Optional.of(SortDirection.valueOf(c.getSortingDirection().name())),
+                    Optional.empty()))
+                .toList();
+        }
+        return new SqlExpression.ExtraAggregate(Optional.ofNullable(operand),
+                new SqlExpression.ExtraAggregate.Spec.ListAgg(distinct, separator, coalesce, onOverflowTruncate, columnsList));
     }
 
     @Override
@@ -62,15 +75,7 @@ public class ListAggAggregator implements Aggregator {
 
     @Override
     public StringBuilder getExpression(CharSequence operand) {
-        List<OrderedColumn> columnsList = List.of();
-        if (columns != null) {
-            columnsList = columns.stream()
-                .map(c -> new OrderedColumn(c.getName(), c.getTable(),
-                    org.eclipse.daanse.olap.api.sql.SortingDirection.NONE.equals(c.getSortingDirection()) ? Optional.empty() : Optional.of(SortDirection.valueOf(c.getSortingDirection().name())),
-                    Optional.empty()))
-                .toList();
-        }
-        return dialect.aggregationGenerator().generateListAgg(operand, distinct, separator, coalesce, onOverflowTruncate, columnsList).map(StringBuilder::new).orElse(null);
+        return new StringBuilder(getName()).append('(').append(operand).append(')');
     }
 
     @Override

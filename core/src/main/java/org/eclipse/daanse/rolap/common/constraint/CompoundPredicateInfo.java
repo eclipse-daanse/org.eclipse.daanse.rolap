@@ -42,11 +42,11 @@ import org.eclipse.daanse.olap.exceptions.UnsupportedCalculatedMemberException;
 import org.eclipse.daanse.olap.key.BitKey;
 import org.eclipse.daanse.olap.query.component.ResolvedFunCallImpl;
 import  org.eclipse.daanse.olap.util.Pair;
+import org.eclipse.daanse.rolap.common.SqlRender;
 import org.eclipse.daanse.rolap.common.agg.AndPredicate;
 import org.eclipse.daanse.rolap.common.agg.ListColumnPredicate;
 import org.eclipse.daanse.rolap.common.agg.OrPredicate;
 import org.eclipse.daanse.rolap.common.agg.ValueColumnPredicate;
-import org.eclipse.daanse.rolap.common.sql.SqlQuery;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.star.StarColumnPredicate;
 import org.eclipse.daanse.rolap.common.star.StarPredicate;
@@ -106,11 +106,7 @@ public class CompoundPredicateInfo {
     if ( star == null || predicate == null ) {
       return null;
     }
-    final StringBuilder buf = new StringBuilder();
-    SqlQuery query = new SqlQuery( star.getSqlQueryDialect(), star.getContext().getConfigValue(ConfigConstants.GENERATE_FORMATTED_SQL, ConfigConstants.GENERATE_FORMATTED_SQL_DEFAULT_VALUE, Boolean.class) );
-    buf.setLength( 0 );
-    predicate.toSql( query, buf );
-    return buf.toString();
+    return SqlRender.renderPredicate( org.eclipse.daanse.rolap.common.sqlbuild.StarPredicateTranslator.toPredicate( predicate ), star.getDialect() );
   }
 
   private static RolapStar getStar( RolapMeasure measure ) {
@@ -385,7 +381,7 @@ public class CompoundPredicateInfo {
 
   private StarPredicate makeUnaryPredicate( RolapCubeMember member, RolapCube baseCube, Evaluator evaluator ) {
     TupleConstraintStruct constraint = new TupleConstraintStruct();
-    SqlConstraintUtils.expandSupportedCalculatedMember( member, evaluator, constraint );
+    CalculatedMemberExpander.expandSupportedCalculatedMember( member, evaluator, constraint );
     List<Member> expandedMemberList = constraint.getMembers();
     for ( Member checkMember : expandedMemberList ) {
       if ( checkMember == null || checkMember.isCalculated() || !( checkMember instanceof RolapCubeMember ) ) {

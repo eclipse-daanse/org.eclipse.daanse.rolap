@@ -13,13 +13,12 @@
  */
 package org.eclipse.daanse.rolap.common.util;
 
-import static org.eclipse.daanse.rolap.common.util.SQLUtil.toCodeSetSqlStatement;
 
-import org.eclipse.daanse.rolap.common.sql.SqlQuery;
+
 
 public class ViewUtil {
-    public static SqlQuery.CodeSet getCodeSet(org.eclipse.daanse.rolap.mapping.model.database.source.SqlSelectSource view) {
-        return toCodeSetSqlStatement(view.getSql().getDialectStatements());
+    public static ViewCodeSet getCodeSet(org.eclipse.daanse.rolap.mapping.model.database.source.SqlSelectSource view) {
+        return ViewCodeSet.fromMappingSqlStatement(view.getSql().getDialectStatements());
     }
 
 }

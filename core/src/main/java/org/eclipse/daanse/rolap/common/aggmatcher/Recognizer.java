@@ -26,7 +26,7 @@
 
 package org.eclipse.daanse.rolap.common.aggmatcher;
 
-import static org.eclipse.daanse.rolap.common.util.ExpressionUtil.getExpression;
+import static org.eclipse.daanse.rolap.common.util.SqlExpressionResolver.render;
 import static org.eclipse.daanse.rolap.common.util.RelationUtil.getAlias;
 
 import java.text.MessageFormat;
@@ -53,7 +53,6 @@ import org.eclipse.daanse.rolap.aggregator.countbased.AvgFromAvgAggregator;
 import org.eclipse.daanse.rolap.aggregator.countbased.AvgFromSumAggregator;
 import org.eclipse.daanse.rolap.aggregator.countbased.SumFromAvgAggregator;
 import org.eclipse.daanse.rolap.common.Utils;
-import org.eclipse.daanse.rolap.common.sql.SqlQuery;
 import org.eclipse.daanse.rolap.common.star.HierarchyUsage;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.element.RolapCatalog;
@@ -902,7 +901,7 @@ public abstract class Recognizer {
         // average column.
         if (factAgg == AvgAggregator.INSTANCE) {
             String columnExpr = getFactCountExpr(aggUsage);
-            return new AvgFromSumAggregator(columnExpr);
+            return new AvgFromSumAggregator(columnExpr, getFactCountNode(aggUsage));
         } else {
             return factAgg;
         }
@@ -936,15 +935,16 @@ public abstract class Recognizer {
         Aggregator rollupAgg = null;
 
         String columnExpr = getFactCountExpr(aggUsage);
+        org.eclipse.daanse.sql.statement.api.expression.SqlExpression columnNode = getFactCountNode(aggUsage);
         if (factAgg == AvgAggregator.INSTANCE) {
             if (siblingAgg == AvgAggregator.INSTANCE) {
-                rollupAgg = new AvgFromAvgAggregator(columnExpr);
+                rollupAgg = new AvgFromAvgAggregator(columnExpr, columnNode);
             } else if (siblingAgg == SumAggregator.INSTANCE) {
-                rollupAgg = new AvgFromSumAggregator(columnExpr);
+                rollupAgg = new AvgFromSumAggregator(columnExpr, columnNode);
             }
         } else if (factAgg == SumAggregator.INSTANCE) {
             if (siblingAgg == AvgAggregator.INSTANCE|| siblingAgg instanceof AvgFromAvgAggregator) {
-                rollupAgg = new SumFromAvgAggregator(columnExpr);
+                rollupAgg = new SumFromAvgAggregator(columnExpr, columnNode);
             }
         } else if (factAgg == DistinctCountAggregator.INSTANCE) {
             rollupAgg = factAgg;
@@ -1012,8 +1012,20 @@ public abstract class Recognizer {
         // we want the fact count expression
         org.eclipse.daanse.rolap.element.RolapColumn column =
             new org.eclipse.daanse.rolap.element.RolapColumn(tableName, factCountColumnName);
-        SqlQuery sqlQuery = star.getSqlQuery();
-        return getExpression(column, sqlQuery);
+        return render(column, star.getDialect());
+    }
+
+    /**
+     * Dialect-free node twin of {@link #getFactCountExpr(JdbcSchema.Table.Column.Usage)}: the same
+     * agg-table-qualified fact-count column ({@code aggTable.getName()} / fact count column name),
+     * rendered per dialect as {@code "table"."column"} by the statement renderer instead of being
+     * pre-rendered here at agg-recognition time.
+     */
+    protected org.eclipse.daanse.sql.statement.api.expression.SqlExpression getFactCountNode(
+            final JdbcSchema.Table.Column.Usage aggUsage) {
+        return org.eclipse.daanse.sql.statement.api.Expressions.column(
+            org.eclipse.daanse.sql.statement.api.model.TableAlias.of(aggTable.getName()),
+            getFactCountColumnName(aggUsage));
     }
 
     /**

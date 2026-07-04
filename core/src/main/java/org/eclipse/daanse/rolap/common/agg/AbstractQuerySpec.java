@@ -36,11 +36,17 @@ import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.jdbc.db.dialect.api.type.BestFitColumnType;
 import org.eclipse.daanse.olap.api.sql.SortingDirection;
 import org.eclipse.daanse.olap.common.Util;
-import  org.eclipse.daanse.olap.util.Pair;
-import org.eclipse.daanse.rolap.common.sql.SqlQuery;
+import org.eclipse.daanse.sql.statement.api.render.RenderedSql;
+import org.eclipse.daanse.rolap.common.sql.QueryRecorder;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.star.StarColumnPredicate;
 import org.eclipse.daanse.rolap.common.star.StarPredicate;
+import org.eclipse.daanse.rolap.common.sqlbuild.AggregateSqlMapper;
+import org.eclipse.daanse.rolap.common.sqlbuild.SqlBuildGuard;
+import org.eclipse.daanse.rolap.common.sqlbuild.StarPredicateTranslator;
+import org.eclipse.daanse.sql.statement.api.expression.Predicate;
+import org.eclipse.daanse.sql.statement.api.model.SelectStatement;
+import java.util.ArrayList;
 
 /**
  * Base class for {@link QuerySpec} implementations.
@@ -71,8 +77,8 @@ public abstract class AbstractQuerySpec implements QuerySpec {
      *
      * @return a new query object
      */
-    protected SqlQuery newSqlQuery() {
-        return getStar().getSqlQuery();
+    protected QueryRecorder newQuery() {
+        return getStar().newQueryRecorder();
     }
 
     @Override
@@ -84,38 +90,86 @@ public abstract class AbstractQuerySpec implements QuerySpec {
      * Adds a measure to a query.
      *
      * @param i Ordinal of measure
-     * @param sqlQuery Query object
+     * @param query Query object
      */
-    protected void addMeasure(final int i, final SqlQuery sqlQuery) {
+    protected void addMeasure(final int i, final QueryRecorder query) {
         RolapStar.Measure measure = getMeasure(i);
         if (!isPartOfSelect(measure)) {
             return;
         }
         Util.assertTrue(measure.getTable() == getStar().getFactTable());
-        measure.getTable().addToFrom(sqlQuery, false, true);
+        measure.getTable().addToFrom(query, false, true);
 
-        String exprInner =
+        // Dialect-generator aggregators (PERCENTILE / LISTAGG / bitwise / NTH_VALUE) build a dialect-free
+        // ExtraAggregate node the renderer turns into dialect SQL at render (the same
+        // dialect.aggregationGenerator() call). The operand is the measure
+        // column node (plain Column / computed RawVariant), or null for aggregators that take their own column.
+        if (measure.getAggregator() instanceof org.eclipse.daanse.rolap.aggregator.NodeAggregate na) {
+            org.eclipse.daanse.sql.statement.api.expression.SqlExpression operandNode =
+                measure.getExpression() == null ? null
+                    : (measure.getExpression() instanceof org.eclipse.daanse.rolap.element.RolapColumn
+                        ? org.eclipse.daanse.rolap.common.sqlbuild.JoinPlanner.expressionFor(measure.getExpression())
+                        : org.eclipse.daanse.sql.statement.api.Expressions.rawVariant(
+                            org.eclipse.daanse.rolap.common.util.SqlExpressionResolver.sqlVariants(
+                                measure.getExpression())));
+            query.addSelectNodeCommented(na.toNode(operandNode), measure.getInternalType(), getMeasureAlias(i),
+                "measure " + measure.getName() + " (" + measure.getAggregator().getName() + ")");
+            return;
+        }
+
+        // Dialect-free path: the measure column as a builder node — count(*) for a null expression, a plain
+        // Column for a RolapColumn, else a computed RawVariant the renderer resolves per dialect at
+        // render — wrapped by a simple aggregator (sum/count/avg/min/
+        // max/distinct-count) as an Aggregate node. Only composite / non-node aggregators (getExpression(node)
+        // == null) fall back to the rendered-string path below; a computed expression always takes the
+        // RawVariant node (generateExprString rejects computed columns).
+        org.eclipse.daanse.sql.statement.api.expression.SqlExpression innerNode =
             measure.getExpression() == null
-                ? "*"
-                : measure.generateExprString(sqlQuery);
-        StringBuilder exprOuter = measure.getAggregator().getExpression(exprInner);
-        sqlQuery.addSelect(
-            exprOuter,
-            measure.getInternalType(),
-            getMeasureAlias(i));
+                ? org.eclipse.daanse.sql.statement.api.Expressions.star()
+                : (measure.getExpression() instanceof org.eclipse.daanse.rolap.element.RolapColumn
+                    ? org.eclipse.daanse.rolap.common.sqlbuild.JoinPlanner.expressionFor(measure.getExpression())
+                    : org.eclipse.daanse.sql.statement.api.Expressions.rawVariant(
+                        org.eclipse.daanse.rolap.common.util.SqlExpressionResolver.sqlVariants(
+                            measure.getExpression())));
+        org.eclipse.daanse.sql.statement.api.expression.SqlExpression outerNode =
+            (innerNode != null
+                && measure.getAggregator() instanceof org.eclipse.daanse.rolap.aggregator.AbstractAggregator agg)
+                ? agg.getExpression(innerNode)
+                : null;
+        if (outerNode != null) {
+            // Keep the explicit measure alias (m{i}) in both cases; the comment is added only when on and
+            // shows solely in the diagnostic copy (executed SQL byte-identical).
+            query.addSelectNodeCommented(outerNode, measure.getInternalType(), getMeasureAlias(i),
+                "measure " + measure.getName() + " (" + measure.getAggregator().getName() + ")");
+        } else {
+            // Render the inner node (count(*) / plain column / computed RawVariant) to its dialect string;
+            // a computed column renders via its RawVariant instead of being rejected.
+            String exprInner = org.eclipse.daanse.rolap.common.SqlRender.renderExpression(
+                innerNode, getStar().getDialect());
+            StringBuilder exprOuter = measure.getAggregator().getExpression(exprInner);
+            query.addSelect(
+                exprOuter,
+                measure.getInternalType(),
+                getMeasureAlias(i));
+        }
     }
 
     protected abstract boolean isAggregate();
 
-    protected Map<String, String> nonDistinctGenerateSql(SqlQuery sqlQuery)
+    protected Map<RolapStar.Column, String> nonDistinctGenerateSql(QueryRecorder query)
     {
         //First add fact table to From.
-        getStar().getFactTable().addToFrom(sqlQuery, false, false);
+        getStar().getFactTable().addToFrom(query, false, false);
+        if (getMeasureCount() > 0) {
+            // Coarse aggregate context: a base (real fact) read; name the cube the measures belong to.
+            query.setHeaderComment("segment cube " + getMeasure(0).getCubeName());
+            query.setFooterComment("segment request");
+        }
         // add constraining dimensions
         RolapStar.Column[] columns = getColumns();
         int arity = columns.length;
         if (countOnly) {
-            sqlQuery.addSelect("count(*)", BestFitColumnType.INT);
+            query.addSelect("count(*)", BestFitColumnType.INT);
         }
         for (int i = 0; i < arity; i++) {
             RolapStar.Column column = columns[i];
@@ -124,18 +178,30 @@ public abstract class AbstractQuerySpec implements QuerySpec {
                 // this is a funky dimension -- ignore for now
                 continue;
             }
-            table.addToFrom(sqlQuery, false, true);
-
-            String expr = column.generateExprString(sqlQuery);
+            table.addToFrom(query, false, true);
 
             StarColumnPredicate predicate = getColumnPredicate(i);
-            final String where = RolapStar.Column.createInExpr(
-                expr,
-                predicate,
-                column.getDatatype(),
-                sqlQuery);
-            if (!where.equals("true")) {
-                sqlQuery.addWhere(where);
+            if (predicate.getConstrainedColumn() != null) {
+                // Dialect-free path: the predicate carries its own column (renders to the same expr),
+                // so translate it to a builder Predicate instead of a raw dialect-rendered string.
+                // always-true (createInExpr would have returned "true") adds no restriction: skip it.
+                if (!org.eclipse.daanse.rolap.common.sqlbuild.StarPredicateTranslator.isAlwaysTrue(predicate)) {
+                    query.addWhere(
+                        org.eclipse.daanse.rolap.common.sqlbuild.StarPredicateTranslator.toPredicate(predicate));
+                }
+            } else {
+                // Fake-column case (predicate has no constrained column): keep the raw string rendering,
+                // which substitutes the caller-supplied expr.
+                // residual: fake-column createInExpr (dialect-rendered, no constrained column to
+                // translate) — see 07-fallback-policy
+                final String where = RolapStar.Column.createInExpr(
+                    column.generateExprString(getStar().getDialect()),
+                    predicate,
+                    column.getDatatype(),
+                    getStar().getDialect());
+                if (!where.equals("true")) {
+                    query.addWhere(where);
+                }
             }
 
             if (countOnly || !isPartOfSelect(column)) {
@@ -144,30 +210,32 @@ public abstract class AbstractQuerySpec implements QuerySpec {
 
             // some DB2 (AS400) versions throw an error, if a column alias is
             // there and *not* used in a subsequent order by/group by
-            final Dialect dialect = sqlQuery.getDialect();
+            // Dialect-free: pass the column expression for SELECT / GROUP BY / ORDER BY.
+            final Dialect dialect = getStar().getDialect();
             final String alias =
-                    sqlQuery.addSelect(expr, column.getInternalType(), dialect.allowsFieldAlias() ? getColumnAlias(i) : null);
+                    query.addSelectExpr(column.getExpression(), column.getInternalType(),
+                        dialect.allowsFieldAlias() ? getColumnAlias(i) : null);
 
             if (isAggregate()) {
-                sqlQuery.addGroupBy(expr, alias);
+                query.addGroupByExpr(column.getExpression(), alias);
             }
 
             // Add ORDER BY clause to make the results deterministic.
             // Derby has a bug with ORDER BY, so ignore it.
             if (isOrdered()) {
-                sqlQuery.addOrderBy(
-                    expr,
+                query.addOrderByExpr(
+                    column.getExpression(),
                     alias,
                     SortingDirection.ASC, false, false, true);
             }
         }
 
         // Add compound member predicates
-        extraPredicates(sqlQuery);
+        extraPredicates(query);
 
         // add measures
         for (int i = 0, count = getMeasureCount(); i < count; i++) {
-            addMeasure(i, sqlQuery);
+            addMeasure(i, query);
         }
 
         return Collections.emptyMap();
@@ -203,35 +271,138 @@ public abstract class AbstractQuerySpec implements QuerySpec {
     }
 
     @Override
-	public Pair<String, List<BestFitColumnType>> generateSqlQuery() {
-        SqlQuery sqlQuery = newSqlQuery();
-
+	public RenderedSql generateSql() {
         int k = getDistinctMeasureCount();
-        final Dialect dialect = sqlQuery.getDialect();
-        final Map<String, String> groupingSetsAliases;
+        final Dialect dialect = getStar().getDialect();
+
+        // AUTHORITATIVE builder for ALL nonDistinct aggregate shapes (simple; compound slicer predicates;
+        // and/or a distinct measure rendered count(distinct col) inline) via AggregateSqlMapper.
+        // Declines grouping-sets / distinct-SUBQUERY / ordered / countOnly so they fall to the
+        // QueryRecorder path below — for the common aggregate the QueryRecorder is NEVER constructed. The
+        // hasGroupingSets() check is essential: without it a k==0 grouping-sets segment would hit the
+        // builder and silently drop its GROUPING SETS.
+        // Capability reads (allowsCountDistinct / allowsMultipleCountDistinct): the capability boolean is
+        // gated HERE (choose the distinct-subquery rewrite vs the inline count(distinct)), while the
+        // SPELLING stays in the Dialect/renderer.
+        boolean usesNonDistinct = !((!dialect.allowsCountDistinct() && k > 0)
+            || (!dialect.allowsMultipleCountDistinct() && k > 1));
+        if (!countOnly && !isOrdered() && isAggregate() && !hasGroupingSets() && usesNonDistinct) {
+            RenderedSql built = tryAggregateBuilderAuthoritative(dialect);
+            if (built != null) {
+                return built;
+            }
+        }
+
+        QueryRecorder query = newQuery();
+
+        final Map<RolapStar.Column, String> groupingSetsAliases;
+        // Same capability reads as above — gate by capability boolean at the decision point, spell at
+        // the renderer.
         if (!dialect.allowsCountDistinct() && k > 0
             || !dialect.allowsMultipleCountDistinct() && k > 1)
         {
+            org.eclipse.daanse.rolap.common.RolapUtil.SQL_GEN_LOGGER.debug(
+                    "aggregate: distinctMeasures={} allowsCountDistinct={} allowsMultipleCountDistinct={} -> distinct-subquery rewrite",
+                    k, dialect.allowsCountDistinct(), dialect.allowsMultipleCountDistinct());
             groupingSetsAliases =
-                distinctGenerateSql(sqlQuery, countOnly);
+                distinctGenerateSql(query, countOnly);
         } else {
             groupingSetsAliases =
-                nonDistinctGenerateSql(sqlQuery);
+                nonDistinctGenerateSql(query);
         }
         if (!countOnly) {
-            addGroupingFunction(sqlQuery);
-            addGroupingSets(sqlQuery, groupingSetsAliases);
+            addGroupingFunction(query);
+            addGroupingSets(query, groupingSetsAliases);
         }
-        return sqlQuery.toSqlAndTypes();
+        // Only the declined shapes reach here (countOnly, ordered, grouping-sets, distinct-subquery, or a
+        // builder out-of-scope decline) — the QueryRecorder is authoritative for them.
+        return query.toSqlAndTypes(dialect);
     }
 
-    protected void addGroupingFunction(SqlQuery sqlQuery) {
+    /**
+     * AUTHORITATIVE builder for the nonDistinct aggregate shapes the simple gate skips: the group-by
+     * columns + measures PLUS the {@link #getPredicateList()} compound (slicer) predicates as
+     * {@link AggregateSqlMapper.ExtraConjunct}s, via {@link AggregateSqlMapper#aggregate}. The CALLER gates
+     * the shape (not countOnly/ordered/grouping-sets/distinct-subquery); this returns the builder SQL
+     * directly (no reference compare), or {@code null}
+     * when a column/measure is out of mapper scope (funky table / not part of SELECT) so the caller falls
+     * back to the {@link QueryRecorder} path.
+     */
+    private RenderedSql tryAggregateBuilderAuthoritative(Dialect dialect) {
+        try {
+            RolapStar.Table fact = getStar().getFactTable();
+            RolapStar.Column[] columns = getColumns();
+            List<RolapStar.Column> groupBy = new ArrayList<>();
+            List<Predicate> columnFilters = new ArrayList<>();
+            for (int i = 0; i < columns.length; i++) {
+                RolapStar.Column column = columns[i];
+                if (column.getTable().isFunky() || !isPartOfSelect(column)) {
+                    // Out of mapper scope -> the QueryRecorder path builds this segment.
+                    org.eclipse.daanse.rolap.common.RolapUtil.SQL_GEN_LOGGER.debug(
+                        "aggregate builder decline: column {} funky/not-part-of-select", column.getName());
+                    return null;
+                }
+                groupBy.add(column);
+                StarColumnPredicate predicate = getColumnPredicate(i);
+                columnFilters.add(StarPredicateTranslator.isAlwaysTrue(predicate)
+                    ? null : StarPredicateTranslator.toPredicate(predicate));
+            }
+            List<RolapStar.Measure> measures = new ArrayList<>();
+            for (int i = 0, count = getMeasureCount(); i < count; i++) {
+                RolapStar.Measure measure = getMeasure(i);
+                if (!isPartOfSelect(measure)) {
+                    // Out of mapper scope -> the QueryRecorder path builds this segment.
+                    org.eclipse.daanse.rolap.common.RolapUtil.SQL_GEN_LOGGER.debug(
+                        "aggregate builder decline: measure {} not part of SELECT", measure.getName());
+                    return null;
+                }
+                measures.add(measure);
+            }
+            // The compound (slicer) predicates the simple fast path skips -> translated WHERE + the tables
+            // their constrained columns require joined (mirrors extraPredicates).
+            List<AggregateSqlMapper.ExtraConjunct> extras = new ArrayList<>();
+            for (StarPredicate sp : getPredicateList()) {
+                if (StarPredicateTranslator.isAlwaysTrue(sp)) {
+                    continue;
+                }
+                List<RolapStar.Table> tables = new ArrayList<>();
+                for (RolapStar.Column c : sp.getConstrainedColumnList()) {
+                    tables.add(c.getTable());
+                }
+                extras.add(new AggregateSqlMapper.ExtraConjunct(
+                    StarPredicateTranslator.toPredicate(sp), tables));
+            }
+            return SqlBuildGuard.build(dialect,
+                getStar().getContext().getConfigValue(
+                    org.eclipse.daanse.olap.common.ConfigConstants.GENERATE_FORMATTED_SQL,
+                    org.eclipse.daanse.olap.common.ConfigConstants.GENERATE_FORMATTED_SQL_DEFAULT_VALUE,
+                    Boolean.class),
+                () -> AggregateSqlMapper.aggregate(fact, groupBy, columnFilters, measures, dialect, extras))
+                .render();
+        } catch (RuntimeException e) {
+            // A translator/mapper shape outside builder scope -> the QueryRecorder path builds this segment.
+            org.eclipse.daanse.rolap.common.RolapUtil.SQL_GEN_LOGGER.debug(
+                "aggregate builder decline: {}", e.toString());
+            return null;
+        }
+    }
+
+    /**
+     * Whether this query emits {@code GROUP BY GROUPING SETS} (the batched multi-rollup segment load). The
+     * authoritative aggregate builder declines when true (the mapper does not model grouping sets). Default
+     * false; {@link SegmentArrayQuerySpec} overrides to consult its grouping-sets list.
+     */
+    protected boolean hasGroupingSets() {
+        return false;
+    }
+
+    protected void addGroupingFunction(QueryRecorder query) {
         throw new UnsupportedOperationException();
     }
 
     protected void addGroupingSets(
-        SqlQuery sqlQuery,
-        Map<String, String> groupingSetsAliases)
+        QueryRecorder query,
+        Map<RolapStar.Column, String> groupingSetsAliases)
     {
         throw new UnsupportedOperationException();
     }
@@ -258,19 +429,19 @@ public abstract class AbstractQuerySpec implements QuerySpec {
      * an algorithm which converts distinct-aggregates to non-distinct
      * aggregates over subqueries.
      *
-     * @param outerSqlQuery Query to modify
+     * @param outerQuery Query to modify
      * @param countOnly If true, only generate a single row: no need to
      *   generate a GROUP BY clause or put any constraining columns in the
      *   SELECT clause
      * @return A map of aliases used in the inner query if grouping sets
      * were enabled.
      */
-    protected Map<String, String> distinctGenerateSql(
-        final SqlQuery outerSqlQuery,
+    protected Map<RolapStar.Column, String> distinctGenerateSql(
+        final QueryRecorder outerQuery,
         boolean countOnly)
     {
-        final Dialect dialect = outerSqlQuery.getDialect();
-        final Map<String, String> groupingSetsAliases =
+        final Dialect dialect = getStar().getDialect();
+        final Map<RolapStar.Column, String> groupingSetsAliases =
             new HashMap<>();
         // Generate something like
         //
@@ -292,8 +463,8 @@ public abstract class AbstractQuerySpec implements QuerySpec {
         //    and dim2.k = f.k2) as dummyname
 
         // GREENPLUM not support InnerDistinct
-        final SqlQuery innerSqlQuery = newSqlQuery();
-        innerSqlQuery.setDistinct(dialect.allowsInnerDistinct());
+        final QueryRecorder innerQuery = newQuery();
+        innerQuery.setDistinct(dialect.allowsInnerDistinct());
 
         // add constraining dimensions
         RolapStar.Column[] columns = getColumns();
@@ -305,81 +476,121 @@ public abstract class AbstractQuerySpec implements QuerySpec {
                 // this is a funky dimension -- ignore for now
                 continue;
             }
-            table.addToFrom(innerSqlQuery, false, true);
-            String expr = column.generateExprString(innerSqlQuery);
+            table.addToFrom(innerQuery, false, true);
             StarColumnPredicate predicate = getColumnPredicate(i);
-            final String where = RolapStar.Column.createInExpr(
-                expr,
-                predicate,
-                column.getDatatype(),
-                innerSqlQuery);
-            if (!where.equals("true")) {
-                innerSqlQuery.addWhere(where);
+            if (predicate.getConstrainedColumn() != null) {
+                // Dialect-free path (see nonDistinctGenerateSql): translate to a builder Predicate.
+                if (!org.eclipse.daanse.rolap.common.sqlbuild.StarPredicateTranslator.isAlwaysTrue(predicate)) {
+                    innerQuery.addWhere(
+                        org.eclipse.daanse.rolap.common.sqlbuild.StarPredicateTranslator.toPredicate(predicate));
+                }
+            } else {
+                // residual: fake-column createInExpr (dialect-rendered, no constrained column to
+                // translate) — see 07-fallback-policy
+                final String where = RolapStar.Column.createInExpr(
+                    column.generateExprString(dialect),
+                    predicate,
+                    column.getDatatype(),
+                    dialect);
+                if (!where.equals("true")) {
+                    innerQuery.addWhere(where);
+                }
             }
             if (countOnly) {
                 continue;
             }
+            // Dialect-free: pass the column expression for SELECT / GROUP BY.
             String alias = "d" + i;
-            alias = innerSqlQuery.addSelect(expr, null, alias);
+            alias = innerQuery.addSelectExpr(column.getExpression(), null, alias);
             if (!dialect.allowsInnerDistinct()) {
-                innerSqlQuery.addGroupBy(expr, alias);
+                innerQuery.addGroupByExpr(column.getExpression(), alias);
             }
             final String quotedAlias = dialect.quoteIdentifier(alias);
-            outerSqlQuery.addSelectGroupBy(quotedAlias, null);
-            // Add this alias to the map of grouping sets aliases
+            outerQuery.addSelectGroupBy(quotedAlias, null);
+            // Add this alias to the map of grouping sets aliases, keyed by the column (not the rendered
+            // string) so the consumer needn't re-render it via the dialect.
             groupingSetsAliases.put(
-                expr,
+                column,
                 dialect.quoteIdentifier(
                     new StringBuilder("dummyname.").append(alias)).toString());
         }
 
         // add predicates not associated with columns
-        extraPredicates(innerSqlQuery);
+        extraPredicates(innerQuery);
 
         // add measures
         for (int i = 0, count = getMeasureCount(); i < count; i++) {
             RolapStar.Measure measure = getMeasure(i);
 
             Util.assertTrue(measure.getTable() == getStar().getFactTable());
-            measure.getTable().addToFrom(innerSqlQuery, false, true);
+            measure.getTable().addToFrom(innerQuery, false, true);
 
             String alias = getMeasureAlias(i);
-            String expr = measure.generateExprString(outerSqlQuery);
-            innerSqlQuery.addSelect(
-                expr,
-                measure.getInternalType(),
-                alias);
-            if (!dialect.allowsInnerDistinct()) {
-                innerSqlQuery.addGroupBy(expr, alias);
+            if (measure.getExpression() != null) {
+                // Dialect-free: project the raw measure column as a node (like the dimension SELECT above);
+                // the outer query applies the aggregator. Byte-equal — plain column -> Column node, computed
+                // -> RawVariant the renderer resolves per dialect. Bail to the string for a column-less measure.
+                innerQuery.addSelectExpr(measure.getExpression(), measure.getInternalType(), alias);
+                if (!dialect.allowsInnerDistinct()) {
+                    innerQuery.addGroupByExpr(measure.getExpression(), alias);
+                }
+            } else {
+                String expr = measure.generateExprString(dialect);
+                innerQuery.addSelect(expr, measure.getInternalType(), alias);
+                if (!dialect.allowsInnerDistinct()) {
+                    innerQuery.addGroupBy(expr, alias);
+                }
             }
-            outerSqlQuery.addSelect(
+            outerQuery.addSelect(
                 measure.getAggregator().getNonDistinctAggregator()
                     .getExpression(dialect.quoteIdentifier(alias)),
                 measure.getInternalType());
         }
-        outerSqlQuery.addFrom(innerSqlQuery, "dummyname", true);
+        outerQuery.addFrom(innerQuery, "dummyname", true);
         return groupingSetsAliases;
     }
 
     /**
      * Adds predicates not associated with columns.
      *
-     * @param sqlQuery Query
+     * @param query Query
      */
-    protected void extraPredicates(SqlQuery sqlQuery) {
+    protected void extraPredicates(QueryRecorder query) {
         List<StarPredicate> predicateList = getPredicateList();
         for (StarPredicate predicate : predicateList) {
             for (RolapStar.Column column
                 : predicate.getConstrainedColumnList())
             {
                 final RolapStar.Table table = column.getTable();
-                table.addToFrom(sqlQuery, false, true);
+                table.addToFrom(query, false, true);
             }
-            StringBuilder buf = new StringBuilder();
-            predicate.toSql(sqlQuery, buf);
-            final String where = buf.toString();
-            if (!where.equals("true")) {
-                sqlQuery.addWhere(where);
+            // Dialect-free path: translate the compound (slicer) predicate to a builder Predicate
+            // instead of the dialect-rendered predicate.toSql(dialect, buf) string. These are the SAME
+            // getPredicateList() predicates DrillThroughQuerySpec.buildDrillThrough and
+            // tryAggregateBuilderAuthoritative already feed through StarPredicateTranslator.
+            // Always-true adds no restriction and is skipped.
+            if (StarPredicateTranslator.isAlwaysTrue(predicate)) {
+                continue;
+            }
+            Predicate translated;
+            try {
+                translated = StarPredicateTranslator.toPredicate(predicate);
+            } catch (IllegalArgumentException outOfTranslatorScope) {
+                // Shape the translator does not model (Range / MemberTuple / Minus star predicate,
+                // possibly nested inside an And/Or): keep the raw string rendering for this WHOLE
+                // predicate — top-level per predicate, never a node/string hybrid within one predicate.
+                translated = null;
+            }
+            if (translated != null) {
+                query.addWhere(translated);
+            } else {
+                // residual: untranslatable StarPredicate shape (dialect-rendered toSql) — see 07-fallback-policy
+                StringBuilder buf = new StringBuilder();
+                predicate.toSql(getStar().getDialect(), buf);
+                final String where = buf.toString();
+                if (!where.equals("true")) {
+                    query.addWhere(where);
+                }
             }
         }
     }
