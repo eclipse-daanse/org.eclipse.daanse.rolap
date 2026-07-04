@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.daanse.olap.key.BitKey;
-import org.eclipse.daanse.rolap.common.sql.SqlQuery;
+import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.star.StarPredicate;
 
@@ -102,12 +102,12 @@ public class OrPredicate extends ListPredicate {
      * column values to use in the IN list.
      *
      * @param predicate predicate to analyze
-     * @param sqlQuery Query
+     * @param dialect Query
      * @param predicateMap the map containing predicates analyzed so far
      */
     private void checkInListForPredicate(
         StarPredicate predicate,
-        SqlQuery sqlQuery,
+        Dialect dialect,
         Map<BitKey, List<StarPredicate>> predicateMap)
     {
         BitKey inListRhsBitKey;
@@ -119,7 +119,7 @@ public class OrPredicate extends ListPredicate {
         } else if (predicate instanceof AndPredicate) {
             // OR of ANDs over a set of values over the same column set
             inListRhsBitKey =
-                ((AndPredicate) predicate).checkInList(sqlQuery, columnBitKey);
+                ((AndPredicate) predicate).checkInList(dialect, columnBitKey);
         } else {
             inListRhsBitKey = columnBitKey.emptyCopy();
         }
@@ -133,11 +133,11 @@ public class OrPredicate extends ListPredicate {
     }
 
     private void checkInList(
-        SqlQuery sqlQuery,
+        Dialect dialect,
         Map<BitKey, List<StarPredicate>> predicateMap)
     {
         for (StarPredicate predicate : children) {
-            checkInListForPredicate(predicate, sqlQuery, predicateMap);
+            checkInListForPredicate(predicate, dialect, predicateMap);
         }
     }
 
@@ -145,7 +145,7 @@ public class OrPredicate extends ListPredicate {
      * Translates a list of predicates over the same set of columns into sql
      * using IN list where possible.
      *
-     * @param sqlQuery Query
+     * @param dialect Query
      * @param buf buffer to build sql
      * @param inListRhsBitKey which column positions are included in
      *     the IN predicate; the non included positions corresponde to
@@ -153,7 +153,7 @@ public class OrPredicate extends ListPredicate {
      * @param predicateList the list of predicates to translate.
      */
     private void toInListSql(
-        SqlQuery sqlQuery,
+        Dialect dialect,
         StringBuilder buf,
         BitKey inListRhsBitKey,
         List<StarPredicate> predicateList)
@@ -179,7 +179,7 @@ public class OrPredicate extends ListPredicate {
             } else {
                 buf.append(" and ");
             }
-            String expr = columnMap.get(colPos).generateExprString(sqlQuery);
+            String expr = columnMap.get(colPos).generateExprString(dialect);
             buf.append(expr);
             buf.append(" is null");
         }
@@ -209,7 +209,7 @@ public class OrPredicate extends ListPredicate {
             } else {
                 buf.append(", ");
             }
-            String expr = columnMap.get(colPos).generateExprString(sqlQuery);
+            String expr = columnMap.get(colPos).generateExprString(dialect);
             buf.append(expr);
         }
         if (multiInList) {
@@ -228,10 +228,10 @@ public class OrPredicate extends ListPredicate {
 
             if (predicate instanceof AndPredicate) {
                 ((AndPredicate) predicate).toInListSql(
-                    sqlQuery, buf, inListRhsBitKey);
+                    dialect, buf, inListRhsBitKey);
             } else {
                 assert predicate instanceof ValueColumnPredicate;
-                ((ValueColumnPredicate) predicate).toInListSql(sqlQuery, buf);
+                ((ValueColumnPredicate) predicate).toInListSql(dialect, buf);
             }
         }
         buf.append(")");
@@ -239,7 +239,7 @@ public class OrPredicate extends ListPredicate {
     }
 
     @Override
-	public void toSql(SqlQuery sqlQuery, StringBuilder buf) {
+	public void toSql(Dialect dialect, StringBuilder buf) {
         //
         // If possible, translate the predicate using IN lists.
         //
@@ -263,7 +263,7 @@ public class OrPredicate extends ListPredicate {
             new LinkedHashMap<> ();
 
         boolean first = true;
-        checkInList(sqlQuery, predicateMap);
+        checkInList(dialect, predicateMap);
         buf.append("(");
 
         for (BitKey columnKey : predicateMap.keySet()) {
@@ -277,7 +277,7 @@ public class OrPredicate extends ListPredicate {
                     } else {
                         buf.append(" or ");
                     }
-                    pred.toSql(sqlQuery, buf);
+                    pred.toSql(dialect, buf);
                 }
             } else {
                 // Translate the rest
@@ -286,7 +286,7 @@ public class OrPredicate extends ListPredicate {
                 } else {
                     buf.append(" or ");
                 }
-                toInListSql(sqlQuery, buf, columnKey, predList);
+                toInListSql(dialect, buf, columnKey, predList);
             }
         }
 

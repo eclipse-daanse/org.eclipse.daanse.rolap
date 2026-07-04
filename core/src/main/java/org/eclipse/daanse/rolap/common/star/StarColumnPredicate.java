@@ -99,7 +99,7 @@ public interface StarColumnPredicate extends StarPredicate {
      * objects are created without a column.
      *
      * We call this method to provide a fake column, then call
-     * {@link #toSql(mondrian.rolap.sql.SqlQuery, StringBuilder)}.
+     * {@link #toSql(mondrian.rolap.sql.the retired query facade, StringBuilder)}.
      *
      * todo: remove this method when
      * mondrian.util.Bug#BugMondrian313Fixed bug MONDRIAN-313 and

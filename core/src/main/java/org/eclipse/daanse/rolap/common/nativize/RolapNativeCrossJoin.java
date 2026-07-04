@@ -43,7 +43,7 @@ import org.eclipse.daanse.olap.function.def.nonemptycrossjoin.NonEmptyCrossJoinF
 import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.RolapUtil;
 import org.eclipse.daanse.rolap.common.connection.AbstractRolapConnection;
-import org.eclipse.daanse.rolap.common.constraint.SqlConstraintUtils;
+import org.eclipse.daanse.rolap.common.constraint.MeasureConflictDetector;
 import org.eclipse.daanse.rolap.common.evaluator.RolapEvaluator;
 import org.eclipse.daanse.rolap.common.sql.CrossJoinArg;
 import org.eclipse.daanse.rolap.common.sql.MemberListCrossJoinArg;
@@ -205,7 +205,7 @@ public class RolapNativeCrossJoin extends RolapNativeSet {
             }
         }
 
-        if (SqlConstraintUtils.measuresConflictWithMembers(
+        if (MeasureConflictDetector.measuresConflictWithMembers(
                 evaluator.getQuery().getMeasuresMembers(), cjArgs))
         {
             alertCrossJoinNonNative(

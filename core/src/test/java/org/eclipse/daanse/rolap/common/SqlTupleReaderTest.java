@@ -47,7 +47,7 @@ import org.eclipse.daanse.olap.api.element.Property;
 import org.eclipse.daanse.olap.api.sql.SqlExpression;
 import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;
 import org.eclipse.daanse.rolap.common.aggmatcher.JdbcSchema;
-import org.eclipse.daanse.rolap.common.sql.SqlQuery;
+import org.eclipse.daanse.rolap.common.sql.QueryRecorder;
 import org.eclipse.daanse.rolap.common.sql.TupleConstraint;
 import org.eclipse.daanse.rolap.common.star.RolapSqlExpression;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
@@ -74,7 +74,7 @@ class SqlTupleReaderTest {
   @Disabled
   void addLevelMemberSql() throws Exception {
     TupleConstraint constraint = mock( TupleConstraint.class );
-    SqlQuery sqlQuery = mock( SqlQuery.class, Answers.RETURNS_MOCKS );
+    QueryRecorder sqlQuery = mock( QueryRecorder.class, Answers.RETURNS_MOCKS );
     RolapCube baseCube = mock( RolapCube.class );
     RolapLevel targetLevel = mock( RolapLevel.class );
     RolapColumn expression =  mock(org.eclipse.daanse.rolap.element.RolapColumn.class);
@@ -91,7 +91,6 @@ class SqlTupleReaderTest {
     when(expression.getSqls()).thenAnswer(setupDummyListAnswer(sql));
     when(expression.getName()).thenReturn( "name" );
     when(expression.getTable()).thenReturn( "table" );
-    when(sqlQuery.getDialect()).thenReturn( dialect );   
     when( rolapProperty.getName() ).thenReturn( propertyName );
     when( rolapProperty.getType() ).thenReturn(Property.Datatype.TYPE_STRING);
     when(rolapProperty.getExp()).thenReturn(expression);
@@ -138,8 +137,8 @@ class SqlTupleReaderTest {
     when( aggStar.lookupLevel( 0 ) ).thenReturn( aggStarLevel );
     doReturn( factTable ).when( column ).getTable();
     SqlTupleReader reader = new SqlTupleReader( constraint );
-    reader.addLevelMemberSql( sqlQuery, targetLevel, baseCube, whichSelect, aggStar );
-    verify( factTable ).addToFrom( any(), eq( false ), eq( true ) );
+    reader.addLevelMemberSql( sqlQuery, targetLevel, baseCube, whichSelect, aggStar, dialect );
+    verify( factTable ).addToFrom( any( QueryRecorder.class ), eq( false ), eq( true ) );
   }
 
   private Object createInstance( String className, Class[] constructorArgsClasses, Object[] constructorArgs,

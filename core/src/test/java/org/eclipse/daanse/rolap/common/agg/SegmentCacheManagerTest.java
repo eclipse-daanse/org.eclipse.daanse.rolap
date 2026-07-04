@@ -78,16 +78,33 @@ class SegmentCacheManagerTest {
 
   @Test
   void shutdownEndOfQueue() throws Exception {
-    BlockingQueue execResults = new ArrayBlockingQueue( 10 );
+    BlockingQueue<Object> execResults = new ArrayBlockingQueue<>( 10 );
     SegmentCacheManager man = new SegmentCacheManager( context );
-    // add 10 commands to the exec queue
-    executeNtimes( execResults, man, 10 );
-    // then shut down
+    // Wait until every worker thread has entered man.execute() before kicking off
+    // shutdown; otherwise the executor's threads can race and schedule shutdown
+    // before some workers reach the actor queue, causing spurious
+    // "Actor queue already shut down" failures.
+    CountDownLatch entered = new CountDownLatch( 10 );
+    for ( int i = 0; i < 10; i++ ) {
+      executor.submit( () -> {
+        entered.countDown();
+        try {
+          putInQueue( execResults, man.execute( new MockCommand( this::sleep ) ) );
+        } catch ( RuntimeException re ) {
+          putInQueue( execResults, re );
+        }
+      } );
+    }
+    assertThat( entered.await( 5, TimeUnit.SECONDS ) ).isTrue();
+    // tiny grace to let each worker put its command on the actor queue before
+    // shutdown is enqueued.
+    Thread.sleep( 100 );
     executor.submit( man::shutdown );
     List<Object> results = new ArrayList<>();
-    // collect the results.  All should have completed successfully with "done".
+    // collect the results. All should have completed successfully with "done".
+    // Commands take ~100ms each; allow generous slack per poll for sequential actor draining.
     for ( int i = 0; i < 10; i++ ) {
-      Object val = execResults.poll( 200, TimeUnit.MILLISECONDS );
+      Object val = execResults.poll( 5000, TimeUnit.MILLISECONDS );
         assertThat(val).isEqualTo("done");
       results.add( val );
     }

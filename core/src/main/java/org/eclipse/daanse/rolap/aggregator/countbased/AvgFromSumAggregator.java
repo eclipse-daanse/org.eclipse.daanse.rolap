@@ -12,6 +12,10 @@
 */
 package org.eclipse.daanse.rolap.aggregator.countbased;
 
+import org.eclipse.daanse.sql.statement.api.Expressions;
+import org.eclipse.daanse.sql.statement.api.expression.ArithmeticOperator;
+import org.eclipse.daanse.sql.statement.api.expression.SqlExpression;
+
 /**
  * Aggregator used for aggregate tables implementing the average aggregator.
  *
@@ -28,19 +32,36 @@ package org.eclipse.daanse.rolap.aggregator.countbased;
  */
 public class AvgFromSumAggregator extends AbstractFactCountBasedAggregator {
 
-    public AvgFromSumAggregator(String factCountExpr) {
-        super("AvgFromSum", factCountExpr);
+    public AvgFromSumAggregator(String factCountExpr, SqlExpression factCountNode) {
+        super("AvgFromSum", factCountExpr, factCountNode);
     }
 
     @Override
     public StringBuilder getExpression(CharSequence operand) {
+        // sum(x) * 1e0 / sum(fc): the 1e0 factor forces approximate-numeric division on
+        // every dialect. A bare decimal/integer division truncates on Derby/ClickHouse
+        // (result-scale truncation) and SQLite (integer division), while MySQL rounds at
+        // scale+4 — the double division makes the rollup value dialect-independent.
         StringBuilder buf = new StringBuilder(64);
         buf.append("sum(");
         buf.append(operand);
-        buf.append(") / sum(");
+        buf.append(") * 1e0 / sum(");
         buf.append(factCountExpr);
         buf.append(')');
         return buf;
+    }
+
+    @Override
+    public SqlExpression getExpression(SqlExpression inner) {
+        // sum(<inner>) * 1e0 / sum(<factCount>) — non-parenthesized, matching the string form;
+        // see getExpression(CharSequence) for the 1e0 rationale.
+        return Expressions.infix(
+            Expressions.infix(
+                Expressions.aggregate("sum", inner),
+                ArithmeticOperator.MULTIPLY,
+                Expressions.raw("1e0")),
+            ArithmeticOperator.DIVIDE,
+            Expressions.aggregate("sum", factCountNode));
     }
 
     @Override
@@ -52,5 +73,15 @@ public class AvgFromSumAggregator extends AbstractFactCountBasedAggregator {
     public String getScalarExpression(String operand) {
         return new StringBuilder(64).append('(').append(operand).append(") / (").append(factCountExpr).append(')')
                 .toString();
+    }
+
+    @Override
+    public SqlExpression getScalarNode(SqlExpression operand) {
+        // (<operand>) / (<factCount>) — each side individually parenthesized (empty-name Function renders
+        // exactly "(x)"), joined by a NON-parenthesized infix "/" — byte-identical to getScalarExpression.
+        return Expressions.infix(
+            Expressions.function("", operand),
+            ArithmeticOperator.DIVIDE,
+            Expressions.function("", factCountNode));
     }
 }

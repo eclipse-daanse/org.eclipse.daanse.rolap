@@ -13,32 +13,41 @@
 package org.eclipse.daanse.rolap.aggregator.extra;
 
 import java.util.List;
+import java.util.Optional;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.olap.api.DataTypeJdbc;
 import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.olap.api.calc.Calc;
 import org.eclipse.daanse.olap.api.calc.tuple.TupleList;
 import org.eclipse.daanse.olap.api.evaluator.Evaluator;
+import org.eclipse.daanse.rolap.aggregator.NodeAggregate;
 import org.eclipse.daanse.rolap.element.RolapColumn;
 import org.eclipse.daanse.rolap.mapping.model.olap.cube.measure.PercentType;
 import org.eclipse.daanse.rolap.mapping.model.database.relational.SortingDirection;
+import org.eclipse.daanse.sql.statement.api.expression.SqlExpression;
 
 
-public class PercentileAggregator implements Aggregator {
+public class PercentileAggregator implements Aggregator, NodeAggregate {
 
     private Double percentile;
     private PercentType percentileType;
     private RolapColumn rolapOrderedColumn;
-    private Dialect dialect;
 
 
     public PercentileAggregator(PercentType percentileType, Double percentile,
-            RolapColumn rolapOrderedColumn, Dialect dialect) {
+            RolapColumn rolapOrderedColumn) {
         this.percentile = percentile;
         this.percentileType = percentileType;
         this.rolapOrderedColumn = rolapOrderedColumn;
-        this.dialect = dialect;
+    }
+
+    @Override
+    public SqlExpression toNode(SqlExpression operand) {
+        return new SqlExpression.ExtraAggregate(Optional.empty(),
+                new SqlExpression.ExtraAggregate.Spec.Percentile(percentile,
+                        percentileType == PercentType.CONT,
+                        SortingDirection.DESC.equals(rolapOrderedColumn.getSortingDirection()),
+                        rolapOrderedColumn.getTable(), rolapOrderedColumn.getName()));
     }
 
     @Override
@@ -49,14 +58,7 @@ public class PercentileAggregator implements Aggregator {
 
     @Override
     public StringBuilder getExpression(CharSequence operand) {
-        boolean desc = SortingDirection.DESC.equals(rolapOrderedColumn.getSortingDirection());
-        String table = rolapOrderedColumn.getTable();
-        String name = rolapOrderedColumn.getName();
-
-        return switch (percentileType) {
-        case PercentType.DISC -> dialect.aggregationGenerator().generatePercentileDisc(percentile, desc, table, name).map(StringBuilder::new).orElse(null);
-        case PercentType.CONT -> dialect.aggregationGenerator().generatePercentileCont(percentile, desc, table, name).map(StringBuilder::new).orElse(null);
-        };
+        return new StringBuilder(getName()).append('(').append(operand).append(')');
     }
 
     @Override

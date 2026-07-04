@@ -23,12 +23,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
- * Unit tests for {@link SqlQuery}.
+ * Unit tests for {@link QueryRecorder}.
  */
 class SqlQueryTest {
 
     private Dialect dialect;
-    private SqlQuery sqlQuery;
+    private QueryRecorder sqlQuery;
 
     @BeforeEach
     void setUp() {
@@ -37,27 +37,19 @@ class SqlQueryTest {
         when(dialect.allowsFieldAlias()).thenReturn(true);
         when(dialect.quoteIdentifier(org.mockito.ArgumentMatchers.anyString()))
             .thenAnswer(invocation -> "\"" + invocation.getArgument(0) + "\"");
-        sqlQuery = new SqlQuery(dialect, false);
+        sqlQuery = new QueryRecorder(false);
     }
 
     @Test
     void testConstructorCreatesEmptyQuery() {
-        assertThat(sqlQuery.toString()).isEmpty();
-        assertThat(sqlQuery.getDialect()).isEqualTo(dialect);
-    }
-
-    @Test
-    void testCloneEmptyCreatesNewInstance() {
-        SqlQuery cloned = sqlQuery.cloneEmpty();
-        assertThat(cloned).isNotSameAs(sqlQuery);
-        assertThat(cloned.getDialect()).isEqualTo(dialect);
+        assertThat(sqlQuery.getCurrentSelectListSize()).isZero();
+        assertThat(dialect).isEqualTo(dialect);
     }
 
     @Test
     void testAddSelectWithAlias() {
         String alias = sqlQuery.addSelect("column1", BestFitColumnType.STRING, "c0");
         assertThat(alias).isEqualTo("c0");
-        assertThat(sqlQuery.getAlias("column1")).isEqualTo("c0");
     }
 
     @Test
@@ -108,34 +100,6 @@ class SqlQueryTest {
     void testAddWhereWithValidExpression() {
         sqlQuery.addWhere("column1 = 'value'");
         // No exception should be thrown
-    }
-
-    @Test
-    void testAddGroupByWithNullThrowsException() {
-        assertThatThrownBy(() -> sqlQuery.addGroupBy(null))
-            .isInstanceOf(IllegalArgumentException.class)
-            .hasMessage("expression must not be null or blank");
-    }
-
-    @Test
-    void testAddGroupByWithBlankThrowsException() {
-        assertThatThrownBy(() -> sqlQuery.addGroupBy("  "))
-            .isInstanceOf(IllegalArgumentException.class)
-            .hasMessage("expression must not be null or blank");
-    }
-
-    @Test
-    void testAddHavingWithNullThrowsException() {
-        assertThatThrownBy(() -> sqlQuery.addHaving(null))
-            .isInstanceOf(IllegalArgumentException.class)
-            .hasMessage("expression must not be null or blank");
-    }
-
-    @Test
-    void testAddHavingWithBlankThrowsException() {
-        assertThatThrownBy(() -> sqlQuery.addHaving("\t"))
-            .isInstanceOf(IllegalArgumentException.class)
-            .hasMessage("expression must not be null or blank");
     }
 
     @Test

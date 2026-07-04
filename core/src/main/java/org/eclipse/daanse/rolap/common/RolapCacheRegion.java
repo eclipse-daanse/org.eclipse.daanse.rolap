@@ -25,7 +25,7 @@
 
 package org.eclipse.daanse.rolap.common;
 
-import static org.eclipse.daanse.rolap.common.util.ExpressionUtil.genericExpression;
+import static org.eclipse.daanse.rolap.common.util.SqlExpressionResolver.genericSql;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -88,7 +88,7 @@ public class RolapCacheRegion {
         bitKey.set(bitPosition);
         columnPredicates.put(bitPosition, predicate);
         columnPredicatesByName.put(
-            genericExpression(column.getExpression()),
+            genericSql(column.getExpression()),
             predicate);
     }
 

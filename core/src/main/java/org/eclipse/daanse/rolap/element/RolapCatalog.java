@@ -39,6 +39,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -142,9 +143,14 @@ public class RolapCatalog implements Catalog {
 	private RolapStarRegistry rolapStarRegistry;
 
 	/**
-	 * Holds cubes in this schema.
+	 * Holds cubes in this schema. Insertion-ordered (LinkedHashMap) so that
+	 * {@link #getCubes()} enumerates cubes in mapping-declaration order. A plain
+	 * HashMap keyed by mapping-object identity would make the order a per-JVM
+	 * lottery, and callers relying on the first declared cube (for example
+	 * {@code catalogReader.getCubes().get(0)}) could intermittently receive a
+	 * virtual cube whose {@code getStar()} is {@code null}.
 	 */
-	private final Map<org.eclipse.daanse.rolap.mapping.model.olap.cube.Cube, RolapCube> mapMappingToRolapCube = new HashMap<>();
+	private final Map<org.eclipse.daanse.rolap.mapping.model.olap.cube.Cube, RolapCube> mapMappingToRolapCube = new LinkedHashMap<>();
 
 	private final Map<org.eclipse.daanse.cwm.model.cwm.resource.relational.Schema, RolapDatabaseSchema> mapMappingToRolapDatabaseSchema = new HashMap<>();
 

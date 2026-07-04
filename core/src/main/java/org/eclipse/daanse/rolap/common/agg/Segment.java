@@ -29,7 +29,7 @@
 
 package org.eclipse.daanse.rolap.common.agg;
 
-import static org.eclipse.daanse.rolap.common.util.ExpressionUtil.genericExpression;
+import static org.eclipse.daanse.rolap.common.util.SqlExpressionResolver.genericSql;
 
 import java.io.PrintWriter;
 import java.util.AbstractList;
@@ -204,7 +204,7 @@ public class Segment {
 
     for ( int i = 0; i < columns.length; i++ ) {
       buf.append( sep );
-      buf.append( genericExpression(columns[i].getExpression()) );
+      buf.append( genericSql(columns[i].getExpression()) );
       describeAxes( buf, i, values );
     }
     if ( !excludedRegions.isEmpty() ) {
@@ -234,7 +234,7 @@ public class Segment {
     buf.append( sep );
     buf.append( "measure=" );
     buf.append( measure.getExpression() == null ? measure.getAggregator().getExpression( "*" ) : measure
-        .getAggregator().getExpression( genericExpression(measure.getExpression())) );
+        .getAggregator().getExpression( genericSql(measure.getExpression())) );
     return buf.toString();
   }
 

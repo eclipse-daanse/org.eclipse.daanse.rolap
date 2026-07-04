@@ -28,7 +28,6 @@
 package org.eclipse.daanse.rolap.common;
 
 import static org.eclipse.daanse.olap.fun.sort.Sorter.hierarchizeTupleList;
-import static org.eclipse.daanse.rolap.common.util.ExpressionUtil.getExpression;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -47,6 +46,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 
+import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.jdbc.db.dialect.api.type.BestFitColumnType;
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.calc.tuple.TupleList;
@@ -66,6 +66,9 @@ import org.eclipse.daanse.olap.calc.base.type.tuplebase.ListTupleList;
 import org.eclipse.daanse.olap.calc.base.type.tuplebase.TupleCollections;
 import org.eclipse.daanse.olap.calc.base.type.tuplebase.UnaryTupleList;
 import org.eclipse.daanse.olap.common.ConfigConstants;
+import org.eclipse.daanse.rolap.common.sqlbuild.GuardedSql;
+import org.eclipse.daanse.rolap.common.sqlbuild.SqlBuildGuard;
+import org.eclipse.daanse.rolap.common.sqlbuild.TupleSqlMapper;
 import org.eclipse.daanse.olap.common.ExecuteDurationUtil;
 import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.olap.common.Util;
@@ -74,14 +77,15 @@ import org.eclipse.daanse.olap.execution.ExecutionImpl;
 import org.eclipse.daanse.olap.function.def.crossjoin.CrossJoinFunDef;
 import org.eclipse.daanse.olap.key.BitKey;
 import  org.eclipse.daanse.olap.util.CancellationChecker;
-import  org.eclipse.daanse.olap.util.Pair;
+import org.eclipse.daanse.sql.statement.api.render.RenderedSql;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.agg.AggregationManager;
 import org.eclipse.daanse.rolap.common.agg.CellRequest;
 import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;
 import org.eclipse.daanse.rolap.common.catalog.RolapCubeComparator;
 import org.eclipse.daanse.rolap.common.constraint.DescendantsConstraint;
-import org.eclipse.daanse.rolap.common.constraint.SqlConstraintUtils;
+import org.eclipse.daanse.rolap.common.constraint.CalculatedMemberExpander;
+import org.eclipse.daanse.rolap.common.constraint.MeasureConflictDetector;
 import org.eclipse.daanse.rolap.common.constraint.SqlContextConstraint;
 import org.eclipse.daanse.rolap.common.evaluator.RolapEvaluator;
 import org.eclipse.daanse.rolap.common.member.MemberCache;
@@ -92,10 +96,11 @@ import org.eclipse.daanse.rolap.common.sql.CrossJoinArg;
 import org.eclipse.daanse.rolap.common.sql.DescendantsCrossJoinArg;
 import org.eclipse.daanse.rolap.common.sql.MemberChildrenConstraint;
 import org.eclipse.daanse.rolap.common.sql.MemberListCrossJoinArg;
-import org.eclipse.daanse.rolap.common.sql.SqlQuery;
+import org.eclipse.daanse.rolap.common.sql.QueryRecorder;
+
 import org.eclipse.daanse.rolap.common.sql.TupleConstraint;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
-import org.eclipse.daanse.rolap.common.util.ExpressionUtil;
+import org.eclipse.daanse.rolap.common.util.SqlExpressionResolver;
 import org.eclipse.daanse.rolap.element.RolapBaseCubeMeasure;
 import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.element.RolapCubeHierarchy;
@@ -129,7 +134,7 @@ import org.slf4j.LoggerFactory;
  *
  * When reading members from a single level, then the constraint is not
  * required to join the fact table in
- * {@link TupleConstraint#addLevelConstraint(org.eclipse.daanse.rolap.common.sql.SqlQuery, RolapCube, org.eclipse.daanse.rolap.common.aggmatcher.AggStar, RolapLevel)}
+ * {@link TupleConstraint#addLevelConstraint(org.eclipse.daanse.rolap.common.sql.QueryRecorder, RolapCube, org.eclipse.daanse.rolap.common.aggmatcher.AggStar, RolapLevel)}
  * although it may do so to restrict
  * the result. Also it is permitted to cache the parent/children from all
  * members in MemberCache, so
@@ -140,7 +145,7 @@ import org.slf4j.LoggerFactory;
  * then we can not store the parent/child pairs in the MemberCache and
  * {@link TupleConstraint#getMemberChildrenConstraint(RolapMember)}
  * must return null. Also
- * {@link TupleConstraint#addConstraint(org.eclipse.daanse.rolap.common.sql.SqlQuery, org.eclipse.daanse.rolap.element.RolapCube, org.eclipse.daanse.rolap.common.aggmatcher.AggStar)}
+ * {@link TupleConstraint#addConstraint(org.eclipse.daanse.rolap.common.sql.QueryRecorder, org.eclipse.daanse.rolap.element.RolapCube, org.eclipse.daanse.rolap.common.aggmatcher.AggStar)}
  * is required to join the fact table for the levels table.
  *
  *
@@ -161,7 +166,6 @@ public class SqlTupleReader implements TupleReader {
    * does not manage to load any more members.
    */
   private int missedMemberCount;
-  private static final String UNION = "union";
   private int emptySets = 0;
   // allow hints by default
   private boolean allowHints = true;
@@ -517,10 +521,10 @@ public Object getCacheKey() {
             partialTargets.add( target );
           }
         }
-        final Pair<String, List<BestFitColumnType>> pair =
+        final GuardedSql guarded =
           makeLevelMembersSql( context, targetGroup );
-        String sql = pair.left;
-        List<BestFitColumnType> types = pair.right;
+        String sql = guarded.render().sql();
+        List<BestFitColumnType> types = guarded.render().columnTypes();
         assert sql != null && !sql.equals( "" );
         ExecutionMetadata metadata = ExecutionMetadata.of(
           "SqlTupleReader.readTuples " + partialTargets,
@@ -610,9 +614,16 @@ public Object getCacheKey() {
         }
 
         if ( execQuery ) {
-          moreRows = resultSet.next();
-          if ( moreRows ) {
-            ++stmt.rowCount;
+          if ( maxRows > 0 && stmt.rowCount >= maxRows ) {
+            // Client-side enforcement of maxRows: some JDBC drivers (duckdb_jdbc)
+            // silently ignore Statement.setMaxRows. The SQL is ordered, so the
+            // first maxRows rows are exactly the requested result.
+            moreRows = false;
+          } else {
+            moreRows = resultSet.next();
+            if ( moreRows ) {
+              ++stmt.rowCount;
+            }
           }
         } else {
           currPartialResultIdx++;
@@ -1008,7 +1019,7 @@ public TupleList readTuples(
     partialResult.add( row );
   }
 
-  Pair<String, List<BestFitColumnType>> makeLevelMembersSql(
+  GuardedSql makeLevelMembersSql(
           Context<?> context, List<TargetBase> targetGroup ) {
     // In the case of a virtual cube, if we need to join to the fact
     // table, we do not necessarily have a single underlying fact table,
@@ -1043,14 +1054,13 @@ public TupleList readTuples(
       }
       // generate sub-selects, each one joining with one of
       // the fact table referenced
-      String prependString = "";
-      final StringBuilder selectString = new StringBuilder();
       List<BestFitColumnType> types = null;
+      GuardedSql lastGuarded = null;
+      final List<org.eclipse.daanse.sql.statement.api.model.Statement> unionInputs =
+        new java.util.ArrayList<>();
 
       final int savepoint =
         getEvaluator( constraint ).savepoint();
-
-      SqlQuery unionQuery = SqlQuery.newQuery( context, "" );
 
       try {
         for ( RolapCube baseCube : fullyJoiningBaseCubes ) {
@@ -1086,26 +1096,21 @@ public TupleList readTuples(
           getEvaluator( constraint )
             .setContext( measureInCurrentbaseCube );
 
-          selectString.append( prependString );
-
           // Generate the select statement for the current base cube.
           // Make sure to pass WhichSelect.NOT_LAST if there are more
           // than one base cube and it isn't the last one so that
           // the order by clause is not added to unionized queries
           // (that would be illegal SQL)
-          final Pair<String, List<BestFitColumnType>> pair =
+          final GuardedSql guarded =
             generateSelectForLevels(
               context, baseCube,
               fullyJoiningBaseCubes.size() == 1
                 ? WhichSelect.ONLY
                 : WhichSelect.NOT_LAST,
               targetGroup );
-          selectString.append( pair.left );
-          types = pair.right;
-          prependString =
-            context.getConfigValue(ConfigConstants.GENERATE_FORMATTED_SQL, ConfigConstants.GENERATE_FORMATTED_SQL_DEFAULT_VALUE, Boolean.class)
-              ? new StringBuilder(Util.NL).append(UNION).append(Util.NL).toString()
-              : new StringBuilder(" ").append(UNION).append(" ").toString();
+          lastGuarded = guarded;
+          unionInputs.add( guarded.statement() );
+          types = guarded.render().columnTypes();
         }
       } finally {
         // Restore the original measure member
@@ -1116,36 +1121,38 @@ public TupleList readTuples(
         // Because there is only one virtual cube to
         // join on, we can swap the union query by
         // the original one.
-        return Pair.of( selectString.toString(), types );
+        return lastGuarded;
       } else {
-        // Add the subquery to the wrapper query.
-        unionQuery.addFromQuery(
-          selectString.toString(), "unionQuery", true );
-
-        // Dont forget to select all columns.
-        unionQuery.addSelect( "*", null, null );
-
-        // Sort the union of the cubes.
-        // The order by columns need to be numbers,
-        // not column name strings or expressions.
-        if ( fullyJoiningBaseCubes.size() > 1 ) {
-          for ( int i = 0; i < types.size(); i++ ) {
-            unionQuery.addOrderBy(
-              new StringBuilder().append(i + 1),
-              null,
-              SortingDirection.ASC,
-              false,
-              // We can't order the nulls
-              // because column ordinals used as alias
-              // are not supported by functions.
-              // FIXME This dialect call is old and
-              // has lost its meaning in the process.
-              unionQuery.getDialect()
-                .requiresUnionOrderByOrdinal(),
-              true );
-          }
+        // The per-cube statements composed as a SetOperation node in the FROM:
+        //   select * from (<sub1> union <sub2> ...) as unionQuery order by 1, 2, ...
+        // The order-by columns need to be ordinals (1, 2, ...), not column names/expressions. The
+        // nullable flag preserves the requiresUnionOrderByOrdinal() handling (column ordinals
+        // used as alias are not supported by functions, so nulls are not collated for them).
+        boolean nullable = context.getDialect().requiresUnionOrderByOrdinal();
+        org.eclipse.daanse.sql.statement.api.SelectStatementBuilder wrapper =
+          org.eclipse.daanse.sql.statement.api.SelectStatementBuilder.create();
+        // Diagnostic provenance on the WRAPPER select (rendered only when comments are on). The
+        // union ARMS render compact per the renderer's set-input contract, so their own
+        // header/projection comments are not emitted — the wrapper names the composition instead.
+        wrapper.header( "virtual cube union (" + fullyJoiningBaseCubes.size() + " base cubes)" );
+        wrapper.footerComment( "tuples via " + constraint.getClass().getSimpleName()
+          + " (union of " + fullyJoiningBaseCubes.size() + " base cubes)" );
+        wrapper.project( org.eclipse.daanse.sql.statement.api.Expressions.star(), null );
+        wrapper.from( org.eclipse.daanse.sql.statement.api.From.set(
+          new org.eclipse.daanse.sql.statement.api.model.SetOperation(
+            org.eclipse.daanse.sql.statement.api.model.SetOperation.SetOp.UNION,
+            unionInputs, java.util.List.of(), java.util.Optional.empty() ),
+          org.eclipse.daanse.sql.statement.api.model.TableAlias.of( "unionQuery" ) ) );
+        for ( int i = 0; i < types.size(); i++ ) {
+          wrapper.orderOn(
+            org.eclipse.daanse.sql.statement.api.Expressions.ordinal( i + 1 ),
+            new org.eclipse.daanse.sql.statement.api.model.SortSpec(
+              org.eclipse.daanse.sql.statement.api.model.SortDirection.ASC, nullable,
+              org.eclipse.daanse.sql.statement.api.model.NullOrder.LAST, false ) );
         }
-        return Pair.of( unionQuery.toSqlAndTypes().left, types );
+        org.eclipse.daanse.sql.statement.api.model.SelectStatement wrapperStatement = wrapper.build();
+        String sql = SqlRender.render( wrapperStatement, context.getDialect() ).sql();
+        return new GuardedSql( wrapperStatement, RenderedSql.of( sql, types ) );
       }
 
     } else {
@@ -1204,7 +1211,7 @@ public TupleList readTuples(
       }
     }
     Set<Member> membersInMeasures =
-      SqlConstraintUtils.getMembersNestedInMeasures( measures );
+      MeasureConflictDetector.getMembersNestedInMeasures( measures );
     return membersInMeasures.contains(
       target.getLevel().getHierarchy().getAllMember() );
   }
@@ -1235,14 +1242,16 @@ public TupleList readTuples(
     return ( (RolapCube) query.getCube() ).getMeasures();
   }
 
-  Pair<String, List<BestFitColumnType>> sqlForEmptyTuple(
+  GuardedSql sqlForEmptyTuple(
     final Context context,
     final Collection<RolapCube> baseCubes ) {
-    final SqlQuery sqlQuery = SqlQuery.newQuery( context, null );
-    sqlQuery.addSelect( "0", null );
-    sqlQuery.addFrom( baseCubes.iterator().next().getFact(), null, true );
-    sqlQuery.addWhere( "1 = 0" );
-    return sqlQuery.toSqlAndTypes();
+    // "select 0 from <fact> where 1 = 0" — a never-matching probe used when no base cube fully joins.
+    var b = org.eclipse.daanse.sql.statement.api.SelectStatementBuilder.create();
+    b.project( org.eclipse.daanse.sql.statement.api.Expressions.literal( 0, org.eclipse.daanse.jdbc.db.dialect.api.type.Datatype.INTEGER ), null );
+    b.from( org.eclipse.daanse.rolap.common.sqlbuild.RelationFromMapper.from(baseCubes.iterator().next().getFact() ) );
+    b.where( org.eclipse.daanse.sql.statement.api.Predicates.alwaysFalse() );
+    org.eclipse.daanse.sql.statement.api.model.SelectStatement statement = b.build();
+    return new GuardedSql( statement, SqlRender.render( statement, context.getDialect() ) );
   }
 
   /**
@@ -1254,20 +1263,44 @@ public TupleList readTuples(
    * @param targetGroup the set of targets for which to generate a select
    * @return SQL statement string and types
    */
-  Pair<String, List<BestFitColumnType>> generateSelectForLevels(
+  GuardedSql generateSelectForLevels(
     Context<?> context,
     RolapCube baseCube,
     WhichSelect whichSelect, List<TargetBase> targetGroup ) {
     String s =
       "while generating query to retrieve members of level(s) " + targets;
 
-    // Allow query to use optimization hints from the table definition
-    SqlQuery sqlQuery = SqlQuery.newQuery( context, s );
-    sqlQuery.setAllowHints( allowHints );
-
-
     Evaluator evaluator = getEvaluator( constraint );
     AggStar aggStar = chooseAggStar( constraint, evaluator, baseCube, context.getConfigValue(ConfigConstants.USE_AGGREGATES, ConfigConstants.USE_AGGREGATES_DEFAULT_VALUE ,Boolean.class) );
+
+    // No double build: a standalone single-target SELECT, supported level, no aggregate table and an
+    // unrestricted constraint is fully reproduced by the generic mapper — build it directly and skip
+    // constructing the QueryRecorder entirely. Everything else falls through to the QueryRecorder path below.
+    if ( whichSelect == WhichSelect.ONLY && aggStar == null && targetGroup.size() == 1 ) {
+      TargetBase only = targetGroup.get( 0 );
+      // supportsAllowingExpressions covers plain tables/joins, view/inline relations (incl. a view
+      // nested in a join) and computed (expression) columns; the dialect overload renders each via the
+      // dialect-aware subset/whole-relation + dialect-specific expression SQL, so all are built
+      // authoritatively here (result-verified).
+      if ( only.getSrcMembers() == null && ( TupleSqlMapper.supportsAllowingExpressions( only.getLevel() )
+          || TupleSqlMapper.supportsParentChild( only.getLevel() ) ) ) {
+        java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution> contribution =
+          constraint.toContribution( baseCube, aggStar );
+        if ( contribution.isPresent() && contribution.get().producesPlainLevelMembers() ) {
+          RolapUtil.SQL_GEN_LOGGER.debug(
+              "level-members {}: standalone unconstrained -> builder authoritative",
+              only.getLevel().getUniqueName() );
+          return SqlBuildGuard.build( context.getDialect(),
+            context.getConfigValue( ConfigConstants.GENERATE_FORMATTED_SQL,
+                ConfigConstants.GENERATE_FORMATTED_SQL_DEFAULT_VALUE, Boolean.class ),
+            () -> TupleSqlMapper.levelMembersSql( only.getLevel(), context.getDialect() ) );
+        }
+      }
+    }
+
+    // Allow query to use optimization hints from the table definition
+    QueryRecorder sqlQuery = QueryRecorder.newQuery( context, s );
+    sqlQuery.setAllowHints( allowHints );
 
     // add the selects for all levels to fetch
     for ( TargetBase target : targetGroup ) {
@@ -1279,13 +1312,146 @@ public TupleList readTuples(
           target.getLevel(),
           baseCube,
           whichSelect,
-          aggStar );
+          aggStar,
+          context.getDialect() );
       }
     }
 
-    constraint.addConstraint( sqlQuery, baseCube, aggStar );
+    // Diagnostic header/footer (rendered only when comments are on): a multi-target group is a
+    // tuple read — name every enumerated level (the single-target header was set per level above) —
+    // and the footer names the request type + the constraint class that shaped the WHERE.
+    final List<String> sqlTargetLevels = targetGroup.stream()
+      .filter( t -> t.getSrcMembers() == null )
+      .map( t -> t.getLevel().getUniqueName() )
+      .toList();
+    if ( sqlTargetLevels.size() > 1 ) {
+      sqlQuery.setHeaderComment( "tuples " + String.join( " x ", sqlTargetLevels ) );
+    }
+    sqlQuery.setFooterComment( ( sqlTargetLevels.size() > 1 ? "tuples" : "members" )
+      + " via " + constraint.getClass().getSimpleName() );
 
-    return sqlQuery.toSqlAndTypes();
+    // The constraint contributes ops recorded on a FORK of the current recorder state; append
+    // merges the ops AND the fork's relation registrations back, so the constraint code runs
+    // against the same state, in the same order, as recording directly on the parent.
+    final QueryRecorder.Fork constraintFork = sqlQuery.fork();
+    sqlQuery.append( constraintFork,
+      constraint.addConstraintOps( context.getDialect(), constraintFork, baseCube, aggStar ) );
+
+    return preferTupleBuilder( sqlQuery, whichSelect, aggStar, targetGroup, context.getDialect(),
+      context.getDataSource() );
+  }
+
+  /**
+   * Produces the level/tuple SQL from the generic {@link TupleSqlMapper} when it yields the same
+   * SQL as the {@link QueryRecorder} assembled above (see {@link SqlBuildGuard}). Applies only to a
+   * standalone single-target SELECT with no aggregate table; virtual-cube unions, multi-target
+   * groups, enumerated sources, and constraints the mapper does not reproduce use the
+   * {@link QueryRecorder} result.
+   */
+  private GuardedSql preferTupleBuilder(
+    QueryRecorder sqlQuery, WhichSelect whichSelect, AggStar aggStar, List<TargetBase> targetGroup,
+    Dialect dialect, javax.sql.DataSource dataSource )
+  {
+    GuardedSql sqlQueryResult = sqlQuery.toGuarded( dialect );
+    if ( whichSelect != WhichSelect.ONLY || aggStar != null || targetGroup.size() != 1 ) {
+      // Out of mapper scope (union arm / aggregate table / multi-target tuple read).
+      RolapUtil.SQL_GEN_LOGGER.debug(
+        "level members: recorder path (whichSelect={} aggStar={} targets={})",
+        whichSelect, aggStar != null, targetGroup.size() );
+      return sqlQueryResult;
+    }
+    TargetBase target = targetGroup.get( 0 );
+    if ( target.getSrcMembers() != null ) {
+      // Enumerated source members: the recorder result already restricts to them.
+      RolapUtil.SQL_GEN_LOGGER.debug(
+        "level members {}: recorder path (enumerated src members)", target.getLevel().getUniqueName() );
+      return sqlQueryResult;
+    }
+    // Compute the contribution once. The view/expr/pc paths thread a present+restricted contribution into
+    // the dialect-aware constrained level SELECT (the 7-arg overload) instead of dropping it — guarded by
+    // orReference, so a shape the mapper does not reproduce byte-for-byte simply falls back. The supports
+    // path below uses the same contribution.
+    java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution> contribution =
+      constraint.toContribution( null, aggStar );
+    java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution> restricted =
+      contribution.filter( cc -> !cc.producesPlainLevelMembers() );
+    // Diagnostic: tag every level-members query with its constraint class so a builder/reference divergence
+    // can be attributed to the constraint whose toContribution did not reproduce it.
+    org.eclipse.daanse.rolap.common.RolapUtil.SQL_GEN_LOGGER.debug(
+      "level members {} constraint={} present={} restricted={}",
+      target.getLevel().getUniqueName(), constraint.getClass().getSimpleName(),
+      contribution.isPresent(), restricted.isPresent() );
+    if ( !TupleSqlMapper.supports( target.getLevel() ) ) {
+      // View / inline-table relations (incl. nested in a join) are outside the plain-table scope but
+      // can be rendered dialect-aware; try the mapper guarded (byte-equal-or-fall-back) so any
+      // divergence (e.g. whole-relation vs the snowflake subset) safely falls back.
+      if ( TupleSqlMapper.supportsViaDialectFrom( target.getLevel() ) ) {
+        return SqlBuildGuard.orReference(
+          "level members (view) " + target.getLevel().getUniqueName(),
+          dialect,
+          restricted.isPresent()
+            ? () -> TupleSqlMapper.levelMembersSql( target.getLevel(), dialect, restricted.get().where(),
+                restricted.get().joinTables(), restricted.get().orderedPredicates(),
+                restricted.get().nativeOrder(), restricted.get().nativeHaving(), restricted.get().factJoinRequired() )
+            : () -> TupleSqlMapper.levelMembersSql( target.getLevel()),
+          sqlQueryResult, dataSource );
+      }
+      // Computed (expression) key/caption/ordinal columns: rendered via each expression's
+      // dialect-specific SQL. Guarded — the FROM subset can be wrong on a multi-table relation.
+      if ( TupleSqlMapper.supportsAllowingExpressions( target.getLevel() ) ) {
+        return SqlBuildGuard.orReference(
+          "level members (expr) " + target.getLevel().getUniqueName(),
+          dialect,
+          restricted.isPresent()
+            ? () -> TupleSqlMapper.levelMembersSql( target.getLevel(), dialect, restricted.get().where(),
+                restricted.get().joinTables(), restricted.get().orderedPredicates(),
+                restricted.get().nativeOrder(), restricted.get().nativeHaving(), restricted.get().factJoinRequired() )
+            : () -> TupleSqlMapper.levelMembersSql( target.getLevel(), dialect ),
+          sqlQueryResult, dataSource );
+      }
+      // Parent-child level: emits the parent key column ahead of the level key (nulls-first ORDER BY).
+      // Guarded — only the null nullParentValue case; richer ordering falls back.
+      if ( TupleSqlMapper.supportsParentChild( target.getLevel() ) ) {
+        return SqlBuildGuard.orReference(
+          "level members (pc) " + target.getLevel().getUniqueName(),
+          dialect,
+          restricted.isPresent()
+            ? () -> TupleSqlMapper.levelMembersSql( target.getLevel(), dialect, restricted.get().where(),
+                restricted.get().joinTables(), restricted.get().orderedPredicates(),
+                restricted.get().nativeOrder(), restricted.get().nativeHaving(), restricted.get().factJoinRequired() )
+            : () -> TupleSqlMapper.levelMembersSql( target.getLevel(), dialect ),
+          sqlQueryResult, dataSource );
+      }
+      // No mapper covers this level shape at all — the recorder result stands.
+      RolapUtil.SQL_GEN_LOGGER.debug(
+        "level members {}: recorder path (level shape unsupported by mappers)",
+        target.getLevel().getUniqueName() );
+      return sqlQueryResult;
+    }
+    // A constraint that contributes nothing extra (no predicate, no fact join) leaves the level
+    // members unrestricted — the mapper reproduces it, so use it authoritatively. Richer
+    // constraints (default empty Optional) keep the byte-equal guard.
+    if ( contribution.isPresent() ) {
+      final org.eclipse.daanse.rolap.common.sql.ConstraintContribution c = contribution.get();
+      if ( c.producesPlainLevelMembers() ) {
+        // Unrestricted — the mapper reproduces it, use it authoritatively.
+        return SqlBuildGuard.build( dialect, sqlQuery.isFormatted(),
+          () -> TupleSqlMapper.levelMembersSql( target.getLevel() ) );
+      }
+      // A restriction (dimension-only key, a context/NON-EMPTY fact join, or the target level's own
+      // non-empty existence join) — build the constrained level SELECT guarded (byte-equal-or-fall-back).
+      return SqlBuildGuard.orReference(
+        "level members (constrained) " + target.getLevel().getUniqueName(),
+        dialect,
+        () -> TupleSqlMapper.levelMembersSql( target.getLevel(), dialect, c.where(),
+          c.joinTables(), c.orderedPredicates(), c.nativeOrder(), c.nativeHaving(), c.factJoinRequired() ),
+        sqlQueryResult, dataSource );
+    }
+    return SqlBuildGuard.orReference(
+      "level members " + target.getLevel().getUniqueName(),
+      dialect,
+      () -> TupleSqlMapper.levelMembersSql( target.getLevel() ),
+      sqlQueryResult, dataSource );
   }
 
   private boolean targetIsOnBaseCube( TargetBase target, RolapCube baseCube ) {
@@ -1318,11 +1484,12 @@ public TupleList readTuples(
    * @param aggStar     aggregate star if available
    */
   public void addLevelMemberSql(
-    SqlQuery sqlQuery,
+    QueryRecorder sqlQuery,
     RolapLevel level,
     RolapCube baseCube,
     WhichSelect whichSelect,
-    AggStar aggStar ) {
+    AggStar aggStar,
+    Dialect dialect ) {
     RolapHierarchy hierarchy = level.getHierarchy();
 
     // lookup RolapHierarchy of base cube that matches this hierarchy
@@ -1338,8 +1505,37 @@ public TupleList readTuples(
     List<RolapLevel> levels = (List<RolapLevel>) hierarchy.getLevels();
     int levelDepth = level.getDepth();
 
+    {
+      sqlQuery.setHeaderComment(
+        "members " + level.getUniqueName()
+          + ( baseCube != null ? " (cube " + baseCube.getName() + ")" : "" ) );
+    }
+
     boolean needsGroupBy =
       RolapUtil.isGroupByNeeded( hierarchy, levels, levelDepth );
+
+    // Base-FROM provenance: name the dimension + the deepest projected level whose relation table
+    // anchors the FROM, keyed to the PREDICTED base alias (the leftmost leaf of the first level's
+    // relation subset — the table the first addToFrom emits). If the prediction misses (an
+    // agg-collapsed first level, or a constraint added the fact first) the label merges into that
+    // table's JOIN comment instead — still accurate provenance. Render-only; never in executed SQL.
+    String predictedBaseAlias = null;
+    for ( int i = 0; i <= levelDepth; i++ ) {
+      RolapLevel lvl = levels.get( i );
+      if ( lvl.isAll() ) {
+        continue;
+      }
+      SqlExpression firstExp = lvl.getParentExp() != null ? lvl.getParentExp() : lvl.getKeyExp();
+      String anchor = firstExp instanceof org.eclipse.daanse.rolap.element.RolapColumn c
+        ? c.getTable() : null;
+      predictedBaseAlias = org.eclipse.daanse.rolap.common.sqlbuild.RelationFromMapper
+        .baseAliasFor( hierarchy.getRelation(), anchor );
+      break;
+    }
+    if ( predictedBaseAlias != null ) {
+      sqlQuery.commentFrom( predictedBaseAlias,
+        TupleSqlMapper.baseTableComment( level, predictedBaseAlias ) );
+    }
 
     for ( int i = 0; i <= levelDepth; i++ ) {
       RolapLevel currLevel = levels.get( i );
@@ -1360,7 +1556,7 @@ public TupleList readTuples(
         // if this is a single column collapsed level, there is
         // no need to join it with dimension tables
         addAggColumnToSql(
-          sqlQuery, whichSelect, aggStar, (RolapCubeLevel) currLevel );
+          sqlQuery, whichSelect, aggStar, (RolapCubeLevel) currLevel, dialect );
         continue;
       }
 
@@ -1379,50 +1575,50 @@ public TupleList readTuples(
         }
         if ( whichSelect == WhichSelect.LAST
           || whichSelect == WhichSelect.ONLY ) {
-          final String parentSql =
-            getExpression(parentExp, sqlQuery );
+          // Dialect-free: pass the parent expression (SELECT + GROUP BY + ORDER BY).
           final String parentAlias =
-            sqlQuery.addSelectGroupBy(
-              parentSql, currLevel.getInternalType() );
+            sqlQuery.addSelectExpr( parentExp, currLevel.getInternalType() );
+          sqlQuery.addGroupByExpr( parentExp, parentAlias );
           if (level.getNullParentValue() == null) {
-              sqlQuery.addOrderBy(
-                      parentSql, parentAlias, SortingDirection.ASC, false, true, false );
+              sqlQuery.addOrderByExpr(
+                      parentExp, parentAlias, SortingDirection.ASC, false, true, false );
           } else {
-              sqlQuery.addOrderBy(
-                      parentSql, parentAlias, SortingDirection.ASC, false, level.getNullParentValue(), level.getDatatype(), false);
+              sqlQuery.addOrderByExpr(
+                      parentExp, parentAlias, SortingDirection.ASC, false, level.getNullParentValue(), level.getDatatype(), false);
           }
         }
       }
-      String keySql = getExpression( keyExp, sqlQuery );
-
       if ( !levelCollapsed ) {
         hierarchy.addToFrom( sqlQuery, keyExp );
+        if ( keyExp instanceof org.eclipse.daanse.rolap.element.RolapColumn keyCol
+            && !keyCol.getTable().equals( predictedBaseAlias ) ) {
+          // One reason per level the join serves; a snowflake table serving several levels accumulates
+          // several reasons that the FROM fold merges onto the single rendered join. The BASE table
+          // carries the dimension/level-table label above instead — "snowflake" is join vocabulary.
+          sqlQuery.commentFrom( keyCol.getTable(),
+            "snowflake " + currLevel.getUniqueName() );
+        }
         for (SqlExpression ordinalExp : ordinalExps) {
             hierarchy.addToFrom( sqlQuery, ordinalExp );
         }
-      }
-      String captionSql = null;
-      if ( captionExp != null ) {
-        captionSql = getExpression( captionExp, sqlQuery );
-        if ( !levelCollapsed ) {
+        if ( captionExp != null ) {
           hierarchy.addToFrom( sqlQuery, captionExp );
         }
       }
 
+      // Dialect-free: pass the expressions; the facade builds Column nodes (plain) / Raw (computed).
       final String keyAlias =
-        sqlQuery.addSelect( keySql, currLevel.getInternalType() );
+        sqlQuery.addSelectExprCommented( keyExp, currLevel.getInternalType(),
+          "level key " + currLevel.getUniqueName() );
       if ( needsGroupBy ) {
-        // We pass both the expression and the alias.
-        // The SQL query will figure out what to use.
-        sqlQuery.addGroupBy( keySql, keyAlias );
+        sqlQuery.addGroupByExpr( keyExp, keyAlias );
       }
-      if ( captionSql != null ) {
+      if ( captionExp != null ) {
         final String captionAlias =
-          sqlQuery.addSelect( captionSql, null );
+          sqlQuery.addSelectExprCommented( captionExp, null,
+            "level caption " + currLevel.getUniqueName() );
         if ( needsGroupBy ) {
-          // We pass both the expression and the alias.
-          // The SQL query will figure out what to use.
-          sqlQuery.addGroupBy( captionSql, captionAlias );
+          sqlQuery.addGroupByExpr( captionExp, captionAlias );
         }
       }
 
@@ -1432,33 +1628,35 @@ public TupleList readTuples(
         for (SqlExpression ordinalExp : currLevel.getOrdinalExps()) {
             SortingDirection sortingDirection = ordinalExp.getSortingDirection();
             if ( currLevel.getKeyExp().equals( ordinalExp ) ) {
-                sqlQuery.addOrderBy(
-                        keySql, keyAlias, sortingDirection, false, true, true );
+                sqlQuery.addOrderByExpr(
+                        keyExp, keyAlias, sortingDirection, false, true, true );
             } else {
             	SqlExpression oe = targetExp.get(ordinalExp);
-                String ordinalSql = getExpression( oe, sqlQuery );
-                orderByAlias = sqlQuery.addSelect( ordinalSql, null );
+                orderByAlias = sqlQuery.addSelectExpr( oe, null );
                 if ( needsGroupBy ) {
-                    sqlQuery.addGroupBy( ordinalSql, orderByAlias );
+                    sqlQuery.addGroupByExpr( oe, orderByAlias );
                 }
                 if ( whichSelect == WhichSelect.ONLY ) {
-                    sqlQuery.addOrderBy(
-                        ordinalSql, orderByAlias, sortingDirection, false, true, true );
-                    sqlQuery.addOrderBy(
-                        keySql, keyAlias, SortingDirection.ASC, false, true, true );
+                    sqlQuery.addOrderByExpr(
+                        oe, orderByAlias, sortingDirection, false, true, true );
+                    sqlQuery.addOrderByExpr(
+                        keyExp, keyAlias, SortingDirection.ASC, false, true, true );
                 }
             }
         }
       } else {
         if ( whichSelect == WhichSelect.ONLY ) {
-          sqlQuery.addOrderBy(
-            keySql, keyAlias, SortingDirection.ASC, false, true, true );
+          sqlQuery.addOrderByExpr(
+            keyExp, keyAlias, SortingDirection.ASC, false, true, true );
         }
       }
 
-      // Add the contextual level constraints.
-      constraint.addLevelConstraint(
-        sqlQuery, baseCube, aggStar, currLevel );
+      // Add the contextual level constraints: each per-level call gets a FRESH fork of
+      // the CURRENT recorder state, so sequential level constraints see the prior calls' merged
+      // effects exactly as if they mutated the recorder in place.
+      final QueryRecorder.Fork levelFork = sqlQuery.fork();
+      sqlQuery.append( levelFork,
+        constraint.addLevelConstraintOps( dialect, levelFork, baseCube, aggStar, currLevel ) );
 
       if ( levelCollapsed && requiresJoinToDim( targetExp ) ) {
         // add join between key and aggstar
@@ -1475,8 +1673,10 @@ public TupleList readTuples(
           new RolapStar.Condition(
             currLevel.getKeyExp(),
             aggColumn.getExpression() );
-        sqlQuery.addWhere( condition.toString( sqlQuery ) );
+        // Add the agg table to FROM first, then feed the structured join condition (dialect-free FromJoin edge)
+        // — addJoinCondition is a no-op unless both tables are already present.
         aggColumn.getTable().addToFrom( sqlQuery, false, true );
+        sqlQuery.addJoinCondition( condition.getLeft(), condition.getRight() );
       } else if ( levelCollapsed ) {
         RolapStar.Column starColumn =
           ( (RolapCubeLevel) currLevel ).getStarKeyColumn();
@@ -1489,28 +1689,22 @@ public TupleList readTuples(
       for ( RolapProperty property : properties ) {
         final SqlExpression propExp =
           targetExp.get( property.getExp() );
-        final String propSql;
-        if ( propExp instanceof org.eclipse.daanse.rolap.element.RolapColumn column) {
-          // When dealing with a column, we must use the same table
-          // alias as the one used by the level. We also assume that
-          // the property lives in the same table as the level.
-          propSql =
-            sqlQuery.getDialect().quoteIdentifier(
-                ExpressionUtil.getTableAlias(propExp),
-
-                column.getName() );
-        } else {
-          propSql = getExpression( property.getExp(), sqlQuery );
-        }
-        final String propAlias = sqlQuery.addSelect(
-          propSql,
-          EnumConvertor.toBestFitColumnType(property.getType().getInternalType()) );
-        if ( needsGroupBy && ( !sqlQuery.getDialect().allowsSelectNotInGroupBy()
+        // Dialect-free: project the property expression as a builder node (registers a node in the alias map
+        // so the native-filter HAVING-alias lookup can resolve it). Byte-identical to the prior rendered
+        // string: a RolapColumn used the targetExp-mapped column; a computed property used the un-mapped
+        // property.getExp() (which is also what getNameExp() returns, so the native lookup matches).
+        final SqlExpression toProject =
+          ( propExp instanceof org.eclipse.daanse.rolap.element.RolapColumn ) ? propExp : property.getExp();
+        final String propAlias = sqlQuery.addSelectExprCommented(
+          toProject,
+          EnumConvertor.toBestFitColumnType(property.getType().getInternalType()),
+          "member property " + property.getName() );
+        if ( needsGroupBy && ( !dialect.allowsSelectNotInGroupBy()
             || !property.dependsOnLevelValue() )) {
             // Certain dialects allow us to eliminate properties
             // from the group by that are functionally dependent
             // on the level value
-            sqlQuery.addGroupBy( propSql, propAlias );
+            sqlQuery.addGroupByExpr( toProject, propAlias );
         }
       }
     }
@@ -1600,12 +1794,12 @@ public TupleList readTuples(
 
 
   private void addAggColumnToSql(
-    SqlQuery sqlQuery, WhichSelect whichSelect, AggStar aggStar,
-    RolapCubeLevel level ) {
+    QueryRecorder sqlQuery, WhichSelect whichSelect, AggStar aggStar,
+    RolapCubeLevel level, Dialect dialect ) {
     RolapStar.Column starColumn =
       level.getStarKeyColumn();
     AggStar.Table.Column aggColumn = getAggColumn( aggStar, level );
-    String aggColExp = aggColumn.generateExprString( sqlQuery );
+    String aggColExp = aggColumn.generateExprString( dialect );
     final String colAlias =
       sqlQuery.addSelectGroupBy( aggColExp, starColumn.getInternalType() );
     if ( whichSelect == WhichSelect.ONLY ) {
@@ -1698,7 +1892,7 @@ public TupleList readTuples(
     // Failing to do so could result in chosing the wrong aggstar, as the
     // level would not be passed to the bitkeys
     final Member[] members =
-      SqlConstraintUtils.expandSupportedCalculatedMembers(
+      CalculatedMemberExpander.expandSupportedCalculatedMembers(
         Arrays.asList(
           evaluator.getNonAllMembers() ),
         evaluator )

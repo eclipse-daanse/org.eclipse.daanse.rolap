@@ -38,8 +38,9 @@ import org.eclipse.daanse.olap.fun.DaanseEvaluationException;
 import org.eclipse.daanse.olap.query.component.NumericLiteralImpl;
 import org.eclipse.daanse.olap.query.component.StringLiteralImpl;
 import org.eclipse.daanse.olap.util.type.TypeWrapperExp;
+import org.eclipse.daanse.rolap.common.nativize.NativeSqlContext;
 import org.eclipse.daanse.rolap.common.nativize.RolapNativeSql;
-import org.eclipse.daanse.rolap.common.sql.SqlQuery;
+import org.eclipse.daanse.rolap.common.sql.QueryRecorder;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -68,10 +69,10 @@ class NumberSqlCompilerTest {
         when(dialect.quoteDecimalLiteral("-1"))
         .thenReturn(new StringBuilder("-1"));
 
-        SqlQuery query = mock(SqlQuery.class);
-        when(query.getDialect()).thenReturn(dialect);
+        QueryRecorder query = mock(QueryRecorder.class);
 
-        RolapNativeSql sql = new RolapNativeSql(query, null, null, null);
+        RolapNativeSql sql = new RolapNativeSql(
+            NativeSqlContext.ofRecorder(query, dialect), null, null, null);
         compiler = sql.new NumberSqlCompiler();
     }
 

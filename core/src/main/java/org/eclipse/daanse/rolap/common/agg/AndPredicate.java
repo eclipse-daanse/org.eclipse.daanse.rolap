@@ -32,7 +32,7 @@ import java.util.TreeSet;
 
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.key.BitKey;
-import org.eclipse.daanse.rolap.common.sql.SqlQuery;
+import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.rolap.common.star.StarPredicate;
 
 /**
@@ -88,7 +88,7 @@ public class AndPredicate extends ListPredicate {
         return new OrPredicate(list);
     }
 
-    public BitKey checkInList(SqlQuery sqlQuery, BitKey inListLHSBitKey) {
+    public BitKey checkInList(Dialect dialect, BitKey inListLHSBitKey) {
         // AND predicate by itself is not using IN list; when it is
         // one of the children to an OR predicate, then using IN list
         // is helpful. The later is checked by passing in a bitmap that
@@ -130,7 +130,7 @@ public class AndPredicate extends ListPredicate {
 
         if (!getConstrainedColumnBitKey().equals(inListLHSBitKey)
             || (children.size() > 1
-             && !sqlQuery.getDialect().supportsMultiValueInExpr()))
+             && !dialect.supportsMultiValueInExpr()))
         {
             inListRHSBitKey.clear();
         } else {
@@ -163,7 +163,7 @@ public class AndPredicate extends ListPredicate {
      *
      */
     public void toInListSql(
-        SqlQuery sqlQuery,
+        Dialect dialect,
         StringBuilder buf,
         BitKey inListRHSBitKey)
     {
@@ -195,7 +195,7 @@ public class AndPredicate extends ListPredicate {
             } else {
                 buf.append(", ");
             }
-            sqlQuery.getDialect().quote(
+            dialect.quote(
                 buf, predicate.getValue(),
                 predicate.getConstrainedColumn().getDatatype());
         }

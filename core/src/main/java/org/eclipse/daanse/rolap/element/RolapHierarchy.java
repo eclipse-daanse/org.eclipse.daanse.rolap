@@ -26,7 +26,7 @@
  */
 package org.eclipse.daanse.rolap.element;
 
-import static org.eclipse.daanse.rolap.common.util.ExpressionUtil.getTableAlias;
+import static org.eclipse.daanse.rolap.common.util.SqlExpressionResolver.getTableAlias;
 import static org.eclipse.daanse.rolap.common.util.JoinUtil.left;
 import static org.eclipse.daanse.rolap.common.util.JoinUtil.right;
 import static org.eclipse.daanse.rolap.common.util.LevelUtil.getKeyExp;
@@ -110,7 +110,7 @@ import org.eclipse.daanse.rolap.common.member.SmartRestrictedMemberReader;
 import org.eclipse.daanse.rolap.common.member.SubstitutingMemberReader;
 import org.eclipse.daanse.rolap.common.result.RolapResult;
 import org.eclipse.daanse.rolap.common.sql.MemberChildrenConstraint;
-import org.eclipse.daanse.rolap.common.sql.SqlQuery;
+import org.eclipse.daanse.rolap.common.sql.QueryRecorder;
 import org.eclipse.daanse.rolap.common.star.RolapSqlExpression;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.util.LevelUtil;
@@ -874,7 +874,7 @@ public class RolapHierarchy extends HierarchyBase {
      *    topmost ('all') expression, which may require more columns and more
      *    joins
      */
-    public void addToFromInverse(SqlQuery query, SqlExpression expression) {
+    public void addToFromInverse(QueryRecorder query, SqlExpression expression) {
         if (getRelation() == null) {
             throw Util.newError(
                 new StringBuilder("cannot add hierarchy ").append(getUniqueName())
@@ -889,6 +889,7 @@ public class RolapHierarchy extends HierarchyBase {
         query.addFrom(subRelation, null, failIfExists);
     }
 
+
     /**
      * Adds to the FROM clause of the query the tables necessary to access the
      * members of this hierarchy. If expression is not null, adds
@@ -902,7 +903,7 @@ public class RolapHierarchy extends HierarchyBase {
      *    topmost ('all') expression, which may require more columns and more
      *    joins
      */
-    public void addToFrom(SqlQuery query, SqlExpression expression) {
+    public void addToFrom(QueryRecorder query, SqlExpression expression) {
         if (getRelation() == null) {
             throw Util.newError(
                 new StringBuilder("cannot add hierarchy ").append(getUniqueName())
@@ -932,6 +933,7 @@ public class RolapHierarchy extends HierarchyBase {
             failIfExists);
     }
 
+
     /**
      * Adds a table to the FROM clause of the query.
      * If table is not null, adds the table. Otherwise, add the
@@ -943,7 +945,7 @@ public class RolapHierarchy extends HierarchyBase {
      * @param query Query to add the hierarchy to
      * @param table table to add to the query
      */
-    public void addToFrom(SqlQuery query, RolapStar.Table table) {
+    public void addToFrom(QueryRecorder query, RolapStar.Table table) {
         if (getRelation() == null) {
             throw Util.newError(
                 new StringBuilder("cannot add hierarchy ").append(getUniqueName())
@@ -985,6 +987,7 @@ public class RolapHierarchy extends HierarchyBase {
         }
     }
 
+
     /**
      * Returns the smallest subset of relation which contains
      * the relation alias, or null if these is no relation with
@@ -1020,6 +1023,8 @@ public class RolapHierarchy extends HierarchyBase {
      * Returns the smallest subset of relation which contains
      * the relation alias, or null if these is no relation with
      * such an alias.
+     * <p>The algorithm lives in {@code RelationFromMapper.relationSubset} (the sqlbuild FROM
+     * builder needs the identical subset — one home, IMPROVEMENTS-03 consolidation).
      * @param relation the relation in which to look for table by its alias
      * @param alias table alias to search for
      * @return the smallest containing relation or null if no matching table
@@ -1029,24 +1034,7 @@ public class RolapHierarchy extends HierarchyBase {
     		org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation,
         String alias)
     {
-        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource join) {
-            org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource rightRelation =
-                relationSubset(right(join), alias);
-            if (rightRelation == null) {
-                return relationSubset(left(join), alias);
-            } else {
-                return SystemWideProperties.instance()
-                    .FilterChildlessSnowflakeMembers
-                    ? join
-                    : rightRelation;
-            }
-        } else if (relation != null) {
-            return RelationUtil.getAlias(relation).equals(alias)
-                ? relation
-                : null;
-        } else {
-            throw Util.newInternal("bad relation type " + relation);
-        }
+        return org.eclipse.daanse.rolap.common.sqlbuild.RelationFromMapper.relationSubset(relation, alias);
     }
 
     /**

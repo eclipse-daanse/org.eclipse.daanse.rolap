@@ -13,26 +13,37 @@
 package org.eclipse.daanse.rolap.aggregator.extra;
 
 import java.util.List;
+import java.util.Optional;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.jdbc.db.dialect.api.generator.BitOperation;
 import org.eclipse.daanse.olap.api.DataTypeJdbc;
 import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.olap.api.calc.Calc;
 import org.eclipse.daanse.olap.api.calc.tuple.TupleList;
 import org.eclipse.daanse.olap.api.evaluator.Evaluator;
+import org.eclipse.daanse.rolap.aggregator.NodeAggregate;
+import org.eclipse.daanse.sql.statement.api.expression.SqlExpression;
 
-public class BitAggAggregator implements Aggregator {
+public class BitAggAggregator implements Aggregator, NodeAggregate {
 
     private boolean not;
     private org.eclipse.daanse.rolap.mapping.model.olap.cube.measure.BitAggType bitAggType;
-    private Dialect dialect;
 
     //
-    public BitAggAggregator(boolean not, org.eclipse.daanse.rolap.mapping.model.olap.cube.measure.BitAggType bitAggType, Dialect dialect) {
+    public BitAggAggregator(boolean not, org.eclipse.daanse.rolap.mapping.model.olap.cube.measure.BitAggType bitAggType) {
         this.not = not;
         this.bitAggType = bitAggType;
-        this.dialect = dialect;
+    }
+
+    @Override
+    public SqlExpression toNode(SqlExpression operand) {
+        BitOperation operation = switch (bitAggType) {
+        case org.eclipse.daanse.rolap.mapping.model.olap.cube.measure.BitAggType.AND -> not ? BitOperation.NAND : BitOperation.AND;
+        case org.eclipse.daanse.rolap.mapping.model.olap.cube.measure.BitAggType.OR -> not ? BitOperation.NOR : BitOperation.OR;
+        case org.eclipse.daanse.rolap.mapping.model.olap.cube.measure.BitAggType.XOR -> not ? BitOperation.NXOR : BitOperation.XOR;
+        };
+        return new SqlExpression.ExtraAggregate(Optional.ofNullable(operand),
+                new SqlExpression.ExtraAggregate.Spec.BitAggregation(operation));
     }
 
     @Override
@@ -52,23 +63,7 @@ public class BitAggAggregator implements Aggregator {
 
     @Override
     public StringBuilder getExpression(CharSequence operand) {
-        return switch (bitAggType) {
-        case org.eclipse.daanse.rolap.mapping.model.olap.cube.measure.BitAggType.AND -> and(operand);
-        case org.eclipse.daanse.rolap.mapping.model.olap.cube.measure.BitAggType.OR -> or(operand);
-        case org.eclipse.daanse.rolap.mapping.model.olap.cube.measure.BitAggType.XOR -> xor(operand);
-        };
-    }
-
-    private StringBuilder and(CharSequence operand) {
-        return dialect.aggregationGenerator().generateBitAggregation(not ? BitOperation.NAND : BitOperation.AND, operand).map(StringBuilder::new).orElse(null);
-    }
-
-    private StringBuilder or(CharSequence operand) {
-        return dialect.aggregationGenerator().generateBitAggregation(not ? BitOperation.NOR : BitOperation.OR, operand).map(StringBuilder::new).orElse(null);
-    }
-
-    private StringBuilder xor(CharSequence operand) {
-        return dialect.aggregationGenerator().generateBitAggregation(not ? BitOperation.NXOR : BitOperation.XOR, operand).map(StringBuilder::new).orElse(null);
+        return new StringBuilder(getName()).append('(').append(operand).append(')');
     }
 
     @Override

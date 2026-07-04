@@ -23,7 +23,7 @@
  */
 package org.eclipse.daanse.rolap.common.agg;
 
-import static org.eclipse.daanse.rolap.common.util.ExpressionUtil.genericExpression;
+import static org.eclipse.daanse.rolap.common.util.SqlExpressionResolver.genericSql;
 
 import java.math.BigInteger;
 import java.util.AbstractList;
@@ -56,7 +56,6 @@ import  org.eclipse.daanse.olap.util.Pair;
 import org.eclipse.daanse.rolap.common.EnumConvertor;
 import org.eclipse.daanse.rolap.common.RolapUtil;
 import org.eclipse.daanse.rolap.common.agg.Segment.ExcludedRegion;
-import org.eclipse.daanse.rolap.common.sql.SqlQuery;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.star.StarColumnPredicate;
 import org.eclipse.daanse.rolap.common.star.StarPredicate;
@@ -782,7 +781,7 @@ public class SegmentBuilder {
         StarColumnPredicate predicate, SortedSet<Comparable> set)
     {
         return new SegmentColumn(
-            genericExpression(predicate.getConstrainedColumn()
+            genericSql(predicate.getConstrainedColumn()
                 .getExpression()),
             predicate.getConstrainedColumn().getCardinality(),
             set);
@@ -801,15 +800,11 @@ public class SegmentBuilder {
             SegmentBuilder.toConstrainedColumns(segment.predicates);
         final List<String> cp = new ArrayList<>();
 
-        StringBuilder buf = new StringBuilder();
-
+        final org.eclipse.daanse.sql.statement.render.DialectSqlRenderer predicateRenderer =
+            new org.eclipse.daanse.sql.statement.render.DialectSqlRenderer(segment.star.getDialect());
         for (StarPredicate compoundPredicate : segment.compoundPredicateList) {
-            buf.setLength(0);
-            SqlQuery query =
-                new SqlQuery(
-                    segment.star.getSqlQueryDialect(), segment.star.getContext().getConfigValue(ConfigConstants.GENERATE_FORMATTED_SQL, ConfigConstants.GENERATE_FORMATTED_SQL_DEFAULT_VALUE, Boolean.class));
-            compoundPredicate.toSql(query, buf);
-            cp.add(buf.toString());
+            cp.add(predicateRenderer.renderPredicate(
+                org.eclipse.daanse.rolap.common.sqlbuild.StarPredicateTranslator.toPredicate(compoundPredicate)));
         }
         final RolapCatalog schema = segment.star.getCatalog();
         return new SegmentHeader(

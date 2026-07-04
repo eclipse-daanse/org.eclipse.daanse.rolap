@@ -24,8 +24,6 @@
 
 package org.eclipse.daanse.rolap.common;
 
-import static org.eclipse.daanse.rolap.common.util.ExpressionUtil.getExpression;
-
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -37,8 +35,11 @@ import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.olap.api.sql.SqlExpression;
 import org.eclipse.daanse.olap.common.ExecuteDurationUtil;
 import org.eclipse.daanse.olap.execution.ExecutionImpl;
-import org.eclipse.daanse.rolap.common.sql.SqlQuery;
+import org.eclipse.daanse.rolap.common.sqlbuild.JoinPlanner;
+import org.eclipse.daanse.rolap.common.sqlbuild.RelationFromMapper;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
+import org.eclipse.daanse.sql.statement.api.Expressions;
+import org.eclipse.daanse.sql.statement.api.SelectStatementBuilder;
 import org.eclipse.daanse.rolap.sql.SqlStatisticsProviderNew;
 
 
@@ -71,10 +72,17 @@ public class RolapStatisticsCache {
             return getTableCardinality(
                 null, table.getTable());
         } else {
-            final SqlQuery sqlQuery = star.getSqlQuery();
-            sqlQuery.addSelect("*", null);
-            sqlQuery.addFrom(relation, null, true);
-            return getQueryCardinality(sqlQuery.toString());
+            final Dialect dialect = star.getDialect();
+            SelectStatementBuilder q = SelectStatementBuilder.create();
+            org.eclipse.daanse.sql.statement.api.model.FromClause from = RelationFromMapper.from(relation);
+            // Diagnostic provenance (rendered only when comments are on; never part of the executed
+            // SQL): this whole-relation read is the statistics cache's row-count probe input — the
+            // provider wraps it as `select count(*) from (<this>)`.
+            q.header("table cardinality " + relationName(alias, from));
+            q.footerComment("cardinality probe (count rows)");
+            q.from(from);
+            q.project(Expressions.star(), null);
+            return getQueryCardinality(SqlRender.render(q.build(), dialect).sql());
         }
     }
 
@@ -88,7 +96,7 @@ public class RolapStatisticsCache {
         if (tableMap.containsKey(key)) {
             rowCount = tableMap.get(key);
         } else {
-            final Dialect dialect = star.getSqlQueryDialect();
+            final Dialect dialect = star.getDialect();
             //final List<StatisticsProvider> statisticsProviders =
             //    dialect.getStatisticsProviders();
             final List<SqlStatisticsProviderNew> statisticsProviders = List.of(new SqlStatisticsProviderNew());
@@ -121,7 +129,7 @@ public class RolapStatisticsCache {
         if (queryMap.containsKey(sql)) {
             rowCount = queryMap.get(sql);
         } else {
-            final Dialect dialect = star.getSqlQueryDialect();
+            final Dialect dialect = star.getDialect();
             //final List<StatisticsProvider> statisticsProviders =
             //    dialect.getStatisticsProviders();
             final List<SqlStatisticsProviderNew> statisticsProviders = List.of(new SqlStatisticsProviderNew());
@@ -160,11 +168,17 @@ public class RolapStatisticsCache {
                 table.getTable(),
                 column.getName());
         } else {
-            final SqlQuery sqlQuery = star.getSqlQuery();
-            sqlQuery.setDistinct(true);
-            sqlQuery.addSelect(getExpression( expression, sqlQuery), null);
-            sqlQuery.addFrom(relation, null, true);
-            return getQueryCardinality(sqlQuery.toString());
+            final Dialect dialect = star.getDialect();
+            SelectStatementBuilder q = SelectStatementBuilder.create();
+            org.eclipse.daanse.sql.statement.api.model.FromClause from = RelationFromMapper.from(relation);
+            // Diagnostic provenance: the distinct-values read the statistics cache wraps as
+            // `select count(*) from (<this>)` — a count-distinct probe for one column/expression.
+            q.header("column cardinality " + columnName(expression, from));
+            q.footerComment("cardinality probe (count distinct values)");
+            q.distinct(true);
+            q.from(from);
+            q.project(JoinPlanner.expressionFor(expression), null);
+            return getQueryCardinality(SqlRender.render(q.build(), dialect).sql());
         }
     }
 
@@ -179,7 +193,7 @@ public class RolapStatisticsCache {
         if (columnMap.containsKey(key)) {
             rowCount = columnMap.get(key);
         } else {
-            final Dialect dialect = star.getSqlQueryDialect();
+            final Dialect dialect = star.getDialect();
             final List<SqlStatisticsProviderNew> statisticsProviders = List.of(new SqlStatisticsProviderNew());
             //final List<StatisticsProvider> statisticsProviders =
             //    dialect.getStatisticsProviders();
@@ -206,6 +220,27 @@ public class RolapStatisticsCache {
             columnMap.put(key, rowCount);
         }
         return rowCount;
+    }
+
+    /** The provenance name for the row-count probe: the caller's alias, else the FROM base alias. */
+    private static String relationName(String alias,
+            org.eclipse.daanse.sql.statement.api.model.FromClause from) {
+        if (alias != null && !alias.isBlank()) {
+            return alias;
+        }
+        org.eclipse.daanse.sql.statement.api.model.TableAlias base =
+                org.eclipse.daanse.sql.statement.api.From.baseAlias(from);
+        return base != null ? base.name() : "relation";
+    }
+
+    /** The provenance name for the count-distinct probe: table.column for a plain column, else the base alias. */
+    private static String columnName(SqlExpression expression,
+            org.eclipse.daanse.sql.statement.api.model.FromClause from) {
+        if (expression instanceof org.eclipse.daanse.rolap.element.RolapColumn column) {
+            return column.getTable() != null
+                    ? column.getTable() + "." + column.getName() : column.getName();
+        }
+        return "expression on " + relationName(null, from);
     }
 
     public int getColumnCardinality2(

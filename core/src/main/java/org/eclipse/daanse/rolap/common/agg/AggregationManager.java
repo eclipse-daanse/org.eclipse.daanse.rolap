@@ -47,7 +47,7 @@ import org.eclipse.daanse.olap.api.execution.ExecutionContext;
 import org.eclipse.daanse.olap.common.ConfigConstants;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.key.BitKey;
-import  org.eclipse.daanse.olap.util.Pair;
+import org.eclipse.daanse.sql.statement.api.render.RenderedSql;
 import org.eclipse.daanse.rolap.api.RolapContext;
 import org.eclipse.daanse.rolap.common.CacheControlImpl;
 import org.eclipse.daanse.rolap.common.RolapAggregationManager;
@@ -229,14 +229,14 @@ public class AggregationManager extends RolapAggregationManager implements OlapA
                 starPredicateSlicer,
                 fields,
                 countOnly);
-        Pair<String, List<BestFitColumnType>> pair = spec.generateSqlQuery();
+        RenderedSql pair = spec.generateSql();
 
         if (getLogger().isDebugEnabled()) {
             getLogger().debug(
-                "DrillThroughSQL: {}{}" ,pair.left, Util.NL);
+                "DrillThroughSQL: {}{}" ,pair.sql(), Util.NL);
         }
 
-        return pair.left;
+        return pair.sql();
     }
 
     /**
@@ -246,7 +246,7 @@ public class AggregationManager extends RolapAggregationManager implements OlapA
      * @return A pair consisting of a SQL statement and a list of suggested
      *     types of columns
      */
-    public static Pair<String, List<BestFitColumnType>> generateSql(
+    public static RenderedSql generateSql(
         GroupingSetsList groupingSetsList,
         List<StarPredicate> compoundPredicateList, boolean useAggregates)
     {
@@ -299,11 +299,11 @@ public class AggregationManager extends RolapAggregationManager implements OlapA
                 AggQuerySpec aggQuerySpec =
                     new AggQuerySpec(
                         aggStar, rollup[0], groupingSetsList);
-                Pair<String, List<BestFitColumnType>> sql = aggQuerySpec.generateSqlQuery();
+                RenderedSql sql = aggQuerySpec.generateSql();
 
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug(
-                        "generateSqlQuery: sql={}", sql.left);
+                        "generateSql: sql={}", sql.sql());
                 }
 
                 return sql;
@@ -338,11 +338,11 @@ public class AggregationManager extends RolapAggregationManager implements OlapA
         SegmentArrayQuerySpec spec =
             new SegmentArrayQuerySpec(groupingSetsList, compoundPredicateList);
 
-        Pair<String, List<BestFitColumnType>> pair = spec.generateSqlQuery();
+        RenderedSql pair = spec.generateSql();
 
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug(
-                "generateSqlQuery: sql=" + pair.left);
+                "generateSql: sql=" + pair.sql());
         }
 
         return pair;

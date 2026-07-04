@@ -229,6 +229,18 @@ public class SqlStatement implements SqlStatementI {
 
       this.resultSet = statement.executeQuery( sql );
 
+      // Compute accessors BEFORE skipping rows: some drivers (sqlite-jdbc 3.36) invalidate
+      // ResultSet metadata once next() has returned false, so a skip past the last row would
+      // make guessTypes() fail ("SQLite JDBC: inconsistent internal state"). They ensure that
+      // we use the most efficient method (e.g. getInt, getDouble, getObject) for the type of
+      // the column. Even if you are going to box the result into an object, it is better to
+      // use getInt than getObject; the latter might return something daft like a BigDecimal
+      // (does, on the Oracle JDBC driver).
+      accessors.clear();
+      for ( BestFitColumnType type : guessTypes() ) {
+        accessors.add( createAccessor( accessors.size(), type ) );
+      }
+
       // skip to first row specified in request
       this.state = State.ACTIVE;
       if ( firstRowOrdinal > 0 ) {
@@ -267,16 +279,6 @@ public class SqlStatement implements SqlStatementI {
 //          getPurpose(),
 //          executeNanos )
 
-      // Compute accessors. They ensure that we use the most efficient
-      // method (e.g. getInt, getDouble, getObject) for the type of the
-      // column. Even if you are going to box the result into an object,
-      // it is better to use getInt than getObject; the latter might
-      // return something daft like a BigDecimal (does, on the Oracle JDBC
-      // driver).
-      accessors.clear();
-      for ( BestFitColumnType type : guessTypes() ) {
-        accessors.add( createAccessor( accessors.size(), type ) );
-      }
     } catch ( Throwable e ) {
       status = new StringBuilder(", failed (").append(e).append(")").toString();
 

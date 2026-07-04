@@ -26,7 +26,7 @@
  */
 package org.eclipse.daanse.rolap.common.member;
 
-import static org.eclipse.daanse.rolap.common.util.ExpressionUtil.getExpression;
+import static org.eclipse.daanse.rolap.common.util.SqlExpressionResolver.render;
 
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -62,11 +62,12 @@ import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.exceptions.ResourceLimitExceededException;
 import org.eclipse.daanse.olap.key.BitKey;
 import  org.eclipse.daanse.olap.util.CancellationChecker;
-import  org.eclipse.daanse.olap.util.Pair;
+import org.eclipse.daanse.sql.statement.api.render.RenderedSql;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.EnumConvertor;
 import org.eclipse.daanse.rolap.common.RolapAggregationManager;
 import org.eclipse.daanse.rolap.common.RolapUtil;
+import org.eclipse.daanse.rolap.common.SqlRender;
 import org.eclipse.daanse.rolap.common.SqlStatement;
 import org.eclipse.daanse.rolap.common.SqlTupleReader;
 import org.eclipse.daanse.rolap.common.TupleReader;
@@ -75,11 +76,18 @@ import org.eclipse.daanse.rolap.common.agg.AggregationManager;
 import org.eclipse.daanse.rolap.common.agg.CellRequest;
 import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;
 import org.eclipse.daanse.rolap.common.constraint.SqlConstraintFactory;
-import org.eclipse.daanse.rolap.common.constraint.SqlConstraintUtils;
+import org.eclipse.daanse.rolap.common.constraint.CalculatedMemberExpander;
 import org.eclipse.daanse.rolap.common.constraint.SqlContextConstraint;
+import org.eclipse.daanse.rolap.common.constraint.DefaultMemberChildrenConstraint;
 import org.eclipse.daanse.rolap.common.sql.MemberChildrenConstraint;
 import org.eclipse.daanse.rolap.common.sql.MemberKeyConstraint;
-import org.eclipse.daanse.rolap.common.sql.SqlQuery;
+import org.eclipse.daanse.rolap.common.sql.QueryRecorder;
+
+import org.eclipse.daanse.rolap.common.sqlbuild.GuardedSql;
+import org.eclipse.daanse.rolap.common.sqlbuild.SqlBuildGuard;
+import org.eclipse.daanse.rolap.common.sqlbuild.JoinPlanner;
+import org.eclipse.daanse.rolap.common.sqlbuild.MemberSqlMapper;
+import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.rolap.common.sql.TupleConstraint;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.element.RolapBaseCubeMeasure;
@@ -286,19 +294,37 @@ public class SqlMemberSource
         boolean[] mustCount)
     {
         mustCount[0] = false;
-        SqlQuery sqlQuery =
-            SqlQuery.newQuery(
-                    context,
-                "while generating query to count members in level " + level);
         int levelDepth = level.getDepth();
         List<RolapLevel> levels = (List<RolapLevel>) hierarchy.getLevels();
+
+        // The "select count(*) from (select distinct …) init" cardinality query is built
+        // authoritatively by the generic mapper (byte-equal corpus-wide), skipping both QueryRecorder
+        // constructions. Other shapes (full-depth count(*), the non-FROM-query count-distinct, and
+        // levels the mapper does not support) fall through to the QueryRecorder path below.
+        if (levelDepth != levels.size() && context.getDialect().allowsFromQuery()
+            && org.eclipse.daanse.rolap.common.sqlbuild.TupleSqlMapper.countSupports(level)) {
+            return SqlRender.render(org.eclipse.daanse.rolap.common.sqlbuild.TupleSqlMapper.levelMemberCountSql(level), context.getDialect())
+                .sql();
+        }
+        // Leaf level: "select count(*) from <table>" — rendered by the builder when the key is a plain
+        // column in a renderable relation (the FROM is derived as the generic count does).
+        if (levelDepth == levels.size()
+            && org.eclipse.daanse.rolap.common.sqlbuild.TupleSqlMapper.leafCountSupports(level)) {
+            return SqlRender.render(org.eclipse.daanse.rolap.common.sqlbuild.TupleSqlMapper.leafCountSql(level), context.getDialect())
+                .sql();
+        }
+
+        QueryRecorder sqlQuery =
+            QueryRecorder.newQuery(
+                    context,
+                "while generating query to count members in level " + level);
         if (levelDepth == levels.size()) {
             // "select count(*) from schema.customer"
             sqlQuery.addSelect("count(*)", null);
             hierarchy.addToFrom(sqlQuery, level.getKeyExp());
-            return sqlQuery.toString();
+            return sqlQuery.toSqlAndTypes(context.getDialect()).sql();
         }
-        if (!sqlQuery.getDialect().allowsFromQuery()) {
+        if (!context.getDialect().allowsFromQuery()) {
             List<String> columnList = new ArrayList<>();
             int columnCount = 0;
             for (int i = levelDepth; i >= 0; i--) {
@@ -307,7 +333,7 @@ public class SqlMemberSource
                      continue;
                 }
                 if (columnCount > 0) {
-                    if (sqlQuery.getDialect().allowsCompoundCountDistinct()) {
+                    if (context.getDialect().allowsCompoundCountDistinct()) {
                         // no op.
                     } else if (true) {
                         // for databases where both SELECT-in-FROM and
@@ -319,7 +345,7 @@ public class SqlMemberSource
                 }
                 hierarchy.addToFrom(sqlQuery, level2.getKeyExp());
 
-                String keyExp = getExpression(level2.getKeyExp(), sqlQuery);
+                String keyExp = render(level2.getKeyExp(), context.getDialect());
                 columnList.add(keyExp);
 
                 if (level2.isUnique()) {
@@ -330,7 +356,7 @@ public class SqlMemberSource
             if (mustCount[0]) {
                 for (String colDef : columnList) {
                     final StringBuilder exp =
-                        sqlQuery.getDialect().functionGenerator().generateCountExpression(colDef);
+                        context.getDialect().functionGenerator().generateCountExpression(colDef);
                     sqlQuery.addSelect(exp, null);
                     sqlQuery.addOrderBy(exp, SortingDirection.ASC, false, true);
                 }
@@ -343,13 +369,13 @@ public class SqlMemberSource
                     }
                     i++;
                     sb.append(
-                        sqlQuery.getDialect().functionGenerator()
+                        context.getDialect().functionGenerator()
                             .generateCountExpression(colDef));
                 }
                 sqlQuery.addSelect(
                     new StringBuilder("count(DISTINCT ").append(sb.toString()).append(")").toString(), null);
             }
-            return sqlQuery.toString();
+            return sqlQuery.toSqlAndTypes(context.getDialect()).sql();
 
         } else {
             sqlQuery.setDistinct(true);
@@ -360,13 +386,15 @@ public class SqlMemberSource
                 }
                 SqlExpression keyExp = level2.getKeyExp();
                 hierarchy.addToFrom(sqlQuery, keyExp);
-                sqlQuery.addSelect(getExpression(keyExp, sqlQuery), null);
+                // Dialect-free: plain column -> Column node, computed -> RawVariant (renderer resolves
+                // per dialect at render).
+                sqlQuery.addSelectExpr(keyExp, null);
                 if (level2.isUnique()) {
                     break; // no further qualification needed
                 }
             }
-            SqlQuery outerQuery =
-                SqlQuery.newQuery(
+            QueryRecorder outerQuery =
+                QueryRecorder.newQuery(
                     context,
                     "while generating query to count members in level "
                     + level);
@@ -375,7 +403,7 @@ public class SqlMemberSource
             // FROM-queries to have an alias
             boolean failIfExists = true;
             outerQuery.addFrom(sqlQuery, "init", failIfExists);
-            return outerQuery.toString();
+            return outerQuery.toSqlAndTypes(context.getDialect()).sql();
         }
     }
 
@@ -386,9 +414,9 @@ public class SqlMemberSource
     }
 
     private List<RolapMember> getMembers(Context context) {
-        Pair<String, List<BestFitColumnType>> pair = makeKeysSql(context);
-        final String sql = pair.left;
-        List<BestFitColumnType> types = pair.right;
+        RenderedSql pair = makeKeysSql(context);
+        final String sql = pair.sql();
+        List<BestFitColumnType> types = pair.columnTypes();
         List<RolapLevel> levels = (List<RolapLevel>) hierarchy.getLevels();
         ExecutionMetadata metadata = ExecutionMetadata.of(
             "SqlMemberSource.getMembers",
@@ -535,66 +563,14 @@ RME is this right
         list.add(i + 1, member);
     }
 
-    private Pair<String, List<BestFitColumnType>> makeKeysSql(
+    private RenderedSql makeKeysSql(
         Context context)
     {
-        SqlQuery sqlQuery =
-            SqlQuery.newQuery(
-                context,
-                "while generating query to retrieve members of " + hierarchy);
-        List<RolapLevel> levels = (List<RolapLevel>) hierarchy.getLevels();
-        for (RolapLevel level : levels) {
-            if (level.isAll()) {
-                continue;
-            }
-            final SqlExpression keyExp = level.getKeyExp();
-            hierarchy.addToFrom(sqlQuery, keyExp);
-            final String expString =
-                getExpression(keyExp, sqlQuery);
-            final String keyAlias =
-                sqlQuery.addSelectGroupBy(expString, null);
-
-            if (level.getOrdinalExps() != null && !level.getOrdinalExps().isEmpty()) {
-                for (SqlExpression ordinalExp : level.getOrdinalExps()) {
-                    final SortingDirection sortingDirection = ordinalExp.getSortingDirection();
-                    // Ordering comes from a separate expression
-                    // Make sure the table is selected.
-                    hierarchy.addToFrom(sqlQuery, ordinalExp);
-                    final String ordinalExpString =
-                        getExpression(ordinalExp, sqlQuery);
-                    final String orderAlias =
-                        sqlQuery.addSelectGroupBy(ordinalExpString, null);
-                    sqlQuery.addOrderBy(
-                        ordinalExpString,
-                        orderAlias,
-                        sortingDirection, false, true, true);
-                }
-            } else {
-                // Still need to order by key.
-                sqlQuery.addOrderBy(
-                    expString,
-                    keyAlias,
-                    keyExp.getSortingDirection(), false, true, true);
-            }
-
-            RolapProperty[] properties = level.getProperties();
-            for (RolapProperty property : properties) {
-                final SqlExpression propExpr = property.getExp();
-                hierarchy.addToFrom(sqlQuery, propExpr);
-                final String propStringExpr =
-                    getExpression(propExpr, sqlQuery);
-                final String propAlias =
-                    sqlQuery.addSelect(propStringExpr, null);
-                // Some dialects allow us to eliminate properties from the
-                // group by that are functionally dependent on the level value
-                if (!sqlQuery.getDialect().allowsSelectNotInGroupBy()
-                    || !property.dependsOnLevelValue())
-                {
-                    sqlQuery.addGroupBy(propStringExpr, propAlias);
-                }
-            }
-        }
-        return sqlQuery.toSqlAndTypes();
+        // Whole-hierarchy member enumeration is built entirely by the statement builder; keysSql
+        // handles every relation (tables/joins/views/inline via from) and parent-child
+        // levels (emitting the level key, no parent column).
+        return SqlRender.render(org.eclipse.daanse.rolap.common.sqlbuild.TupleSqlMapper.keysSql(
+                hierarchy, context.getDialect()), context.getDialect());
     }
 
     // implement MemberReader
@@ -659,30 +635,61 @@ RME is this right
      *
      * See also {@link SqlTupleReader#makeLevelMembersSql}.
      */
-    Pair<String, List<BestFitColumnType>> makeChildMemberSql(
+    GuardedSql makeChildMemberSql(
         RolapMember member,
         Context<?> context,
         MemberChildrenConstraint constraint)
     {
-        SqlQuery sqlQuery =
-            SqlQuery.newQuery(
-                context,
-                "while generating query to retrieve children of member "
-                    + member);
+        RolapLevel level = (RolapLevel) member.getLevel().getChildLevel();
 
         // If this is a non-empty constraint, it is more efficient to join to
         // an aggregate table than to the fact table. See whether a suitable
         // aggregate table exists.
         AggStar aggStar = chooseAggStar(constraint, member, context.getConfigValue(ConfigConstants.USE_AGGREGATES, ConfigConstants.USE_AGGREGATES_DEFAULT_VALUE ,Boolean.class));
 
-        // Create the condition, which is either the parent member or
-        // the full context (non empty).
-        constraint.addMemberConstraint(sqlQuery, null, aggStar, member);
+        // No double build: when the generic mapper fully reproduces this query — a supported level,
+        // a dimension-only constraint (no fact join) and no aggregate-table join — build it directly
+        // and skip constructing the QueryRecorder entirely.
+        if (aggStar == null && MemberSqlMapper.supports(level)) {
+            java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution> contribution =
+                constraint.toContribution(null, null, member);
+            if (contribution.isPresent() && !contribution.get().requiresFactJoin()) {
+                RolapUtil.SQL_GEN_LOGGER.debug(
+                        "member-children level={}: dimension-only constraint -> builder authoritative",
+                        level.getUniqueName());
+                List<RolapLevel> mapperLevels = (List<RolapLevel>) hierarchy.getLevels();
+                boolean ngb = RolapUtil.isGroupByNeeded(hierarchy, mapperLevels, level.getDepth());
+                java.util.Optional<org.eclipse.daanse.sql.statement.api.expression.Predicate> where =
+                    contribution.get().where();
+                return SqlBuildGuard.build(context.getDialect(),
+                    Boolean.TRUE.equals(context.getConfigValue(ConfigConstants.GENERATE_FORMATTED_SQL,
+                        ConfigConstants.GENERATE_FORMATTED_SQL_DEFAULT_VALUE, Boolean.class)),
+                    () -> MemberSqlMapper.childMemberSql(level, ngb, where,
+                        context.getDialect().allowsSelectNotInGroupBy()));
+            }
+        }
 
-        RolapLevel level = (RolapLevel) member.getLevel().getChildLevel();
+        QueryRecorder sqlQuery =
+            QueryRecorder.newQuery(
+                context,
+                "while generating query to retrieve children of member "
+                    + member);
+
+        // Create the condition, which is either the parent member or
+        // the full context (non empty). The constraint contributes ops recorded on a FORK of the
+        // current recorder state; append merges the ops AND the fork's relation registrations back,
+        // so the constraint runs against the same state as recording directly on the parent.
+        final QueryRecorder.Fork memberFork = sqlQuery.fork();
+        sqlQuery.append(memberFork,
+            constraint.addMemberConstraintOps(context.getDialect(), memberFork, null, aggStar, member));
 
         List<RolapLevel> levels = (List<RolapLevel>) hierarchy.getLevels();
         int levelDepth = level.getDepth();
+
+        {
+            sqlQuery.setHeaderComment( "children of " + member.getUniqueName() );
+            sqlQuery.setFooterComment( "children via " + constraint.getClass().getSimpleName() );
+        }
 
         boolean needsGroupBy =
                 RolapUtil.isGroupByNeeded( hierarchy, levels, levelDepth );
@@ -701,27 +708,52 @@ RME is this right
                 ((RolapCubeLevel) level).getStarKeyColumn();
             int bitPos = starColumn.getBitPosition();
             AggStar.Table.Column aggColumn = aggStar.lookupColumn(bitPos);
-            String q = aggColumn.generateExprString(sqlQuery);
-            String qAlias = sqlQuery.addSelect(q, starColumn.getInternalType());
+            // Dialect-free: the agg column as a statement node (renders "table"."column" via
+            // quoteIdentifier).
+            org.eclipse.daanse.sql.statement.api.expression.SqlExpression qNode = aggColumn.toSqlExpression();
+            String qAlias = sqlQuery.addSelectNode(qNode, starColumn.getInternalType());
             if(needsGroupBy) {
-                sqlQuery.addGroupBy(q, qAlias);
+                sqlQuery.addGroupByNode(qNode, qAlias);
             }
-            sqlQuery.addOrderBy(
-                q, qAlias, SortingDirection.ASC, false, true, true);
+            sqlQuery.addOrderByNode(
+                qNode, qAlias, SortingDirection.ASC, false, true, true);
             aggColumn.getTable().addToFrom(sqlQuery, false, true);
-            return sqlQuery.toSqlAndTypes();
+            return sqlQuery.toGuarded(context.getDialect());
         }
 
         hierarchy.addToFrom(sqlQuery, level.getKeyExp());
-        String q = getExpression(level.getKeyExp(), sqlQuery);
-        String idAlias = sqlQuery.addSelect(q, level.getInternalType());
+        if ( level.getKeyExp() instanceof org.eclipse.daanse.rolap.element.RolapColumn keyCol ) {
+            // Base-FROM provenance: the dimension + child-level label keyed to the PREDICTED base
+            // alias (the leftmost leaf of the child level's relation subset). If a constraint added
+            // the fact first the label merges into the dimension table's join comment instead —
+            // still accurate. "snowflake" stays join-only vocabulary (non-base aliases).
+            String baseAlias = org.eclipse.daanse.rolap.common.sqlbuild.RelationFromMapper
+                .baseAliasFor( hierarchy.getRelation(), keyCol.getTable() );
+            if ( baseAlias != null ) {
+                sqlQuery.commentFrom( baseAlias,
+                    org.eclipse.daanse.rolap.common.sqlbuild.TupleSqlMapper
+                        .baseTableComment( level, baseAlias ) );
+            }
+            if ( !keyCol.getTable().equals( baseAlias ) ) {
+                sqlQuery.commentFrom( keyCol.getTable(),
+                    "snowflake " + level.getUniqueName() );
+            }
+        }
+        // Dialect-free: pass the key expression for SELECT / GROUP BY / ORDER BY; the facade builds a Column
+        // node (plain) / Raw (computed). The ORDER BY dedup below compares expressions (RolapColumn.equals is
+        // value-based: name + table) instead of the rendered strings.
+        String idAlias = sqlQuery.addSelectExprCommented(level.getKeyExp(), level.getInternalType(),
+            "level key " + level.getUniqueName());
         if(needsGroupBy) {
-            sqlQuery.addGroupBy(q, idAlias);
+            sqlQuery.addGroupByExpr(level.getKeyExp(), idAlias);
         }
 
         // in non empty mode the level table must be joined to the fact
-        // table
-        constraint.addLevelConstraint(sqlQuery, null, aggStar, level);
+        // table (fresh fork of the CURRENT state — it sees the member constraint's and the direct
+        // mutations' merged effects, exactly as if it mutated the recorder in place).
+        final QueryRecorder.Fork levelFork = sqlQuery.fork();
+        sqlQuery.append(levelFork,
+            constraint.addMemberLevelConstraintOps(context.getDialect(), levelFork, null, aggStar, level));
 
         if (levelCollapsed) {
             // if this is a collapsed level, add a join between key and aggstar
@@ -733,8 +765,10 @@ RME is this right
                 new RolapStar.Condition(
                     level.getKeyExp(),
                     aggColumn.getExpression());
-            sqlQuery.addWhere(condition.toString(sqlQuery));
+            // Add the key table to FROM first, then feed the structured join (dialect-free FromJoin edge) —
+            // the agg table (the join's right side) is the FROM base; addJoinCondition needs both present.
             hierarchy.addToFromInverse(sqlQuery, level.getKeyExp());
+            sqlQuery.addJoinCondition(condition.getLeft(), condition.getRight());
 
             // also may need to join parent levels to make selection unique
             RolapCubeLevel parentLevel = (RolapCubeLevel)level.getParentLevel();
@@ -748,7 +782,8 @@ RME is this right
                     new RolapStar.Condition(
                         parentLevel.getKeyExp(),
                         aggColumn.getExpression());
-                sqlQuery.addWhere(condition.toString(sqlQuery));
+                // Left (parentLevel key) already added above; agg table is the FROM base → both present.
+                sqlQuery.addJoinCondition(condition.getLeft(), condition.getRight());
                 parentLevel = parentLevel.getParentLevel();
             }
         }
@@ -758,10 +793,11 @@ RME is this right
             if (!levelCollapsed) {
                 hierarchy.addToFrom(sqlQuery, captionExp);
             }
-            String captionSql = getExpression(captionExp, sqlQuery);
-            String gbAlias = sqlQuery.addSelect(captionSql, null);
+            // Dialect-free: pass the caption expression (SELECT + GROUP BY only, no ORDER BY entanglement).
+            String gbAlias = sqlQuery.addSelectExprCommented(captionExp, null,
+                "level caption " + level.getUniqueName());
             if(needsGroupBy) {
-                sqlQuery.addGroupBy(captionSql, gbAlias);
+                sqlQuery.addGroupByExpr(captionExp, gbAlias);
             }
         }
         if (!levelCollapsed) {
@@ -772,23 +808,22 @@ RME is this right
 
         if (level.getOrdinalExps() != null && !level.getOrdinalExps().isEmpty()) {
             for (SqlExpression order : level.getOrdinalExps()) {
-                final String orderBy = getExpression(order, sqlQuery);
                 final SortingDirection sortingDirection = order.getSortingDirection();
-                if (!orderBy.equals(q)) {
-                    String orderAlias = sqlQuery.addSelect(orderBy, null);
+                if (!order.equals(level.getKeyExp())) {
+                    String orderAlias = sqlQuery.addSelectExpr(order, null);
                     if(needsGroupBy) {
-                        sqlQuery.addGroupBy(orderBy, orderAlias);
+                        sqlQuery.addGroupByExpr(order, orderAlias);
                     }
-                    sqlQuery.addOrderBy(
-                        orderBy, orderAlias, sortingDirection, false, true, true);
+                    sqlQuery.addOrderByExpr(
+                        order, orderAlias, sortingDirection, false, true, true);
                 } else {
-                    sqlQuery.addOrderBy(
-                        q, idAlias, sortingDirection, false, true, true);
+                    sqlQuery.addOrderByExpr(
+                        level.getKeyExp(), idAlias, sortingDirection, false, true, true);
                 }
             }
         } else {
-            sqlQuery.addOrderBy(
-                q, idAlias, level.getKeyExp().getSortingDirection(), false, true, true);
+            sqlQuery.addOrderByExpr(
+                level.getKeyExp(), idAlias, level.getKeyExp().getSortingDirection(), false, true, true);
         }
 
         RolapProperty[] properties = level.getProperties();
@@ -797,17 +832,83 @@ RME is this right
             if (!levelCollapsed) {
                 hierarchy.addToFrom(sqlQuery, exp);
             }
-            final String s = getExpression(exp, sqlQuery);
-            String alias = sqlQuery.addSelect(s, EnumConvertor.toBestFitColumnType(property.getType().getInternalType()));
+            // Dialect-free: pass the property expression (SELECT + GROUP BY only, no ORDER BY entanglement).
+            String alias = sqlQuery.addSelectExprCommented(exp,
+                EnumConvertor.toBestFitColumnType(property.getType().getInternalType()),
+                "member property " + property.getName());
 
             // Some dialects allow us to eliminate properties from the
             // group by that are functionally dependent on the level value
-            if (needsGroupBy && !sqlQuery.getDialect().allowsSelectNotInGroupBy()
+            if (needsGroupBy && !context.getDialect().allowsSelectNotInGroupBy()
                 || !property.dependsOnLevelValue()) {
-                sqlQuery.addGroupBy(s, alias);
+                sqlQuery.addGroupByExpr(exp, alias);
             }
         }
-        return sqlQuery.toSqlAndTypes();
+        return preferBuilder(level, needsGroupBy, member, context.getDialect(),
+            sqlQuery.toGuarded(context.getDialect()), constraint, context.getDataSource());
+    }
+
+    /**
+     * Returns the children SQL from the generic {@link MemberSqlMapper} when the mapper supports the
+     * level, otherwise the {@link QueryRecorder} result. The parent member's key constraint is reproduced
+     * via {@link JoinPlanner#memberKeyConstraint}.
+     * <p>
+     * For the {@link DefaultMemberChildrenConstraint} (only the parent-key constraint, fully
+     * reproduced) the mapper output is used authoritatively (see {@link SqlBuildGuard#build}),
+     * verified by the result-level catalog check suites. For richer constraints (context/slicer,
+     * role access — which the mapper does not yet model) the byte-equal guard keeps it honest: the
+     * builder differs and the {@link QueryRecorder} result is used (see {@link SqlBuildGuard#orReference}).
+     */
+    private GuardedSql preferBuilder(
+        RolapLevel level,
+        boolean needsGroupBy,
+        RolapMember member,
+        Dialect dialect,
+        GuardedSql sqlQueryResult,
+        MemberChildrenConstraint constraint,
+        javax.sql.DataSource dataSource)
+    {
+        if (!MemberSqlMapper.supports(level)) {
+            // Out of mapper scope (parent-child / computed column / unsupported relation).
+            org.eclipse.daanse.rolap.common.RolapUtil.SQL_GEN_LOGGER.debug(
+                "member children {}: recorder path (level unsupported by mapper)",
+                level.getUniqueName());
+            return sqlQueryResult;
+        }
+        // A constraint that contributes a dimension-only restriction (no fact join) is fully
+        // reproduced by the mapper — use it authoritatively. Anything else (context/slicer/role, or
+        // a constraint not yet expressible on the builder) keeps the byte-equal guard.
+        java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution> contribution =
+            constraint.toContribution(null, null, member);
+        // Routing decision: authoritative build (dimension-only), guarded context build, or guarded
+        // parent-key build — attributable per constraint class.
+        org.eclipse.daanse.rolap.common.RolapUtil.SQL_GEN_LOGGER.debug(
+            "member children {} constraint={} present={} factJoin={}",
+            level.getUniqueName(), constraint.getClass().getSimpleName(), contribution.isPresent(),
+            contribution.map(org.eclipse.daanse.rolap.common.sql.ConstraintContribution::requiresFactJoin)
+                .orElse(false));
+        if (contribution.isPresent() && !contribution.get().requiresFactJoin()) {
+            java.util.Optional<org.eclipse.daanse.sql.statement.api.expression.Predicate> where =
+                contribution.get().where();
+            return SqlBuildGuard.build(dialect,
+                Boolean.TRUE.equals(context.getConfigValue(ConfigConstants.GENERATE_FORMATTED_SQL,
+                    ConfigConstants.GENERATE_FORMATTED_SQL_DEFAULT_VALUE, Boolean.class)),
+                () -> MemberSqlMapper.childMemberSql(level, needsGroupBy, where,
+                    dialect.allowsSelectNotInGroupBy()));
+        }
+        if (contribution.isPresent()) {
+            // A context/NON-EMPTY restriction with a fact join — build the star-join variant guarded
+            // (byte-equal-or-fall-back), since the translated context predicate is best-effort.
+            final org.eclipse.daanse.rolap.common.sql.ConstraintContribution c = contribution.get();
+            return SqlBuildGuard.orReference("member children (context) " + level.getUniqueName(), dialect,
+                () -> MemberSqlMapper.childMemberSql(level, needsGroupBy, c.where(), c.joinTables(),
+                    c.orderedPredicates(), c.memberKeyGroup(), dialect.allowsSelectNotInGroupBy()),
+                sqlQueryResult, dataSource);
+        }
+        return SqlBuildGuard.orReference("member children " + level.getUniqueName(), dialect,
+            () -> MemberSqlMapper.childMemberSql(level, needsGroupBy,
+                JoinPlanner.memberKeyConstraint(member), dialect.allowsSelectNotInGroupBy()),
+            sqlQueryResult, dataSource);
     }
 
     private static AggStar chooseAggStar(
@@ -831,7 +932,7 @@ RME is this right
 
         // Expand calculated so we don't miss their bitkeys
         final Member[] members =
-            SqlConstraintUtils.expandSupportedCalculatedMembers(
+            CalculatedMemberExpander.expandSupportedCalculatedMembers(
                 Arrays.asList(
                     evaluator.getNonAllMembers()),
                     evaluator)
@@ -1055,7 +1156,7 @@ RME is this right
         Execution execution = ExecutionContext.current().getExecution();
         execution.checkCancelOrTimeout();
 
-        Pair<String, List<BestFitColumnType>> pair;
+        RenderedSql pair;
         boolean parentChild;
         final RolapLevel parentLevel = parentMember.getLevel();
         RolapLevel childLevel;
@@ -1078,14 +1179,14 @@ RME is this right
                     pair = makeChildMemberSqlPCForLevel(parentMember, pl);
                     parentChild = true;
                 } else {
-                    pair = makeChildMemberSql(parentMember, context, constraint);
+                    pair = makeChildMemberSql(parentMember, context, constraint).render();
                     parentChild = false;
                 }
             }
         }
-        final String sql = pair.left;
+        final String sql = pair.sql();
 
-        final List<BestFitColumnType> types = pair.right;
+        final List<BestFitColumnType> types = pair.columnTypes();
         ExecutionMetadata metadata = ExecutionMetadata.of(
             "SqlMemberSource.getMemberChildren",
             "while building member cache",
@@ -1309,14 +1410,9 @@ RME is this right
      * Currently, parent-child hierarchies may have only one level (plus the
      * 'All' level).
      */
-    private Pair<String, List<BestFitColumnType>> makeChildMemberSqlPCRoot(
+    private RenderedSql makeChildMemberSqlPCRoot(
         RolapMember member)
     {
-        SqlQuery sqlQuery =
-            SqlQuery.newQuery(
-                context,
-                new StringBuilder("while generating query to retrieve children of parent/child ")
-                .append("hierarchy member ").append(member).toString());
         Util.assertTrue(
             member.isAll(),
             "In the current implementation, parent/child hierarchies must have only one level (plus the 'All' level).");
@@ -1328,35 +1424,14 @@ RME is this right
             level.isUnique(), new StringBuilder("parent-child level '")
                 .append(level).append("' must be unique").toString());
 
-        hierarchy.addToFrom(sqlQuery, level.getParentExp());
-        String parentId = getExpression(level.getParentExp(), sqlQuery);
-        StringBuilder condition = new StringBuilder(64);
-        condition.append(parentId);
-        if (level.getNullParentValue() == null
-            || level.getNullParentValue().equalsIgnoreCase("NULL"))
-        {
-            condition.append(" IS NULL");
-        } else {
-            // Quote the value if it doesn't seem to be a number.
-            try {
-            	Double.parseDouble(level.getNullParentValue());
-//                discard(Double.parseDouble(level.getNullParentValue()));
-                condition.append(" = ");
-                condition.append(level.getNullParentValue());
-            } catch (NumberFormatException e) {
-                condition.append(" = ");
-                Util.singleQuoteString(level.getNullParentValue(), condition);
-            }
-        }
-        sqlQuery.addWhere(condition.toString());
-
-        addLevel(sqlQuery, level, true);
-
-        return sqlQuery.toSqlAndTypes();
+        // Roots of a parent-child hierarchy are rendered by the builder
+        // (WHERE parentExp IS NULL / = nullParentValue), no QueryRecorder needed.
+        return SqlRender.render(org.eclipse.daanse.rolap.common.sqlbuild.TupleSqlMapper.parentChildRootSql(
+                member, context.getDialect()), context.getDialect());
     }
 
     private void addLevel(
-        SqlQuery sqlQuery,
+        QueryRecorder sqlQuery,
         RolapLevel level,
         boolean group)
     {
@@ -1369,38 +1444,39 @@ RME is this right
             hierarchy.addToFrom(sqlQuery, order);
         }
 
-        // First deal with the key column.
-        final String keySql = getExpression(key, sqlQuery);
-        final String keyAlias =
-            group
-                ? sqlQuery.addSelectGroupBy(keySql, level.getInternalType())
-                : sqlQuery.addSelect(keySql, level.getInternalType());
+        // First deal with the key column. Dialect-free (P5-B2): pass the EXPRESSION — the facade
+        // builds a Column node (plain) / RawVariant (computed); no getExpression(dialect) pre-render.
+        final String keyAlias = sqlQuery.addSelectExpr(key, level.getInternalType());
+        if (group) {
+            sqlQuery.addGroupByExpr(key, keyAlias);
+        }
 
-        // Now deal with the ordering column.
+        // Now deal with the ordering column. The order-vs-key dedup compares EXPRESSIONS
+        // (RolapColumn.equals is value-based: table + name) instead of the rendered strings —
+        // equal expressions rendered equal strings, so the dedup decision is unchanged.
         if (level.getOrdinalExps() != null && !level.getOrdinalExps().isEmpty()) {
             for (SqlExpression order : level.getOrdinalExps()) {
-                final String orderSql = getExpression(order, sqlQuery);
                 final SortingDirection sortingDirection = order.getSortingDirection();
-                if (!orderSql.equals(keySql)) {
-                    final String orderAlias =
-                        group
-                            ? sqlQuery.addSelectGroupBy(orderSql, null)
-                            : sqlQuery.addSelect(orderSql, null);
-                     sqlQuery.addOrderBy(
-                        orderSql,
+                if (!order.equals(key)) {
+                    final String orderAlias = sqlQuery.addSelectExpr(order, null);
+                    if (group) {
+                        sqlQuery.addGroupByExpr(order, orderAlias);
+                    }
+                    sqlQuery.addOrderByExpr(
+                        order,
                         orderAlias,
                         sortingDirection, false, true, true);
                 } else {
                     // Same key as order. Just order it.
-                    sqlQuery.addOrderBy(
-                        keySql,
+                    sqlQuery.addOrderByExpr(
+                        key,
                         keyAlias,
                         sortingDirection, false, true, true);
                 }
             }
         } else {
-            sqlQuery.addOrderBy(
-                    keySql,
+            sqlQuery.addOrderByExpr(
+                    key,
                     keyAlias,
                     key.getSortingDirection(), false, true, true);
         }
@@ -1409,16 +1485,16 @@ RME is this right
         for (RolapProperty property : properties) {
             final SqlExpression exp = property.getExp();
             hierarchy.addToFrom(sqlQuery, exp);
-            final String s = getExpression(exp, sqlQuery);
             // REVIEW: Maybe use property.getType?
-            String alias = sqlQuery.addSelect(s, null);
+            // Dialect-free: plain column -> Column node, computed -> RawVariant (renderer resolves per dialect).
+            String alias = sqlQuery.addSelectExpr(exp, null);
             // Some dialects allow us to eliminate properties from the group by
             // that are functionally dependent on the level value
             if (group
-                && (!sqlQuery.getDialect().allowsSelectNotInGroupBy()
+                && (!context.getDialect().allowsSelectNotInGroupBy()
                     || !property.dependsOnLevelValue()))
             {
-                sqlQuery.addGroupBy(s, alias);
+                sqlQuery.addGroupByExpr(exp, alias);
             }
         }
     }
@@ -1435,131 +1511,31 @@ RME is this right
      *
      * See also {@link SqlTupleReader#makeLevelMembersSql}.
      */
-    private Pair<String, List<BestFitColumnType>> makeChildMemberSqlPC(
+    private RenderedSql makeChildMemberSqlPC(
         RolapMember member)
     {
-        SqlQuery sqlQuery =
-            SqlQuery.newQuery(
-                context,
-                new StringBuilder("while generating query to retrieve children of ")
-                .append("parent/child hierarchy member ").append(member).toString());
         RolapLevel level = member.getLevel();
-
         Util.assertTrue(!level.isAll(), "all level cannot be parent-child");
         Util.assertTrue(
             level.isUnique(),
             new StringBuilder("parent-child level '").append(level).append("' must be ").append("unique").toString());
-
-        hierarchy.addToFrom(sqlQuery, level.getParentExp());
-        String parentId = getExpression(level.getParentExp(), sqlQuery);
-
-        StringBuilder buf = new StringBuilder();
-        sqlQuery.getDialect().quote(buf, member.getKey(), level.getDatatype());
-        sqlQuery.addWhere(parentId, " = ", buf.toString());
-
-        hierarchy.addToFrom(sqlQuery, level.getKeyExp());
-        String childId = getExpression(level.getKeyExp(), sqlQuery);
-        String idAlias =
-            sqlQuery.addSelectGroupBy(childId, level.getInternalType());
-        for (SqlExpression oe : level.getOrdinalExps()) {
-           hierarchy.addToFrom(sqlQuery, oe);
-        }
-        if (level.getOrdinalExps() != null && !level.getOrdinalExps().isEmpty()) {
-            for (SqlExpression oe : level.getOrdinalExps()) {
-                final String orderBy = getExpression(oe, sqlQuery);
-                SortingDirection sortingDirection = oe.getSortingDirection();
-                if (!orderBy.equals(childId)) {
-                     String orderAlias = sqlQuery.addSelectGroupBy(orderBy, null);
-                     sqlQuery.addOrderBy(
-                         orderBy, orderAlias, sortingDirection, false, true, true);
-                } else {
-                     sqlQuery.addOrderBy(
-                          childId, idAlias, sortingDirection, false, true, true);
-                }
-           }
-        } else {
-            sqlQuery.addOrderBy(
-                    childId, idAlias, level.getKeyExp().getSortingDirection(), false, true, true);
-        }
-        RolapProperty[] properties = level.getProperties();
-        for (RolapProperty property : properties) {
-            final SqlExpression exp = property.getExp();
-            hierarchy.addToFrom(sqlQuery, exp);
-            final String s = getExpression(exp, sqlQuery);
-            String alias = sqlQuery.addSelect(s, null);
-            // Some dialects allow us to eliminate properties from the group by
-            // that are functionally dependent on the level value
-            if (!sqlQuery.getDialect().allowsSelectNotInGroupBy()
-                || !property.dependsOnLevelValue())
-            {
-                sqlQuery.addGroupBy(s, alias);
-            }
-        }
-        return sqlQuery.toSqlAndTypes();
+        // Children of a parent-child member are rendered entirely by the builder; parentChildChildrenSql
+        // handles every renderable PC hierarchy (verified byte-equal). No QueryRecorder fallback needed.
+        return SqlRender.render(org.eclipse.daanse.rolap.common.sqlbuild.TupleSqlMapper.parentChildChildrenSql(
+                member, context.getDialect()), context.getDialect());
     }
 
-    private Pair<String, List<BestFitColumnType>> makeChildMemberSqlPCForLevel(
+    private RenderedSql makeChildMemberSqlPCForLevel(
             RolapMember member, Level parentChildLevel)
         {
-            SqlQuery sqlQuery =
-                SqlQuery.newQuery(
-                    context,
-                    new StringBuilder("while generating query to retrieve children of ")
-                    .append("parent/child hierarchy member ").append(member).toString());
             RolapLevel level = member.getLevel();
-
             Util.assertTrue(!level.isAll(), "all level cannot be parent-child");
             Util.assertTrue(
                 level.isUnique(),
                 new StringBuilder("parent-child level '").append(level).append("' must be ").append("unique").toString());
-
-            hierarchy.addToFrom(sqlQuery, ((RolapLevel)parentChildLevel).getParentExp());
-            String parentId = getExpression(((RolapLevel)parentChildLevel).getParentExp(), sqlQuery);
-
-            StringBuilder buf = new StringBuilder();
-            sqlQuery.getDialect().quote(buf, member.getKey(), level.getDatatype());
-            sqlQuery.addWhere(parentId, " = ", buf.toString());
-
-            hierarchy.addToFrom(sqlQuery, level.getKeyExp());
-            String childId = getExpression(level.getKeyExp(), sqlQuery);
-            String idAlias =
-                sqlQuery.addSelectGroupBy(childId, level.getInternalType());
-            for (SqlExpression oe : level.getOrdinalExps()) {
-                hierarchy.addToFrom(sqlQuery, oe);
-            }
-            if (level.getOrdinalExps() != null && !level.getOrdinalExps().isEmpty()) {
-                for (SqlExpression oe : level.getOrdinalExps()) {
-                    final String orderBy = getExpression(oe, sqlQuery);
-                    SortingDirection sortingDirection = oe.getSortingDirection();
-                    if (!orderBy.equals(childId)) {
-                        String orderAlias = sqlQuery.addSelectGroupBy(orderBy, null);
-                        sqlQuery.addOrderBy(
-                            orderBy, orderAlias, sortingDirection, false, true, true);
-                    } else {
-                        sqlQuery.addOrderBy(
-                            childId, idAlias, sortingDirection, false, true, true);
-                    }
-                }
-            } else {
-                sqlQuery.addOrderBy(
-                        childId, idAlias, level.getKeyExp().getSortingDirection(), false, true, true);
-            }
-
-            RolapProperty[] properties = level.getProperties();
-            for (RolapProperty property : properties) {
-                final SqlExpression exp = property.getExp();
-                hierarchy.addToFrom(sqlQuery, exp);
-                final String s = getExpression(exp, sqlQuery);
-                String alias = sqlQuery.addSelect(s, null);
-                // Some dialects allow us to eliminate properties from the group by
-                // that are functionally dependent on the level value
-                if (!sqlQuery.getDialect().allowsSelectNotInGroupBy()
-                    || !property.dependsOnLevelValue())
-                {
-                    sqlQuery.addGroupBy(s, alias);
-                }
-            }
-            return sqlQuery.toSqlAndTypes();
+            // Builder renders children at an intermediate PC level (WHERE parentChildLevel.parentExp = key).
+            return SqlRender.render(org.eclipse.daanse.rolap.common.sqlbuild.TupleSqlMapper.parentChildChildrenForLevelSql(
+                    member, (RolapLevel) parentChildLevel, context.getDialect()), context.getDialect());
         }
 
     // implement MemberReader

@@ -70,6 +70,18 @@ public abstract class AbstractAggregator implements Aggregator {
     }
 
     /**
+     * Dialect-free node form of {@link #getExpression(CharSequence)}, for callers that already hold a builder
+     * {@link org.eclipse.daanse.sql.statement.api.expression.SqlExpression} for the operand. Returns
+     * {@code null} when this aggregator cannot be represented as a simple {@code name(operand)} builder node
+     * (composite count-based or dialect-generator aggregators) — the caller then falls back to the
+     * {@link CharSequence} string form. The simple {@code name(operand)} aggregators override this.
+     */
+    public org.eclipse.daanse.sql.statement.api.expression.SqlExpression getExpression(
+            org.eclipse.daanse.sql.statement.api.expression.SqlExpression inner) {
+        return null;
+    }
+
+    /**
      * If this is a distinct aggregator, returns the corresponding non-distinct
      * aggregator, otherwise throws an error.
      */

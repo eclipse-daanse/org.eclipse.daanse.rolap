@@ -28,11 +28,13 @@ package org.eclipse.daanse.rolap.common.constraint;
 
 import java.util.List;
 
+import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.olap.api.evaluator.Evaluator;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;
 import org.eclipse.daanse.rolap.common.sql.MemberChildrenConstraint;
-import org.eclipse.daanse.rolap.common.sql.SqlQuery;
+import org.eclipse.daanse.rolap.common.sql.QueryTape;
+import org.eclipse.daanse.rolap.common.sql.QueryRecorder;
 import org.eclipse.daanse.rolap.common.sql.TupleConstraint;
 import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.element.RolapLevel;
@@ -63,23 +65,33 @@ public class DescendantsConstraint implements TupleConstraint {
         this.mcc = mcc;
     }
 
+    /**
+     * Delegates to the wrapped member-children constraint's ops form on the SAME fork (a
+     * descendants read is the parents' member-children read).
+     */
     @Override
-	public void addConstraint(
-        SqlQuery sqlQuery,
+    public QueryTape addConstraintOps(
+        Dialect dialect,
+        QueryRecorder.Fork fork,
         RolapCube baseCube,
         AggStar aggStar)
     {
-        mcc.addMemberConstraint(sqlQuery, baseCube, aggStar, parentMembers);
+        return mcc.addMemberConstraintOps(dialect, fork, baseCube, aggStar, parentMembers);
     }
 
+    /**
+     * Delegates the level constraint to the wrapped member-children constraint — see
+     * {@link #addConstraintOps}.
+     */
     @Override
-	public void addLevelConstraint(
-        SqlQuery sqlQuery,
+    public QueryTape addLevelConstraintOps(
+        Dialect dialect,
+        QueryRecorder.Fork fork,
         RolapCube baseCube,
         AggStar aggStar,
         RolapLevel level)
     {
-        mcc.addLevelConstraint(sqlQuery, baseCube, aggStar, level);
+        return mcc.addMemberLevelConstraintOps(dialect, fork, baseCube, aggStar, level);
     }
 
     @Override
@@ -107,5 +119,63 @@ public class DescendantsConstraint implements TupleConstraint {
     @Override
     public boolean supportsAggTables() {
         return true;
+    }
+
+    /**
+     * Delegates to the wrapped {@link MemberChildrenConstraint} for a single parent (the common
+     * descend-one-member case): {@code addConstraint} is {@code mcc.addMemberConstraint(parents)}, so a
+     * one-element parent list is exactly that constraint's children contribution. Multiple parents (an
+     * {@code IN}/{@code OR} over parent keys) are not yet expressible — returns empty.
+     */
+    @Override
+    public java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution> toContribution(
+        RolapCube baseCube, AggStar aggStar)
+    {
+        if (parentMembers.size() == 1) {
+            return mcc.toContribution(baseCube, aggStar, parentMembers.get(0));
+        }
+        // Multiple parents, all from the same level (e.g. a role-restricted descendants set {[OR],[WA]} →
+        // store_state IN ('OR','WA')): build the multi-member IN via memberConstraintContribution (a
+        // single-level multi-member set → one IN). Guarded at the consumer, so a shape it can't express (calc
+        // member, computed / snowflake multi-table key) falls back to the reference query.
+        if (!parentMembers.isEmpty()) {
+            java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution.ColumnPredicate> cp =
+                MemberConstraintWriter.memberConstraintContribution(baseCube, parentMembers, false, false);
+            if (cp.isEmpty()) {
+                return java.util.Optional.empty();
+            }
+            // Compose the wrapped constraint's CONTEXT: the list-parents member constraint is
+            // addContextConstraint + addMemberConstraint, so a context-bearing mcc (SqlContextConstraint)
+            // must contribute its slicer columns + fact join FIRST, then the parent IN — otherwise the
+            // slicer WHERE (e.g. promotion_name = '…') and its joins are silently dropped.
+            // Mirrors RolapNativeSet's composition.
+            if (mcc instanceof SqlContextConstraint contextConstraint) {
+                java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution> base =
+                    contextConstraint.toContribution(baseCube, aggStar);
+                if (base.isEmpty()) {
+                    return java.util.Optional.empty();
+                }
+                org.eclipse.daanse.rolap.common.sql.ConstraintContribution c = base.get();
+                java.util.List<org.eclipse.daanse.sql.statement.api.expression.Predicate> wheres =
+                    new java.util.ArrayList<>();
+                c.where().ifPresent(wheres::add);
+                wheres.add(cp.get().predicate());
+                java.util.List<org.eclipse.daanse.rolap.common.star.RolapStar.Table> joinTables =
+                    new java.util.ArrayList<>(c.joinTables());
+                joinTables.add(cp.get().table());
+                java.util.List<org.eclipse.daanse.rolap.common.sql.ConstraintContribution.ColumnPredicate> ordered =
+                    new java.util.ArrayList<>(c.orderedPredicates());
+                ordered.add(cp.get());
+                return java.util.Optional.of(new org.eclipse.daanse.rolap.common.sql.ConstraintContribution(
+                    java.util.Optional.of(wheres.size() == 1 ? wheres.get(0)
+                        : org.eclipse.daanse.sql.statement.api.Predicates.and(wheres)),
+                    joinTables, ordered, c.memberKeyGroup()).withFactJoinRequired(c.factJoinRequired()));
+            }
+            return java.util.Optional.of(new org.eclipse.daanse.rolap.common.sql.ConstraintContribution(
+                java.util.Optional.of(cp.get().predicate()),
+                java.util.List.of(cp.get().table()),
+                java.util.List.of(cp.get())));
+        }
+        return java.util.Optional.empty();
     }
 }

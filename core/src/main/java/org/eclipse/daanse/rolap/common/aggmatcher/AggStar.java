@@ -27,8 +27,8 @@
 package org.eclipse.daanse.rolap.common.aggmatcher;
 
 import static java.util.Collections.EMPTY_LIST;
-import static org.eclipse.daanse.rolap.common.util.ExpressionUtil.getExpression;
-import static org.eclipse.daanse.rolap.common.util.ExpressionUtil.getTableAlias;
+import static org.eclipse.daanse.rolap.common.util.SqlExpressionResolver.render;
+import static org.eclipse.daanse.rolap.common.util.SqlExpressionResolver.getTableAlias;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -46,6 +46,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.jdbc.db.dialect.api.type.BestFitColumnType;
 import org.eclipse.daanse.jdbc.db.dialect.api.type.Datatype;
 import org.eclipse.daanse.olap.api.Context;
@@ -64,11 +65,11 @@ import org.eclipse.daanse.rolap.common.RolapUtil;
 import org.eclipse.daanse.rolap.common.SqlStatement;
 import org.eclipse.daanse.rolap.common.aggmatcher.JdbcSchema.Table.Column.Usage;
 import org.eclipse.daanse.rolap.common.aggmatcher.JdbcSchema.UsageType;
-import org.eclipse.daanse.rolap.common.sql.SqlQuery;
+import org.eclipse.daanse.rolap.common.sql.QueryRecorder;
 import org.eclipse.daanse.rolap.common.star.RolapSqlExpression;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.star.RolapStar.Table;
-import org.eclipse.daanse.rolap.common.util.ExpressionUtil;
+import org.eclipse.daanse.rolap.common.util.SqlExpressionResolver;
 import org.eclipse.daanse.rolap.element.RolapColumn;
 import org.eclipse.daanse.rolap.element.RolapLevel;
 import org.slf4j.Logger;
@@ -422,10 +423,10 @@ public class AggStar {
     }
 
     /**
-     * Get an SqlQuery instance.
+     * Get a QueryRecorder instance (P4-B5).
      */
-    private SqlQuery getSqlQuery() {
-        return getStar().getSqlQuery();
+    private QueryRecorder newQueryRecorder() {
+        return getStar().newQueryRecorder();
     }
 
     /**
@@ -541,13 +542,6 @@ public class AggStar {
             }
 
             /**
-             * Return the left join expression as string.
-             */
-            public String getLeft(final SqlQuery query) {
-                return getExpression(this.left, query);
-            }
-
-            /**
              * Return the right join expression.
              */
             public SqlExpression getRight() {
@@ -558,11 +552,11 @@ public class AggStar {
             /**
              * This is used to create part of a SQL where clause.
              */
-            String toString(final SqlQuery query) {
+            String toString(final Dialect dialect) {
                 StringBuilder buf = new StringBuilder(64);
-                buf.append(getExpression(left, query));
+                buf.append(render(left, dialect));
                 buf.append(" = ");
-                buf.append(getExpression(right, query));
+                buf.append(render(right, dialect));
                 return buf.toString();
             }
             @Override
@@ -578,7 +572,7 @@ public class AggStar {
              * Prints this table and its children.
              */
             public void print(final PrintWriter pw, final String prefix) {
-                SqlQuery sqlQueuy = getSqlQuery();
+                Dialect dialect = getTable().getAggStar().getStar().getDialect();
                 pw.print(prefix);
                 pw.println("JoinCondition:");
                 String subprefix = new StringBuilder(prefix).append("  ").toString();
@@ -595,18 +589,11 @@ public class AggStar {
                         pw.print(") ");
                     }
                 }
-                pw.println(getExpression(left, sqlQueuy));
+                pw.println(render(left, dialect));
 
                 pw.print(subprefix);
                 pw.print("right=");
-                pw.println(getExpression(right, sqlQueuy));
-            }
-
-            /**
-             * Get a SqlQuery object.
-             */
-            protected SqlQuery getSqlQuery() {
-                return getAggStar().getSqlQuery();
+                pw.println(render(right, dialect));
             }
 
         }
@@ -679,10 +666,6 @@ public class AggStar {
                 return datatype;
             }
 
-            public SqlQuery getSqlQuery() {
-                return getTable().getAggStar().getSqlQuery();
-            }
-
             public SqlExpression getExpression() {
                 return expression;
             }
@@ -691,12 +674,12 @@ public class AggStar {
              * Generates a SQL expression, which typically this looks like
              * this: <i>tableName</i>.<i>columnName</i>.
              */
-            public String generateExprString(final SqlQuery query) {
+            public String generateExprString(final Dialect dialect) {
                 String usagePrefix = getUsagePrefix();
                 String exprString;
 
                 if (usagePrefix == null) {
-                    exprString = ExpressionUtil.getExpression(getExpression(), query);
+                    exprString = SqlExpressionResolver.render(getExpression(), dialect);
                 } else {
                     SqlExpression expressionInner = getExpression();
                     assert expressionInner instanceof org.eclipse.daanse.rolap.element.RolapColumn;
@@ -705,10 +688,29 @@ public class AggStar {
                     String prefixedName = usagePrefix
                         + columnExpr.getName();
                     String tableName = getTableAlias(columnExpr);
-                    exprString = query.getDialect().quoteIdentifier(
+                    exprString = dialect.quoteIdentifier(
                         tableName, prefixedName);
                 }
                 return exprString;
+            }
+
+            /**
+             * Dialect-free node for this aggregate column. A plain column renders identically to
+             * {@link #generateExprString(Dialect)} (both quote the same table + name); a computed expression
+             * becomes a {@link org.eclipse.daanse.sql.statement.api.expression.SqlExpression.RawVariant} the
+             * renderer resolves per dialect — the same per-dialect pick {@code chooseQuery} made, at render.
+             */
+            public org.eclipse.daanse.sql.statement.api.expression.SqlExpression toSqlExpression() {
+                String usagePrefix = getUsagePrefix();
+                if (usagePrefix == null) {
+                    return getExpression() == null ? null
+                        : org.eclipse.daanse.rolap.common.sqlbuild.JoinPlanner.expressionFor(getExpression());
+                }
+                org.eclipse.daanse.rolap.element.RolapColumn columnExpr =
+                    (org.eclipse.daanse.rolap.element.RolapColumn) getExpression();
+                return org.eclipse.daanse.sql.statement.api.Expressions.column(
+                    org.eclipse.daanse.sql.statement.api.model.TableAlias.of(getTableAlias(columnExpr)),
+                    usagePrefix + columnExpr.getName());
             }
 
             private String getUsagePrefix() {
@@ -730,13 +732,12 @@ public class AggStar {
                 return sw.toString();
             }
             public void print(final PrintWriter pw, final String prefix) {
-                SqlQuery sqlQuery = getSqlQuery();
                 pw.print(prefix);
                 pw.print(getName());
                 pw.print(" (");
                 pw.print(getBitPosition());
                 pw.print("): ");
-                pw.print(generateExprString(sqlQuery));
+                pw.print(generateExprString(getStar().getDialect()));
             }
 
             public BestFitColumnType getInternalType() {
@@ -1050,12 +1051,13 @@ public class AggStar {
             }
         }
 
+
         /**
          * This is a copy of the code found in RolapStar used to generate an SQL
          * query.
          */
         public void addToFrom(
-            final SqlQuery query,
+            final QueryRecorder query,
             final boolean failIfExists,
             final boolean joinToParent)
         {
@@ -1065,7 +1067,8 @@ public class AggStar {
                     getParent().addToFrom(query, failIfExists, joinToParent);
                 }
                 if (hasJoinCondition()) {
-                    query.addWhere(getJoinCondition().toString(query));
+                    // Structured join condition → dialect-free FromJoin edge (ANSI JOIN…ON), not a WHERE string.
+                    query.addJoinCondition(getJoinCondition().getLeft(), getJoinCondition().getRight());
                 }
             }
         }
@@ -1141,11 +1144,38 @@ public class AggStar {
                 return rollableLevelBitKey;
             }
 
-            public String generateRollupString(SqlQuery query) {
-                String expr = super.generateExprString(query);
+            public String generateRollupString(Dialect dialect) {
+                // Use super's Dialect worker DIRECTLY (non-virtual super call) to get the PLAIN column
+                // expression. A virtual generateExprString(dialect) would re-dispatch through this Measure's
+                // override, which applies the fact-count scalar weighting — and
+                // getRollupAggregator().getExpression(...) below would then weight it AGAIN
+                // (sum((u)*(fc)*fc) / sum((u)/(fc))/sum(fc)). Scalar weighting belongs only to the
+                // standalone-scalar path, not to rollup. (Matches the legacy single-method behavior.)
+                String expr = super.generateExprString(dialect);
                 Aggregator rollup = getRollupAggregator();
 
                 return rollup.getExpression(expr).toString();
+            }
+
+            /** Dialect-free node form of {@link #generateRollupString(Dialect)}, or {@code null} when the plain
+             *  column is computed or the rollup aggregator is not a simple node aggregator (caller uses the
+             *  string form). {@code toSqlExpression()} returns the PLAIN (unweighted) column — the same
+             *  non-virtual choice the string path makes via {@code super.generateExprString} — so no
+             *  double-weighting. */
+            public org.eclipse.daanse.sql.statement.api.expression.SqlExpression generateRollupExpression() {
+                org.eclipse.daanse.sql.statement.api.expression.SqlExpression node = toSqlExpression();
+                if (node == null) {
+                    return null;
+                }
+                Aggregator rollup = getRollupAggregator();
+                if (rollup instanceof org.eclipse.daanse.rolap.aggregator.AbstractAggregator agg) {
+                    return agg.getExpression(node);
+                }
+                // Dialect-generator rollup aggregator (PERCENTILE/LISTAGG/bit/NTH_VALUE) → its dialect-free node.
+                if (rollup instanceof org.eclipse.daanse.rolap.aggregator.NodeAggregate na) {
+                    return na.toNode(node);
+                }
+                return null;
             }
 
             private Aggregator getRollupAggregator() {
@@ -1159,6 +1189,9 @@ public class AggStar {
                     rollup = (getAggregator().isDistinct())
                         ? getAggregator().getNonDistinctAggregator()
                         : getAggregator().getRollup();
+                    org.eclipse.daanse.rolap.common.RolapUtil.SQL_GEN_LOGGER.trace(
+                        "rollup measure on FK: distinct={} -> {}", getAggregator().isDistinct(),
+                        getAggregator().isDistinct() ? "non-distinct (count)" : "normal rollup");
                 } else {
                     rollup = getAggregator().getRollup();
                 }
@@ -1167,23 +1200,36 @@ public class AggStar {
 
             @Override
 			public void print(final PrintWriter pw, final String prefix) {
-                SqlQuery sqlQuery = getSqlQuery();
                 pw.print(prefix);
                 pw.print(getName());
                 pw.print(" (");
                 pw.print(getBitPosition());
                 pw.print("): ");
-                pw.print(generateRollupString(sqlQuery));
+                pw.print(generateRollupString(getStar().getDialect()));
             }
 
             @Override
-            public String generateExprString(SqlQuery query) {
-                String exprString = super.generateExprString(query);
+            public String generateExprString(Dialect dialect) {
+                String exprString = super.generateExprString(dialect);
                 Aggregator rollupAggregator = getRollupAggregator();
                 if (rollupAggregator instanceof AbstractFactCountBasedAggregator agg && agg.alwaysRequiresFactColumn()) {
                     return agg.getScalarExpression(exprString);
                 }
                 return exprString;
+            }
+
+            /** Dialect-free node form of {@link #generateExprString(Dialect)}: the plain column node when this
+             *  measure is not scalar-weighted; the fact-count scalar-weighted composite via
+             *  {@link AbstractFactCountBasedAggregator#getScalarNode} (renders byte-identically to
+             *  {@code getScalarExpression(exprString)}); {@code null} only when the plain column itself has no
+             *  node form — caller uses the string form. */
+            public org.eclipse.daanse.sql.statement.api.expression.SqlExpression generateExpression() {
+                Aggregator rollupAggregator = getRollupAggregator();
+                if (rollupAggregator instanceof AbstractFactCountBasedAggregator agg && agg.alwaysRequiresFactColumn()) {
+                    org.eclipse.daanse.sql.statement.api.expression.SqlExpression plain = toSqlExpression();
+                    return plain == null ? null : agg.getScalarNode(plain);
+                }
+                return toSqlExpression();
             }
         }
 
@@ -1561,7 +1607,7 @@ public class AggStar {
                 numberOfRows = approxRowCount;
                 return;
             }
-            SqlQuery query = getSqlQuery();
+            QueryRecorder query = newQueryRecorder();
             query.addSelect("count(*)", null);
             query.addFrom(getRelation(), getName(), false);
             Context context = getAggStar().getStar().getContext();
@@ -1575,10 +1621,11 @@ public class AggStar {
                 0
             );
             ExecutionContext execContext = execution.asContext().createChild(metadata, Optional.empty());
+            final String sql = query.toSqlAndTypes(getAggStar().getStar().getDialect()).sql();
             SqlStatement stmt =
                 RolapUtil.executeQuery(
                         context,
-                    query.toString(),
+                    sql,
                     execContext);
             try {
                 ResultSet resultSet = stmt.getResultSet();
@@ -1588,7 +1635,7 @@ public class AggStar {
                 } else {
                     String logMsg = MessageFormat.format(sqlQueryFailed,
                         "AggStar.FactTable.makeNumberOfRows",
-                        query.toString());
+                        sql);
                     getLogger().warn(logMsg);
 
                     // set to large number so that this table is never used

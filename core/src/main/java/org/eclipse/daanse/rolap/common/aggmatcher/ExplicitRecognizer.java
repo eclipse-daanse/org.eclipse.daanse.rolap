@@ -229,7 +229,7 @@ class ExplicitRecognizer extends Recognizer {
         // precedence to the explicitly defined rollup type
         if (explicitRollupType != null) {
             String factCountExpr = getFactCountExpr(aggUsage);
-            ra = explicitRollupType.getAggregator(factCountExpr);
+            ra = explicitRollupType.getAggregator(factCountExpr, getFactCountNode(aggUsage));
         } else {
             ra = (factAgg == null)
                     ? convertAggregator(aggUsage, rm.getAggregator())

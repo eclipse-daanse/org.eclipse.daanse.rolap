@@ -32,7 +32,7 @@ package org.eclipse.daanse.rolap.common.agg;
 import java.util.List;
 
 import org.eclipse.daanse.jdbc.db.dialect.api.type.BestFitColumnType;
-import  org.eclipse.daanse.olap.util.Pair;
+import org.eclipse.daanse.sql.statement.api.render.RenderedSql;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.star.StarColumnPredicate;
 
@@ -62,5 +62,5 @@ public interface QuerySpec {
      */
     StarColumnPredicate getColumnPredicate(int i);
 
-    Pair<String, List<BestFitColumnType>> generateSqlQuery();
+    RenderedSql generateSql();
 }

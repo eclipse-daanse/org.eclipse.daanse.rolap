@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.eclipse.daanse.olap.common.Util;
-import org.eclipse.daanse.rolap.common.sql.SqlQuery;
+import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.star.StarColumnPredicate;
 import org.eclipse.daanse.rolap.common.star.StarPredicate;
@@ -337,16 +337,16 @@ public class ListColumnPredicate extends AbstractColumnPredicate {
     }
 
     @Override
-	public void toSql(SqlQuery sqlQuery, StringBuilder buf) {
+	public void toSql(Dialect dialect, StringBuilder buf) {
         List<StarColumnPredicate> predicates = getPredicates();
         if (predicates.size() == 1) {
-            predicates.getFirst().toSql(sqlQuery, buf);
+            predicates.getFirst().toSql(dialect, buf);
             return;
         }
 
         int notNullCount = 0;
         final RolapStar.Column column = getConstrainedColumn();
-        final String expr = column.generateExprString(sqlQuery);
+        final String expr = column.generateExprString(dialect);
         final int marker = buf.length(); // to allow backtrack later
         buf.append(expr);
         ValueColumnPredicate firstNotNull = null;
@@ -364,7 +364,7 @@ public class ListColumnPredicate extends AbstractColumnPredicate {
                 firstNotNull = predicate2;
             }
             ++notNullCount;
-            sqlQuery.getDialect().quote(buf, key, column.getDatatype());
+            dialect.quote(buf, key, column.getDatatype());
         }
         buf.append(')');
 
@@ -393,7 +393,7 @@ public class ListColumnPredicate extends AbstractColumnPredicate {
             buf.append('(');
             buf.append(expr);
             buf.append(" = ");
-            sqlQuery.getDialect().quote(
+            dialect.quote(
                 buf,
                 firstNotNull.getValue(),
                 column.getDatatype());

@@ -26,7 +26,7 @@
 
 package org.eclipse.daanse.rolap.common;
 
-import static org.eclipse.daanse.rolap.common.util.ExpressionUtil.genericExpression;
+import static org.eclipse.daanse.rolap.common.util.SqlExpressionResolver.genericSql;
 
 import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
@@ -514,7 +514,7 @@ public class CacheControlImpl implements CacheControl {
                                 break;
                             }
                             final String ccName =
-                                genericExpression(((RolapLevel) member.getLevel()).getKeyExp());
+                                genericSql(((RolapLevel) member.getLevel()).getKeyExp());
                             if (!levels.containsKey(ccName)) {
                                 levels.put(
                                     ccName, new HashSet<>());
@@ -558,7 +558,7 @@ public class CacheControlImpl implements CacheControl {
                     // into an actual list of values for ConstrainedColumn
                     list.add(
                         new SegmentColumn(
-                            genericExpression(region.level.getKeyExp()),
+                            genericSql(region.level.getKeyExp()),
                             -1,
                             null));
                 }

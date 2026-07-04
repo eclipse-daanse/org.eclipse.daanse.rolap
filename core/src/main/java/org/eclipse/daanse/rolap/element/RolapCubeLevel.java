@@ -45,7 +45,7 @@ import org.eclipse.daanse.rolap.common.agg.RangeColumnPredicate;
 import org.eclipse.daanse.rolap.common.agg.ValueColumnPredicate;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.star.StarColumnPredicate;
-import org.eclipse.daanse.rolap.common.util.ExpressionUtil;
+import org.eclipse.daanse.rolap.common.util.SqlExpressionResolver;
 import org.eclipse.daanse.rolap.common.util.RelationUtil;
 
 /**
@@ -211,7 +211,7 @@ public class RolapCubeLevel extends RolapLevel implements CubeLevel {
                 // need to determine correct name of alias for this level.
                 // this may be defined in level
                 // col.table
-                String alias = getHierarchy().lookupAlias(ExpressionUtil.getTableAlias(col));
+                String alias = getHierarchy().lookupAlias(SqlExpressionResolver.getTableAlias(col));
                 return new org.eclipse.daanse.rolap.element.RolapColumn(alias, col.getName(), col.getSortingDirection());
             }
         } else {
@@ -315,6 +315,12 @@ public class RolapCubeLevel extends RolapLevel implements CubeLevel {
      */
     public RolapLevel getRolapLevel() {
         return rolapLevel;
+    }
+
+    @Override
+    public org.eclipse.daanse.jdbc.db.dialect.api.type.Datatype getKeyColumnPhysicalDatatype() {
+        // The mapping level lives on the underlying shared level, not the cube copy.
+        return rolapLevel != null ? rolapLevel.getKeyColumnPhysicalDatatype() : super.getKeyColumnPhysicalDatatype();
     }
 
     @Override

@@ -65,7 +65,7 @@ import org.eclipse.daanse.olap.fun.FunUtil;
 import org.eclipse.daanse.olap.util.format.Format;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.constraint.CompoundPredicateInfo;
-import org.eclipse.daanse.rolap.common.constraint.SqlConstraintUtils;
+import org.eclipse.daanse.rolap.common.constraint.SlicerAnalyzer;
 import org.eclipse.daanse.rolap.common.result.CellReader;
 import org.eclipse.daanse.rolap.element.CompoundSlicerRolapMember;
 import org.eclipse.daanse.rolap.element.RolapCube;
@@ -562,8 +562,8 @@ public final int hashCode() {
   public final void setSlicerTuples( TupleList tuples ) {
     slicerTuples = tuples;
     if ( tuples != null ) {
-      disjointSlicerTuple = SqlConstraintUtils.isDisjointTuple( tuples );
-      multiLevelSlicerTuple = SqlConstraintUtils.hasMultipleLevelSlicer( this );
+      disjointSlicerTuple = SlicerAnalyzer.isDisjointTuple( tuples );
+      multiLevelSlicerTuple = SlicerAnalyzer.hasMultipleLevelSlicer( this );
       slicerPredicateInfo = new CompoundPredicateInfo( tuples, (RolapMeasure) currentMembers[0], this );
     } else {
       disjointSlicerTuple = false;

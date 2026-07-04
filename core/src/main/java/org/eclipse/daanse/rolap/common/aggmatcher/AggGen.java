@@ -40,7 +40,7 @@ import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.olap.api.sql.SqlExpression;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.rolap.api.RolapContext;
-import org.eclipse.daanse.rolap.common.sql.SqlQuery;
+import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.element.RolapColumn;
 import org.slf4j.Logger;
@@ -113,10 +113,6 @@ public class AggGen {
 
     protected String getFactTableName() {
         return getFactTable().getAlias();
-    }
-
-    protected SqlQuery getSqlQuery() {
-        return star.getSqlQuery();
     }
 
     protected String getFactCount() {
@@ -573,7 +569,7 @@ public class AggGen {
         PrintWriter pw = new PrintWriter(sw);
         String prefix = "    ";
         String factTableName = getFactTableName();
-        SqlQuery sqlQuery = getSqlQuery();
+        Dialect dialect = star.getDialect();
 
         pw.print("INSERT INTO ");
         pw.print(makeLostAggregateTableName(getFactTableName()));
@@ -604,11 +600,11 @@ public class AggGen {
 
             pw.print(prefix);
             pw.print(
-                sqlQuery.getDialect().quoteIdentifier(
+                dialect.quoteIdentifier(
                     factTableName,
                     c.getName()));
             pw.print(" AS ");
-            pw.print(sqlQuery.getDialect().quoteIdentifier(c.getName()));
+            pw.print(dialect.quoteIdentifier(c.getName()));
             pw.println(',');
         }
         for (JdbcSchema.Table.Column.Usage usage : measures) {
@@ -617,23 +613,23 @@ public class AggGen {
 
             pw.print(prefix);
             pw.print(
-                agg.getExpression(sqlQuery.getDialect().quoteIdentifier(
+                agg.getExpression(dialect.quoteIdentifier(
                     factTableName, c.getName())));
             pw.print(" AS ");
-            pw.print(sqlQuery.getDialect().quoteIdentifier(c.getName()));
+            pw.print(dialect.quoteIdentifier(c.getName()));
             pw.println(',');
         }
 
         // do fact_count
         pw.print(prefix);
         pw.print("COUNT(*) AS ");
-        pw.println(sqlQuery.getDialect().quoteIdentifier(getFactCount()));
+        pw.println(dialect.quoteIdentifier(getFactCount()));
 
         pw.println("FROM ");
         pw.print(prefix);
-        pw.print(sqlQuery.getDialect().quoteIdentifier(factTableName));
+        pw.print(dialect.quoteIdentifier(factTableName));
         pw.print(" ");
-        pw.println(sqlQuery.getDialect().quoteIdentifier(factTableName));
+        pw.println(dialect.quoteIdentifier(factTableName));
 
         pw.println("GROUP BY ");
         int k = 0;
@@ -648,7 +644,7 @@ public class AggGen {
 
             pw.print(prefix);
             pw.print(
-                sqlQuery.getDialect().quoteIdentifier(
+                dialect.quoteIdentifier(
                     factTableName,
                     c.getName()));
         }
@@ -702,7 +698,7 @@ public class AggGen {
         PrintWriter pw = new PrintWriter(sw);
         String prefix = "    ";
         String factTableName = getFactTableName();
-        SqlQuery sqlQuery = getSqlQuery();
+        Dialect dialect = star.getDialect();
 
         pw.print("INSERT INTO ");
         pw.print(makeCollapsedAggregateTableName(getFactTableName()));
@@ -744,13 +740,13 @@ public class AggGen {
 
                 pw.print(prefix);
                 pw.print(
-                    sqlQuery.getDialect().quoteIdentifier(
+                    dialect.quoteIdentifier(
                         t.getName(),
                         c.getName()));
                 pw.print(" AS ");
                 String n = (usage.usagePrefix == null)
                     ? c.getName() : usage.usagePrefix + c.getName();
-                pw.print(sqlQuery.getDialect().quoteIdentifier(n));
+                pw.print(dialect.quoteIdentifier(n));
                 pw.println(',');
             }
         }
@@ -761,23 +757,23 @@ public class AggGen {
 
             pw.print(prefix);
             pw.print(
-                agg.getExpression(sqlQuery.getDialect().quoteIdentifier(
+                agg.getExpression(dialect.quoteIdentifier(
                     t.getName(), c.getName())));
             pw.print(" AS ");
-            pw.print(sqlQuery.getDialect().quoteIdentifier(c.getName()));
+            pw.print(dialect.quoteIdentifier(c.getName()));
             pw.println(',');
         }
 
         // do fact_count
         pw.print(prefix);
         pw.print("COUNT(*) AS ");
-        pw.println(sqlQuery.getDialect().quoteIdentifier(getFactCount()));
+        pw.println(dialect.quoteIdentifier(getFactCount()));
 
         pw.println("FROM ");
         pw.print(prefix);
-        pw.print(sqlQuery.getDialect().quoteIdentifier(factTableName));
+        pw.print(dialect.quoteIdentifier(factTableName));
         pw.print(" ");
-        pw.print(sqlQuery.getDialect().quoteIdentifier(factTableName));
+        pw.print(dialect.quoteIdentifier(factTableName));
         pw.println(',');
 
         // add dimension tables
@@ -787,9 +783,9 @@ public class AggGen {
                 pw.println(',');
             }
             pw.print(prefix);
-            pw.print(sqlQuery.getDialect().quoteIdentifier(rt.getAlias()));
+            pw.print(dialect.quoteIdentifier(rt.getAlias()));
             pw.print(" AS ");
-            pw.print(sqlQuery.getDialect().quoteIdentifier(rt.getAlias()));
+            pw.print(dialect.quoteIdentifier(rt.getAlias()));
 
             // walk up tables
             if (rt.getParentTable() != null) {
@@ -800,10 +796,10 @@ public class AggGen {
 
                     pw.print(prefix);
                     pw.print(
-                        sqlQuery.getDialect().quoteIdentifier(rt.getAlias()));
+                        dialect.quoteIdentifier(rt.getAlias()));
                     pw.print(" AS ");
                     pw.print(
-                        sqlQuery.getDialect().quoteIdentifier(rt.getAlias()));
+                        dialect.quoteIdentifier(rt.getAlias()));
                 }
             }
         }
@@ -821,7 +817,7 @@ public class AggGen {
                 continue;
             }
             pw.print(prefix);
-            pw.print(cond.toString(sqlQuery));
+            pw.print(cond.toString(dialect));
 
             if (rt.getParentTable() != null) {
                 while (rt.getParentTable().getParentTable() != null) {
@@ -831,7 +827,7 @@ public class AggGen {
                     pw.println(" and");
 
                     pw.print(prefix);
-                    pw.print(cond.toString(sqlQuery));
+                    pw.print(cond.toString(dialect));
                 }
             }
         }
@@ -852,7 +848,7 @@ public class AggGen {
                 String n = (usage.usagePrefix == null)
                     ? c.getName() : usage.usagePrefix + c.getName();
                 pw.print(prefix);
-                pw.print(sqlQuery.getDialect().quoteIdentifier(t.getName(), n));
+                pw.print(dialect.quoteIdentifier(t.getName(), n));
             }
         }
         pw.println(';');

@@ -233,7 +233,7 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
 
         try (Connection connection = dataSource.getConnection()) {
             dialect = dialectFactory.createDialect(connection);
-            aggregationFactory = new AggregationFactoryImpl(dialect, this.getCustomAggregators());
+            aggregationFactory = new AggregationFactoryImpl(this.getCustomAggregators());
         } catch (SQLException e) {
             LOGGER.error(ERR_MSG_DIALECT_INIT, e);
         }

@@ -36,12 +36,17 @@ import java.util.Set;
 import org.eclipse.daanse.jdbc.db.dialect.api.type.BestFitColumnType;
 import org.eclipse.daanse.olap.api.element.OlapElement;
 import org.eclipse.daanse.olap.common.Util;
-import  org.eclipse.daanse.olap.util.Pair;
-import org.eclipse.daanse.rolap.common.sql.SqlQuery;
+import org.eclipse.daanse.sql.statement.api.render.RenderedSql;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.star.RolapStar.Column;
 import org.eclipse.daanse.rolap.common.star.StarColumnPredicate;
 import org.eclipse.daanse.rolap.common.star.StarPredicate;
+import org.eclipse.daanse.rolap.common.sqlbuild.AggregateSqlMapper;
+import org.eclipse.daanse.rolap.common.sqlbuild.SqlBuildGuard;
+import org.eclipse.daanse.rolap.common.sqlbuild.StarPredicateTranslator;
+import org.eclipse.daanse.sql.statement.api.Expressions;
+import org.eclipse.daanse.sql.statement.api.expression.Predicate;
+import org.eclipse.daanse.sql.statement.api.model.SelectStatement;
 
 /**
  * Provides the information necessary to generate SQL for a drill-through
@@ -71,7 +76,7 @@ public class DrillThroughQuerySpec extends AbstractQuerySpec {
             this.listOfStarPredicates = Collections.emptyList();
         }
         int tmpMaxColumnNameLength =
-            getStar().getSqlQueryDialect().getMaxColumnNameLength();
+            getStar().getDialect().getMaxColumnNameLength();
         if (tmpMaxColumnNameLength == 0) {
             // From java.sql.DatabaseMetaData: "a result of zero means that
             // there is no limit or the limit is not known"
@@ -216,46 +221,92 @@ public class DrillThroughQuerySpec extends AbstractQuerySpec {
     }
 
     @Override
-	public Pair<String, List<BestFitColumnType>> generateSqlQuery() {
-        SqlQuery sqlQuery = newSqlQuery();
-        nonDistinctGenerateSql(sqlQuery);
-        appendInapplicableFields(sqlQuery);
-        if(this.request.getMaxRowCount() > 0) {
-            sqlQuery.addRowLimit(this.request.getMaxRowCount());
-        }
-        return sqlQuery.toSqlAndTypes();
+	public RenderedSql generateSql() {
+        // Authoritative: the builder reproduces every drill-through shape (count + detail), verified
+        // 46/46 corpus-wide; no legacy QueryRecorder is constructed. buildDrillThrough handles countOnly too.
+        org.eclipse.daanse.jdbc.db.dialect.api.Dialect dialect = getStar().getDialect();
+        return SqlBuildGuard.build(dialect,
+            getStar().getContext().getConfigValue(
+                org.eclipse.daanse.olap.common.ConfigConstants.GENERATE_FORMATTED_SQL,
+                org.eclipse.daanse.olap.common.ConfigConstants.GENERATE_FORMATTED_SQL_DEFAULT_VALUE,
+                Boolean.class),
+            () -> buildDrillThrough(dialect)).render();
     }
 
     /**
-     * Adds each inapplicable member to the sqlQuery as a placeholder.
-     * A drillthrough query can have inapplicable members included in the
-     * RETURN clause in the case of virtual cubes.
-     * We include these fields in the output because they've been
-     * specifically requested, even though they have no associated
-     * data.
+     * The drill-through SELECT via the generic {@link AggregateSqlMapper#drillThrough}: the detail-row
+     * query (cut columns + measures + inapplicable-member NULL placeholders + row limit), or a
+     * {@code count(*)} query when {@code countOnly}. This is the authoritative producer — no legacy
+     * QueryRecorder is built.
      */
-    private void appendInapplicableFields(SqlQuery sqlQuery) {
-        for (OlapElement member : request.getNonApplicableMembers()) {
-            sqlQuery.addSelect(
-                "NULL", BestFitColumnType.STRING, member.getName());
+    private SelectStatement buildDrillThrough(org.eclipse.daanse.jdbc.db.dialect.api.Dialect dialect) {
+        boolean allowsFieldAlias = dialect.allowsFieldAlias();
+        List<AggregateSqlMapper.DrillColumn> drillColumns = new ArrayList<>();
+        RolapStar.Column[] columns = getColumns();
+        for (int i = 0; i < columns.length; i++) {
+            RolapStar.Column column = columns[i];
+            if (column.getTable().isFunky()) {
+                continue; // funky dimension — ignored, exactly like nonDistinctGenerateSql
+            }
+            StarColumnPredicate predicate = getColumnPredicate(i);
+            Predicate filter = StarPredicateTranslator.isAlwaysTrue(predicate)
+                ? null : StarPredicateTranslator.toPredicate(predicate);
+            boolean selected = isPartOfSelect(column);
+            String alias = (selected && allowsFieldAlias) ? getColumnAlias(i) : null;
+            // The request's cut columns participate in ORDER BY (legacy addOrderBy when isOrdered()).
+            drillColumns.add(
+                new AggregateSqlMapper.DrillColumn(column, filter, selected, alias, isOrdered()));
         }
-    }
 
-    @Override
-	protected void addMeasure(final int i, final SqlQuery sqlQuery) {
-        RolapStar.Measure measure = getMeasure(i);
-
-        if (!isPartOfSelect(measure)) {
-            return;
+        // compound member predicates (slicer): add their predicate + ensure their tables are joined,
+        // and — mirroring extraPredicates — SELECT each constrained column (deduped alias, no ORDER
+        // BY) when the request includes it and it is not already projected.
+        List<Predicate> extraFilters = new ArrayList<>();
+        Set<String> columnNameSet = new HashSet<>(columnNames);
+        for (StarPredicate sp : getPredicateList()) {
+            extraFilters.add(StarPredicateTranslator.toPredicate(sp));
+            for (RolapStar.Column c : sp.getConstrainedColumnList()) {
+                boolean inSelect = isPartOfSelect(c) && !columnNameSet.contains(c.getName());
+                String alias = inSelect ? makeAlias(c, columnNames, columnNameSet) : null;
+                drillColumns.add(new AggregateSqlMapper.DrillColumn(
+                    c, null, inSelect, allowsFieldAlias ? alias : null, false));
+            }
         }
 
-        Util.assertTrue(measure.getTable() == getStar().getFactTable());
-        measure.getTable().addToFrom(sqlQuery, false, true);
-
+        // SELECT extras: measures (raw, named) then NULL placeholders for inapplicable members.
+        // (Skipped for countOnly — the mapper projects count(*) over the same FROM+WHERE.)
+        List<AggregateSqlMapper.RawProjection> raw = new ArrayList<>();
         if (!countOnly) {
-            String expr = measure.generateExprString(sqlQuery);
-            sqlQuery.addSelect(expr, null, getMeasureAlias(i));
+            for (int i = 0, n = getMeasureCount(); i < n; i++) {
+                RolapStar.Measure measure = getMeasure(i);
+                if (!isPartOfSelect(measure)) {
+                    continue;
+                }
+                // Dialect-free: the drill-through projects the raw measure column -> Column / computed
+                // RawVariant (renderer resolves per dialect == the legacy generateExprString chooseQuery, at
+                // render). A column-less measure keeps the legacy string (rare; never computed -> no chooseQuery).
+                raw.add(new AggregateSqlMapper.RawProjection(
+                    measure.getExpression() == null
+                        ? Expressions.raw(measure.generateExprString(dialect))
+                        : org.eclipse.daanse.rolap.common.sqlbuild.JoinPlanner.expressionFor(
+                            measure.getExpression()),
+                    null, getMeasureAlias(i), "measure " + measure.getName()));
+            }
+            for (OlapElement member : request.getNonApplicableMembers()) {
+                // Derby rejects a bare NULL in the select list (42X01) — it needs a typed
+                // CAST(NULL AS ...). Everyone else (incl. ClickHouse, where a CAST to a
+                // non-Nullable type would itself fail) keeps the generic bare NULL.
+                raw.add(new AggregateSqlMapper.RawProjection(
+                    Expressions.rawVariant(java.util.Map.of(
+                        "generic", "NULL",
+                        "derby", "CAST(NULL AS VARCHAR(255))")),
+                    BestFitColumnType.STRING, member.getName(),
+                    "inapplicable member"));
+            }
         }
+
+        return AggregateSqlMapper.drillThrough(getStar().getFactTable(), drillColumns, extraFilters, raw,
+            countOnly, request.getMaxRowCount(), dialect);
     }
 
     @Override
@@ -273,32 +324,4 @@ public class DrillThroughQuerySpec extends AbstractQuerySpec {
         return listOfStarPredicates;
     }
 
-    @Override
-    public void extraPredicates(SqlQuery sqlQuery) {
-        super.extraPredicates(sqlQuery);
-
-        if (countOnly) {
-            return;
-        }
-        // generate the select list
-        final Set<String> columnNameSet = new HashSet<>(columnNames);
-        List<StarPredicate> predicateList = getPredicateList();
-        for (StarPredicate predicate : predicateList) {
-            for (RolapStar.Column column
-                : predicate.getConstrainedColumnList())
-            {
-              // add to Select clause only columns
-              // that are not yet in Select clause
-              // there is no need to have the same column twice
-                if (request.includeInSelect(column)
-                    && !columnNameSet.contains(column.getName()))
-                {
-                    sqlQuery.addSelect(
-                        column.generateExprString(sqlQuery),
-                        column.getInternalType(),
-                        makeAlias(column, columnNames, columnNameSet));
-                }
-            }
-        }
-    }
 }

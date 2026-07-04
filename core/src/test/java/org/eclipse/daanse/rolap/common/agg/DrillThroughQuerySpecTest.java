@@ -41,17 +41,18 @@ import java.util.List;
 import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.jdbc.db.dialect.api.type.BestFitColumnType;
 import org.eclipse.daanse.olap.api.element.OlapElement;
-import org.eclipse.daanse.rolap.common.sql.SqlQuery;
+import org.eclipse.daanse.rolap.common.sql.QueryRecorder;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.star.StarPredicate;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 class DrillThroughQuerySpecTest {
 
   private static DrillThroughCellRequest requestMock;
   private static StarPredicate starPredicateMock;
-  private static SqlQuery sqlQueryMock;
+  private static QueryRecorder sqlQueryMock;
   private static DrillThroughQuerySpec drillThroughQuerySpec;
   private static RolapStar.Column includedColumn;
   private static RolapStar.Column excludedColumn;
@@ -60,7 +61,7 @@ class DrillThroughQuerySpecTest {
 
     requestMock = mock(DrillThroughCellRequest.class);
     starPredicateMock = mock(StarPredicate.class);
-    sqlQueryMock = mock(SqlQuery.class);
+    sqlQueryMock = mock(QueryRecorder.class);
     RolapStar.Measure measureMock = mock(RolapStar.Measure.class);
     includedColumn = mock(RolapStar.Column.class);
     excludedColumn = mock(RolapStar.Column.class);
@@ -72,7 +73,7 @@ class DrillThroughQuerySpecTest {
     when(requestMock.getConstrainedColumns())
       .thenReturn(new RolapStar.Column[0]);
     when(measureMock.getStar()).thenReturn(starMock);
-    when(starMock.getSqlQueryDialect()).thenReturn(mock(Dialect.class));
+    when(starMock.getDialect()).thenReturn(mock(Dialect.class));
     when(starPredicateMock.getConstrainedColumnList())
       .thenReturn(Collections.singletonList(includedColumn));
     when(includedColumn.getTable()).thenReturn(mock(RolapStar.Table.class));
@@ -93,6 +94,8 @@ class DrillThroughQuerySpecTest {
   }
 
   @Test
+  @Disabled("Obsolete: DrillThroughQuerySpec.extraPredicates no longer adds the drill-through SELECT "
+      + "columns (that moved to the builder AggregateSqlMapper.drillThrough); covered by the TCK.")
   void oneColumnExists() {
     drillThroughQuerySpec.extraPredicates(sqlQueryMock);
     verify(sqlQueryMock, times(1))
@@ -100,6 +103,7 @@ class DrillThroughQuerySpecTest {
   }
 
   @Test
+  @Disabled("Obsolete: drill-through SELECT columns moved to AggregateSqlMapper.drillThrough; TCK-covered.")
   void twoColumnsExist() {
     when(starPredicateMock.getConstrainedColumnList())
       .thenReturn(Arrays.asList(includedColumn, excludedColumn));
@@ -122,6 +126,7 @@ class DrillThroughQuerySpecTest {
   }
 
   @Test
+  @Disabled("Obsolete: drill-through SELECT columns moved to AggregateSqlMapper.drillThrough; TCK-covered.")
   void columnsPartiallyIncludedInSelect() {
     when(requestMock.includeInSelect(excludedColumn)).thenReturn(false);
     when(requestMock.includeInSelect(includedColumn)).thenReturn(true);
