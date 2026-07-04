@@ -742,7 +742,7 @@ public class QueryRecorder {
 
     /**
      * Dialect-free SELECT: the caller passes the ROLAP {@code SqlExpression} (e.g. a level key) instead of a
-     * pre-rendered string. A plain {@link RolapColumn} feeds the builder a dialect-free {@code Column} node;
+     * pre-rendered string. A plain {@code RolapColumn} feeds the builder a dialect-free {@code Column} node;
      * a computed expression a {@code RawVariant} carrying its per-dialect SQL map. Alias assignment and the
      * alias maps match {@link #addSelect(CharSequence, BestFitColumnType)}.
      */
@@ -844,7 +844,7 @@ public class QueryRecorder {
         track(new QueryTape.GroupByExprNode(node, alias));
     }
 
-    /** A plain {@link RolapColumn} → dialect-free {@code Column} node; any computed expression → a
+    /** A plain {@code RolapColumn} → dialect-free {@code Column} node; any computed expression → a
      *  {@code RawVariant} node carrying its per-dialect SQL map (resolved at render). */
     private SqlExpression nodeOf(org.eclipse.daanse.olap.api.sql.SqlExpression expression, String legacyStr) {
         if (expression instanceof org.eclipse.daanse.rolap.element.RolapColumn c) {

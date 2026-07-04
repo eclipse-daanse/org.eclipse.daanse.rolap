@@ -177,7 +177,7 @@ public abstract class RolapNativeSet extends RolapNative {
     }
 
     /**
-     * The builder counterpart of {@link #addConstraint}: the inherited context contribution PLUS each
+     * The builder counterpart of {@code addConstraint}: the inherited context contribution PLUS each
      * applicable cross-join arg's member constraint (mirroring {@code super.addConstraint} then each
      * {@code arg.addConstraint}). Only plain {@link MemberListCrossJoinArg}s whose member set is expressible
      * as a single {@code ColumnPredicate} are modelled; anything else (descendants args, multi-value/
