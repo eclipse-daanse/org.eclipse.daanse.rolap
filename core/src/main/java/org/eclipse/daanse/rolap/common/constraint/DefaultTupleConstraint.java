@@ -26,16 +26,12 @@
 
 package org.eclipse.daanse.rolap.common.constraint;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.olap.api.evaluator.Evaluator;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;
 import org.eclipse.daanse.rolap.common.sql.MemberChildrenConstraint;
-import org.eclipse.daanse.rolap.common.sql.QueryTape;
-import org.eclipse.daanse.rolap.common.sql.QueryRecorder;
 import org.eclipse.daanse.rolap.common.sql.TupleConstraint;
 import org.eclipse.daanse.rolap.element.RolapCube;
-import org.eclipse.daanse.rolap.element.RolapLevel;
 
 /**
  * TupleConstraint which does not restrict the result.
@@ -46,33 +42,6 @@ public class DefaultTupleConstraint implements TupleConstraint {
         new DefaultTupleConstraint();
 
     protected DefaultTupleConstraint() {
-    }
-
-    /**
-     * No restriction: the contribution is the fork's empty tape.
-     */
-    @Override
-    public QueryTape addConstraintOps(
-        Dialect dialect,
-        QueryRecorder.Fork fork,
-        RolapCube baseCube,
-        AggStar aggStar)
-    {
-        return fork.ops();
-    }
-
-    /**
-     * No per-level restriction — see {@link #addConstraintOps}.
-     */
-    @Override
-    public QueryTape addLevelConstraintOps(
-        Dialect dialect,
-        QueryRecorder.Fork fork,
-        RolapCube baseCube,
-        AggStar aggStar,
-        RolapLevel level)
-    {
-        return fork.ops();
     }
 
     @Override

@@ -64,7 +64,7 @@ import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.fun.FunUtil;
 import org.eclipse.daanse.olap.util.format.Format;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
-import org.eclipse.daanse.rolap.common.constraint.CompoundPredicateInfo;
+import org.eclipse.daanse.rolap.common.agg.CompoundPredicateInfo;
 import org.eclipse.daanse.rolap.common.constraint.SlicerAnalyzer;
 import org.eclipse.daanse.rolap.common.result.CellReader;
 import org.eclipse.daanse.rolap.element.CompoundSlicerRolapMember;
@@ -147,7 +147,7 @@ public class RolapEvaluator implements Evaluator {
    */
   protected final List<List<List<Member>>> aggregationLists;
 
-  public CompoundPredicateInfo slicerPredicateInfo;
+  private CompoundPredicateInfo slicerPredicateInfo;
 
   private final List<Member> slicerMembers;
   private final Map<Hierarchy, Set<Member>> slicerMembersByHierarchy;
@@ -173,6 +173,11 @@ public class RolapEvaluator implements Evaluator {
 
   public CompoundPredicateInfo getSlicerPredicateInfo() {
     return slicerPredicateInfo;
+  }
+
+  /** Caches the compound-slicer translation on this evaluator (see {@code RolapAggregationManager}). */
+  public void setSlicerPredicateInfo(CompoundPredicateInfo slicerPredicateInfo) {
+    this.slicerPredicateInfo = slicerPredicateInfo;
   }
 
   /**

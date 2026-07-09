@@ -22,7 +22,7 @@
  * Contributors after Fork in 2023:
  *   SmartCity Jena - initial
  */
-package org.eclipse.daanse.rolap.common.constraint;
+package org.eclipse.daanse.rolap.common.agg;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -54,6 +54,8 @@ import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.element.RolapCubeLevel;
 import org.eclipse.daanse.rolap.element.RolapCubeMember;
 import org.eclipse.daanse.rolap.element.RolapMeasure;
+import org.eclipse.daanse.rolap.common.constraint.CalculatedMemberExpander;
+import org.eclipse.daanse.rolap.common.constraint.TupleConstraintStruct;
 import org.eclipse.daanse.rolap.element.RolapStoredMeasure;
 import org.eclipse.daanse.rolap.element.VisualTotalMember;
 

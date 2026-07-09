@@ -26,10 +26,7 @@
  *   <li>{@code StarPredicateTranslator} — {@code StarPredicate} constraints → builder {@code Predicate}.</li>
  * </ul>
  * <p>
- * The shared SQL-text helpers ({@code SqlTextNormalizer}) and the structural statement comparator
- * ({@code StatementEquivalence}) live in {@code org.eclipse.daanse.sql.statement.compare}.
+ * Bundle-private: no bundle outside {@code rolap.core} references this package (verified
+ * 2026-07-06); the in-bundle test fragment reaches it through the host classloader.
  */
-//TODO: RM EXPORT
-@org.osgi.annotation.bundle.Export
-@org.osgi.annotation.versioning.Version("0.0.1")
 package org.eclipse.daanse.rolap.common.sqlbuild;

@@ -298,7 +298,7 @@ public class ExplicitRules {
         /**
          * Validate the content and structure of this Group.
          */
-        public void validate(final MessageRecorder msgRecorder) {
+        void validate(final MessageRecorder msgRecorder) {
             msgRecorder.pushContextName(getName());
             try {
                 for (ExplicitRules.TableDef tableDef : tableDefs) {
@@ -1236,7 +1236,7 @@ public class ExplicitRules {
          *
          * It is an error if there is a column that does not have a mapping.
          */
-        public boolean columnsOK(
+        boolean columnsOK(
             final RolapStar star,
             final JdbcSchema.Table dbFactTable,
             final JdbcSchema.Table dbTable,
@@ -1312,7 +1312,7 @@ public class ExplicitRules {
          * Validate the Levels and Measures, also make sure each definition
          * is different, both name and column.
          */
-        public void validate(final MessageRecorder msgRecorder) {
+        void validate(final MessageRecorder msgRecorder) {
             msgRecorder.pushContextName("TableDef");
             try {
                 // used to detect duplicates
@@ -1536,7 +1536,7 @@ public class ExplicitRules {
          * Validate name and base class.
          */
         @Override
-		public void validate(final MessageRecorder msgRecorder) {
+        void validate(final MessageRecorder msgRecorder) {
             msgRecorder.pushContextName("NameTableDef");
             try {
                 checkAttributeString(msgRecorder, name.getName(), "name");
@@ -1653,7 +1653,7 @@ public class ExplicitRules {
          * Validate excludes and base class.
          */
         @Override
-		public void validate(final MessageRecorder msgRecorder) {
+        void validate(final MessageRecorder msgRecorder) {
             msgRecorder.pushContextName("PatternTableDef");
             try {
                 checkAttributeString(msgRecorder, pattern.pattern(), "pattern");

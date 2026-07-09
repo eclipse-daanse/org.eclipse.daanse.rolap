@@ -30,9 +30,10 @@ public class SumAggregator extends AbstractAggregator {
     }
 
     @Override
-    public org.eclipse.daanse.sql.statement.api.expression.SqlExpression getExpression(
+    public org.eclipse.daanse.sql.statement.api.expression.SqlExpression toNode(
             org.eclipse.daanse.sql.statement.api.expression.SqlExpression inner) {
-        return org.eclipse.daanse.sql.statement.api.Expressions.aggregate(getName(), inner);
+        org.eclipse.daanse.sql.statement.api.expression.SqlExpression operand = nodeOperand(inner);
+        return org.eclipse.daanse.sql.statement.api.Expressions.aggregate(getName(), operand);
     }
 
     @Override

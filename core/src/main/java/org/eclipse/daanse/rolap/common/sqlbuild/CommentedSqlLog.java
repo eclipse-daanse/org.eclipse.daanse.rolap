@@ -33,20 +33,16 @@ import org.slf4j.LoggerFactory;
  * ADDITIONALLY rendered with comments on (formatted, {@link RenderOptions.CommentStyle#LINE})
  * and appended to {@code <dir>/commented-sql-<daanse.tc.id or 0>.sql}, each entry preceded by a
  * {@code -- ==== statement N ====} separator. The extra render is a pure side effect (the
- * renderer is stateless), so the EXECUTED SQL stays byte-identical — comments live only in this
+ * renderer is stateless), so the EXECUTED SQL stays identical — comments live only in this
  * file.
  *
- * <p>Hooked from the two render seams that cover all executed statements:
- * {@code SqlRender.render(SelectStatement, ...)} (the rolap-wide render entry point) and
- * {@code QueryRecorder}'s internal render behind {@code toSqlAndTypes}/{@code toGuarded} (which
- * constructs {@code DialectSqlRenderer} directly, bypassing {@code SqlRender}).
+ * <p>Hooked from the single render seam that covers all executed statements:
+ * {@code SqlRender.render(SelectStatement, ...)} (the rolap-wide render entry point).
+ * {@code QueryRecorder}'s render delegates to {@code SqlRender} too, so it is covered by the same seam.
  *
- * <p>Dedupe: a back-to-back re-render of the SAME statement instance (e.g. {@code SqlBuildGuard}
- * re-rendering a promoted candidate in the reference's formatting) is logged once, by identity of
- * the last logged statement. NOT deduped — and accepted, since the file is for human inspection:
- * {@code SqlBuildGuard.orReference} logs both the builder candidate and the reference even
- * though only one of them is executed, and statistics/cardinality probe queries are logged like
- * any other statement.
+ * <p>Dedupe: a back-to-back re-render of the SAME statement instance is logged once, by identity
+ * of the last logged statement. NOT deduped — and accepted, since the file is for human
+ * inspection: statistics/cardinality probe queries are logged like any other statement.
  *
  * <p>Never throws: render or IO problems are logged as a single WARN and the diagnostic is
  * silently skipped from then on (for IO, per failing directory).

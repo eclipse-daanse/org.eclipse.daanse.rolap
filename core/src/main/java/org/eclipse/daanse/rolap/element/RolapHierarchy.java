@@ -314,7 +314,7 @@ public class RolapHierarchy extends HierarchyBase {
         this.relation = xmlHierarchyRelation;
         if (xmlHierarchyRelation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.InlineTableSource inlineTable) {
             this.relation =
-                RolapUtil.convertInlineTableToRelation(
+                RolapCube.convertInlineTableToRelation(
                     inlineTable,
                     getRolapCatalog().getInternalConnection().getContext().getDialect());
         }
@@ -1002,21 +1002,9 @@ public class RolapHierarchy extends HierarchyBase {
         org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation,
         String alias)
     {
-        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource join) {
-        	org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource leftRelation =
-                relationSubsetInverse(left(join), alias);
-            return (leftRelation == null)
-                ? relationSubsetInverse(right(join), alias)
-                : join;
-
-        } else if (relation != null) {
-            return RelationUtil.getAlias(relation).equals(alias)
-                ? relation
-                : null;
-
-        } else {
-            throw Util.newInternal("bad relation type " + relation);
-        }
+        // The algorithm lives in RelationFromMapper.relationSubsetInverse (the sqlbuild agg FROM
+        // builder needs the identical inverse subset — one home, same consolidation as relationSubset).
+        return org.eclipse.daanse.rolap.common.sqlbuild.RelationFromMapper.relationSubsetInverse(relation, alias);
     }
 
     /**

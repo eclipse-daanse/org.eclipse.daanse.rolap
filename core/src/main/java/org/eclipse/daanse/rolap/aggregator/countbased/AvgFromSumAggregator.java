@@ -52,12 +52,13 @@ public class AvgFromSumAggregator extends AbstractFactCountBasedAggregator {
     }
 
     @Override
-    public SqlExpression getExpression(SqlExpression inner) {
-        // sum(<inner>) * 1e0 / sum(<factCount>) — non-parenthesized, matching the string form;
+    public SqlExpression toNode(SqlExpression inner) {
+        SqlExpression operand = nodeOperand(inner);
+        // sum(<operand>) * 1e0 / sum(<factCount>) — non-parenthesized, matching the string form;
         // see getExpression(CharSequence) for the 1e0 rationale.
         return Expressions.infix(
             Expressions.infix(
-                Expressions.aggregate("sum", inner),
+                Expressions.aggregate("sum", operand),
                 ArithmeticOperator.MULTIPLY,
                 Expressions.raw("1e0")),
             ArithmeticOperator.DIVIDE,
@@ -78,7 +79,7 @@ public class AvgFromSumAggregator extends AbstractFactCountBasedAggregator {
     @Override
     public SqlExpression getScalarNode(SqlExpression operand) {
         // (<operand>) / (<factCount>) — each side individually parenthesized (empty-name Function renders
-        // exactly "(x)"), joined by a NON-parenthesized infix "/" — byte-identical to getScalarExpression.
+        // exactly "(x)"), joined by a NON-parenthesized infix "/".
         return Expressions.infix(
             Expressions.function("", operand),
             ArithmeticOperator.DIVIDE,

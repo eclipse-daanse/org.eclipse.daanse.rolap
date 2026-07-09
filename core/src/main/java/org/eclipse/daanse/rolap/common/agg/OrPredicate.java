@@ -26,13 +26,8 @@
 package org.eclipse.daanse.rolap.common.agg;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
-import org.eclipse.daanse.olap.key.BitKey;
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.star.StarPredicate;
 
@@ -105,41 +100,6 @@ public class OrPredicate extends ListPredicate {
      * @param dialect Query
      * @param predicateMap the map containing predicates analyzed so far
      */
-    private void checkInListForPredicate(
-        StarPredicate predicate,
-        Dialect dialect,
-        Map<BitKey, List<StarPredicate>> predicateMap)
-    {
-        BitKey inListRhsBitKey;
-        BitKey columnBitKey = getConstrainedColumnBitKey();
-        if (predicate instanceof ValueColumnPredicate) {
-            // OR of column values from the same column
-            inListRhsBitKey =
-                ((ValueColumnPredicate) predicate).checkInList(columnBitKey);
-        } else if (predicate instanceof AndPredicate) {
-            // OR of ANDs over a set of values over the same column set
-            inListRhsBitKey =
-                ((AndPredicate) predicate).checkInList(dialect, columnBitKey);
-        } else {
-            inListRhsBitKey = columnBitKey.emptyCopy();
-        }
-        List<StarPredicate> predicateGroup =
-            predicateMap.get(inListRhsBitKey);
-        if (predicateGroup == null) {
-            predicateGroup = new ArrayList<> ();
-            predicateMap.put(inListRhsBitKey, predicateGroup);
-        }
-        predicateGroup.add(predicate);
-    }
-
-    private void checkInList(
-        Dialect dialect,
-        Map<BitKey, List<StarPredicate>> predicateMap)
-    {
-        for (StarPredicate predicate : children) {
-            checkInListForPredicate(predicate, dialect, predicateMap);
-        }
-    }
 
     /**
      * Translates a list of predicates over the same set of columns into sql
@@ -152,146 +112,6 @@ public class OrPredicate extends ListPredicate {
      *     columns that are nulls
      * @param predicateList the list of predicates to translate.
      */
-    private void toInListSql(
-        Dialect dialect,
-        StringBuilder buf,
-        BitKey inListRhsBitKey,
-        List<StarPredicate> predicateList)
-    {
-        // Make a col position to column map to aid search.
-        Map<Integer, RolapStar.Column> columnMap =
-            new HashMap<>();
-
-        for (RolapStar.Column column : columns) {
-            columnMap.put(column.getBitPosition(), column);
-        }
-
-        buf.append("(");
-        // First generate nulls for the columns which will not be included
-        // in the IN list
-
-        boolean firstNullColumnPredicate = true;
-        for (Integer colPos
-            : getConstrainedColumnBitKey().andNot(inListRhsBitKey))
-        {
-            if (firstNullColumnPredicate) {
-                firstNullColumnPredicate = false;
-            } else {
-                buf.append(" and ");
-            }
-            String expr = columnMap.get(colPos).generateExprString(dialect);
-            buf.append(expr);
-            buf.append(" is null");
-        }
-
-        // Now the IN list part
-        if (inListRhsBitKey.isEmpty()) {
-            return;
-        }
-
-        if (firstNullColumnPredicate) {
-            firstNullColumnPredicate = false;
-        } else {
-            buf.append(" and ");
-        }
-
-        // First add the column names;
-        boolean multiInList = inListRhsBitKey.toBitSet().cardinality() > 1;
-        if (multiInList) {
-            // Multi-IN list
-            buf.append("(");
-        }
-
-        boolean firstColumn = true;
-        for (Integer colPos : inListRhsBitKey) {
-            if (firstColumn) {
-                firstColumn = false;
-            } else {
-                buf.append(", ");
-            }
-            String expr = columnMap.get(colPos).generateExprString(dialect);
-            buf.append(expr);
-        }
-        if (multiInList) {
-            // Multi-IN list
-            buf.append(")");
-        }
-        buf.append(" in (");
-
-        boolean firstPredicate = true;
-        for (StarPredicate predicate : predicateList) {
-            if (firstPredicate) {
-                firstPredicate = false;
-            } else {
-                buf.append(", ");
-            }
-
-            if (predicate instanceof AndPredicate) {
-                ((AndPredicate) predicate).toInListSql(
-                    dialect, buf, inListRhsBitKey);
-            } else {
-                assert predicate instanceof ValueColumnPredicate;
-                ((ValueColumnPredicate) predicate).toInListSql(dialect, buf);
-            }
-        }
-        buf.append(")");
-        buf.append(")");
-    }
-
-    @Override
-	public void toSql(Dialect dialect, StringBuilder buf) {
-        //
-        // If possible, translate the predicate using IN lists.
-        //
-        // Two possibilities:
-        // (1) top-level can be directly tranlated to IN-list
-        //  examples:
-        //   (country IN (USA, Canada))
-        //
-        //   ((country, state) in ((USA, CA), (USA, OR)))
-        //
-        // (2) child level can be translated to IN list: this allows IN list
-        // predicates generated such as:
-        //   (country, state) IN ((USA, CA), (USA, OR))
-        //   OR
-        //   (country, state, city) IN ((USA, CA, SF), (USA, OR, Portland))
-        //
-        // The second case is handled by calling toSql on the children in
-        // super.toSql().
-        //
-        final Map<BitKey, List<StarPredicate>> predicateMap =
-            new LinkedHashMap<> ();
-
-        boolean first = true;
-        checkInList(dialect, predicateMap);
-        buf.append("(");
-
-        for (BitKey columnKey : predicateMap.keySet()) {
-            List<StarPredicate> predList = predicateMap.get(columnKey);
-            if (columnKey.isEmpty() || predList.size() <= 1) {
-                // Not possible to have IN list, or only one predicate
-                // in the group.
-                for (StarPredicate pred : predList) {
-                    if (first) {
-                        first = false;
-                    } else {
-                        buf.append(" or ");
-                    }
-                    pred.toSql(dialect, buf);
-                }
-            } else {
-                // Translate the rest
-                if (first) {
-                    first = false;
-                } else {
-                    buf.append(" or ");
-                }
-                toInListSql(dialect, buf, columnKey, predList);
-            }
-        }
-
-        buf.append(")");
-    }
 
     @Override
 	protected String getOp() {

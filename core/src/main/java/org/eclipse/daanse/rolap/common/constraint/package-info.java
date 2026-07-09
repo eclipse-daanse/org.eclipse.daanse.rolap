@@ -11,7 +11,8 @@
 *   SmartCity Jena - initial
 *   Stefan Bischof (bipolis.org) - initial
 */
-//TODO: RM EXPORT
-@org.osgi.annotation.bundle.Export
-@org.osgi.annotation.versioning.Version("0.0.1")
+/**
+ * SQL constraint translators that turn MDX context, member and level restrictions into
+ * dialect-free constraint contributions for the generated SQL. This package is bundle-private.
+ */
 package org.eclipse.daanse.rolap.common.constraint;

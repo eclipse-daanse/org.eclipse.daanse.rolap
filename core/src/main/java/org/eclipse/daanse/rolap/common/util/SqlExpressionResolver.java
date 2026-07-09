@@ -34,9 +34,9 @@ public class SqlExpressionResolver {
         if (expression instanceof RolapColumn c) {
             return dialect.quoteIdentifier(c.getTable(), c.getName());
         }
-        // A computed expression is rendered as a dialect-free RawVariant node (JoinPlanner.expressionFor),
-        // resolved per dialect by the renderer's chooseVariant. Reaching this removed legacy dialect-string path
-        // means a SQL producer still feeds a computed column as a string — convert that producer to a node.
+        // A computed expression must be emitted as a dialect-free node (JoinPlanner.expressionFor),
+        // resolved per dialect by the renderer, not a pre-rendered string; reaching here means a producer
+        // passed a non-plain-column expression.
         throw new IllegalStateException(
             "computed SQL expression must be a RawVariant node, not the removed legacy dialect-string path: "
                 + expression);

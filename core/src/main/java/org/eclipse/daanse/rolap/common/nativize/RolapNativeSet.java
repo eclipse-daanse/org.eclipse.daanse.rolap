@@ -44,7 +44,6 @@ import org.eclipse.daanse.olap.api.catalog.CatalogReader;
 import org.eclipse.daanse.olap.api.element.Hierarchy;
 import org.eclipse.daanse.olap.api.element.Level;
 import org.eclipse.daanse.olap.api.element.Member;
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.olap.api.evaluator.NativeEvaluator;
 import org.eclipse.daanse.olap.calc.base.type.tuplebase.DelegatingTupleList;
 import org.eclipse.daanse.olap.common.ConfigConstants;
@@ -68,8 +67,6 @@ import org.eclipse.daanse.rolap.common.sql.CrossJoinArg;
 import org.eclipse.daanse.rolap.common.sql.CrossJoinArgFactory;
 import org.eclipse.daanse.rolap.common.sql.MemberChildrenConstraint;
 import org.eclipse.daanse.rolap.common.sql.MemberListCrossJoinArg;
-import org.eclipse.daanse.rolap.common.sql.QueryTape;
-import org.eclipse.daanse.rolap.common.sql.QueryRecorder;
 import org.eclipse.daanse.rolap.common.sql.TupleConstraint;
 import org.eclipse.daanse.rolap.element.MultiCardinalityDefaultMember;
 import org.eclipse.daanse.rolap.element.RolapCube;
@@ -143,31 +140,8 @@ public abstract class RolapNativeSet extends RolapNative {
     }
 
 
-    /**
-     * Records the set constraint on the fork: the inherited {@link SqlContextConstraint} context
-     * first, then each applicable arg's member constraint through the recorder-typed
-     * {@link CrossJoinArg} SPI.
-     */
-    @Override
-    public QueryTape addConstraintOps(
-      Dialect dialect,
-      QueryRecorder.Fork fork,
-      RolapCube baseCube,
-      AggStar aggStar ) {
-      super.addConstraintOps( dialect, fork, baseCube, aggStar );
-      for ( CrossJoinArg arg : args ) {
-        if ( canApplyCrossJoinArgConstraint( arg ) ) {
-          RolapLevel level = arg.getLevel();
-          if ( level == null || levelIsOnBaseCube( baseCube, level ) ) {
-            arg.addConstraint( dialect, fork, baseCube, aggStar );
-          }
-        }
-      }
-      return fork.ops();
-    }
-
-    /** Diagnostic twin of {@code SqlContextConstraint.BAIL_LOG}: why THIS constraint's contribution
-     * fell back — without it, silent early returns make present=false outcomes unattributable. */
+    /** Diagnostic log paralleling {@code SqlContextConstraint.BAIL_LOG}: why THIS constraint's
+     * contribution fell back — without it, silent early returns make fallbacks unattributable. */
     private static final org.slf4j.Logger SET_BAIL_LOG =
         org.slf4j.LoggerFactory.getLogger( "daanse.sql.gen.bail" );
 
@@ -177,22 +151,46 @@ public abstract class RolapNativeSet extends RolapNative {
     }
 
     /**
-     * The builder counterpart of {@code addConstraint}: the inherited context contribution PLUS each
-     * applicable cross-join arg's member constraint (mirroring {@code super.addConstraint} then each
-     * {@code arg.addConstraint}). Only plain {@link MemberListCrossJoinArg}s whose member set is expressible
-     * as a single {@code ColumnPredicate} are modelled; anything else (descendants args, multi-value/
-     * multi-level member sets, no context contribution) returns {@link java.util.Optional#empty()} so the
-     * byte-equal guard falls back to the recorded reference query.
+     * The SetConstraint/NECJ composition executes the expanded calc gate ({@link CalcLift#LIFTED}):
+     * a supported calculated member in context or slicer is expanded in place rather than forcing
+     * non-native evaluation. Routing parity lives in {@code SqlTupleReader.generateSelectForLevels}:
+     * the SetConstraint-family multi-target reads execute through
+     * {@code TupleSqlMapper.tupleLevelMembersSqlRecorderJoinOrder}.
      */
     @Override
-    public java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution> toContribution(
-        RolapCube baseCube, AggStar aggStar ) {
+    public CalcLift executedCalcLift() {
+      return CalcLift.LIFTED;
+    }
+
+    /**
+     * Builds the constraint contribution, reached from the base 2-arg {@code toContribution}
+     * dispatch with {@link #executedCalcLift()}: the inherited context contribution PLUS each
+     * applicable cross-join arg's member constraint. Plain {@link MemberListCrossJoinArg}s and
+     * descendants args whose member set is expressible as a single {@code ColumnPredicate} are
+     * modelled; anything inexpressible (multi-value / multi-level member sets, no context
+     * contribution) returns {@link java.util.Optional#empty()} so the caller falls back to the
+     * reference query.
+     */
+    @Override
+    protected java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution> toContribution(
+        RolapCube baseCube, AggStar aggStar, CalcLift lift ) {
       java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution> base =
-          super.toContribution( baseCube, aggStar );
+          super.toContribution( baseCube, aggStar, lift );
       if ( base.isEmpty() ) {
-        return bail( "set-base-context-empty" ); // the context bail itself logs its own reason
+        // The inherited context could not be expressed (a deep composition the calc gate could
+        // not lift); the context bail below logs its own precise reason.
+        return bail( "set-base-context-empty" );
       }
       org.eclipse.daanse.rolap.common.sql.ConstraintContribution c = base.get();
+      if ( aggStar != null && c.aggPlan().isEmpty() ) {
+        // Defensive: an agg-routed context contribution always carries its plan (possibly with
+        // empty predicates); a plan-less one cannot feed the agg-join channel.
+        throw dead( "set-agg-base-no-plan" );
+      }
+      // The agg-join channel: the base context's provenance extended per arg, in the same order
+      // the base predicates/args are appended. Null when not agg-routed.
+      List<org.eclipse.daanse.rolap.common.sql.AggPlan.AggColumnPredicate> aggPredicates =
+          aggStar == null ? null : new ArrayList<>( c.aggPlan().get().orderedAggPredicates() );
       List<org.eclipse.daanse.sql.statement.api.expression.Predicate> wheres = new ArrayList<>();
       c.where().ifPresent( wheres::add );
       List<org.eclipse.daanse.rolap.common.star.RolapStar.Table> joinTables = new ArrayList<>( c.joinTables() );
@@ -200,7 +198,7 @@ public abstract class RolapNativeSet extends RolapNative {
           new ArrayList<>( c.orderedPredicates() );
       for ( CrossJoinArg arg : args ) {
         if ( !canApplyCrossJoinArgConstraint( arg ) ) {
-          continue; // addConstraintOps skips this arg too
+          continue; // a non-applicable (calc-member) arg contributes no constraint
         }
         RolapLevel level = arg.getLevel();
         // levelIsOnBaseCube needs a non-null baseCube; the contribution path passes null (non-virtual), where
@@ -208,7 +206,7 @@ public abstract class RolapNativeSet extends RolapNative {
         if ( level != null && baseCube != null && !levelIsOnBaseCube( baseCube, level ) ) {
           continue;
         }
-        // The member set + flags this arg's addConstraint passes to addMemberConstraint, per arg type:
+        // The member set + flags applied per arg type:
         //   MemberListCrossJoinArg -> (members, its restrictMemberTypes, its exclude)
         //   DescendantsCrossJoinArg -> ([member], restrictMemberTypes=true, exclude=false)
         List<RolapMember> argMembers;
@@ -224,60 +222,211 @@ public abstract class RolapNativeSet extends RolapNative {
           argExclude = false;
         } else {
           // Other arg types are not modelled. SKIP (not bail): if such an arg adds a real constraint the
-          // contribution is partial and the byte-equal guard falls back; if it adds nothing (an all-member
-          // or projection arg) skipping preserves the inherited context match.
+          // contribution is partial and the caller falls back to the reference query; if it adds nothing
+          // (an all-member or projection arg) skipping preserves the inherited context match.
           continue;
         }
         if ( argMembers == null ) {
           continue; // the arg has no member dimension -> the recorded path also adds nothing
         }
         if ( argMembers.isEmpty() ) {
-          // An EMPTY member set: addMemberConstraint emits an always-false "(1 = 0)" predicate
-          // to produce the empty result. The builder has no clean table-less always-false conjunct
-          // (the mapper renders WHERE from per-table ColumnPredicates), so BAIL to the reference rather
-          // than skip it — skipping would under-constrain the crossjoin to all rows.
-          return bail( "set-arg-empty-members" );
-        }
-        if ( argMembers.stream().anyMatch( Member::isNull ) ) {
-          // A NULL member in the set: generateSingleValueInExpr emits the same always-false "(1 = 0)",
-          // while memberConstraintContribution returns empty for it —
-          // the arg would fall to the all-member branch below and under-constrain (a null member is not
-          // calculated, so it would even add a bare existence join). Same reasoning as the empty set:
-          // no table-less always-false conjunct exists in the builder, so BAIL to the reference.
-          return bail( "set-arg-null-member" );
-        }
-        java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution.ColumnPredicate> argCp =
-            org.eclipse.daanse.rolap.common.constraint.MemberConstraintWriter.memberConstraintContribution(
-                baseCube, argMembers, argRestrict, argExclude );
-        if ( argCp.isEmpty() ) {
-          // All-member set, or a member set this builder can't express. The recorded path still joins an
-          // all-member arg's level table to the fact (the non-empty existence restriction). Add it ONLY for
-          // a GENUINE all-member set (no calculated member): a calc/inexpressible arg (e.g. an enum set
-          // containing a calc member, where the recorded path emits an IN over the real members) must stay
-          // skipped and fall back — turning it into a bare existence join under-constrains.
-          if ( argMembers.stream().noneMatch( Member::isCalculated )
-              && arg.getLevel() instanceof org.eclipse.daanse.rolap.element.RolapCubeLevel argCubeLevel ) {
-            org.eclipse.daanse.rolap.common.star.RolapStar.Column argKey =
-                argCubeLevel.getBaseStarKeyColumn( baseCube );
-            if ( argKey != null ) {
-              joinTables.add( argKey.getTable() );
-            }
+          // An EMPTY member-set arg restricts the result to nothing: the member constraint is the
+          // always-false "(1 = 0)" conjunct ("(1 = 1)" for an exclude arg) instead of any column
+          // restriction. The conjunct references no dimension column, so it is carried on the FACT
+          // table: a fact-rooted ColumnPredicate adds no join steps of its own (the fact join is the
+          // cross join's existence join, forced anyway) — only the WHERE conjunct, in arg order.
+          org.eclipse.daanse.rolap.common.star.RolapStar star =
+              baseCube != null ? baseCube.getStar() : getEvaluator().getCube().getStar();
+          if ( star == null ) {
+            // No star to hang the conjunct on (virtual cube without a fact) — cannot express it.
+            throw dead( "set-arg-empty-members-no-star" );
+          }
+          org.eclipse.daanse.sql.statement.api.expression.Predicate alwaysFalse =
+              org.eclipse.daanse.sql.statement.api.Predicates.raw( argExclude ? "(1 = 1)" : "(1 = 0)" );
+          ordered.add( new org.eclipse.daanse.rolap.common.sql.ConstraintContribution.ColumnPredicate(
+              star.getFactTable(), alwaysFalse ) );
+          wheres.add( alwaysFalse );
+          if ( aggPredicates != null ) {
+            // Column-less conjunct: carried on the AGG fact table, matching the base fact.
+            aggPredicates.add( new org.eclipse.daanse.rolap.common.sql.AggPlan.AggColumnPredicate(
+                aggStar.getFactTable(), alwaysFalse ) );
           }
           continue;
         }
+        if ( argMembers.stream().anyMatch( Member::isNull ) ) {
+          // A NULL member in the set: whether the member constraint collapses to the always-false
+          // "(1 = 0)" depends on which addMemberConstraint branch runs (single-value IN vs the
+          // multi-level compound), which is not modelled here. memberConstraintContribution returns
+          // empty for it, so the arg would fall to the all-member branch below and under-constrain
+          // (a null member is not calculated, so it would even add a bare existence join). BAIL to
+          // the reference instead.
+          throw dead( "set-arg-null-member" );
+        }
+        // The aggStar-threaded arg channel: under an agg routing the member-set predicate is built
+        // on the AGG column nodes (single-value INs and tuple INs alike); a null aggStar is the
+        // base form.
+        java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution.ColumnPredicate> argCp =
+            org.eclipse.daanse.rolap.common.constraint.MemberConstraintWriter.memberConstraintContribution(
+                baseCube, aggStar, argMembers, argRestrict, argExclude );
+        if ( argCp.isEmpty() && aggStar == null && !argExclude ) {
+          // Compound-null-parent retry: an arg whose member set memberConstraintContribution
+          // cannot carry BECAUSE of a null ancestor key (the Warehouse2 NECJ shape,
+          // [#null].[#null].[addr].[name]) is retried through the compound form of
+          // constrainMultiLevelMembers' null-parent compound
+          // (((a2 is null and (name, a1) in (…))) [or …]), built with Predicates.isNull +
+          // Predicates.inTuple. Base star only: under an agg routing the compound form is not
+          // modelled (no agg provenance), and an exclude arg follows the NOT-IN form — both keep
+          // the bail below.
+          argCp = org.eclipse.daanse.rolap.common.constraint.MemberConstraintWriter
+              .memberConstraintContributionCompoundNullParent( baseCube, argMembers, argRestrict );
+        }
+        if ( argCp.isEmpty() ) {
+          // memberConstraintContribution could not carry this arg as a single ColumnPredicate, so an
+          // empty return must be classified before it is dropped:
+          //
+          //   - A set that genuinely ADDS NOTHING (an all-member co-arg such as [All Products], or a
+          //     calculated-only set) needs no WHERE and no join (an [All Products] co-arg in a
+          //     Warehouse level read leaves product/product_class out of the FROM). SKIP it —
+          //     turning it into a join would over-join a foreign dimension.
+          //
+          //   - Any OTHER inexpressible-but-REAL restriction (an exclude/NOT-IN multi-level tuple,
+          //     an agg-routed compound, or a rest-form even the compound retry above cannot carry)
+          //     is a real WHERE conjunct. Skipping it here would UNDER-CONSTRAIN and silently produce
+          //     wrong SQL. BAIL to the reference query instead.
+          //
+          // (The NON-EMPTY existence join to the fact is emitted for the TARGET level being read via
+          // factJoinRequired, never through joinTables, so a skipped all-member arg still keeps the
+          // cross join's existence semantics.)
+          boolean addsNothing = argMembers.stream().allMatch( RolapMember::isAll )
+              || argMembers.stream().allMatch( m -> m.isCalculated() && !m.isParentChildLeaf() );
+          if ( addsNothing ) {
+            continue;
+          }
+          return bail( "set-arg-inexpressible-member" );
+        }
         ordered.add( argCp.get() );
-        joinTables.add( argCp.get().table() );
+        if ( argCp.get().table() != null ) {
+          // A table-less predicate (shared / non-cube level, constrained via its key expression)
+          // contributes only the WHERE conjunct.
+          joinTables.add( argCp.get().table() );
+        }
         wheres.add( argCp.get().predicate() );
+        if ( aggPredicates != null ) {
+          // Provenance for the agg-join channel: the agg table carrying the arg's substituted key
+          // column (same first-member level the writer's ColumnPredicate table is derived from).
+          java.util.Optional<org.eclipse.daanse.rolap.common.aggmatcher.AggStar.Table> aggTable =
+              org.eclipse.daanse.rolap.common.constraint.MemberConstraintWriter.aggMemberTable(
+                  baseCube, aggStar, argMembers.get( 0 ).getLevel() );
+          if ( aggTable.isEmpty() ) {
+            throw dead( "set-arg-agg-table-unresolved" );
+          }
+          aggPredicates.add( new org.eclipse.daanse.rolap.common.sql.AggPlan.AggColumnPredicate(
+              aggTable.get(), argCp.get().predicate() ) );
+        }
       }
       // An all-member crossjoin (EMPTY base + all-member args) yields no WHERE — leave it empty rather than
-      // an empty AND, but carry the base's factJoinRequired so the target level's non-empty existence join
+      // an empty AND. ALWAYS the And wrap otherwise: the mapper splits the top-level And, so a single
+      // grouped member-set conjunct must sit one level below the split to keep its parentheses.
+      // Carry the base's factJoinRequired so the target level's non-empty existence join
       // to the fact is still emitted (the whole point of a NonEmptyCrossJoin).
       java.util.Optional<org.eclipse.daanse.sql.statement.api.expression.Predicate> whereOpt =
           wheres.isEmpty() ? java.util.Optional.empty()
-              : java.util.Optional.of( wheres.size() == 1 ? wheres.get( 0 )
-                  : org.eclipse.daanse.sql.statement.api.Predicates.and( wheres ) );
-      return java.util.Optional.of( new org.eclipse.daanse.rolap.common.sql.ConstraintContribution(
-          whereOpt, joinTables, ordered, c.memberKeyGroup() ).withFactJoinRequired( c.factJoinRequired() ) );
+              : java.util.Optional.of( org.eclipse.daanse.sql.statement.api.Predicates.and( wheres ) );
+      org.eclipse.daanse.rolap.common.sql.ConstraintContribution result =
+          new org.eclipse.daanse.rolap.common.sql.ConstraintContribution(
+              whereOpt, joinTables, ordered, c.memberKeyGroup() )
+              .withFactJoinRequired( c.factJoinRequired() );
+      if ( aggPredicates != null ) {
+        // A present plan with EMPTY predicates stays present — the valid unconstrained agg
+        // translation.
+        result = result.withAggPlan(
+            new org.eclipse.daanse.rolap.common.sql.AggPlan( aggStar, aggPredicates ) );
+      }
+      return java.util.Optional.of( result );
+    }
+
+    /**
+     * The aggStar collapsed level-members WHERE <em>including</em> this set's per-arg member
+     * restrictions (consumed by {@code SqlTupleReader.aggCollapsedLevelMembersSql}) — a
+     * {@code DescendantsCrossJoinArg} parent restriction ({@code the_year = 1997} under
+     * {@code [Time].[Quarter]}) that the inherited context-only translation would misclassify as
+     * UNCONSTRAINED. Composition emits the agg-substituted context conjuncts first, then per
+     * applicable arg the agg-substituted single-parent key group ({@code aggMemberKeyGroup} — the
+     * same parenthesised group {@code MemberConstraintWriter.addMemberConstraint} emits for one
+     * member).
+     * <p>
+     * BAILs (never UNCONSTRAINED) for every arg shape not reproduced here: a
+     * {@code MemberListCrossJoinArg} with calculated members (the constraint is skipped but the
+     * members are read by enumeration — not the single-target collapsed shape), any other
+     * {@code MemberListCrossJoinArg} (single-value IN / multi-level
+     * {@code constrainMultiLevelMembers} compounds are not modelled), a calculated or null
+     * descendants member, an off-cube level, or an unresolvable agg key column. Subclass gates:
+     * {@code FilterConstraint} overrides for its context gate (no context/args unless non-empty or
+     * join-required); {@code TopCountConstraint} needs none — its non-join branch never sees an
+     * aggStar ({@code supportsAggTables() == isJoinRequired()}).
+     * <p>
+     * Routing: the level-members collapsed gate reads the live {@code levelMembersAggWhereState}
+     * first and lets a non-bailed candidate decide the empty-WHERE case.
+     */
+    @Override
+    public SqlContextConstraint.AggWhereResult levelMembersAggWhereCandidateState( AggStar aggStar ) {
+      if ( aggStar == null ) {
+        return SqlContextConstraint.AggWhereResult.BAIL;
+      }
+      // The inherited context leg — the same context translation, in LIST form so the per-arg
+      // groups append behind the context conjuncts (emission order). null == a shape outside the
+      // context translation (virtual cube, calc/slicer exotic, role access, missing agg node,
+      // builder-time exception).
+      List<org.eclipse.daanse.rolap.common.sql.AggPlan.AggColumnPredicate> ctx =
+          aggContextColumnPredicates( aggStar, null );
+      if ( ctx == null ) {
+        return SqlContextConstraint.AggWhereResult.BAIL;
+      }
+      List<org.eclipse.daanse.sql.statement.api.expression.Predicate> all = new ArrayList<>();
+      for ( org.eclipse.daanse.rolap.common.sql.AggPlan.AggColumnPredicate acp : ctx ) {
+        all.add( acp.predicate() );
+      }
+      RolapCube cube = (RolapCube) getEvaluator().getCube();
+      for ( CrossJoinArg arg : args ) {
+        if ( !canApplyCrossJoinArgConstraint( arg ) ) {
+          // Calc-member MemberListCrossJoinArg: the constraint is skipped AND the members are
+          // enumerated (enum-target read) — not the shape this candidate serves. BAIL.
+          return SqlContextConstraint.AggWhereResult.BAIL;
+        }
+        RolapLevel level = arg.getLevel();
+        if ( level != null && !levelIsOnBaseCube( cube, level ) ) {
+          // Such an off-cube arg is not reproduced here (virtual-cube composition already bailed
+          // above). BAIL.
+          return SqlContextConstraint.AggWhereResult.BAIL;
+        }
+        if ( arg instanceof org.eclipse.daanse.rolap.common.sql.DescendantsCrossJoinArg ) {
+          List<RolapMember> argMembers = arg.getMembers();
+          if ( argMembers == null ) {
+            // No member dimension -> this arg adds nothing.
+            continue;
+          }
+          RolapMember m = argMembers.get( 0 );
+          if ( m.isCalculated() || m.isNull() ) {
+            return SqlContextConstraint.AggWhereResult.BAIL;
+          }
+          java.util.Optional<org.eclipse.daanse.sql.statement.api.expression.Predicate> group =
+              aggMemberKeyGroup( aggStar, cube, m );
+          if ( group == null ) {
+            return SqlContextConstraint.AggWhereResult.BAIL;
+          }
+          // Empty (all-member parent) adds nothing — a no-op key group.
+          group.ifPresent( all::add );
+        } else {
+          // MemberListCrossJoinArg without calc members (single-value IN / multi-level
+          // constrainMultiLevelMembers compounds) and any future arg type: not modelled. BAIL.
+          return SqlContextConstraint.AggWhereResult.BAIL;
+        }
+      }
+      if ( all.isEmpty() ) {
+        return SqlContextConstraint.AggWhereResult.UNCONSTRAINED;
+      }
+      return SqlContextConstraint.AggWhereResult.of(
+          org.eclipse.daanse.sql.statement.api.Predicates.and( all ) );
     }
 
     /**

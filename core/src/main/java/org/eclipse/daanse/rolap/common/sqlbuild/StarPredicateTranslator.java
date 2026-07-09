@@ -18,13 +18,18 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.rolap.common.agg.AndPredicate;
 import org.eclipse.daanse.rolap.common.agg.ListColumnPredicate;
 import org.eclipse.daanse.rolap.common.agg.LiteralStarPredicate;
+import org.eclipse.daanse.rolap.common.agg.MemberTuplePredicate;
+import org.eclipse.daanse.rolap.common.agg.MinusStarPredicate;
 import org.eclipse.daanse.rolap.common.agg.OrPredicate;
+import org.eclipse.daanse.rolap.common.agg.RangeColumnPredicate;
 import org.eclipse.daanse.rolap.common.agg.ValueColumnPredicate;
+import org.eclipse.daanse.rolap.common.star.StarColumnPredicate;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.star.StarPredicate;
 import org.eclipse.daanse.sql.statement.api.Expressions;
@@ -58,22 +63,48 @@ public final class StarPredicateTranslator {
         return predicate instanceof LiteralStarPredicate literal && literal.getValue();
     }
 
+    /** The default column→node resolver: a plain star column via {@link JoinPlanner#expressionFor(RolapStar.Column)}. */
+    private static final Function<RolapStar.Column, SqlExpression> DEFAULT_COLUMN_RESOLVER =
+            JoinPlanner::expressionFor;
+
     public static Predicate toPredicate(StarPredicate predicate) {
+        return toPredicate(predicate, DEFAULT_COLUMN_RESOLVER);
+    }
+
+    /**
+     * As {@link #toPredicate(StarPredicate)} but resolves each constrained {@link RolapStar.Column} to its
+     * SQL node through {@code columnResolver} instead of the star column's own expression. Used to substitute
+     * aggregate-table column nodes for base columns when translating an agg-substituted slicer-tuple predicate
+     * (the columns carry a delegate that only renders via {@code generateExprString}, so the default
+     * {@link JoinPlanner#expressionFor} cannot reach their node). The factoring (IN / tuple-IN, null hoisting)
+     * is the same as the base-star path bar the substituted column expressions.
+     */
+    public static Predicate toPredicate(
+            StarPredicate predicate, Function<RolapStar.Column, SqlExpression> columnResolver) {
         if (predicate instanceof ValueColumnPredicate value) {
-            return valuePredicate(value);
+            return valuePredicate(value, columnResolver);
         }
         if (predicate instanceof ListColumnPredicate list) {
-            return listPredicate(list);
+            return listPredicate(list, columnResolver);
         }
         if (predicate instanceof AndPredicate and) {
-            return Predicates.and(translateChildren(and.getChildren()));
+            return Predicates.and(translateChildren(and.getChildren(), columnResolver));
         }
         if (predicate instanceof OrPredicate or) {
-            return orPredicate(or);
+            return orPredicate(or, columnResolver);
         }
         if (predicate instanceof LiteralStarPredicate literal) {
             // true → always-true (renders 1=1); false → always-false (renders 1=0).
             return literal.getValue() ? Predicates.and(List.of()) : Predicates.or(List.of());
+        }
+        if (predicate instanceof RangeColumnPredicate range) {
+            return rangePredicate(range, columnResolver);
+        }
+        if (predicate instanceof MemberTuplePredicate tuple) {
+            return memberTuplePredicate(tuple, columnResolver);
+        }
+        if (predicate instanceof MinusStarPredicate minus) {
+            return minusPredicate(minus, columnResolver);
         }
         throw new IllegalArgumentException("unsupported StarPredicate: " + predicate.getClass().getName());
     }
@@ -88,13 +119,25 @@ public final class StarPredicateTranslator {
      */
     public static Predicate toColumnPredicate(
             org.eclipse.daanse.rolap.common.star.StarColumnPredicate predicate, SqlExpression col) {
+        return toColumnPredicate(predicate, col, null);
+    }
+
+    /**
+     * As {@link #toColumnPredicate(org.eclipse.daanse.rolap.common.star.StarColumnPredicate, SqlExpression)}
+     * but with an explicit literal datatype for predicates constructed WITHOUT a star column (a shared /
+     * non-cube level constrained via its level key expression, where the literal datatype comes from the
+     * level rather than a star column).
+     */
+    public static Predicate toColumnPredicate(
+            org.eclipse.daanse.rolap.common.star.StarColumnPredicate predicate, SqlExpression col,
+            org.eclipse.daanse.jdbc.db.api.type.Datatype fallbackType) {
         if (predicate instanceof ValueColumnPredicate value) {
             Object v = value.getValue();
             if (v == null || v == Util.sqlNullValue) {
                 return Predicates.isNull(col);
             }
             return Predicates.comparison(col, ComparisonOperator.EQ,
-                    Expressions.literal(v, value.getConstrainedColumn().getDatatype()));
+                    Expressions.literal(v, literalType(value, fallbackType)));
         }
         if (predicate instanceof ListColumnPredicate list) {
             List<org.eclipse.daanse.rolap.common.star.StarColumnPredicate> children = list.getPredicates();
@@ -110,7 +153,7 @@ public final class StarPredicateTranslator {
                         hasNull = true;
                         continue;
                     }
-                    values.add(Expressions.literal(val, v.getConstrainedColumn().getDatatype()));
+                    values.add(Expressions.literal(val, literalType(v, fallbackType)));
                 }
                 Predicate base;
                 if (values.isEmpty()) {
@@ -129,10 +172,17 @@ public final class StarPredicateTranslator {
         return toPredicate(predicate);
     }
 
+    /** The literal datatype: the predicate's star column when present, else the caller's fallback. */
+    private static org.eclipse.daanse.jdbc.db.api.type.Datatype literalType(
+            ValueColumnPredicate value, org.eclipse.daanse.jdbc.db.api.type.Datatype fallbackType) {
+        return value.getConstrainedColumn() != null ? value.getConstrainedColumn().getDatatype() : fallbackType;
+    }
+
     /** {@code col = value}, or {@code col IS NULL} when the value is null. */
-    private static Predicate valuePredicate(ValueColumnPredicate value) {
+    private static Predicate valuePredicate(
+            ValueColumnPredicate value, Function<RolapStar.Column, SqlExpression> columnResolver) {
         RolapStar.Column column = value.getConstrainedColumn();
-        SqlExpression col = JoinPlanner.expressionFor(column);
+        SqlExpression col = columnResolver.apply(column);
         Object v = value.getValue();
         // The null sentinel Util.sqlNullValue is NOT Java null; compare by reference (its toString() is
         // "#null", which must never leak into SQL).
@@ -147,12 +197,13 @@ public final class StarPredicateTranslator {
      * {@code col = v} for a single value, {@code col IN (v1, v2, …)} for several (a one-element
      * list renders as equality, not {@code IN}), else an {@code OR} of the translated children.
      */
-    private static Predicate listPredicate(ListColumnPredicate list) {
+    private static Predicate listPredicate(
+            ListColumnPredicate list, Function<RolapStar.Column, SqlExpression> columnResolver) {
         List<org.eclipse.daanse.rolap.common.star.StarColumnPredicate> children = list.getPredicates();
         boolean allValues = !children.isEmpty()
                 && children.stream().allMatch(ValueColumnPredicate.class::isInstance);
         if (allValues) {
-            SqlExpression col = JoinPlanner.expressionFor(list.getConstrainedColumn());
+            SqlExpression col = columnResolver.apply(list.getConstrainedColumn());
             // Split the null sentinel out of the value list — it must render as IS NULL, not as the
             // literal "#null". Three cases:
             //   col IS NULL  /  (col = v or col is null)  /  (col in (...) or col is null).
@@ -179,7 +230,7 @@ public final class StarPredicateTranslator {
         }
         List<Predicate> parts = new ArrayList<>();
         for (org.eclipse.daanse.rolap.common.star.StarColumnPredicate child : children) {
-            parts.add(toPredicate(child));
+            parts.add(toPredicate(child, columnResolver));
         }
         return Predicates.or(parts);
     }
@@ -190,7 +241,8 @@ public final class StarPredicateTranslator {
      * the result is {@code col IN (...)} (wrapped in the {@code OR}'s parentheses);
      * otherwise the children are {@code OR}-ed as-is.
      */
-    private static Predicate orPredicate(OrPredicate or) {
+    private static Predicate orPredicate(
+            OrPredicate or, Function<RolapStar.Column, SqlExpression> columnResolver) {
         List<StarPredicate> children = or.getChildren();
         // Each child must reduce to one value per column (a bare ValueColumnPredicate, or an
         // AndPredicate of them — a slicer tuple member). Otherwise fall back to a plain OR.
@@ -198,12 +250,12 @@ public final class StarPredicateTranslator {
         for (StarPredicate child : children) {
             List<ValueColumnPredicate> row = columnValues(child);
             if (row == null) {
-                return Predicates.or(translateChildren(children));
+                return Predicates.or(translateChildren(children, columnResolver));
             }
             rows.add(row);
         }
         if (rows.size() <= 1) {
-            return Predicates.or(translateChildren(children));
+            return Predicates.or(translateChildren(children, columnResolver));
         }
         // The constrained columns, ordered by bit position (ascending BitKey order — the canonical
         // column order); every row must constrain exactly this column set.
@@ -220,11 +272,11 @@ public final class StarPredicateTranslator {
                 byColumn.put(v.getConstrainedColumn().getBitPosition(), v);
             }
             if (byColumn.size() != columns.size()) {
-                return Predicates.or(translateChildren(children));
+                return Predicates.or(translateChildren(children, columnResolver));
             }
             for (RolapStar.Column col : columns) {
                 if (!byColumn.containsKey(col.getBitPosition())) {
-                    return Predicates.or(translateChildren(children));
+                    return Predicates.or(translateChildren(children, columnResolver));
                 }
             }
             rowMaps.add(byColumn);
@@ -246,12 +298,12 @@ public final class StarPredicateTranslator {
             } else if (nulls == 0) {
                 inListColumns.add(col);
             } else {
-                return Predicates.or(translateChildren(children));
+                return Predicates.or(translateChildren(children, columnResolver));
             }
         }
         List<Predicate> conj = new ArrayList<>();
         for (RolapStar.Column col : nullColumns) {
-            conj.add(Predicates.isNull(JoinPlanner.expressionFor(col)));
+            conj.add(Predicates.isNull(columnResolver.apply(col)));
         }
         if (!inListColumns.isEmpty()) {
             List<List<SqlExpression>> valueRows = new ArrayList<>();
@@ -268,19 +320,18 @@ public final class StarPredicateTranslator {
                 for (List<SqlExpression> r : valueRows) {
                     flat.add(r.get(0));
                 }
-                conj.add(Predicates.in(JoinPlanner.expressionFor(inListColumns.get(0)), flat));
+                conj.add(Predicates.in(columnResolver.apply(inListColumns.get(0)), flat));
             } else {
                 List<SqlExpression> colExprs = new ArrayList<>();
                 for (RolapStar.Column col : inListColumns) {
-                    colExprs.add(JoinPlanner.expressionFor(col));
+                    colExprs.add(columnResolver.apply(col));
                 }
                 conj.add(Predicates.inTuple(colExprs, valueRows));
             }
         }
-        // Parenthesisation must match the reference SQL (the guard byte-compares): the OR's outer "("
-        // plus the factored group's "(" — and, for a multi-column list, the extra tuple "(". The
-        // factored null columns are AND-ed BEFORE the IN-list. or([ and([ nulls.., inList ]) ])
-        // renders exactly that pair.
+        // Parenthesisation: the OR's outer "(" plus the factored group's "(" — and, for a
+        // multi-column list, the extra tuple "(". The factored null columns are AND-ed BEFORE the
+        // IN-list. or([ and([ nulls.., inList ]) ]) renders exactly that pair.
         return Predicates.or(List.of(Predicates.and(conj)));
     }
 
@@ -311,11 +362,163 @@ public final class StarPredicateTranslator {
         return v == null || v.getValue() == null || v.getValue() == Util.sqlNullValue;
     }
 
-    private static List<Predicate> translateChildren(List<StarPredicate> children) {
+    private static List<Predicate> translateChildren(
+            List<StarPredicate> children, Function<RolapStar.Column, SqlExpression> columnResolver) {
         List<Predicate> parts = new ArrayList<>();
         for (StarPredicate child : children) {
-            parts.add(toPredicate(child));
+            parts.add(toPredicate(child, columnResolver));
         }
         return parts;
+    }
+
+    /**
+     * A {@link RangeColumnPredicate} → a comparison, or an {@code AND} of two for a two-sided
+     * range. A lower bound is {@code col >= v} (inclusive) or {@code col > v} (exclusive); an
+     * upper bound {@code col <= v} / {@code col < v}. Uniform one-sided/two-sided form (never
+     * {@code BETWEEN}). Declines (throws) a range whose bound value is the SQL null sentinel —
+     * that can never render as a comparison.
+     */
+    private static Predicate rangePredicate(
+            RangeColumnPredicate range, Function<RolapStar.Column, SqlExpression> columnResolver) {
+        RolapStar.Column column = range.getConstrainedColumn();
+        SqlExpression col = columnResolver.apply(column);
+        List<Predicate> parts = new ArrayList<>();
+        ValueColumnPredicate lower = range.getLowerBound();
+        if (lower != null) {
+            parts.add(Predicates.comparison(col,
+                    range.getLowerInclusive() ? ComparisonOperator.GE : ComparisonOperator.GT,
+                    boundLiteral(lower, column)));
+        }
+        ValueColumnPredicate upper = range.getUpperBound();
+        if (upper != null) {
+            parts.add(Predicates.comparison(col,
+                    range.getUpperInclusive() ? ComparisonOperator.LE : ComparisonOperator.LT,
+                    boundLiteral(upper, column)));
+        }
+        if (parts.isEmpty()) {
+            throw new IllegalArgumentException("RangeColumnPredicate with no bounds");
+        }
+        return parts.size() == 1 ? parts.get(0) : Predicates.and(parts);
+    }
+
+    /** A range bound's literal; declines (throws) the SQL null sentinel — a range cannot be
+     *  bounded by {@code IS NULL}. */
+    private static SqlExpression boundLiteral(ValueColumnPredicate bound, RolapStar.Column column) {
+        Object v = bound.getValue();
+        if (v == null || v == Util.sqlNullValue) {
+            throw new IllegalArgumentException("RangeColumnPredicate bound with null value");
+        }
+        return Expressions.literal(v, column.getDatatype());
+    }
+
+    /**
+     * A {@link MemberTuplePredicate} → the SQL twin of its lexicographic {@code evaluate}: each
+     * bound becomes an EQ-conjunction (EQ bound) or an {@code OR} of prefix-conjuncts (range
+     * bound); multiple bounds are {@code AND}-ed. For a bound over columns c1..cn with values
+     * v1..vn a {@code >}/{@code >=} bound is
+     * {@code (c1>v1) OR (c1=v1 AND c2>v2) OR … OR (c1=v1 AND … AND cn-1=vn-1 AND cn ⊚ vn)} where
+     * only the final tie-break uses the possibly-non-strict operator; {@code <}/{@code <=} is
+     * the mirror image.
+     * <p>
+     * GUARD: {@link MemberTuplePredicate#computeColumnList} skips non-{@code RolapCubeLevel}
+     * levels, so a bound's value count can exceed the column-list size. This method declines
+     * (throws) on that misalignment rather than emit column-shifted SQL.
+     */
+    private static Predicate memberTuplePredicate(
+            MemberTuplePredicate tuple, Function<RolapStar.Column, SqlExpression> columnResolver) {
+        List<RolapStar.Column> columns = tuple.getConstrainedColumnList();
+        List<Predicate> boundPreds = new ArrayList<>();
+        for (MemberTuplePredicate.BoundSpec bound : tuple.getBoundSpecs()) {
+            List<Object> values = bound.values();
+            if (values.size() != columns.size()) {
+                throw new IllegalArgumentException(
+                        "MemberTuplePredicate bound/column misalignment: " + values.size()
+                                + " values vs " + columns.size() + " columns");
+            }
+            boundPreds.add(boundPredicate(columns, values, bound.relation(), columnResolver));
+        }
+        return boundPreds.size() == 1 ? boundPreds.get(0) : Predicates.and(boundPreds);
+    }
+
+    /** One {@link MemberTuplePredicate.BoundSpec} → its lexicographic {@link Predicate}. */
+    private static Predicate boundPredicate(
+            List<RolapStar.Column> columns, List<Object> values,
+            MemberTuplePredicate.BoundRelation relation,
+            Function<RolapStar.Column, SqlExpression> columnResolver) {
+        int n = columns.size();
+        if (relation == MemberTuplePredicate.BoundRelation.EQ) {
+            List<Predicate> eqs = new ArrayList<>();
+            for (int k = 0; k < n; k++) {
+                eqs.add(memberComparison(columns.get(k), ComparisonOperator.EQ, values.get(k), columnResolver));
+            }
+            return eqs.size() == 1 ? eqs.get(0) : Predicates.and(eqs);
+        }
+        boolean greater = relation == MemberTuplePredicate.BoundRelation.GT
+                || relation == MemberTuplePredicate.BoundRelation.GE;
+        ComparisonOperator strict = greater ? ComparisonOperator.GT : ComparisonOperator.LT;
+        ComparisonOperator finalOp = switch (relation) {
+        case GT -> ComparisonOperator.GT;
+        case GE -> ComparisonOperator.GE;
+        case LT -> ComparisonOperator.LT;
+        case LE -> ComparisonOperator.LE;
+        case EQ -> ComparisonOperator.EQ;
+        };
+        List<Predicate> terms = new ArrayList<>();
+        for (int k = 0; k < n; k++) {
+            List<Predicate> conj = new ArrayList<>();
+            for (int j = 0; j < k; j++) {
+                conj.add(memberComparison(columns.get(j), ComparisonOperator.EQ, values.get(j), columnResolver));
+            }
+            conj.add(memberComparison(columns.get(k), k == n - 1 ? finalOp : strict, values.get(k), columnResolver));
+            terms.add(conj.size() == 1 ? conj.get(0) : Predicates.and(conj));
+        }
+        return terms.size() == 1 ? terms.get(0) : Predicates.or(terms);
+    }
+
+    /** {@code col <op> literal(value)} with the column's own datatype for the literal. */
+    private static Predicate memberComparison(
+            RolapStar.Column column, ComparisonOperator op, Object value,
+            Function<RolapStar.Column, SqlExpression> columnResolver) {
+        return Predicates.comparison(columnResolver.apply(column), op,
+                Expressions.literal(value, column.getDatatype()));
+    }
+
+    /**
+     * A {@link MinusStarPredicate} → {@code plus AND NOT(minus)}, recursing both sides. SQL
+     * three-valued logic drops rows where {@code minus} is unknown (a null column makes
+     * {@code NOT(minus)} evaluate to {@code NULL}); so when {@code minus} does not itself
+     * constrain the null value we widen to {@code NOT(minus) OR col IS NULL}, mirroring the
+     * exclude-path convention in {@code MemberConstraintWriter}.
+     */
+    private static Predicate minusPredicate(
+            MinusStarPredicate minus, Function<RolapStar.Column, SqlExpression> columnResolver) {
+        Predicate plusP = toPredicate(minus.getPlus(), columnResolver);
+        Predicate minusP = toPredicate(minus.getMinus(), columnResolver);
+        Predicate negated;
+        if (constrainsNull(minus.getMinus())) {
+            negated = Predicates.not(minusP);
+        } else {
+            SqlExpression col = columnResolver.apply(minus.getConstrainedColumn());
+            negated = Predicates.or(List.of(Predicates.not(minusP), Predicates.isNull(col)));
+        }
+        return Predicates.and(List.of(plusP, negated));
+    }
+
+    /** Whether a predicate's value set includes the SQL null value (so {@code NOT(it)} already
+     *  accounts for null rows). Predicates whose values can't be enumerated are treated as not
+     *  covering null (the caller then adds the {@code IS NULL} protection). */
+    private static boolean constrainsNull(StarColumnPredicate predicate) {
+        List<Object> values = new ArrayList<>();
+        try {
+            predicate.values(values);
+        } catch (UnsupportedOperationException e) {
+            return false;
+        }
+        for (Object v : values) {
+            if (v == null || v == Util.sqlNullValue) {
+                return true;
+            }
+        }
+        return false;
     }
 }

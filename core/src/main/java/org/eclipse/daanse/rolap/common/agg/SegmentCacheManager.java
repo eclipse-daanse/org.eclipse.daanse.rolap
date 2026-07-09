@@ -108,8 +108,7 @@ import org.slf4j.LoggerFactory;
  *
  * 3. Delete {@link org.eclipse.daanse.rolap.common.RolapStar#lookupOrCreateAggregation}
  * and {@link org.eclipse.daanse.rolap.common.RolapStar#lookupSegment}
- * and {@link org.eclipse.daanse.rolap.common.RolapStar}.lookupAggregationShared
- * (formerly RolapStar.lookupAggregation).
+ * and {@link org.eclipse.daanse.rolap.common.RolapStar}.lookupAggregationShared.
  *
  *
  *

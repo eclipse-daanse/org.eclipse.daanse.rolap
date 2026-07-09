@@ -49,10 +49,11 @@ public class DistinctCountAggregator extends AbstractAggregator {
     }
 
     @Override
-    public org.eclipse.daanse.sql.statement.api.expression.SqlExpression getExpression(
+    public org.eclipse.daanse.sql.statement.api.expression.SqlExpression toNode(
             org.eclipse.daanse.sql.statement.api.expression.SqlExpression inner) {
-        // legacy renders "count(distinct <operand>)" (NOT "distinct-count(...)") — use the literal "count".
-        return org.eclipse.daanse.sql.statement.api.Expressions.aggregateDistinct("count", inner);
+        org.eclipse.daanse.sql.statement.api.expression.SqlExpression operand = nodeOperand(inner);
+        // renders "count(distinct <operand>)" (NOT "distinct-count(...)") — use the literal "count".
+        return org.eclipse.daanse.sql.statement.api.Expressions.aggregateDistinct("count", operand);
     }
 
     @Override

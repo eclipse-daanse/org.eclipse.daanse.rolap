@@ -79,7 +79,7 @@ import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.query.component.NullLiteralImpl;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.RolapUtil;
-import org.eclipse.daanse.rolap.common.constraint.SqlConstraintFactory;
+import org.eclipse.daanse.rolap.common.sql.SqlConstraintFactory;
 import org.eclipse.daanse.rolap.common.constraint.CalculatedMemberExpander;
 import org.eclipse.daanse.rolap.common.evaluator.RolapEvaluator;
 import org.eclipse.daanse.rolap.common.member.MemberCache;
@@ -596,8 +596,8 @@ public class RolapCatalogReader
                         matchType);
             }
         } catch (NumberFormatException e) {
-            // this was thrown in the retired query facade#quote(boolean numeric, Object
-            // value). This happens when Mondrian searches for unqualified Olap
+            // this is thrown when a value is quoted as numeric.
+            // This happens when Mondrian searches for unqualified Olap
             // Elements like [Month], because it tries to look up a member with
             // that name in all dimensions. Then it generates for example
             // "select .. from time where year = Month" which will result in a

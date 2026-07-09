@@ -25,16 +25,13 @@ package org.eclipse.daanse.rolap.common.sql;
 
 import java.util.List;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
-import org.eclipse.daanse.jdbc.db.dialect.api.type.Datatype;
+import org.eclipse.daanse.jdbc.db.api.type.Datatype;
 import org.eclipse.daanse.olap.api.evaluator.Evaluator;
 import org.eclipse.daanse.olap.api.sql.SqlExpression;
 import  org.eclipse.daanse.olap.util.Pair;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;
-import org.eclipse.daanse.rolap.common.constraint.LevelConstraintGenerator;
 import org.eclipse.daanse.rolap.element.RolapCube;
-import org.eclipse.daanse.rolap.element.RolapLevel;
 
 /**
  * Restricts the SQL result set to members where particular columns have
@@ -59,41 +56,6 @@ public class MemberKeyConstraint
         this.datatypeList = datatypeList;
         this.valueList = valueList;
         cacheKey = Pair.of(columnList, valueList);
-    }
-
-    /**
-     * Records one {@code constrainKeyValue} WHERE conjunct per key column on the fork.
-     */
-    @Override
-    public QueryTape addConstraintOps(
-        Dialect dialect, QueryRecorder.Fork fork, RolapCube baseCube, AggStar aggStar)
-    {
-        for (int i = 0; i < columnList.size(); i++) {
-            SqlExpression expression = columnList.get(i);
-            final Comparable value = valueList.get(i);
-            final Datatype datatype = datatypeList.get(i);
-            fork.addWhere(
-                LevelConstraintGenerator.constrainKeyValue(
-                    dialect,
-                    expression,
-                    datatype,
-                    value));
-        }
-        return fork.ops();
-    }
-
-    /**
-     * No per-level restriction: the contribution is the fork's empty tape.
-     */
-    @Override
-    public QueryTape addLevelConstraintOps(
-        Dialect dialect,
-        QueryRecorder.Fork fork,
-        RolapCube baseCube,
-        AggStar aggStar,
-        RolapLevel level)
-    {
-        return fork.ops();
     }
 
     @Override

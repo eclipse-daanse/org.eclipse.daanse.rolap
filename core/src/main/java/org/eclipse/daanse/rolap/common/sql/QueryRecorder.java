@@ -44,8 +44,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.IntStream;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
-import org.eclipse.daanse.jdbc.db.dialect.api.type.BestFitColumnType;
+import org.eclipse.daanse.jdbc.db.api.type.BestFitColumnType;
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.sql.SortingDirection;
 import org.eclipse.daanse.olap.common.ConfigConstants;
@@ -87,9 +86,6 @@ public class QueryRecorder {
     /** Controls whether table optimization hints are used */
     private boolean allowHints;
 
-    /** Is query supported by database vendor. Default is true*/
-    private boolean isSupported = true;
-
     /**
      * This list is used to keep track of what aliases have been  used in the
      * FROM clause. One might think that a java.util.Set would be a more
@@ -120,15 +116,14 @@ public class QueryRecorder {
         new HashMap<>();
 
     /** Number of SELECT items added — the source of {@code c0..cN} column aliases. Kept live at record
-     *  time because the assigned alias is RETURNED to callers ({@link #addSelect}, {@link #nextColumnAlias},
-     *  {@link #getCurrentSelectListSize}); each recorded {@code SelectItem} op carries the RESOLVED alias,
-     *  so replay never needs the counter. */
+     *  time because the assigned alias is RETURNED to callers ({@link #addSelect}); each recorded
+     *  {@code SelectItem} op carries the RESOLVED alias, so replay never needs the counter. */
     private int aliasCounter = 0;
 
     /**
      * The ordered mutation tape: one immutable {@link QueryTape.QueryOp} per {@link #track} step. This tape
-     * is the ONLY render source — {@link #buildStatement(Dialect)} /
-     * {@link #toSqlAndTypes(Dialect)} hand it to {@code ContributionAssembler}, which replays it against a
+     * is the ONLY render source — {@link #buildStatement()} hands it to {@code ContributionAssembler},
+     * which replays it against a
      * fresh {@code SelectStatementBuilder} (including dedup and FROM/JOIN folding) and builds the statement.
      */
     private final List<QueryTape.QueryOp> tape = new ArrayList<>();
@@ -141,7 +136,7 @@ public class QueryRecorder {
 
     /** The immutable mutation tape recorded so far, plus the query-level flags (see {@link QueryTape}). */
     public QueryTape ops() {
-        return new QueryTape(tape, isSupported, distinct, generateFormattedSql);
+        return new QueryTape(tape, distinct, generateFormattedSql);
     }
 
     private static final String ALIAS_EXISTS_ERROR = "query already contains alias '%s'";
@@ -210,7 +205,6 @@ public class QueryRecorder {
         this.aliasCounter = parent.aliasCounter;
         this.distinct = parent.distinct;
         this.allowHints = parent.allowHints;
-        this.isSupported = parent.isSupported;
     }
 
     public static QueryRecorder newQuery(Context<?> context, String err) {
@@ -218,69 +212,28 @@ public class QueryRecorder {
             context.getConfigValue(ConfigConstants.GENERATE_FORMATTED_SQL, ConfigConstants.GENERATE_FORMATTED_SQL_DEFAULT_VALUE, Boolean.class));
     }
 
-    /** Diagnostic channel for the commented-SQL double-hit (see {@link #toSqlAndTypes}); enabled purely by
-     *  logback configuration. */
-    private static final org.slf4j.Logger COMMENTED_SQL_LOGGER =
-            org.slf4j.LoggerFactory.getLogger("org.eclipse.daanse.rolap.sql.CommentedSql");
-
     /**
      * The dialect-free {@link org.eclipse.daanse.sql.statement.api.model.SelectStatement} this recorder has
      * accumulated — assembled by replaying the recorded {@link QueryTape} tape (the sole render source; the
-     * assembler applies the dedup, resolves deferred view / inline-table / sub-query FROMs against the given
-     * dialect and folds the JOIN edges into the FROM tree).
+     * assembler applies the dedup, resolves the deferred sub-query FROMs and folds the JOIN edges into the
+     * FROM tree). Dialect-free: the {@code DialectSqlRenderer} applies the dialect once when this statement
+     * is rendered (via {@code SqlRender.render(buildStatement(), dialect, renderOptions())}).
      */
-    public org.eclipse.daanse.sql.statement.api.model.SelectStatement buildStatement(Dialect dialect) {
-        return org.eclipse.daanse.rolap.common.sqlbuild.ContributionAssembler.assemble(ops(), dialect);
+    public org.eclipse.daanse.sql.statement.api.model.SelectStatement buildStatement() {
+        return org.eclipse.daanse.rolap.common.sqlbuild.ContributionAssembler.assemble(ops());
     }
 
     /**
-     * Returns the rendered SQL string together with the column types for reading its result set
-     * (one per {@code SELECT} item, in order). The {@code parameters} of the result are empty —
-     * this builder inlines literal values into the SQL.
+     * The render options this recorder was configured with — multi-line when {@link #isFormatted()}, else
+     * compact. Dialect-free, so a consumer renders the assembled statement without this class referencing
+     * the {@code Dialect} type: {@code SqlRender.render(recorder.buildStatement(), dialect, recorder.renderOptions())}.
+     * The central {@link org.eclipse.daanse.rolap.common.SqlRender} seam carries the diagnostic commented-SQL
+     * file log ({@code CommentedSqlLog}) and the commented double-render.
      */
-    public org.eclipse.daanse.sql.statement.api.render.RenderedSql toSqlAndTypes(Dialect dialect) {
-        return render(buildStatement(dialect), dialect);
-    }
-
-    /**
-     * As {@link #toSqlAndTypes(Dialect)} but keeping the assembled statement alongside its render:
-     * ONE {@link #buildStatement(Dialect)} + ONE render (honoring {@link #isFormatted()}), packaged
-     * as a {@link org.eclipse.daanse.rolap.common.sqlbuild.GuardedSql} so the {@code SqlBuildGuard}
-     * verify modes can consult the statement without a second assemble.
-     */
-    public org.eclipse.daanse.rolap.common.sqlbuild.GuardedSql toGuarded(Dialect dialect) {
-        org.eclipse.daanse.sql.statement.api.model.SelectStatement statement = buildStatement(dialect);
-        return new org.eclipse.daanse.rolap.common.sqlbuild.GuardedSql(statement, render(statement, dialect));
-    }
-
-    /** The single render behind {@link #toSqlAndTypes} / {@link #toGuarded}: formatted per
-     *  {@link #isFormatted()}, plus the diagnostic commented-SQL double-hit. */
-    private org.eclipse.daanse.sql.statement.api.render.RenderedSql render(
-            org.eclipse.daanse.sql.statement.api.model.SelectStatement statement, Dialect dialect) {
-        // Diagnostic commented-SQL file log (-Ddaanse.sql.commentlog.dir=<dir>): this render seam
-        // bypasses SqlRender (direct DialectSqlRenderer below), so it hooks the log itself.
-        org.eclipse.daanse.rolap.common.sqlbuild.CommentedSqlLog.append(statement, dialect);
-        org.eclipse.daanse.sql.statement.api.render.RenderOptions opts = isFormatted()
+    public org.eclipse.daanse.sql.statement.api.render.RenderOptions renderOptions() {
+        return isFormatted()
                 ? org.eclipse.daanse.sql.statement.api.render.RenderOptions.multiLine()
                 : org.eclipse.daanse.sql.statement.api.render.RenderOptions.compact();
-        org.eclipse.daanse.sql.statement.render.DialectSqlRenderer renderer =
-                new org.eclipse.daanse.sql.statement.render.DialectSqlRenderer(dialect);
-        // Diagnostic double-hit: whenever the commented-SQL logger is enabled (purely a logback decision — no
-        // system property needed), render the SAME statement a second time WITH comments and log it. The
-        // returned/executed SQL is always rendered with comments OFF (byte-identical), so tests/execution use
-        // the clean uncommented SQL while the commented copy goes only to the log.
-        if (COMMENTED_SQL_LOGGER.isInfoEnabled()) {
-            try {
-                // Always render the diagnostic copy multi-line so the comments are readable, regardless of
-                // whether the executed query is compact.
-                COMMENTED_SQL_LOGGER.info("commented sql:\n{}", renderer.render(statement,
-                        org.eclipse.daanse.sql.statement.api.render.RenderOptions.multiLine()
-                                .withComments(true, org.eclipse.daanse.sql.statement.api.render.RenderOptions.CommentStyle.LINE)).sql());
-            } catch (RuntimeException e) {
-                COMMENTED_SQL_LOGGER.warn("commented-sql render failed (ignored): {}", e.toString());
-            }
-        }
-        return renderer.render(statement, opts);
     }
 
     /**
@@ -316,7 +269,7 @@ public class QueryRecorder {
      *   <li>{@code SelectItem} re-applies the counter increment and the {@code aliasByNode} put with
      *       the op's RESOLVED alias (identical to every SELECT mutator's bookkeeping, since the op
      *       captured the exact node + alias the mutator computed against the forked snapshot);</li>
-     *   <li>{@code Distinct} / {@code Unsupported} re-apply the flag mutation;</li>
+     *   <li>{@code Distinct} re-applies the flag mutation;</li>
      *   <li>every other op is bookkeeping-free at record time (pure {@code track(op)}), so appending
      *       the op verbatim is exactly what its mutator did; duplicate {@code JoinEdge}s are deduped
      *       by the assembler's FROM/JOIN fold, as they already are for the star-join overlap.</li>
@@ -340,10 +293,6 @@ public class QueryRecorder {
                     aliasByNode.put(s.node(), s.mapAlias());
                     track(s);
                 }
-                case QueryTape.Unsupported u -> {
-                    track(u);
-                    isSupported = false;
-                }
                 default -> track(op);
             }
         }
@@ -356,7 +305,7 @@ public class QueryRecorder {
      * {@code hierarchy.addToFrom} → {@code registerRootRelation} / {@code addFrom(RelationalSource)},
      * pure map mutations with no op). Because the fork was seeded with an EXACT snapshot of this
      * recorder's state and this recorder is not mutated between {@code fork()} and this call, the
-     * fork's post-run bookkeeping is byte-for-byte what an un-forked run of the
+     * fork's post-run bookkeeping is exactly what an un-forked run of the
      * constraint would have left here — so adopting it wholesale (fork wins, reproducing even
      * registerRootRelation's overwrite semantics) keeps LATER {@code addFrom} join-between decisions
      * (the {@code FilterChildlessSnowflakeMembers=false} path, which reads these maps) identical.
@@ -400,27 +349,6 @@ public class QueryRecorder {
     }
 
     /**
-     * Adds a subquery to the FROM clause of this Query with a given alias.
-     * If the query already exists it either, depending on
-     * failIfExists, throws an exception or does not add the query
-     * and returns false.
-     *
-     * @param query Subquery
-     * @param alias (if not null, must not be zero length).
-     * @param failIfExists if true, throws exception if alias already exists
-     * @return true if query *was* added
-     *
-     *  alias != null
-     */
-    public boolean addFromQuery(
-        final String query,
-        final String alias,
-        final boolean failIfExists)
-    {
-        return addFromRendered(query, alias, failIfExists, new FromClause.FromRaw(query, TableAlias.of(alias)));
-    }
-
-    /**
      * Core of the rendered-subquery FROM: records the supplied {@code builderNode} (a
      * {@code FromRaw} for an already-rendered string, or a {@code FromSubquery} carrying a
      * sub-query's dialect-free statement) under the FROM-alias dedup.
@@ -450,7 +378,7 @@ public class QueryRecorder {
      *  correct alias (for join-folding) is replaced at its recorded index with the dialect-resolved FROM.
      *  Keeps the producer dialect-free. */
     private boolean addDeferredFrom(String alias, boolean failIfExists,
-            java.util.function.Function<Dialect, FromClause> resolver) {
+            java.util.function.Supplier<FromClause> resolver) {
         requireNonBlankAlias(alias);
         if (fromAliases.contains(alias)) {
             if (failIfExists) {
@@ -518,11 +446,12 @@ public class QueryRecorder {
         final String alias,
         final boolean failIfExists)
     {
-        // Defer the sub-query's statement build until a Dialect is available (so the sub-query's own deferred
-        // view/inline-table FROMs resolve too), then embed it as a FromSubquery.
+        // Defer the sub-query's statement build to assembly time (so its FROM index is known for
+        // join-folding), then embed it as a FromSubquery. Dialect-free: the nested assemble produces a
+        // dialect-free SelectStatement; the renderer applies the dialect once at render.
         addDeferredFrom(alias, failIfExists,
-                d -> new FromClause.FromSubquery(
-                        org.eclipse.daanse.rolap.common.sqlbuild.ContributionAssembler.assemble(sqlQuery.ops(), d),
+                () -> new FromClause.FromSubquery(
+                        org.eclipse.daanse.rolap.common.sqlbuild.ContributionAssembler.assemble(sqlQuery.ops()),
                         TableAlias.of(alias)));
     }
 
@@ -685,7 +614,7 @@ public class QueryRecorder {
         // Auto column alias: the projection is recorded WITHOUT an explicit ColumnAlias and the renderer
         // synthesizes c{ordinal} per the dialect's allowsFieldAlias() (DialectSqlRenderer.effectiveAlias). The
         // c{ordinal} the renderer emits equals nextColumnAlias() (aliasCounter == projection ordinal), so the
-        // SELECT is byte-identical; the op's mapAlias feeds the assembler's GROUP BY / ORDER BY ref resolution.
+        // SELECT is identical; the op's mapAlias feeds the assembler's GROUP BY / ORDER BY ref resolution.
         final String alias = nextColumnAlias();
         final String exprStr = expression.toString();
         aliasCounter++;
@@ -710,12 +639,7 @@ public class QueryRecorder {
         return alias;
     }
 
-    public int getCurrentSelectListSize()
-    {
-        return aliasCounter;
-    }
-
-    public String nextColumnAlias() {
+    private String nextColumnAlias() {
         return COLUMN_ALIAS_PREFIX + aliasCounter;
     }
 
@@ -748,7 +672,7 @@ public class QueryRecorder {
      */
     public String addSelectExpr(org.eclipse.daanse.olap.api.sql.SqlExpression expression, BestFitColumnType type) {
         // Auto column alias: project without an explicit ColumnAlias; the renderer synthesizes c{ordinal} per
-        // allowsFieldAlias() (byte-identical, since c{ordinal} == nextColumnAlias()); the op's mapAlias feeds
+        // allowsFieldAlias() (identical, since c{ordinal} == nextColumnAlias()); the op's mapAlias feeds
         // the assembler's ref resolution.
         final String alias = nextColumnAlias();
         final SqlExpression node = nodeOf(expression, null);
@@ -769,8 +693,8 @@ public class QueryRecorder {
 
     /**
      * As {@link #addSelectExpr(org.eclipse.daanse.olap.api.sql.SqlExpression, BestFitColumnType)} (auto
-     * column alias, byte-identical SQL) but carrying an explanatory rollup comment. The comment is emitted
-     * only by the diagnostic comment render (see {@link #toSqlAndTypes(Dialect)}); the executed
+     * column alias, identical SQL) but carrying an explanatory rollup comment. The comment is emitted
+     * only by the diagnostic comment render (see {@link #renderOptions()}); the executed
      * SQL is unaffected.
      */
     public String addSelectExprCommented(org.eclipse.daanse.olap.api.sql.SqlExpression expression,
@@ -790,7 +714,7 @@ public class QueryRecorder {
     /**
      * As {@link #addSelectNode(SqlExpression, BestFitColumnType, String)} (explicit alias, e.g. a measure
      * {@code m0}) but carrying a comment. A null comment delegates to the exact original method, so the
-     * alias and SQL are byte-identical when off; when on, the same alias is kept and only the comment is
+     * alias and SQL are identical when off; when on, the same alias is kept and only the comment is
      * added (rendered solely by the diagnostic comment copy).
      */
     public String addSelectNodeCommented(SqlExpression node, BestFitColumnType type, String alias, String comment) {
@@ -871,7 +795,7 @@ public class QueryRecorder {
 
     public String addSelectNode(SqlExpression node, BestFitColumnType type) {
         // Auto column alias: project without an explicit ColumnAlias; the renderer synthesizes c{ordinal} per
-        // allowsFieldAlias() (byte-identical); the op's mapAlias feeds the assembler's ref resolution.
+        // allowsFieldAlias() (identical); the op's mapAlias feeds the assembler's ref resolution.
         final String alias = nextColumnAlias();
         aliasCounter++;
         aliasByNode.put(node, alias);
@@ -928,17 +852,44 @@ public class QueryRecorder {
      * union-find dedups any overlap (a join the {@code addJoin} snowflake path also added). The renderer pushes
      * it to WHERE for {@code allowsJoinOn=false} dialects (the comma-join fallback). No-op unless BOTH tables are
      * already in the FROM, so callers must {@code addToFrom} both tables BEFORE calling this.
+     *
+     * <p>The no-op has TWO distinct cases:
+     * <ol>
+     *   <li>Both sides resolve to a table alias but one is NOT in the FROM — the parent-walk guard
+     *       (e.g. {@code RolapHierarchy.addToFrom} walking join conditions past the added relation
+     *       subset). Legitimate, silent.</li>
+     *   <li>A side is a computed {@code <SQL>} expression, so {@code getTableAlias} returns null and
+     *       FROM membership cannot be checked at all. CORRECTNESS HAZARD: this condition would need to
+     *       be emitted unconditionally as a WHERE constraint ({@code AggStar.Table.addToFrom}),
+     *       so silently dropping it here can leave a cross join with wrong aggregates. Kept as a
+     *       no-op for now — the builder twin ({@code MemberSqlMapper.addAggEdge}) deliberately
+     *       reproduces the vanish, and the parent-walk relies on it for computed parent keys — but
+     *       logged loudly with the grep-stable marker {@code agg-join-dropped}.</li>
+     * </ol>
      */
     public void addJoinCondition(org.eclipse.daanse.olap.api.sql.SqlExpression left,
             org.eclipse.daanse.olap.api.sql.SqlExpression right) {
         String leftAlias = getTableAlias(left);
         String rightAlias = getTableAlias(right);
+        if (leftAlias == null || rightAlias == null) {
+            // Case (2): a computed <SQL> join-expression side — no resolvable table alias, condition
+            // dropped. Wrong-results class (cross join) when the tables ARE in the FROM; WARN loudly
+            // instead of throwing so currently-green paths keep working.
+            RolapUtil.SQL_GEN_LOGGER.warn(
+                "agg-join-dropped: join condition suppressed — a side is a computed <SQL> expression "
+                    + "with no resolvable table alias (leftAlias={}, rightAlias={}, left={}, right={}). "
+                    + "Legacy SqlQuery emitted this unconditionally as a WHERE string; dropping it can "
+                    + "produce a cross join with wrong aggregates.",
+                leftAlias, rightAlias, left, right);
+            return;
+        }
         if (fromAliases.contains(leftAlias) && fromAliases.contains(rightAlias)) {
             final SqlExpression leftNode = nodeOf(left, null);
             final SqlExpression rightNode = nodeOf(right, null);
             final Predicate on = Predicates.comparison(leftNode, ComparisonOperator.EQ, rightNode);
             track(new QueryTape.JoinEdge(leftAlias, rightAlias, on));
         }
+        // else: case (1) — table never registered in FROM (parent-walk guard); legitimate silent no-op.
     }
 
     public void addWhere(final String expression)
@@ -952,7 +903,7 @@ public class QueryRecorder {
      * straight to the statement builder, instead of a pre-rendered
      * string. Constraint / aggregate value-constraint feeders translate their {@code StarPredicate} via
      * {@code StarPredicateTranslator.toPredicate}
-     * and call this, so the producer needs no {@link org.eclipse.daanse.jdbc.db.dialect.api.Dialect}
+     * and call this, so the producer needs no {@code Dialect}
      * at construction time — the {@code DialectSqlRenderer} applies it once at render.
      */
     public void addWhere(final org.eclipse.daanse.sql.statement.api.expression.Predicate predicate) {
@@ -1058,7 +1009,7 @@ public class QueryRecorder {
      *  {@code nullParentValue} of the given {@code type}. */
     public void addOrderByExpr(org.eclipse.daanse.olap.api.sql.SqlExpression expression, String alias,
             SortingDirection sortingDirection, boolean prepend, String nullParentValue,
-            org.eclipse.daanse.jdbc.db.dialect.api.type.Datatype type, boolean collateNullsLast) {
+            org.eclipse.daanse.jdbc.db.api.type.Datatype type, boolean collateNullsLast) {
         SqlExpression node = nodeOf(expression, null);
         if (SortingDirection.NONE.equals(sortingDirection)) {
             return;
@@ -1121,17 +1072,6 @@ public class QueryRecorder {
                     rightKey,
                     rightAlias));
         }
-    }
-
-    public boolean isSupported() {
-        return isSupported;
-    }
-
-    public void setSupported(boolean supported) {
-        if (!supported) {
-            track(new QueryTape.Unsupported());
-        }
-        isSupported = supported;
     }
 
     /**

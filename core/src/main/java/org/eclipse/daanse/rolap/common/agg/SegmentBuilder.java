@@ -42,7 +42,7 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.type.Datatype;
+import org.eclipse.daanse.jdbc.db.api.type.Datatype;
 import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.olap.common.ConfigConstants;
 import org.eclipse.daanse.olap.common.Util;

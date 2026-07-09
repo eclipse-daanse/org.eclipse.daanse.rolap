@@ -34,10 +34,6 @@ public class IppAggregator extends AbstractAggregator {
         return i.incrementAndGet();
     }
 
-    public String getExpression(String operand) {
-        return "" + i.incrementAndGet();
-    }
-
     public boolean supportsFastAggregates(DataTypeJdbc dataType) {
         return true;
     }

@@ -20,7 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
-import org.eclipse.daanse.jdbc.db.dialect.api.type.BestFitColumnType;
+import org.eclipse.daanse.jdbc.db.api.type.BestFitColumnType;
 import org.eclipse.daanse.jdbc.db.dialect.db.common.AnsiDialect;
 import org.eclipse.daanse.rolap.common.SqlRender;
 import org.eclipse.daanse.rolap.common.sql.QueryRecorder;
@@ -32,10 +32,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 /**
- * The {@code -Ddaanse.sql.commentlog.dir} diagnostic file log: rendering a statement through
- * either seam ({@link SqlRender} or the {@link QueryRecorder} internal render) appends a
- * comments-on copy to {@code <dir>/commented-sql-<tcid>.sql} while the returned (executed) SQL
- * stays comment-free and byte-identical to a render with the property off.
+ * Verifies the {@code -Ddaanse.sql.commentlog.dir} diagnostic file log: rendering a statement
+ * through {@link SqlRender} (directly or from a {@link QueryRecorder}) appends a comments-on copy
+ * to {@code <dir>/commented-sql-<tcid>.sql}, while the returned (executed) SQL stays comment-free
+ * and identical to a render with the property off. Also verifies an immediate re-render of the same
+ * statement is deduped and that the log is a no-op without the property.
  */
 class CommentedSqlLogTest {
 
@@ -63,20 +64,22 @@ class CommentedSqlLogTest {
     @Test
     void appendsCommentedCopyAndKeepsExecutedSqlIdentical() throws Exception {
         QueryRecorder q = recorder();
-        SelectStatement statement = q.buildStatement(ansi);
+        SelectStatement statement = q.buildStatement();
 
         // Baseline renders with the log OFF.
         String offSqlRender = SqlRender.render(statement, ansi).sql();
-        String offRecorder = q.toSqlAndTypes(ansi).sql();
+        String offRecorder = SqlRender.render(q.buildStatement(), ansi, q.renderOptions()).sql();
         Path file = dir.resolve("commented-sql-" + System.getProperty("daanse.tc.id", "0") + ".sql");
         assertThat(file).doesNotExist();
 
         System.setProperty(CommentedSqlLog.DIR_PROPERTY, dir.toString());
-        // Both seams: the SqlRender entry point and QueryRecorder's internal (bypassing) render.
+        // Both call shapes render through SqlRender (the recorder assembles a dialect-free
+        // statement and delegates to SqlRender).
         String onSqlRender = SqlRender.render(statement, ansi).sql();
-        String onRecorder = recorder().toSqlAndTypes(ansi).sql();
+        QueryRecorder q2 = recorder();
+        String onRecorder = SqlRender.render(q2.buildStatement(), ansi, q2.renderOptions()).sql();
 
-        // Executed SQL is byte-identical and comment-free — the log render is a side effect only.
+        // Executed SQL is identical and comment-free — the log render is a side effect only.
         assertThat(onSqlRender).isEqualTo(offSqlRender).doesNotContain("--");
         assertThat(onRecorder).isEqualTo(offRecorder).doesNotContain("--");
 
@@ -92,7 +95,7 @@ class CommentedSqlLogTest {
     @Test
     void dedupesImmediateReRenderOfSameStatement() throws Exception {
         System.setProperty(CommentedSqlLog.DIR_PROPERTY, dir.toString());
-        SelectStatement statement = recorder().buildStatement(ansi);
+        SelectStatement statement = recorder().buildStatement();
         // The SqlBuildGuard promote path renders the SAME statement instance twice in a row.
         SqlRender.render(statement, ansi);
         SqlRender.render(statement, ansi,
@@ -107,7 +110,7 @@ class CommentedSqlLogTest {
     @Test
     void noopWithoutProperty() {
         // Property cleared in reset(): rendering must neither fail nor create a file.
-        SqlRender.render(recorder().buildStatement(ansi), ansi);
+        SqlRender.render(recorder().buildStatement(), ansi);
         assertThat(dir).isEmptyDirectory();
     }
 }

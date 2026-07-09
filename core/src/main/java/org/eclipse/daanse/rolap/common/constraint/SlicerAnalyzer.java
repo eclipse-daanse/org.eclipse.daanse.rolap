@@ -61,9 +61,6 @@ public class SlicerAnalyzer {
   private SlicerAnalyzer() {
   }
 
-  public static boolean useTupleSlicer( RolapEvaluator evaluator ) {
-    return evaluator.isDisjointSlicerTuple() || evaluator.isMultiLevelSlicerTuple();
-  }
   public static boolean isDisjointTuple( TupleList tupleList ) {
     //This assumes the same level for each hierarchy;
     //won't work if the level restriction is eliminated
@@ -106,8 +103,10 @@ public class SlicerAnalyzer {
    * This map is used by addContextConstraint() to get the set of slicer members associated with each column in the cell
    * request's constrained columns array, {@link CellRequest#getConstrainedColumns}
    */
-  // package-visible: reused by SqlContextConstraint.toContribution
-  static Map<SqlExpression, Set<RolapMember>> getSlicerMemberMap( Evaluator evaluator ) {
+  // public: reused by SqlContextConstraint.toContribution and by
+  // RolapNativeFilter.FilterConstraint.isSupported (the IN-list-limit check needs the SAME
+  // per-column slicer member sets addContextConstraint constrains).
+  public static Map<SqlExpression, Set<RolapMember>> getSlicerMemberMap( Evaluator evaluator ) {
     Map<SqlExpression, Set<RolapMember>> mapOfSlicerMembers =
         new HashMap<>();
     List<Member> slicerMembers = ( (RolapEvaluator) evaluator ).getSlicerMembers();

@@ -29,7 +29,7 @@ import org.eclipse.daanse.cwm.model.cwm.resource.relational.RelationalFactory;
 import org.eclipse.daanse.cwm.util.resource.relational.SqlSimpleTypes;
 import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.jdbc.db.dialect.api.generator.SqlGenerator;
-import org.eclipse.daanse.jdbc.db.dialect.api.type.Datatype;
+import org.eclipse.daanse.jdbc.db.api.type.Datatype;
 import org.eclipse.daanse.olap.api.element.Dimension;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.rolap.common.writeback.RolapWritebackAttribute;

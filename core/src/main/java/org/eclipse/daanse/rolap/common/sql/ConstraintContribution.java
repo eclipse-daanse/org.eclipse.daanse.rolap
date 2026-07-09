@@ -27,28 +27,47 @@ import org.eclipse.daanse.sql.statement.api.expression.Predicate;
  * Constraints expose this via {@code toContribution(...)} on {@code MemberChildrenConstraint} /
  * {@code TupleConstraint}. The SPI method returns {@code Optional<ConstraintContribution>}: an
  * <em>empty Optional</em> means "this constraint cannot (yet) be expressed on the builder — use the
- * legacy the retired query facade path"; a present value (possibly {@link #EMPTY}) is the contribution. An
+ * {@code QueryRecorder} fallback path"; a present value (possibly {@link #EMPTY}) is the contribution. An
  * {@code EMPTY} contribution means the constraint adds nothing (e.g. drilling the all member).
  *
  * @param where            the {@code WHERE} predicate (AND-combined), if any
  * @param joinTables       the star tables the predicate references and that must be in {@code FROM}
- * @param orderedPredicates per-column {@code (table, predicate)} pairs in the legacy add order; lets a
+ * @param orderedPredicates per-column {@code (table, predicate)} pairs in add order; lets a
  *                          fact-join consumer interleave each table's join with its value-constraints
- *                          exactly as {@code the retired query facade.addToFrom}+{@code addWhere} did (empty for
+ *                          (each table joined once on first appearance, its value-constraints emitted
+ *                          right after) (empty for
  *                          dimension-only / member-children constraints, which need no interleaving)
  * @param factJoinRequired  the target level's own existence join to the fact is required even when no
  *                          context column constrains it (a non-empty set: {@code SqlContextConstraint
  *                          .isJoinRequired()} / {@code addLevelConstraint}→{@code joinLevelTableToFactTable}).
  *                          The mapper must add the fact + {@code fact.fk = level.key} on this signal even
  *                          when {@code joinTables} / {@code orderedPredicates} are empty.
+ * @param aggPlan           the aggregate-star translation of this contribution (the agg-join channel).
+ *                          PRESENT if and only if the producer translated the read for
+ *                          a non-null {@code aggStar} routing AND the translation is complete — every
+ *                          context conjunct substituted onto agg columns with its table provenance. An
+ *                          EMPTY {@code orderedAggPredicates} list inside a present plan is a VALID
+ *                          unconstrained plan, NOT a bail; a bail is
+ *                          the empty Optional. {@code where} carries the SAME conjuncts in their
+ *                          agg-substituted form, so {@link #producesPlainLevelMembers} and
+ *                          {@link #requiresFactJoin} keep working unchanged for agg-routed reads.
  */
 public record ConstraintContribution(Optional<Predicate> where, List<RolapStar.Table> joinTables,
         List<ColumnPredicate> orderedPredicates, Optional<Predicate> memberKeyGroup,
-        Optional<NativeOrder> nativeOrder, Optional<Predicate> nativeHaving, boolean factJoinRequired) {
+        Optional<NativeOrder> nativeOrder, Optional<Predicate> nativeHaving, boolean factJoinRequired,
+        Optional<AggPlan> aggPlan) {
 
     public ConstraintContribution {
         joinTables = List.copyOf(joinTables);
         orderedPredicates = List.copyOf(orderedPredicates);
+    }
+
+    /** No agg plan (the prior canonical form — every non-agg producer). */
+    public ConstraintContribution(Optional<Predicate> where, List<RolapStar.Table> joinTables,
+            List<ColumnPredicate> orderedPredicates, Optional<Predicate> memberKeyGroup,
+            Optional<NativeOrder> nativeOrder, Optional<Predicate> nativeHaving, boolean factJoinRequired) {
+        this(where, joinTables, orderedPredicates, memberKeyGroup, nativeOrder, nativeHaving,
+                factJoinRequired, Optional.empty());
     }
 
     /** No existence/fact join required (the prior canonical form). */
@@ -86,21 +105,31 @@ public record ConstraintContribution(Optional<Predicate> where, List<RolapStar.T
     public ConstraintContribution withFactJoinRequired(boolean required) {
         return required == factJoinRequired ? this
                 : new ConstraintContribution(where, joinTables, orderedPredicates, memberKeyGroup,
-                        nativeOrder, nativeHaving, required);
+                        nativeOrder, nativeHaving, required, aggPlan);
+    }
+
+    /** This contribution with the agg-star translation attached (see the {@code aggPlan} component). */
+    public ConstraintContribution withAggPlan(AggPlan plan) {
+        return new ConstraintContribution(where, joinTables, orderedPredicates, memberKeyGroup,
+                nativeOrder, nativeHaving, factJoinRequired, Optional.of(plan));
     }
 
     /**
-     * True when this contribution forces a join to the fact table — either a context column already
-     * does so (non-empty {@code joinTables}) or the target level's own non-empty existence join is
-     * required ({@code factJoinRequired}). This is the single fact-join decision point (the new-world
-     * analog of the legacy {@code SqlContextConstraint.isJoinRequired()}): every build-authoritative-
-     * vs-guarded gate routes through it, so a new "force the fact join" reason is added here once
-     * rather than at each fast-path. NOTE: it deliberately does NOT include {@code where().isEmpty()} —
-     * the member-children fast path builds authoritatively WITH a parent-key WHERE, so that term stays
+     * True when this contribution forces a join to the fact table — a context column already does so
+     * (non-empty {@code joinTables}), the target level's own non-empty existence join is required
+     * ({@code factJoinRequired}), or a present {@link #aggPlan} carries agg-substituted predicates
+     * (they constrain columns of the agg fact/dim tables, so the agg fact join is forced exactly like
+     * a base-star context column; an EMPTY-predicates plan forces nothing — the valid unconstrained
+     * plan). This is the single fact-join decision point (the builder-side counterpart of
+     * {@code SqlContextConstraint.isJoinRequired()}): every build-authoritative-vs-guarded gate routes
+     * through it, so a new "force the fact join" reason is added here once rather than at each
+     * fast-path. NOTE: it deliberately does NOT include {@code where().isEmpty()} — the
+     * member-children fast path builds authoritatively WITH a parent-key WHERE, so that term stays
      * inline at the level-members sites only.
      */
     public boolean requiresFactJoin() {
-        return !joinTables.isEmpty() || factJoinRequired;
+        return !joinTables.isEmpty() || factJoinRequired
+                || aggPlan.map(p -> !p.orderedAggPredicates().isEmpty()).orElse(false);
     }
 
     /**
@@ -126,11 +155,14 @@ public record ConstraintContribution(Optional<Predicate> where, List<RolapStar.T
             org.eclipse.daanse.olap.api.sql.SortingDirection direction, boolean nullable) {}
 
     /**
-     * One context column's value-restriction paired with the star table it lives on, in the legacy
+     * One context column's value-restriction paired with the star table it lives on, in
      * {@code addConstraint} order. The tuple mapper walks these to interleave {@code [table join, then
      * that table's where(s)]} — each table joined once (on first appearance), its value-constraints
-     * emitted right after — reproducing the retired query facade's output byte-for-byte.
+     * emitted right after.
      */
+    /** {@code table} is {@code null} for a shared / non-cube level constrained via its level key
+     *  expression — the key already lives in the plain level FROM, so there is nothing to join;
+     *  fact-join consumers must skip a null table. */
     public record ColumnPredicate(RolapStar.Table table, Predicate predicate) {}
 
     /** A contribution that adds no predicate and no extra tables. */

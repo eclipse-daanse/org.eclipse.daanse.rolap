@@ -15,7 +15,7 @@ package org.eclipse.daanse.rolap.element;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.type.Datatype;
+import org.eclipse.daanse.jdbc.db.api.type.Datatype;
 import org.junit.jupiter.api.Test;
 
 /**

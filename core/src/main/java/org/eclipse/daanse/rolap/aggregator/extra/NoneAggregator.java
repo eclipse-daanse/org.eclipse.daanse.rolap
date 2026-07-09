@@ -33,10 +33,6 @@ public class NoneAggregator extends AbstractAggregator {
         return eval.evaluateCurrent(); // never calc and cache always value from db.
     }
 
-    public String getExpression(String operand) {
-        return operand;
-    }
-
     public boolean supportsFastAggregates(DataTypeJdbc dataType) {
         return false;
     }

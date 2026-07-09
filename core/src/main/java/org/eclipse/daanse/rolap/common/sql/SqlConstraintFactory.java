@@ -24,7 +24,7 @@
  *   SmartCity Jena - initial
  */
 
-package org.eclipse.daanse.rolap.common.constraint;
+package org.eclipse.daanse.rolap.common.sql;
 
 import java.util.List;
 import java.util.Set;
@@ -43,6 +43,11 @@ import org.eclipse.daanse.rolap.common.sql.CrossJoinArgFactory;
 import org.eclipse.daanse.rolap.common.sql.MemberChildrenConstraint;
 import org.eclipse.daanse.rolap.common.sql.TupleConstraint;
 import org.eclipse.daanse.rolap.element.RolapCubeHierarchy;
+import org.eclipse.daanse.rolap.common.constraint.ChildByNameConstraint;
+import org.eclipse.daanse.rolap.common.constraint.DefaultMemberChildrenConstraint;
+import org.eclipse.daanse.rolap.common.constraint.DefaultTupleConstraint;
+import org.eclipse.daanse.rolap.common.constraint.DescendantsConstraint;
+import org.eclipse.daanse.rolap.common.constraint.SqlContextConstraint;
 import org.eclipse.daanse.rolap.element.RolapCubeLevel;
 import org.eclipse.daanse.rolap.element.RolapLevel;
 

@@ -33,7 +33,9 @@ import org.eclipse.daanse.rolap.common.RolapUtil;
  * @param filters  number of WHERE predicates (constraints + table filters)
  * @param joins    number of joined dimension tables
  * @param distinct number of distinct-count measures (0 = none)
- * @param path     verdict: {@code builder-authoritative | builder-guarded-match | legacy-fallback(reason)}
+ * @param path     verdict: {@code builder-authoritative} (recorder routes emit their decline
+ *                 reason on the {@code daanse.sql.gen}/{@code daanse.sql.gen.bail} channels instead
+ *                 of a summary line)
  * @param buildTime wall time around the build call (may be {@code null} if not measured)
  */
 public record StatementBuildSummary(String kind, String context, int groupBy, int measures, int filters,

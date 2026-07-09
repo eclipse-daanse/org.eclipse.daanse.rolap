@@ -26,12 +26,10 @@
 
 package org.eclipse.daanse.rolap.common.sql;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.olap.api.evaluator.Evaluator;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;
 import org.eclipse.daanse.rolap.element.RolapCube;
-import org.eclipse.daanse.rolap.element.RolapLevel;
 
 /**
  * Restricts the SQL result of {@link org.eclipse.daanse.rolap.common.TupleReader}. This is also
@@ -44,19 +42,6 @@ import org.eclipse.daanse.rolap.element.RolapLevel;
  * @author av
  */
 public interface TupleConstraint extends SqlConstraint {
-    /**
-     * Will be called multiple times for every "group by" level in
-     * Level.Members query, i.e. the level that contains the members and all
-     * parent levels except All.
-     * If the condition requires so,
-     * it may join the levels table to the fact table.
-     *
-     * @param sqlQuery the query to modify
-     * @param baseCube base cube for virtual cube constraints
-     * @param aggStar Aggregate table, or null if query is against fact table
-     * @param level the level which is accessed in the Level.Members query
-     */
-
     /**
      * When the members of a level are fetched, the result is grouped
      * by into parents and their children. These parent/children are
@@ -86,42 +71,12 @@ public interface TupleConstraint extends SqlConstraint {
     public boolean supportsAggTables();
 
     /**
-     * B1 SPI-inversion bridge for {@code addConstraint}: instead of mutating the driver's query, the
-     * constraint receives a {@link QueryRecorder.Fork} (a snapshot of the driver's current recorder
-     * state with an empty tape) and RETURNS the {@link QueryTape} it contributes; the driver merges
-     * them back via {@code recorder.append(fork, ops)}.
-     * <p>
-     * This default executes the legacy void {@code addConstraint} against the retired query facade
-     * view of the fork — the same legacy code runs in the same order against the same visible state,
-     * so the merged SQL is byte-identical. Implementations converted in later batches (B2/B3)
-     * override this to build their ops directly.
-     */
-    QueryTape addConstraintOps(
-        Dialect dialect,
-        QueryRecorder.Fork fork,
-        RolapCube baseCube,
-        AggStar aggStar);
-
-    /**
-     * B1 SPI-inversion bridge for {@code addLevelConstraint} — see {@link #addConstraintOps}. Called
-     * per "group by" level; the driver hands each call a FRESH fork of the CURRENT recorder state, so
-     * sequential level constraints see the prior calls' merged effects exactly as the legacy in-place
-     * mutation did.
-     */
-    QueryTape addLevelConstraintOps(
-        Dialect dialect,
-        QueryRecorder.Fork fork,
-        RolapCube baseCube,
-        AggStar aggStar,
-        RolapLevel level);
-
-    /**
-     * The generic-builder counterpart of {@code addConstraint}: this constraint's restriction as a
-     * {@link ConstraintContribution} (builder {@code WHERE} predicate + tables to join), so the
-     * {@code sqlbuild} mappers can build the level/tuple-members SELECT without the retired query facade.
+     * This constraint's restriction as a {@link ConstraintContribution} (builder {@code WHERE}
+     * predicate + tables to join), so the {@code sqlbuild} mappers can build the level/tuple-members
+     * SELECT.
      * <p>
      * Default returns {@link java.util.Optional#empty()} — "not expressible on the builder; use the
-     * the retired query facade path". Constraints that can translate override this.
+     * {@code QueryRecorder} fallback path". Constraints that can translate override this.
      */
     default java.util.Optional<ConstraintContribution> toContribution(
         RolapCube baseCube,

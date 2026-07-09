@@ -20,8 +20,8 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import java.util.Optional;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.type.BestFitColumnType;
-import org.eclipse.daanse.jdbc.db.dialect.api.type.Datatype;
+import org.eclipse.daanse.jdbc.db.api.type.BestFitColumnType;
+import org.eclipse.daanse.jdbc.db.api.type.Datatype;
 import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.jdbc.db.dialect.db.common.AnsiDialect;
 import org.eclipse.daanse.olap.api.aggregator.Aggregator;
@@ -39,9 +39,22 @@ import org.junit.jupiter.api.Test;
 /**
  * Verifies {@link AggregateSqlMapper} reproduces the real captured segment SQL (H2 School
  * catalog): a comma-product fact+dimension join, {@code [join, constraint]} WHERE order, dimension
- * column {@code c0} grouped, measure {@code m0} as lower-case {@code sum(...)}.
+ * column {@code c0} grouped, measure {@code m0} as lower-case {@code sum(...)} — plus the lifted
+ * {@link AggregateSqlMapper.Shape} variants (countOnly / ordered / grouping sets), string-pinned
+ * per capability branch since the H2/MySQL TCK logs carry zero occurrences of those shapes.
  */
 class AggregateSqlMapperTest {
+
+    /** The shared School-catalog star fixture: fact + one snowflake dimension, one constrained
+     *  dimension column and one sum measure. */
+    private record Fixture(RolapStar.Table fact, RolapStar.Column idCol, RolapStar.Measure measure,
+            Predicate filter) {
+    }
+
+    private static final String BASE_FROM_WHERE =
+            " from \"fact_personal\" as \"fact_personal\""
+            + " join \"schul_jahr\" as \"schul_jahr\" on \"fact_personal\".\"schul_jahr_id\" = \"schul_jahr\".\"id\""
+            + " where \"schul_jahr\".\"id\" = 4";
 
     private static RolapStar.Table table(String name, String alias, RolapStar.Table parent,
             RolapStar.Condition join) {
@@ -53,8 +66,7 @@ class AggregateSqlMapperTest {
         return t;
     }
 
-    @Test
-    void reproducesCapturedSegmentSql() {
+    private static Fixture fixture() {
         RolapStar.Table fact = table("fact_personal", "fact_personal", null, null);
         RolapStar.Condition join = mock(RolapStar.Condition.class);
         when(join.leftColumn()).thenReturn(Optional.of(new JoinColumn("fact_personal", "schul_jahr_id")));
@@ -75,19 +87,125 @@ class AggregateSqlMapperTest {
         when(measure.getInternalType()).thenReturn(BestFitColumnType.DECIMAL);
         when(measure.getAggregator()).thenReturn(sum);
 
-        Dialect ansi = new AnsiDialect();
         Predicate filter = Predicates.comparison(Expressions.column(TableAlias.of("schul_jahr"), "id"),
                 ComparisonOperator.EQ, Expressions.literal(4, Datatype.INTEGER));
+        return new Fixture(fact, idCol, measure, filter);
+    }
+
+    private static String render(Dialect dialect, Fixture f, AggregateSqlMapper.Shape shape) {
+        return new DialectSqlRenderer(dialect)
+                .render(AggregateSqlMapper.aggregate(f.fact(), List.of(f.idCol()), List.of(f.filter()),
+                        List.of(f.measure()), dialect, List.of(), shape))
+                .sql();
+    }
+
+    @Test
+    void reproducesCapturedSegmentSql() {
+        Fixture f = fixture();
+        Dialect ansi = new AnsiDialect();
 
         String sql = new DialectSqlRenderer(ansi)
-                .render(AggregateSqlMapper.aggregate(fact, List.of(idCol), List.of(filter), List.of(measure), ansi))
+                .render(AggregateSqlMapper.aggregate(f.fact(), List.of(f.idCol()), List.of(f.filter()),
+                        List.of(f.measure()), ansi))
                 .sql();
 
         assertThat(sql).isEqualTo(
                 "select \"schul_jahr\".\"id\" as \"c0\", sum(\"fact_personal\".\"anzahl_personen\") as \"m0\""
-                + " from \"fact_personal\" as \"fact_personal\""
-                + " join \"schul_jahr\" as \"schul_jahr\" on \"fact_personal\".\"schul_jahr_id\" = \"schul_jahr\".\"id\""
-                + " where \"schul_jahr\".\"id\" = 4"
+                + BASE_FROM_WHERE
+                + " group by \"schul_jahr\".\"id\"");
+    }
+
+    /** countOnly: one leading {@code COUNT(*)} (auto-aliased {@code c0}) replaces the per-column
+     *  SELECT/GROUP BY; the measures still follow; FROM/WHERE (joins + constraints) are unchanged.
+     *  {@code COUNT(*)} is the established builder spelling (drill-through count precedent) — the
+     *  recorder spelled it lower-case. */
+    @Test
+    void countOnlyProjectsGrandTotalWithoutGroupBy() {
+        String sql = render(new AnsiDialect(), fixture(),
+                new AggregateSqlMapper.Shape(true, false, List.of(), List.of()));
+
+        assertThat(sql).isEqualTo(
+                "select COUNT(*) as \"c0\", sum(\"fact_personal\".\"anzahl_personen\") as \"m0\""
+                + BASE_FROM_WHERE);
+    }
+
+    /** ordered: deterministic results — ORDER BY each group-by projection ascending (non-nullable,
+     *  so no null-collation SQL), expression-spelled for a dialect without requiresOrderByAlias. */
+    @Test
+    void orderedAppendsAscOrderByOverGroupedProjection() {
+        Dialect dialect = new AnsiDialect() {
+            @Override
+            public boolean requiresOrderByAlias() {
+                return false;
+            }
+        };
+        String sql = render(dialect, fixture(),
+                new AggregateSqlMapper.Shape(false, true, List.of(), List.of()));
+
+        assertThat(sql).isEqualTo(
+                "select \"schul_jahr\".\"id\" as \"c0\", sum(\"fact_personal\".\"anzahl_personen\") as \"m0\""
+                + BASE_FROM_WHERE
+                + " group by \"schul_jahr\".\"id\""
+                + " order by \"schul_jahr\".\"id\" ASC");
+    }
+
+    /** ordered on a requiresOrderByAlias dialect (e.g. MySQL): the sort key is spelled via the
+     *  projection alias — the ORDER BY rides the projection ref, so the renderer decides. */
+    @Test
+    void orderedUsesAliasWhenDialectRequiresOrderByAlias() {
+        Dialect dialect = new AnsiDialect() {
+            @Override
+            public boolean requiresOrderByAlias() {
+                return true;
+            }
+        };
+        String sql = render(dialect, fixture(),
+                new AggregateSqlMapper.Shape(false, true, List.of(), List.of()));
+
+        assertThat(sql).endsWith(" order by \"c0\" ASC");
+    }
+
+    /** grouping sets, dialect supports them: {@code GROUP BY GROUPING SETS ((keys), ())} replaces the
+     *  plain group-by spelling and each rollup column surfaces as a {@code GROUPING(x)} SELECT-tail
+     *  column (renderer-aliased {@code g0}). */
+    @Test
+    void groupingSetsRenderGroupingSetsWhenSupported() {
+        Fixture f = fixture();
+        Dialect dialect = new AnsiDialect() {
+            @Override
+            public boolean supportsGroupingSets() {
+                return true;
+            }
+        };
+        String sql = render(dialect, f, new AggregateSqlMapper.Shape(false, false,
+                List.of(List.of(f.idCol()), List.of()), List.of(f.idCol())));
+
+        assertThat(sql).isEqualTo(
+                "select \"schul_jahr\".\"id\" as \"c0\", sum(\"fact_personal\".\"anzahl_personen\") as \"m0\","
+                + " GROUPING(\"schul_jahr\".\"id\") as \"g0\""
+                + BASE_FROM_WHERE
+                + " group by grouping sets ((\"schul_jahr\".\"id\"), ())");
+    }
+
+    /** grouping sets, dialect does NOT support them: the renderer falls back to the plain group-by
+     *  keys (recorded alongside the sets — capability spelled at the renderer, not gated in the
+     *  mapper); the {@code GROUPING(x)} column still projects. */
+    @Test
+    void groupingSetsFallBackToPlainGroupByWhenUnsupported() {
+        Fixture f = fixture();
+        Dialect dialect = new AnsiDialect() {
+            @Override
+            public boolean supportsGroupingSets() {
+                return false;
+            }
+        };
+        String sql = render(dialect, f, new AggregateSqlMapper.Shape(false, false,
+                List.of(List.of(f.idCol()), List.of()), List.of(f.idCol())));
+
+        assertThat(sql).isEqualTo(
+                "select \"schul_jahr\".\"id\" as \"c0\", sum(\"fact_personal\".\"anzahl_personen\") as \"m0\","
+                + " GROUPING(\"schul_jahr\".\"id\") as \"g0\""
+                + BASE_FROM_WHERE
                 + " group by \"schul_jahr\".\"id\"");
     }
 }

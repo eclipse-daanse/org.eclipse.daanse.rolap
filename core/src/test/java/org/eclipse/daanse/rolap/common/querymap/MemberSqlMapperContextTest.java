@@ -21,8 +21,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
-import org.eclipse.daanse.jdbc.db.dialect.api.type.BestFitColumnType;
-import org.eclipse.daanse.jdbc.db.dialect.api.type.Datatype;
+import org.eclipse.daanse.jdbc.db.api.type.BestFitColumnType;
+import org.eclipse.daanse.jdbc.db.api.type.Datatype;
 import org.eclipse.daanse.jdbc.db.dialect.db.common.AnsiDialect;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.star.RolapStar.Condition.JoinColumn;
@@ -39,14 +39,13 @@ import org.eclipse.daanse.sql.statement.render.DialectSqlRenderer;
 import org.junit.jupiter.api.Test;
 
 /**
- * Golden-SQL coverage for the context-constrained {@link MemberSqlMapper#childMemberSql(RolapLevel,
- * boolean, Optional, List)} star-join overload (Step B). The {@code SqlContextConstraint} paths are
- * native-evaluated / member-cached in the TCK, so the byte-for-byte match cannot be measured there;
- * this exercises the mapper directly with a constructed {@code ConstraintContribution} instead.
- * <p>
- * Verifies: FROM = dimension relation, then fact, then the context table (legacy add order); WHERE =
- * the star join predicates (parent-first) then each context predicate as its own conjunct, with the
- * multi-part parent key kept as one parenthesised AND group.
+ * Verifies the SQL the context-constrained {@link MemberSqlMapper#childMemberSql(RolapLevel,
+ * boolean, Optional, List)} star-join overload produces: FROM = the dimension relation as root,
+ * the fact joined into it on the dimension's own fact edge, then the context table joined to the
+ * fact (all ANSI JOIN…ON); WHERE = each context predicate as its own conjunct, with the multi-part
+ * parent key kept as one parenthesised AND group. Also verifies the by-name lookup splits the
+ * top-level AND so the parent-key group and the {@code UPPER(name)} filter render as separate
+ * conjuncts.
  */
 class MemberSqlMapperContextTest {
 
@@ -110,18 +109,77 @@ class MemberSqlMapperContextTest {
         Dialect ansi = new AnsiDialect();
         String sql = new DialectSqlRenderer(ansi)
                 .render(MemberSqlMapper.childMemberSql(level, false, Optional.of(where),
-                        List.of(customer, time), ansi.allowsSelectNotInGroupBy()))
+                        List.of(customer, time)))
                 .sql();
 
         assertThat(sql).isEqualTo(
                 "select \"customer\".\"gender\" as \"c0\""
-                + " from \"customer\" as \"customer\", \"sales_fact_1997\" as \"sales_fact_1997\","
-                + " \"time_by_day\" as \"time_by_day\""
-                + " where \"sales_fact_1997\".\"customer_id\" = \"customer\".\"customer_id\""
-                + " and \"sales_fact_1997\".\"time_id\" = \"time_by_day\".\"time_id\""
-                + " and \"time_by_day\".\"the_year\" = 1997"
+                + " from \"customer\" as \"customer\""
+                + " join \"sales_fact_1997\" as \"sales_fact_1997\""
+                + " on \"sales_fact_1997\".\"customer_id\" = \"customer\".\"customer_id\""
+                + " join \"time_by_day\" as \"time_by_day\""
+                + " on \"sales_fact_1997\".\"time_id\" = \"time_by_day\".\"time_id\""
+                + " where \"time_by_day\".\"the_year\" = 1997"
                 + " and (\"customer\".\"country\" = 'USA')"
                 + " order by CASE WHEN \"customer\".\"gender\" IS NULL THEN 1 ELSE 0 END,"
                 + " \"customer\".\"gender\" ASC");
+    }
+
+    /**
+     * The dimension-only child SELECT's two WHERE forms: the plain parent-key enumeration keeps its
+     * multi-column key as ONE grouped conjunct ({@code splitConjuncts=false}), while the by-name
+     * lookup ({@code splitConjuncts=true}) splits the top-level AND so the parent-key group and the
+     * {@code UPPER(name) = UPPER('x')} filter render as two separate conjuncts —
+     * {@code (group) and UPPER(name) = UPPER('x')}, not {@code ((group) and UPPER(name) = UPPER('x'))}.
+     */
+    @Test
+    void byNameSplitsParentKeyAndNameFilterIntoSeparateConjuncts() {
+        TableSource customerSource = mock(TableSource.class);
+        when(customerSource.getAlias()).thenReturn("customer");
+        org.eclipse.daanse.cwm.model.cwm.resource.relational.NamedColumnSet ncs =
+                mock(org.eclipse.daanse.cwm.model.cwm.resource.relational.NamedColumnSet.class);
+        when(ncs.getName()).thenReturn("customer");
+        when(customerSource.getTable()).thenReturn(ncs);
+
+        RolapLevel level = mock(RolapLevel.class);
+        RolapHierarchy hierarchy = mock(RolapHierarchy.class);
+        when(hierarchy.getRelation()).thenReturn(customerSource);
+        when(hierarchy.getLevels()).thenReturn((List) List.of(level));
+        when(level.getHierarchy()).thenReturn(hierarchy);
+        when(level.getDepth()).thenReturn(0);
+        when(level.isAll()).thenReturn(false);
+        when(level.getUniqueName()).thenReturn("[Customers].[Name]");
+        when(level.getKeyExp()).thenReturn(new RolapColumn("customer", "customer_id"));
+        when(level.getInternalType()).thenReturn(BestFitColumnType.STRING);
+        when(level.hasCaptionColumn()).thenReturn(false);
+        when(level.getOrdinalExps()).thenReturn(List.of());
+        when(level.getProperties()).thenReturn(new org.eclipse.daanse.rolap.element.RolapProperty[0]);
+
+        // where = parent-key group (a nested AND, one grouped conjunct) AND the by-name filter.
+        Predicate parentGroup = Predicates.and(List.of(Predicates.comparison(
+                Expressions.column(TableAlias.of("customer"), "city"),
+                ComparisonOperator.EQ, Expressions.literal("San Francisco", Datatype.VARCHAR))));
+        Predicate nameFilter = Predicates.comparison(
+                new org.eclipse.daanse.sql.statement.api.expression.SqlExpression.CaseFold(
+                        Expressions.column(TableAlias.of("customer"), "fullname")),
+                ComparisonOperator.EQ,
+                new org.eclipse.daanse.sql.statement.api.expression.SqlExpression.CaseFold(
+                        Expressions.literal("Gladys Evans", Datatype.VARCHAR)));
+        Predicate where = Predicates.and(List.of(parentGroup, nameFilter));
+
+        Dialect ansi = new AnsiDialect();
+        String grouped = new DialectSqlRenderer(ansi)
+                .render(MemberSqlMapper.childMemberSql(level, false, Optional.of(where), false)).sql();
+        String split = new DialectSqlRenderer(ansi)
+                .render(MemberSqlMapper.childMemberSql(level, false, Optional.of(where), true)).sql();
+
+        // Non-split: the whole AND is one conjunct → an extra outer paren.
+        assertThat(grouped).contains(
+                " where ((\"customer\".\"city\" = 'San Francisco')"
+                + " and UPPER(\"customer\".\"fullname\") = UPPER('Gladys Evans'))");
+        // Split: parent-key group and name filter are two separate conjuncts.
+        assertThat(split).contains(
+                " where (\"customer\".\"city\" = 'San Francisco')"
+                + " and UPPER(\"customer\".\"fullname\") = UPPER('Gladys Evans')");
     }
 }

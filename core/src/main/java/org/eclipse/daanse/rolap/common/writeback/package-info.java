@@ -11,7 +11,8 @@
 *   SmartCity Jena - initial
 *   Stefan Bischof (bipolis.org) - initial
 */
-//TODO: RM EXPORT
-@org.osgi.annotation.bundle.Export
-@org.osgi.annotation.versioning.Version("0.0.1")
+/**
+ * Cell writeback: inline-table fact substitution and batch insert of writeback rows into the
+ * writeback fact table. This package is bundle-private.
+ */
 package org.eclipse.daanse.rolap.common.writeback;

@@ -24,8 +24,7 @@ import java.util.stream.Collectors;
 
 import javax.sql.DataSource;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
-import org.eclipse.daanse.jdbc.db.dialect.api.type.Datatype;
+import org.eclipse.daanse.jdbc.db.api.type.Datatype;
 import org.eclipse.daanse.olap.api.DataTypeJdbc;
 import org.eclipse.daanse.olap.api.access.Role;
 import org.eclipse.daanse.olap.api.connection.Connection;
@@ -73,10 +72,10 @@ public class WritebackUtil {
         }
 
         DataSource dataSource = con.getDataSource();
-        Dialect dialect = con.getContext().getDialect();
         LOGGER.info("Writeback[commit] cube='{}' writebackTable='{}' writing {} row(s)",
                 cube.getName(), writebackTable.getName(), rowCount);
-        BatchInsertEmitter.execute(cube, dataSource, dialect, writebackTable, sessionValues, userId);
+        // The dialect is resolved at the call and passed to BatchInsertEmitter (the render seam).
+        BatchInsertEmitter.execute(cube, dataSource, con.getContext().getDialect(), writebackTable, sessionValues, userId);
     }
 
     public static List<Map<String, Map.Entry<DataTypeJdbc, Object>>> getAllocationValues(RolapCube rolapCube,
