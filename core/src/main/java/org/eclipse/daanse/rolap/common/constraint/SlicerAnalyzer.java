@@ -101,7 +101,7 @@ public class SlicerAnalyzer {
    * Gets a map of Expression to the set of sliced members associated with each expression.
    *
    * This map is used by addContextConstraint() to get the set of slicer members associated with each column in the cell
-   * request's constrained columns array, {@link CellRequest#getConstrainedColumns}
+   * request's constrained columns array, {@link org.eclipse.daanse.rolap.common.agg.CellRequest#getConstrainedColumns()}
    */
   // public: reused by SqlContextConstraint.toContribution and by
   // RolapNativeFilter.FilterConstraint.isSupported (the IN-list-limit check needs the SAME

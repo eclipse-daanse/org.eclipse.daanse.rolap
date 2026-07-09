@@ -230,12 +230,12 @@ public class MemberListCrossJoinArg implements CrossJoinArg {
     }
 
     /** Whether this arg excludes (rather than includes) its members — mirrors the {@code exclude} flag the
-     *  {@link #addConstraint} passes to {@code MemberConstraintWriter.addMemberConstraint}. */
+     *  {@code addConstraint} passes to {@code MemberConstraintWriter.addMemberConstraint}. */
     public boolean isExclude() {
         return exclude;
     }
 
-    /** Whether calculated members are restricted — the {@code restrictMemberTypes} flag {@link #addConstraint}
+    /** Whether calculated members are restricted — the {@code restrictMemberTypes} flag {@code addConstraint}
      *  passes to {@code MemberConstraintWriter.addMemberConstraint}. */
     public boolean isRestrictMemberTypes() {
         return restrictMemberTypes;
