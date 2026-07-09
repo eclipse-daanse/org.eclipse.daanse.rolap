@@ -67,7 +67,7 @@ public class FilteredIterableList<T> extends AbstractSequentialList<T> {
         this.internal = list;
         this.isEmpty = ! this.listIterator(0).hasNext();
         this.size = -1;
-        this.cached = Caffeine.newBuilder().maximumSize(4).weakKeys().weakValues().build();
+        this.cached = Caffeine.newBuilder().maximumSize(4).build();
     }
 
     @Override
