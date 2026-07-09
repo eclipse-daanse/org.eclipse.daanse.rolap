@@ -34,10 +34,10 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
 /**
- * An implementation of {@link SmartCacheImpl} which uses a
- * ReferenceMap as a backing object. Both the key
- * and the value are soft references, because of their
- * cyclic nature.
+ * An implementation of {@link SmartCacheImpl} backed by a Caffeine cache
+ * configured with {@code softValues()}: only the <em>values</em> are held
+ * through soft references, so they may be reclaimed by the garbage collector
+ * under memory pressure; the keys are held strongly.
  *
  * This class does not enforce any synchronization, because
  * this is handled by SmartCacheImpl.
@@ -47,8 +47,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
  */
 public class SoftSmartCache<K, V> extends SmartCacheImpl<K, V> {
 
-    @SuppressWarnings("unchecked")
-    private final Cache<K, V> cache =Caffeine.newBuilder().softValues().build();
+    private final Cache<K, V> cache = Caffeine.newBuilder().softValues().build();
 
     @Override
 	public V putImpl(K key, V value) {
