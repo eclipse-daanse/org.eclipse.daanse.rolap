@@ -101,9 +101,6 @@ import org.eclipse.daanse.rolap.mapping.model.RolapMappingFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
-
 import org.eclipse.daanse.rolap.mapping.model.database.source.SourceFactory;
 import org.eclipse.daanse.rolap.mapping.model.database.source.SourceFactory;
 /**
@@ -295,7 +292,12 @@ public class RolapStar {
         /** Holds all thread-local aggregations of this star. */
 
 
-        private final Cache<AggregationKey, Aggregation> aggregations =Caffeine.newBuilder().weakKeys().weakValues().build();
+        // Accessed only through the thread-local localBars, so there is no
+        // concurrency and a plain HashMap suffices. It also gives equals-based
+        // lookup: Caffeine weakKeys() compared keys by identity, and because a
+        // fresh AggregationKey is built per batch (BatchLoader), lookups missed
+        // and the aggregation reuse this cache exists for never happened.
+        private final Map<AggregationKey, Aggregation> aggregations = new HashMap<>();
 
         private final List<SoftReference<SegmentWithData>> segmentRefs =
             new ArrayList<>();
@@ -661,7 +663,7 @@ public class RolapStar {
             }
 
             // Clear aggregation cache for the current thread context.
-            localBars.get().aggregations.invalidateAll();
+            localBars.get().aggregations.clear();
             localBars.get().segmentRefs.clear();
         }
     }
@@ -701,7 +703,7 @@ public class RolapStar {
      *
      */
     public Aggregation lookupSegment(AggregationKey aggregationKey) {
-        return localBars.get().aggregations.getIfPresent(aggregationKey);
+        return localBars.get().aggregations.get(aggregationKey);
     }
 
 
