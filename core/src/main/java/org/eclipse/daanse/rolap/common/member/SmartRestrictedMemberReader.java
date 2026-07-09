@@ -27,9 +27,9 @@ package org.eclipse.daanse.rolap.common.member;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.WeakHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -64,10 +64,27 @@ public class SmartRestrictedMemberReader extends RestrictedMemberReader {
         super(memberReader, role);
     }
 
+    // Bounded, size-capped cache. The WeakHashMap this replaces never actually
+    // evicted: the value (AccessAwareMemberList) strongly holds the children,
+    // and each child references its parent via getParentMember() — the value
+    // strongly reaches the key, so the weak key was never collectible and the
+    // map grew unbounded for the (potentially long-lived, per-role) reader.
+    // A size cap bounds memory regardless of that self-reference. Insertion
+    // order (not access order) keeps get() non-mutating, so it stays safe under
+    // the read lock; a miss is cheap to rebuild (a children SQL query).
+    private static final int MAX_CACHED_MEMBERS = 1000;
+
     // Our little ad-hoc cache.
     final Map<RolapMember, AccessAwareMemberList>
         memberToChildren =
-            new WeakHashMap<>();
+            new LinkedHashMap<>(16, 0.75f, false) {
+                @Override
+                protected boolean removeEldestEntry(
+                    Map.Entry<RolapMember, AccessAwareMemberList> eldest)
+                {
+                    return size() > MAX_CACHED_MEMBERS;
+                }
+            };
 
     // The lock for cache access.
     final ReadWriteLock lock = new ReentrantReadWriteLock();
