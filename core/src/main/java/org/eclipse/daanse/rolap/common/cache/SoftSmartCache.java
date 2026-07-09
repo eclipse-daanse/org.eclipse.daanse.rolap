@@ -34,10 +34,21 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
 /**
- * An implementation of {@link SmartCacheImpl} backed by a Caffeine cache
- * configured with {@code softValues()}: only the <em>values</em> are held
- * through soft references, so they may be reclaimed by the garbage collector
- * under memory pressure; the keys are held strongly.
+ * An implementation of {@link SmartCacheImpl} backed by a bounded, strong,
+ * equals-keyed Caffeine cache. Under memory pressure the cache is cleared via
+ * {@link MemoryPressureCacheRegistry}.
+ *
+ * <p>Historically this used soft references for both keys and values
+ * (Apache {@code ReferenceMap(SOFT, SOFT)}), so the cyclic member graph could
+ * be reclaimed as a unit under memory pressure. That was migrated to Caffeine
+ * {@code softValues()} with strong keys, which broke it: a strong
+ * {@code MemberKeyR} key pins its parent member (a soft value stored elsewhere),
+ * so whole member ancestor chains could never be collected. Caffeine cannot
+ * express soft keys, and its {@code weakKeys()} compares by identity. This
+ * implementation instead uses strong, equals-based keys with a generous
+ * backstop size bound and adaptive clearing on memory pressure, restoring the
+ * "shed when the heap is tight" behaviour without any reference-semantics
+ * traps. The name is kept for source compatibility.</p>
  *
  * This class does not enforce any synchronization, because
  * this is handled by SmartCacheImpl.
@@ -47,7 +58,19 @@ import com.github.benmanes.caffeine.cache.Caffeine;
  */
 public class SoftSmartCache<K, V> extends SmartCacheImpl<K, V> {
 
-    private final Cache<K, V> cache = Caffeine.newBuilder().softValues().build();
+    /**
+     * Backstop bound on the number of cached entries. The primary shedding
+     * mechanism under memory pressure is {@link MemoryPressureCacheRegistry};
+     * this cap only prevents unbounded growth when the memory monitor is
+     * unavailable, so it is chosen generously to rarely evict in normal use.
+     */
+    private static final int MAX_ENTRIES = 100_000;
+
+    private final Cache<K, V> cache = Caffeine.newBuilder().maximumSize(MAX_ENTRIES).build();
+
+    public SoftSmartCache() {
+        MemoryPressureCacheRegistry.register(this);
+    }
 
     @Override
 	public V putImpl(K key, V value) {
