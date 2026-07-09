@@ -31,6 +31,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.Expiry;
 import com.github.benmanes.caffeine.cache.RemovalCause;
 import com.github.benmanes.caffeine.cache.RemovalListener;
+import com.github.benmanes.caffeine.cache.stats.CacheStats;
 
 /**
  * Thread-safe cache implementation for RolapCatalog instances using Caffeine cache.
@@ -66,6 +67,18 @@ public class RolapCatalogCache implements CatalogCache {
     static final Logger LOGGER = LoggerFactory.getLogger(RolapCatalogCache.class);
 
     /**
+     * Upper bound on the number of live (tier-1) catalogs. Beyond this,
+     * Caffeine evicts the least-valuable entry; its RemovalListener parks it
+     * into the soft second tier (so it can still be resurrected while memory
+     * allows) and flushes its segments. Without a bound the tier-1 cache could
+     * grow unboundedly across many distinct catalog/session keys. Actively used
+     * catalogs are protected from eviction by Caffeine's frequency-based policy
+     * and by the sliding expiry (every read resets the timeout). This is a
+     * memory-safety bound, not a tuning target.
+     */
+    private static final int MAX_CACHED_CATALOGS = 100;
+
+    /**
      * Cache entry combining a RolapCatalog with its individual timeout duration.
      * 
      * @param catalog the cached catalog instance
@@ -98,6 +111,13 @@ public class RolapCatalogCache implements CatalogCache {
             // same-thread executor the parking happens inside cache.invalidateAll(), strictly
             // before softCache.invalidateAll(), so a flush deterministically drops the catalog.
             .executor(Runnable::run)
+            // Bound the live tier so many catalog/session keys cannot grow it
+            // without limit; size-evicted entries are parked into softCache by
+            // the removal listener below (which makes the RemovalCause.SIZE
+            // branch reachable).
+            .maximumSize(MAX_CACHED_CATALOGS)
+            // Collect hit/miss/load stats for diagnosability (see getCacheStats()).
+            .recordStats()
             .expireAfter(new Expiry<RolapCatalogKey, CatalogCacheValue>() {
                 @Override
                 public long expireAfterCreate(RolapCatalogKey key, CatalogCacheValue value, long currentTime) {
@@ -234,9 +254,7 @@ public class RolapCatalogCache implements CatalogCache {
     public void remove(RolapCatalog catalog) {
         if (catalog != null) {
             LOGGER.debug("Removing catalog '{}' from cache", catalog.getName());
-            cache.invalidate(catalog.getKey());
-            softCache.invalidate(catalog.getKey());
-
+            invalidateBothTiers(catalog.getKey());
         } else {
             LOGGER.debug("Attempted to remove null catalog - ignoring");
         }
@@ -252,8 +270,7 @@ public class RolapCatalogCache implements CatalogCache {
     public void clear() {
         long size = cache.estimatedSize();
         LOGGER.info("Clearing cache containing approximately {} catalogs", size);
-        cache.invalidateAll();
-        softCache.invalidateAll();
+        invalidateAllTiers();
         LOGGER.debug("Cache cleared successfully");
     }
 
@@ -274,6 +291,36 @@ public class RolapCatalogCache implements CatalogCache {
         List<RolapCatalog> catalogsSoft = softCache.asMap().values().stream().filter(catalog -> catalog != null)
                 .toList();
         return Collections.unmodifiableList(Stream.concat(catalogs.stream(), catalogsSoft.stream()).toList());
+    }
+
+    /**
+     * The single entry point for invalidating one catalog. Both tiers must
+     * always be invalidated together, tier-1 first: its same-thread removal
+     * listener parks EXPIRED/SIZE entries into softCache, so invalidating
+     * softCache strictly afterwards guarantees a flushed catalog cannot be
+     * resurrected by the next lookup.
+     *
+     * @param key the catalog key to invalidate in both tiers
+     */
+    private void invalidateBothTiers(RolapCatalogKey key) {
+        cache.invalidate(key);
+        softCache.invalidate(key);
+    }
+
+    /** Invalidates every catalog in both tiers (see {@link #invalidateBothTiers}). */
+    private void invalidateAllTiers() {
+        cache.invalidateAll();
+        softCache.invalidateAll();
+    }
+
+    /**
+     * Returns hit/miss/load statistics for the live (tier-1) catalog cache,
+     * useful for diagnosing why catalogs are being (re)built at runtime.
+     *
+     * @return a snapshot of the tier-1 cache statistics
+     */
+    public CacheStats getCacheStats() {
+        return cache.stats();
     }
 
 }
