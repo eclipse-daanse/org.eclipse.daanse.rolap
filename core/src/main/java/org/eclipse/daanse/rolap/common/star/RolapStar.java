@@ -661,7 +661,7 @@ public class RolapStar {
             }
 
             // Clear aggregation cache for the current thread context.
-            localBars.get().aggregations.cleanUp();
+            localBars.get().aggregations.invalidateAll();
             localBars.get().segmentRefs.clear();
         }
     }
