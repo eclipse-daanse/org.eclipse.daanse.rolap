@@ -1390,15 +1390,16 @@ public final class TupleSqlMapper {
      * table, root down to target, each added to GROUP BY (every collapsed column is grouped
      * unconditionally) and ordered ASC nulls-last (the standalone
      * {@code WhichSelect.ONLY} read this path is restricted to). {@code where} (the agg-substituted
-     * context — {@link SqlContextConstraint#levelMembersAggWhere}) is split into per-conjunct
+     * context — {@link org.eclipse.daanse.rolap.common.constraint.SqlContextConstraint#levelMembersAggWhere}) is split into per-conjunct
      * WHERE clauses (a nested {@code And} stays grouped).
      * <p>
      * {@code nativeHaving} (a native Filter measure condition) and {@code nativeOrder} (a native
      * TopCount/BottomCount measure order) are carried the SAME way {@link #buildLevelSelect} does — the
      * HAVING after the GROUP BY, the measure order projected and ORDERed BEFORE the level ordering — but
      * both already agg-substituted by the constraint's agg counterparts
-     * ({@link SqlContextConstraint#levelMembersAggHaving} /
-     * {@link SqlContextConstraint#levelMembersAggOrder}), since the aggStar read has no base-star
+     * ({@link org.eclipse.daanse.rolap.common.constraint.SqlContextConstraint#levelMembersAggHaving} /
+     * {@link org.eclipse.daanse.rolap.common.constraint.SqlContextConstraint#levelMembersAggOrder}),
+     * since the aggStar read has no base-star
      * contribution to resolve them through. A plain (non-native) context constraint passes both empty and
      * the body is identical to the pure-projection shape.
      */

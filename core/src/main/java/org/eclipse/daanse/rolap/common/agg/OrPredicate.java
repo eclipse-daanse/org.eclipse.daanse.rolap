@@ -88,31 +88,6 @@ public class OrPredicate extends ListPredicate {
         return new AndPredicate(list);
     }
 
-    /**
-     * Checks whether a predicate can be translated using an IN list, and groups
-     * predicates based on how many columns can be translated using IN list. If
-     * none of the columns can be made part of IN, the entire predicate will be
-     * translated using AND/OR. This method identifies all the columns that can
-     * be part of IN and and categorizes this predicate based on number of
-     * column values to use in the IN list.
-     *
-     * @param predicate predicate to analyze
-     * @param dialect Query
-     * @param predicateMap the map containing predicates analyzed so far
-     */
-
-    /**
-     * Translates a list of predicates over the same set of columns into sql
-     * using IN list where possible.
-     *
-     * @param dialect Query
-     * @param buf buffer to build sql
-     * @param inListRhsBitKey which column positions are included in
-     *     the IN predicate; the non included positions corresponde to
-     *     columns that are nulls
-     * @param predicateList the list of predicates to translate.
-     */
-
     @Override
 	protected String getOp() {
         return "or";

@@ -134,7 +134,7 @@ import org.slf4j.LoggerFactory;
  *
  * When reading members from a single level, then the constraint is not
  * required to join the fact table in
- * {@link TupleConstraint#addLevelConstraintOps}
+ * {@code TupleConstraint.addLevelConstraintOps}
  * although it may do so to restrict
  * the result. Also it is permitted to cache the parent/children from all
  * members in MemberCache, so
@@ -145,7 +145,7 @@ import org.slf4j.LoggerFactory;
  * then we can not store the parent/child pairs in the MemberCache and
  * {@link TupleConstraint#getMemberChildrenConstraint(RolapMember)}
  * must return null. Also
- * {@link TupleConstraint#addConstraintOps}
+ * {@code TupleConstraint.addConstraintOps}
  * is required to join the fact table for the levels table.
  *
  *

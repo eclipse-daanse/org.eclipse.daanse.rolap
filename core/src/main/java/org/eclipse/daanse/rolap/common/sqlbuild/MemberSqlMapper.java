@@ -309,8 +309,8 @@ public final class MemberSqlMapper {
     }
 
     /**
-     * Comma-join fallback of the fact-join {@link #childMemberSql(RolapLevel, boolean, Optional, List,
-     * boolean)} overload for shapes with no resolvable dimension→fact edge: FROM lists the relation,
+     * Comma-join fallback of the fact-join {@link #childMemberSql(RolapLevel, boolean, Optional, List)}
+     * overload for shapes with no resolvable dimension→fact edge: FROM lists the relation,
      * the fact and the context tables as comma items, every star join is a WHERE conjunct. Guarded
      * use only — the ANSI form is the primary shape, so this is reached only via the guard's fallback.
      */
@@ -353,7 +353,7 @@ public final class MemberSqlMapper {
     }
 
     /**
-     * As the fact-join {@link #childMemberSql(RolapLevel, boolean, Optional, List, boolean)} overload but
+     * As the fact-join {@link #childMemberSql(RolapLevel, boolean, Optional, List)} overload but
      * with the context constraint's per-column {@code (table, predicate)} pairs so the WHERE is
      * interleaved exactly like the {@code addMemberConstraint + addLevelConstraint} sequence:
      * <ol>
