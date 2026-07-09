@@ -28,6 +28,8 @@ import static org.assertj.core.api.Assertions.fail;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ListIterator;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
 import org.junit.jupiter.api.Test;
@@ -107,5 +109,49 @@ class FilteredIterableTest{
             assertThat(identical.get(k)).isEqualTo(i);
             k++;
         }
+    }
+
+    /**
+     * Regression test for the positional cache key semantics.
+     *
+     * The cache was previously built with {@code weakKeys()}, which switches
+     * Caffeine to identity ({@code ==}) key comparison. Autoboxed {@link Integer}
+     * keys are only identical within the -128..127 Integer cache, so a lookup
+     * for an index &gt;= 128 never matched a previously stored entry and the
+     * list fell back to a full linear scan (re-invoking the filter). This test
+     * primes the cache at a high index via the iterator and asserts that a
+     * subsequent random access to that index is served from the cache without
+     * re-scanning.
+     */
+    @Test
+    void cacheServesHighIndexWithoutRescan() throws Exception {
+        final AtomicInteger filterCalls = new AtomicInteger();
+        final List<Integer> base = new ArrayList<>();
+        for (int i = 0; i < 300; i++) {
+            base.add(i);
+        }
+        final FilteredIterableList<Integer> list =
+            new FilteredIterableList<>(base, i -> {
+                filterCalls.incrementAndGet();
+                return true;
+            });
+
+        // Prime the positional cache up to index 200 (> 127) via the iterator;
+        // the last next() stores index 200 as the most-recent cache entry.
+        final ListIterator<Integer> it = list.listIterator(0);
+        Integer last = null;
+        for (int i = 0; i <= 200; i++) {
+            last = it.next();
+        }
+        assertThat(last).isEqualTo(Integer.valueOf(200));
+
+        final int callsAfterPriming = filterCalls.get();
+
+        // Random access to the just-cached high index must be a cache hit and
+        // must NOT trigger another linear scan (no further filter invocations).
+        assertThat(list.get(200)).isEqualTo(Integer.valueOf(200));
+        assertThat(filterCalls.get())
+            .as("get(200) must hit the cache, not re-scan and re-invoke the filter")
+            .isEqualTo(callsAfterPriming);
     }
 }
