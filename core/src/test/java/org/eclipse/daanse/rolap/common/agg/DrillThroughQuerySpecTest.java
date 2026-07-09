@@ -39,7 +39,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
-import org.eclipse.daanse.jdbc.db.dialect.api.type.BestFitColumnType;
+import org.eclipse.daanse.jdbc.db.api.type.BestFitColumnType;
 import org.eclipse.daanse.olap.api.element.OlapElement;
 import org.eclipse.daanse.rolap.common.sql.QueryRecorder;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
@@ -84,6 +84,9 @@ class DrillThroughQuerySpecTest {
   }
 
   @Test
+  @Disabled("Obsolete: DrillThroughQuerySpec.extraPredicates no longer adds the drill-through SELECT "
+      + "columns (that moved to the builder AggregateSqlMapper.drillThrough); the residual toSql "
+      + "fallback that let a bare StarPredicate mock pass is removed (translator is total). TCK-covered.")
   void emptyColumns() {
     List<RolapStar.Column> columns = Collections.emptyList();
     when(starPredicateMock.getConstrainedColumnList())
@@ -113,6 +116,9 @@ class DrillThroughQuerySpecTest {
   }
 
   @Test
+  @Disabled("Obsolete: DrillThroughQuerySpec.extraPredicates no longer adds the drill-through SELECT "
+      + "columns (that moved to the builder AggregateSqlMapper.drillThrough); the residual toSql "
+      + "fallback that let a bare StarPredicate mock pass is removed (translator is total). TCK-covered.")
   void columnsNotIncludedInSelect() {
     when(requestMock.includeInSelect(includedColumn)).thenReturn(false);
     drillThroughQuerySpec.extraPredicates(sqlQueryMock);
@@ -136,5 +142,38 @@ class DrillThroughQuerySpecTest {
     drillThroughQuerySpec.extraPredicates(sqlQueryMock);
     verify(sqlQueryMock, times(1))
       .addSelect(isNull(), isNull(), anyString());
+  }
+
+  // ---- translateOrResidual: the segment path's residual fallback, mirrored for drill-through ----
+
+  /** A translatable shape takes the plain StarPredicateTranslator path. */
+  @Test
+  void translateOrResidualKeepsTranslatorPathForValuePredicate() {
+    RolapStar.Table table = mock(RolapStar.Table.class);
+    when(table.getAlias()).thenReturn("schul_jahr");
+    RolapStar.Column col = mock(RolapStar.Column.class);
+    when(col.getTable()).thenReturn(table);
+    when(col.getExpression())
+      .thenReturn(new org.eclipse.daanse.rolap.element.RolapColumn("schul_jahr", "id"));
+    when(col.getDatatype())
+      .thenReturn(org.eclipse.daanse.jdbc.db.api.type.Datatype.INTEGER);
+    ValueColumnPredicate value = mock(ValueColumnPredicate.class);
+    when(value.getConstrainedColumn()).thenReturn(col);
+    when(value.getValue()).thenReturn(4);
+
+    org.eclipse.daanse.sql.statement.api.expression.Predicate p =
+      DrillThroughQuerySpec.translateOrResidual(value, mock(Dialect.class));
+
+    org.assertj.core.api.Assertions.assertThat(p).isEqualTo(
+      org.eclipse.daanse.rolap.common.sqlbuild.StarPredicateTranslator.toPredicate(value));
+  }
+
+  /** An always-true predicate adds no restriction — returns null. */
+  @Test
+  void translateOrResidualSkipsAlwaysTruePredicate() {
+    org.assertj.core.api.Assertions.assertThat(
+        DrillThroughQuerySpec.translateOrResidual(
+            org.eclipse.daanse.rolap.common.agg.LiteralStarPredicate.TRUE, mock(Dialect.class)))
+      .isNull();
   }
 }

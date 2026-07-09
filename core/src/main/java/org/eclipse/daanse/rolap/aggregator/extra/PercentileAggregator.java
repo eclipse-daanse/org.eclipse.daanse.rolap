@@ -20,14 +20,13 @@ import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.olap.api.calc.Calc;
 import org.eclipse.daanse.olap.api.calc.tuple.TupleList;
 import org.eclipse.daanse.olap.api.evaluator.Evaluator;
-import org.eclipse.daanse.rolap.aggregator.NodeAggregate;
 import org.eclipse.daanse.rolap.element.RolapColumn;
 import org.eclipse.daanse.rolap.mapping.model.olap.cube.measure.PercentType;
 import org.eclipse.daanse.rolap.mapping.model.database.relational.SortingDirection;
 import org.eclipse.daanse.sql.statement.api.expression.SqlExpression;
 
 
-public class PercentileAggregator implements Aggregator, NodeAggregate {
+public class PercentileAggregator implements Aggregator, org.eclipse.daanse.rolap.aggregator.SqlNodeAggregator {
 
     private Double percentile;
     private PercentType percentileType;

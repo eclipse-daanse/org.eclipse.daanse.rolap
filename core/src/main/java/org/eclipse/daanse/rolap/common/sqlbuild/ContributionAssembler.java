@@ -22,9 +22,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
+import java.util.function.Supplier;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.olap.api.sql.SortingDirection;
 import org.eclipse.daanse.rolap.common.sql.QueryTape;
 import org.eclipse.daanse.sql.statement.api.Expressions;
@@ -44,23 +43,22 @@ import org.eclipse.daanse.sql.statement.api.model.SortSpec;
 import org.eclipse.daanse.sql.statement.api.model.TableAlias;
 
 /**
- * Assembles a {@link SelectStatement} / rendered SQL from a recorded {@link QueryTape} mutation tape.
- * This is the ONLY render source for tape-recorded queries:
- * {@code QueryRecorder.buildStatement(Dialect)} / {@code toSqlAndTypes(Dialect)} delegate here,
- * and the recorder keeps no live builder.
+ * Replays a recorded {@link QueryTape} against a fresh builder to assemble the dialect-free
+ * {@link SelectStatement} (dedup, FROM/JOIN folding, deferred sub-query FROM resolution).
+ * {@code QueryRecorder.buildStatement()} delegates here.
  *
- * <p>Each {@link QueryTape.QueryOp} replays with the semantics the recorder's {@code track()}
- * methods promise (same dedup sets, same {@code projByAlias} bookkeeping, same builder overloads),
- * so a tape assembles to the same SQL no matter when — or how often — it is rendered.
+ * <p>Each {@link QueryTape.QueryOp} replays with the semantics the recorder's mutators promise
+ * (same dedup sets, same {@code projByAlias} bookkeeping, same builder overloads), so a tape
+ * assembles to the same SQL no matter when — or how often — it is rendered.
  */
 public final class ContributionAssembler {
 
     private ContributionAssembler() {
     }
 
-    /** Replays the tape against fresh state and assembles the dialect-resolved statement. */
-    public static SelectStatement assemble(QueryTape ops, Dialect dialect) {
-        return buildStatement(replay(ops), dialect);
+    /** Replays the tape against fresh state and assembles the dialect-free statement. */
+    public static SelectStatement assemble(QueryTape ops) {
+        return buildStatement(replay(ops));
     }
 
     /**
@@ -71,7 +69,7 @@ public final class ContributionAssembler {
         final SelectStatementBuilder builder = SelectStatementBuilder.create();
         final List<FromClause> fromItems = new ArrayList<>();
         final List<QueryTape.JoinEdge> builderJoins = new ArrayList<>();
-        final Map<Integer, Function<Dialect, FromClause>> deferredFroms = new LinkedHashMap<>();
+        final Map<Integer, Supplier<FromClause>> deferredFroms = new LinkedHashMap<>();
         final Set<String> builderFromAliases = new LinkedHashSet<>();
         final Set<String> whereSeen = new LinkedHashSet<>();
         final Set<String> groupSeen = new LinkedHashSet<>();
@@ -242,9 +240,6 @@ public final class ContributionAssembler {
                 }
                 case QueryTape.GroupingFunction o ->
                         st.builder.addGroupingFunction(Expressions.raw(o.columnExpr()));
-                case QueryTape.Unsupported o -> {
-                    // Caller-side flag only (QueryTape.supported()) — no builder effect.
-                }
             }
         }
         return st;
@@ -254,10 +249,10 @@ public final class ContributionAssembler {
      * Resolves the deferred FROMs, folds the FROM items and builds. The state is fresh per
      * assembly, so the FROM is applied exactly once.
      */
-    private static SelectStatement buildStatement(State st, Dialect dialect) {
-        // Resolve deferred view / inline-table / sub-query FROMs (they need the dialect) — recursively, so a
-        // nested sub-query's own deferred FROMs resolve via its buildStatement(dialect).
-        st.deferredFroms.forEach((idx, resolver) -> st.fromItems.set(idx, resolver.apply(dialect)));
+    private static SelectStatement buildStatement(State st) {
+        // Resolve the deferred sub-query FROMs — dialect-free, recursively (a nested sub-query's own
+        // deferred FROMs resolve via its buildStatement()); the renderer applies the dialect at render.
+        st.deferredFroms.forEach((idx, resolver) -> st.fromItems.set(idx, resolver.get()));
         FromClause fromClause = buildFromClause(st);
         if (fromClause != null) {
             st.builder.from(fromClause);
@@ -277,8 +272,8 @@ public final class ContributionAssembler {
         // Base-FROM provenance: reasons recorded (commentFrom) against the BASE item's alias are
         // attached to the item itself — the fold below only reaches JOINED items (their reasons merge
         // into the FromJoin comment), so without this the base table renders comment-less. Applies to
-        // every FROM shape (single item, join-tree root, product first item); render-only, byte-neutral
-        // when comments are off.
+        // every FROM shape (single item, join-tree root, product first item); render-only (no effect
+        // on the executed SQL when comments are off).
         org.eclipse.daanse.sql.statement.api.model.TableAlias baseAlias =
                 org.eclipse.daanse.sql.statement.api.From.baseAlias(st.fromItems.get(0));
         if (baseAlias != null) {

@@ -29,12 +29,7 @@ package org.eclipse.daanse.rolap.common.constraint;
 import java.util.Arrays;
 import java.util.List;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.olap.api.query.NameSegment;
-import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;
-import org.eclipse.daanse.rolap.common.sql.QueryTape;
-import org.eclipse.daanse.rolap.common.sql.QueryRecorder;
-import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.element.RolapLevel;
 
 /**
@@ -80,32 +75,6 @@ public class ChildByNameConstraint extends DefaultMemberChildrenConstraint {
             && getCacheKey().equals(childByNameConstraint.getCacheKey());
     }
 
-    /**
-     * Adds the by-name filter for the level being read to the fork. The inherited level
-     * constraint contributes nothing, so only the name filter is recorded.
-     */
-    @Override
-    public QueryTape addMemberLevelConstraintOps(
-        Dialect dialect,
-        QueryRecorder.Fork fork,
-        RolapCube baseCube,
-        AggStar aggStar,
-        RolapLevel level)
-    {
-        // Dialect-free: build the name-column constraint as a Predicate (computed columns -> RawVariant,
-        // resolved per dialect at render); fall back to the raw string only when the column has no node.
-        java.util.Optional<org.eclipse.daanse.sql.statement.api.expression.Predicate> pred =
-            LevelConstraintGenerator.constrainLevelPredicate(level, baseCube, aggStar, childNames, true);
-        if (pred.isPresent()) {
-            fork.addWhere(pred.get());
-        } else {
-            fork.addWhere(
-                LevelConstraintGenerator.constrainLevel(
-                    dialect, level, fork, baseCube, aggStar, childNames, true).toString());
-        }
-        return fork.ops();
-    }
-
     @Override
 	public String toString() {
         return new StringBuilder("ChildByNameConstraint(").append(Arrays.toString(childNames)).append(")").toString();
@@ -129,9 +98,9 @@ public class ChildByNameConstraint extends DefaultMemberChildrenConstraint {
      * (result-verified, like {@link DefaultMemberChildrenConstraint}); only the WHERE parenthesization may
      * differ from the recorded form (a semantic no-op).
      * <p>
-     * Returns {@link java.util.Optional#empty()} (→ the recorder path via the byte-equal guard) when the
-     * child level / name column cannot be expressed as a node (computed column), or the inherited
-     * contribution carries a fact join.
+     * Returns {@link java.util.Optional#empty()} (→ the {@link org.eclipse.daanse.rolap.common.sql.QueryRecorder}
+     * fallback) when the child level / name column cannot be expressed as a node (computed column), or the
+     * inherited contribution carries a fact join.
      */
     @Override
     public java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution> toContribution(

@@ -39,7 +39,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import org.eclipse.daanse.olap.key.BitKey;
-import org.eclipse.daanse.rolap.common.constraint.CompoundPredicateInfo;
+import org.eclipse.daanse.rolap.common.agg.CompoundPredicateInfo;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.star.StarColumnPredicate;
 import org.eclipse.daanse.rolap.common.star.StarPredicate;

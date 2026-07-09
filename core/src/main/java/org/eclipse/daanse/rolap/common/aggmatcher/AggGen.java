@@ -47,9 +47,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This class is used to create "lost" and "collapsed" aggregate table
- * creation sql (creates the rdbms table and inserts into it from the base
- * fact table).
+ * Renders the {@code CREATE} / {@code INSERT … SELECT} SQL for candidate "lost" and
+ * "collapsed" aggregate tables of a {@link RolapStar}, with identifiers quoted for the star's
+ * {@link org.eclipse.daanse.jdbc.db.dialect.api.Dialect}. The generated DDL/DML is diagnostic
+ * only: it is written to the log by {@code BatchLoader.generateAggregateSql} when aggregate-SQL
+ * generation is enabled, and is never executed against the database.
  *
  * @author Richard M. Emberson
  */

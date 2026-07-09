@@ -50,7 +50,7 @@ import org.eclipse.daanse.rolap.common.agg.MemberColumnPredicate;
 import org.eclipse.daanse.rolap.common.agg.OrPredicate;
 import org.eclipse.daanse.rolap.common.agg.RangeColumnPredicate;
 import org.eclipse.daanse.rolap.common.agg.ValueColumnPredicate;
-import org.eclipse.daanse.rolap.common.constraint.CompoundPredicateInfo;
+import org.eclipse.daanse.rolap.common.agg.CompoundPredicateInfo;
 import org.eclipse.daanse.rolap.common.evaluator.RolapEvaluator;
 import org.eclipse.daanse.rolap.common.result.CellReader;
 import org.eclipse.daanse.rolap.common.result.RolapCell;
@@ -305,7 +305,7 @@ public abstract class RolapAggregationManager {
             if (!measure.getCube().equalsOlapElement(predicateInfo.getCube())) {
                 predicateInfo = new CompoundPredicateInfo(
                     aggregationList, measure, evaluator);
-                evaluator.slicerPredicateInfo = predicateInfo;
+                evaluator.setSlicerPredicateInfo(predicateInfo);
             }
         } else {
             predicateInfo =  new CompoundPredicateInfo(

@@ -30,11 +30,12 @@ import org.eclipse.daanse.rolap.mapping.model.database.source.InlineTableSource;
 import org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource;
 import org.eclipse.daanse.rolap.mapping.model.database.source.SourceFactory;
 import org.eclipse.daanse.rolap.mapping.model.database.source.SqlSelectSource;
+import org.eclipse.daanse.rolap.element.RolapCube;
 import org.junit.jupiter.api.Test;
 
 /**
  * The InlineTableSource branch of {@code RolapCube.modifyFact} (line 2536–2542)
- * funnels through {@link RolapUtil#convertInlineTableToRelation}. These tests
+ * funnels through {@link RolapCube#convertInlineTableToRelation}. These tests
  * verify that identifier quoting for that branch is the dialect's
  * responsibility — i.e. rolap delegates SQL generation to
  * {@code dialect.sqlGenerator().generateInline(...)} and embeds the result
@@ -64,7 +65,7 @@ class RolapUtilInlineConversionTest {
         when(generator.generateInline(anyList(), anyList(), anyList())).thenReturn(new StringBuilder(
                 "(select \"PRODUCT\", \"AMOUNT\" from (values('widget', 42)) as t(\"PRODUCT\", \"AMOUNT\"))"));
 
-        RelationalSource result = RolapUtil.convertInlineTableToRelation(source, dialect);
+        RelationalSource result = RolapCube.convertInlineTableToRelation(source, dialect);
 
         // Delegation happened — generator was called once with the column metadata
         // (empty for this minimal fixture) and the value rows (also empty).
@@ -101,7 +102,7 @@ class RolapUtilInlineConversionTest {
         // Caller (RolapCube.modifyFact, line 2537) hands the writeback column order in.
         List<String> orderColumns = List.of("PRODUCT", "AMOUNT");
 
-        RelationalSource result = RolapUtil.convertInlineTableToRelation(source, dialect, orderColumns);
+        RelationalSource result = RolapCube.convertInlineTableToRelation(source, dialect, orderColumns);
 
         verify(generator, times(1)).generateInline(anyList(), anyList(), anyList());
 

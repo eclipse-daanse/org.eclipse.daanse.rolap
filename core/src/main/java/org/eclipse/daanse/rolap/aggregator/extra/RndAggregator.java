@@ -35,10 +35,6 @@ public class RndAggregator extends AbstractAggregator {
         return secureRandom.nextLong();
     }
 
-    public String getExpression(String operand) {
-        return secureRandom.nextLong() + "";
-    }
-
     public boolean supportsFastAggregates(DataTypeJdbc dataType) {
         return true;
     }

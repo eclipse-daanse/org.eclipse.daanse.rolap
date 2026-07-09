@@ -59,8 +59,8 @@ import javax.sql.DataSource;
 
 import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.rolap.common.util.ViewCodeSet;
-import org.eclipse.daanse.jdbc.db.dialect.api.type.BestFitColumnType;
-import org.eclipse.daanse.jdbc.db.dialect.api.type.Datatype;
+import org.eclipse.daanse.jdbc.db.api.type.BestFitColumnType;
+import org.eclipse.daanse.jdbc.db.api.type.Datatype;
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.olap.api.cache.OlapSegmentCacheManager;
@@ -275,9 +275,9 @@ public class RolapStar {
             return dialect.quoteIdentifier(col.getTable(), col.getName());
         }
         if(expression != null) {
-            // A computed expression is rendered as a dialect-free RawVariant node (the renderer's chooseVariant
-            // resolves it per dialect). Reaching this removed legacy dialect-string path means a SQL producer
-            // still feeds a computed column as a string — convert that producer to a node.
+            // A computed expression must be emitted as a dialect-free node (resolved per dialect by the
+            // renderer), not a pre-rendered string; reaching here means a producer passed a non-plain-column
+            // expression.
             throw new IllegalStateException(
                 "computed SQL expression must be a RawVariant node, not the removed legacy dialect-string path: "
                     + expression);
@@ -597,8 +597,8 @@ public class RolapStar {
     }
 
     /**
-     * Creates an empty {@link QueryRecorder} for a query against this star (P4-B5: the recorder
-     * replaced the the retired query facade facade as the accumulation surface; same formatted-flag read).
+     * Creates an empty {@link QueryRecorder} for a query against this star (the accumulation
+     * surface producers record onto).
      */
     public QueryRecorder newQueryRecorder() {
         return new QueryRecorder(
@@ -1056,58 +1056,6 @@ public class RolapStar {
             return approxCardinality.get();
         }
 
-        /**
-         * Generates a predicate that a column matches one of a list of values.
-         *
-         *
-         * Several possible outputs, depending upon whether the there are
-         * nulls:
-         *
-         * One not-null value: foo.bar = 1
-         *
-         * All values not null: foo.bar in (1, 2, 3)
-         *
-         * Null and not null values:
-         * (foo.bar is null or foo.bar in (1, 2))
-         *
-         * Only null values:
-         * foo.bar is null
-         *
-         * String values: foo.bar in ('a', 'b', 'c')
-         *
-         *
-         */
-        public static String createInExpr(
-            final String expr,
-            StarColumnPredicate predicate,
-            Datatype datatype,
-            Dialect dialect)
-        {
-            // Sometimes a column predicate is created without a column. This
-            // is unfortunate, and we will fix it some day. For now, create
-            // a fake column with all of the information needed by the toSql
-            // method, and a copy of the predicate wrapping that fake column.
-            if (!Bug.Bug313Fixed
-                || !Bug.Bug314Fixed
-                && predicate.getConstrainedColumn() == null)
-            {
-                Column column = new Column(datatype) {
-                    @Override
-                    public String generateExprString(Dialect dialect) {
-                        // This fake column has no real expression; the override must return the
-                        // caller-supplied expr. (Reached when a predicate renders via toSql(Dialect) —
-                        // without this override it would fall to the base method and emit "null" for the
-                        // missing expression.)
-                        return expr;
-                    }
-                };
-                predicate = predicate.cloneWithColumn(column);
-            }
-
-            StringBuilder buf = new StringBuilder(64);
-            predicate.toSql(dialect, buf);
-            return buf.toString();
-        }
 
         @Override
 		public String toString() {

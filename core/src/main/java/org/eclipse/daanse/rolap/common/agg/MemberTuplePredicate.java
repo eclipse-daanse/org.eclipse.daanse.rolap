@@ -32,7 +32,6 @@ import java.util.List;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.key.BitKey;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.star.StarPredicate;
 import org.eclipse.daanse.rolap.element.RolapCube;
@@ -171,6 +170,37 @@ public class MemberTuplePredicate implements StarPredicate {
     @Override
 	public BitKey getConstrainedColumnBitKey() {
         return columnBitKey;
+    }
+
+    /** The comparison direction/strictness of a bound's deepest (least-significant) column;
+     *  ancestor columns always compare with the de-stricted (non-strict) operator, so only
+     *  this final operator varies. A neutral, SQL-API-free view for translators. */
+    public enum BoundRelation { LT, LE, GT, GE, EQ }
+
+    /** SQL-translation view of one {@link Bound}: the per-column key values (root-first,
+     *  aligned with {@link #getConstrainedColumnList()}) and the {@link BoundRelation} of the
+     *  deepest column. NOTE: {@code values} may be longer than the column list when some level
+     *  is not a {@link RolapCubeLevel} ({@link #computeColumnList} skips those); callers must
+     *  guard on {@code values.size() == getConstrainedColumnList().size()}. */
+    public record BoundSpec(List<Object> values, BoundRelation relation) {}
+
+    /** The bounds of this predicate as neutral {@link BoundSpec}s (one per lower/upper/equal
+     *  bound). A single {@code EQ} spec for the single-member form; one or two range bounds
+     *  otherwise. */
+    public List<BoundSpec> getBoundSpecs() {
+        List<BoundSpec> specs = new ArrayList<>();
+        for (Bound bound : bounds) {
+            RelOp last = bound.relOps[bound.relOps.length - 1];
+            BoundRelation relation = switch (last) {
+            case LT -> BoundRelation.LT;
+            case LE -> BoundRelation.LE;
+            case GT -> BoundRelation.GT;
+            case GE -> BoundRelation.GE;
+            case EQ -> BoundRelation.EQ;
+            };
+            specs.add(new BoundSpec(Arrays.asList(bound.values), relation));
+        }
+        return specs;
     }
 
     @Override
@@ -335,8 +365,4 @@ public class MemberTuplePredicate implements StarPredicate {
         }
     }
 
-    @Override
-	public void toSql(Dialect dialect, StringBuilder buf) {
-        throw Util.needToImplement(this);
-    }
 }

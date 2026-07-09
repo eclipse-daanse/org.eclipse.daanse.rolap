@@ -52,7 +52,7 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
-import org.eclipse.daanse.jdbc.db.dialect.api.type.Datatype;
+import org.eclipse.daanse.jdbc.db.api.type.Datatype;
 import org.eclipse.daanse.mdx.model.api.expression.operation.FunctionOperationAtom;
 import org.eclipse.daanse.mdx.model.api.expression.operation.OperationAtom;
 import org.eclipse.daanse.olap.access.RoleImpl;
@@ -136,6 +136,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.eclipse.daanse.rolap.mapping.model.database.source.SourceFactory;
+import java.util.Comparator;
+import org.eclipse.daanse.cwm.model.cwm.objectmodel.instance.DataSlot;
+import org.eclipse.daanse.cwm.model.cwm.resource.relational.Column;
+import org.eclipse.daanse.cwm.model.cwm.resource.relational.Row;
+import org.eclipse.daanse.cwm.model.cwm.resource.relational.RowSet;
+import org.eclipse.daanse.cwm.util.resource.relational.ColumnSets;
+import org.eclipse.daanse.cwm.util.resource.relational.RowSets;
+import org.eclipse.daanse.cwm.util.resource.relational.Rows;
 /**
  * RolapCube implements {@link Cube} for a ROLAP database.
  *
@@ -2511,6 +2519,105 @@ public abstract class RolapCube extends CubeBase {
 		return kpis;
 	}
 
+    /**
+     * Converts an inline-table source into a dialect-specific view relation for writeback fact
+     * substitution. It renders the inline data into a {@code SqlSelectSource} view by baking the
+     * dialect's {@code generateInline} SQL as a "generic"-tagged statement. The writeback fact path
+     * ({@link #modifyFact}) appends the writeback WHERE onto the view's SQL string, which only
+     * exists once the inline data has been rendered to SQL.
+     */
+    public static org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource convertInlineTableToRelation(
+    		org.eclipse.daanse.rolap.mapping.model.database.source.InlineTableSource inlineTable,
+        final Dialect dialect)
+    {
+        List<Column> cols = ColumnSets.columns(inlineTable.getTable());
+        List<String> columnNames = cols.stream().map(Column::getName).toList();
+        List<String> columnTypes = cols.stream().map(c -> c.getType().getName()).toList();
+        final int columnCount = cols.size();
+
+        List<String[]> valueList = new ArrayList<>();
+        RowSet extent = inlineTable.getTable().getExtent();
+        List<Row> rows = extent == null ? List.of() : RowSets.rows(extent);
+        for (Row row : rows) {
+            String[] values = new String[columnCount];
+            for (DataSlot value : Rows.slots(row)) {
+                Column col = (Column) value.getFeature();
+                final int columnOrdinal = columnNames.indexOf(col.getName());
+                if (columnOrdinal < 0) {
+                    throw Util.newError(
+                        new StringBuilder("Unknown column '").append(col.getName()).append("'").toString());
+                }
+                values[columnOrdinal] = value.getDataValue();
+            }
+            valueList.add(values);
+        }
+        org.eclipse.daanse.rolap.mapping.model.database.source.SqlSelectSource view = SourceFactory.eINSTANCE.createSqlSelectSource();
+        view.setAlias(getAlias(inlineTable));
+
+        org.eclipse.daanse.rolap.mapping.model.database.source.SqlStatement sqlStatement = SourceFactory.eINSTANCE.createSqlStatement();
+        sqlStatement.getDialects().add("generic");
+        sqlStatement.setSql(dialect.sqlGenerator().generateInline(columnNames, columnTypes, valueList).toString());
+
+        org.eclipse.daanse.rolap.mapping.model.database.relational.DialectSqlView sqlView = org.eclipse.daanse.rolap.mapping.model.database.relational.RelationalFactory.eINSTANCE.createDialectSqlView();
+        sqlView.getDialectStatements().add(sqlStatement);
+
+        view.setSql(sqlView);
+
+        return view;
+    }
+
+    /**
+     * Ordered overload of {@link #convertInlineTableToRelation(org.eclipse.daanse.rolap.mapping.model.database.source.InlineTableSource, Dialect)}:
+     * the writeback fact path hands in the target column order.
+     */
+    public static org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource convertInlineTableToRelation(
+    		org.eclipse.daanse.rolap.mapping.model.database.source.InlineTableSource inlineTable,
+            final Dialect dialect, List<String> orderColumns)
+        {
+            List<String> columnNames = new ArrayList<>();
+            List<String> columnTypes = new ArrayList<>();
+
+            List<? extends org.eclipse.daanse.cwm.model.cwm.resource.relational.Column> columns = ColumnSets
+                    .columnStream(inlineTable.getTable())
+                    .sorted(Comparator.comparingInt(o -> orderColumns.indexOf(o.getName()))).toList();
+
+            for (org.eclipse.daanse.cwm.model.cwm.resource.relational.Column columnMapping : columns) {
+            		columnNames.add(columnMapping.getName());
+            		columnTypes.add(columnMapping.getType().getName());
+            }
+            List<String[]> valueList = new ArrayList<>();
+            List<? extends org.eclipse.daanse.cwm.model.cwm.resource.relational.Row> rows =
+                inlineTable.getTable().getExtent() == null ? java.util.List.of()
+                    : inlineTable.getTable().getExtent().getOwnedElement().stream()
+                        .filter(org.eclipse.daanse.cwm.model.cwm.resource.relational.Row.class::isInstance)
+                        .map(org.eclipse.daanse.cwm.model.cwm.resource.relational.Row.class::cast).toList();
+            for (org.eclipse.daanse.cwm.model.cwm.resource.relational.Row row : rows) {
+                List<String> values = new ArrayList<>();
+                List<? extends org.eclipse.daanse.cwm.model.cwm.objectmodel.instance.DataSlot> rowValues = row.getSlot().stream()
+                    .filter(org.eclipse.daanse.cwm.model.cwm.objectmodel.instance.DataSlot.class::isInstance)
+                    .map(org.eclipse.daanse.cwm.model.cwm.objectmodel.instance.DataSlot.class::cast)
+                    .sorted(Comparator.comparingInt(v -> orderColumns.indexOf(((org.eclipse.daanse.cwm.model.cwm.resource.relational.Column) v.getFeature()).getName())))
+                    .toList();
+                for (org.eclipse.daanse.cwm.model.cwm.objectmodel.instance.DataSlot rowValue : rowValues) {
+                	values.add(rowValue.getDataValue());
+                }
+                valueList.add(values.toArray(new String[0]));
+            }
+
+            org.eclipse.daanse.rolap.mapping.model.database.source.SqlStatement sqlStatement = SourceFactory.eINSTANCE.createSqlStatement();
+            sqlStatement.getDialects().add("generic");
+            sqlStatement.setSql(dialect.sqlGenerator().generateInline(columnNames, columnTypes, valueList).toString());
+
+            org.eclipse.daanse.rolap.mapping.model.database.relational.DialectSqlView sqlView = org.eclipse.daanse.rolap.mapping.model.database.relational.RelationalFactory.eINSTANCE.createDialectSqlView();
+            sqlView.getDialectStatements().add(sqlStatement);
+
+            org.eclipse.daanse.rolap.mapping.model.database.source.SqlSelectSource view = SourceFactory.eINSTANCE.createSqlSelectSource();
+            view.setAlias(getAlias(inlineTable));
+            view.setSql(sqlView);
+
+            return view;
+        }
+
 	@Override
     public void modifyFact(List<Map<String, Entry<DataTypeJdbc, Object>>> sessionValues) {
             if (restoreFact != null) {
@@ -2546,7 +2653,7 @@ public abstract class RolapCube extends CubeBase {
                     }
                     if (fact instanceof org.eclipse.daanse.rolap.mapping.model.database.source.InlineTableSource mappingInlineTable) {
                     	List<String> columns =  writebackTable.getColumns().stream().map(c -> c.getColumn().getName()).toList();
-                    	org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource mappingRelation = RolapUtil.convertInlineTableToRelation(mappingInlineTable, getContext().getDialect(), columns);
+                    	org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource mappingRelation = convertInlineTableToRelation(mappingInlineTable, getContext().getDialect(), columns);
                         if (mappingRelation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.SqlSelectSource mappingView) {
                             changeFact(mappingView, dialect, writebackTable, rolapSessionValues);
                         }

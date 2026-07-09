@@ -27,7 +27,6 @@ package org.eclipse.daanse.rolap.common.star;
 
 import java.util.List;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.olap.key.BitKey;
 
 /**
@@ -129,6 +128,4 @@ public interface StarPredicate {
      * Wildcard value for {@link #evaluate(java.util.List)}.
      */
     Object WILDCARD = new Object();
-
-    void toSql(Dialect dialect, StringBuilder buf);
 }

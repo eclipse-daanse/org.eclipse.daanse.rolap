@@ -40,9 +40,11 @@ import org.eclipse.daanse.sql.statement.api.model.TableAlias;
  * equality, each key qualified by the alias of the leftmost table of its side (the
  * {@code JoinUtil} resolution). The renderer turns the {@code FromJoin} into either an ANSI
  * {@code JOIN…ON} or — when {@code allowsJoinOn()=false} — a comma product with the conditions in
- * {@code WHERE}. {@code SqlSelectSource} (view) and
- * {@code InlineTableSource} are not handled. Callers gate on {@link #supports} and fall back to the
- * reference SQL for everything else.
+ * {@code WHERE}. {@link #from} additionally builds a lone {@code SqlSelectSource} (view) as a
+ * {@link FromClause.FromVariant} and a lone {@code InlineTableSource} as a
+ * {@link FromClause.FromInline} — executed routes gate on {@link #supports} (tables/joins only) or
+ * {@link #isSingleViewOrInline} (the exotic single-relation shapes); everything else stays on the
+ * recorder.
  */
 public final class RelationFromMapper {
 
@@ -58,6 +60,46 @@ public final class RelationFromMapper {
         }
         if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource join) {
             return supports(join.getLeft().getSource()) && supports(join.getRight().getSource());
+        }
+        return false;
+    }
+
+    /**
+     * True if this relation is a SINGLE view ({@code SqlSelectSource}) or inline table
+     * ({@code InlineTableSource}) — the exotic shapes {@link #from} maps to a lone
+     * {@code FromVariant}/{@code FromInline} with no join. A {@code JoinSource} whose sides include
+     * a view/inline is deliberately NOT accepted: such a join places the level key on a
+     * joined side that the per-level subset FROM ({@code fromReferenced}) drops, diverging from the
+     * recorder (e.g. {@code [Store].[Store Country]} = store JOIN inline-nation). Gates the
+     * exotic-level member-children route so ONLY the single-relation view/inline shapes are built
+     * authoritatively.
+     */
+    public static boolean isSingleViewOrInline(
+            org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation) {
+        return relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.SqlSelectSource
+                || relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.InlineTableSource;
+    }
+
+    /**
+     * True when a SINGLE view/inline relation (see {@link #isSingleViewOrInline}) actually resolves
+     * to a non-empty FROM body — as opposed to a DEGENERATE relation whose {@link #from} would emit
+     * broken SQL. The writeback {@code [Scenario]} dimension carries a {@code SqlSelectSource} with
+     * an EMPTY body: it renders as {@code from () as "foo"} and even the recorder emits a
+     * {@code SQLSyntaxError} (caught upstream). Guards the count widening so ONLY the resolvable
+     * exotic single-relation shapes ({@code [Alternative Promotion]},
+     * {@code [Shared Alternative Promotion]}) route to the builder count; the degenerate scenario
+     * relation stays on the recorder (its broken read is unchanged). A view resolves when at least
+     * one dialect variant carries a non-blank SQL body; an inline table resolves when it declares
+     * at least one column.
+     */
+    public static boolean resolvesSingleViewOrInline(
+            org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.SqlSelectSource view) {
+            return ViewUtil.getCodeSet(view).asMap().values().stream()
+                    .anyMatch(sql -> sql != null && !sql.isBlank());
+        }
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.InlineTableSource inline) {
+            return !RolapUtil.inlineTableData(inline).columnNames().isEmpty();
         }
         return false;
     }
@@ -148,8 +190,10 @@ public final class RelationFromMapper {
         return out;
     }
 
-    /** The {@code left.key = right.key} equality for a join, qualified via {@link JoinUtil}. */
-    private static Predicate joinOn(
+    /** The {@code left.key = right.key} equality for a join, qualified via {@link JoinUtil}.
+     *  Package-visible: {@code TupleSqlMapper.productTupleLevelMembersSql} re-emits the same
+     *  equality as a WHERE conjunct for the comma-product (no-fact-join) tuple shape. */
+    static Predicate joinOn(
             org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource join) {
         return Predicates.comparison(
                 Expressions.column(TableAlias.of(JoinUtil.getLeftAlias(join)), join.getLeft().getKey().getName()),
@@ -171,6 +215,46 @@ public final class RelationFromMapper {
                 return relationSubset(join.getLeft().getSource(), alias);
             }
             return SystemWideProperties.instance().FilterChildlessSnowflakeMembers ? join : right;
+        }
+        if (relation == null) {
+            throw org.eclipse.daanse.olap.common.Util.newInternal("bad relation type " + relation);
+        }
+        return RelationUtil.getAlias(relation).equals(alias) ? relation : null;
+    }
+
+    /**
+     * The INVERSE-subset FROM used with aggregate tables: the {@link FromClause} of
+     * {@link #relationSubsetInverse}, i.e. the level-key table together with its LEAF-WARD join
+     * subtree (when the alias sits in a join's LEFT branch the whole join is kept — the tables
+     * between the level key and the hierarchy's leaf side — while root-ward ancestors are
+     * dropped). The recorder path adds this subset first and then joins the agg table to it
+     * "starting at the lowest granularity and working towards the fact table". A non-join relation,
+     * or a {@code null} alias, maps whole — the same guard {@code addToFromInverse} applies.
+     */
+    public static FromClause fromInverse(
+            org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation, String alias) {
+        org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource subRelation = relation;
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource
+                && alias != null) {
+            subRelation = relationSubsetInverse(relation, alias);
+        }
+        return from(subRelation);
+    }
+
+    /**
+     * The smallest subset of {@code relation} containing the table {@code alias} in INVERSE join
+     * order (used with agg tables): a
+     * join is kept WHOLE when the alias is found in its LEFT branch (the leaf-ward subtree rides
+     * along), and recursed into when the alias is only in the right branch. Unlike
+     * {@link #relationSubset} this does NOT consult {@code FilterChildlessSnowflakeMembers}.
+     * Returns {@code null} when no table matches; a null relation node is a model error.
+     */
+    public static org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relationSubsetInverse(
+            org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation, String alias) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource join) {
+            org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource left =
+                    relationSubsetInverse(join.getLeft().getSource(), alias);
+            return left == null ? relationSubsetInverse(join.getRight().getSource(), alias) : join;
         }
         if (relation == null) {
             throw org.eclipse.daanse.olap.common.Util.newInternal("bad relation type " + relation);
@@ -219,11 +303,74 @@ public final class RelationFromMapper {
             collectTableAliases(join.getLeft().getSource(), out);
             collectTableAliases(join.getRight().getSource(), out);
         } else if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.TableSource
-                || relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.SqlSelectSource) {
-            // views (SqlSelectSource) are leaf relations too — collect their alias so a view-backed
-            // level resolves into the snowflake subset (dialect-aware FROM renders it via From.raw).
+                || relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.SqlSelectSource
+                || relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.InlineTableSource) {
+            // views (SqlSelectSource) and inline tables (InlineTableSource) are leaf relations too —
+            // collect their alias so a view/inline-backed level resolves into the snowflake subset
+            // (the FROM renders them via FromVariant/FromInline; the recorder registers inline
+            // aliases the same way). Without the inline alias, memberFromTables would drop the
+            // inline side of a store JOIN inline-nation relation.
             out.add(RelationUtil.getAlias(relation));
         }
+    }
+
+    /**
+     * The table's schema-defined {@code sqlWhereExpression} as a parenthesised raw predicate for
+     * the {@code FromTable.filter} slot, or {@code null} when the relation carries none. The
+     * recorder emits the same filter in {@code QueryRecorder.addFromTable} (the filter joins the
+     * WHERE as its own conjunct when the table enters the FROM); the renderer pushes a
+     * {@code FromTable.filter} into WHERE the same way ({@code DialectSqlRenderer.renderFrom}),
+     * after the statement's explicit conjuncts. Shared by every reader mapper that puts a
+     * star/mapping table into a FROM, so a table-level filter is never silently dropped.
+     */
+    public static Predicate tableFilter(
+            org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation) {
+        if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.TableSource ts
+                && ts.getSqlWhereExpression() != null) {
+            String sql = ts.getSqlWhereExpression().getSql();
+            if (sql != null && !sql.isBlank()) {
+                return Predicates.raw("(" + sql + ")");
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Collects every {@code FromTable.filter} of the tree into {@code sink} — left-deep, in
+     * FROM-entry order, the order the recorder appends each table's schema SQL filter to WHERE as
+     * the table enters the FROM ({@code QueryRecorder.addFromTable}) — and returns the tree with
+     * the slots CLEARED. The level/tuple assembly ({@code TupleSqlMapper.buildLevelSelect}) emits
+     * the collected filters as LEADING explicit WHERE conjuncts, BEFORE the constraint conjuncts:
+     * leaving them in the slot renders them AFTER the explicit conjuncts instead
+     * ({@code DialectSqlRenderer} pushes slot filters into WHERE last), giving the wrong conjunct
+     * order. Clearing the slot prevents the double emission.
+     */
+    public static FromClause liftTableFilters(FromClause from, java.util.List<Predicate> sink) {
+        if (from instanceof FromClause.FromTable t) {
+            if (t.filter().isPresent()) {
+                sink.add(t.filter().get());
+                return new FromClause.FromTable(t.table(), t.alias(), java.util.Optional.empty(),
+                        t.hints(), t.comment());
+            }
+            return t;
+        }
+        if (from instanceof FromClause.FromJoin j) {
+            FromClause left = liftTableFilters(j.left(), sink);
+            FromClause right = liftTableFilters(j.right(), sink);
+            return (left == j.left() && right == j.right()) ? j
+                    : new FromClause.FromJoin(left, j.kind(), right, j.on(), j.comment());
+        }
+        if (from instanceof FromClause.FromProduct p) {
+            java.util.List<FromClause> items = new java.util.ArrayList<>();
+            boolean changed = false;
+            for (FromClause item : p.items()) {
+                FromClause lifted = liftTableFilters(item, sink);
+                changed |= lifted != item;
+                items.add(lifted);
+            }
+            return changed ? new FromClause.FromProduct(items) : p;
+        }
+        return from;
     }
 
     private static FromClause.FromTable fromTable(
@@ -232,11 +379,15 @@ public final class RelationFromMapper {
         String name = ncs.getName();
         String alias = RelationUtil.getAlias(table);
         String schema = schemaName(ncs);
-        return schema != null ? From.table(schema, name, TableAlias.of(alias))
-                : From.table(name, TableAlias.of(alias));
+        // Carry the table's schema SQL filter in the FromTable.filter slot (the renderer emits
+        // it as a WHERE conjunct), reproducing the recorder's addFromTable filter semantics.
+        return From.table(From.tableRef(schema, name), TableAlias.of(alias), tableFilter(table),
+                java.util.Map.of());
     }
 
-    private static String schemaName(
+    /** The schema qualifying a table, or null. Package-visible: {@code AggJoinPlanner.aggTableFrom}
+     *  builds the same schema-qualified table reference for an agg-chain table. */
+    static String schemaName(
             org.eclipse.daanse.cwm.model.cwm.resource.relational.NamedColumnSet ncs) {
         if (ncs.getNamespace() instanceof org.eclipse.daanse.cwm.model.cwm.resource.relational.Schema schema) {
             return schema.getName();

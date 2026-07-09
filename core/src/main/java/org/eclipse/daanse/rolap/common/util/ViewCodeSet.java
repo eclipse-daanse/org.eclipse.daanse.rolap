@@ -18,13 +18,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Holds the per-dialect SQL variants of a view (or other dialect-specific SQL source) as a
- * {@code dialect-name -> SQL} map. The dialect pick happens later, in {@code DialectSqlRenderer} (via a
- * {@code FromVariant}/{@code RawVariant} node resolved with {@code chooseVariant}), not here — the legacy
- * build-time {@code chooseQuery(Dialect)} has been removed.
- * <p>
- * Relocated from the retired query facade's {@code CodeSet} — it is used by view/inline rendering,
- * which outlives the legacy query builder.
+ * Holds the per-dialect SQL variants of a view or inline source as a {@code dialect-name -> SQL}
+ * map. The live dialect is picked at render time by {@code DialectSqlRenderer} (via a
+ * {@code FromVariant}/{@code RawVariant} node resolved with {@code chooseVariant}), not here. Used by
+ * view/inline rendering.
  */
 public class ViewCodeSet {
 
@@ -58,8 +55,8 @@ public class ViewCodeSet {
     }
 
     /**
-     * Exposes the per-dialect {@code dialect-name -> SQL} map for renderer-resolved variant nodes (doc-04
-     * {@code FromVariant}/{@code RawVariant}) — the dialect pick then happens in {@code DialectSqlRenderer}.
+     * Exposes the per-dialect {@code dialect-name -> SQL} map for renderer-resolved variant nodes
+     * ({@code FromVariant}/{@code RawVariant}) — the dialect pick then happens in {@code DialectSqlRenderer}.
      */
     public Map<String, String> asMap() {
         return Map.copyOf(dialectCodes);

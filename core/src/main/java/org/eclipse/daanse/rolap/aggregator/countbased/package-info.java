@@ -11,7 +11,9 @@
 *   SmartCity Jena - initial
 *   Stefan Bischof (bipolis.org) - initial
 */
-//TODO: RM EXPORT
-@org.osgi.annotation.bundle.Export
-@org.osgi.annotation.versioning.Version("0.0.1")
+/**
+ * Aggregators that derive their value from other aggregates and the fact-count column (for
+ * example average from sum, sum from average, average from average). This package is
+ * bundle-private.
+ */
 package org.eclipse.daanse.rolap.aggregator.countbased;

@@ -29,10 +29,7 @@ package org.eclipse.daanse.rolap.common.sql;
 
 import java.util.List;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
-import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;
-import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.element.RolapLevel;
 
 /**
@@ -46,12 +43,6 @@ public interface CrossJoinArg {
     RolapLevel getLevel();
 
     List<RolapMember> getMembers();
-
-    void addConstraint(
-        Dialect dialect,
-        QueryRecorder sqlQuery,
-        RolapCube baseCube,
-        AggStar aggStar);
 
     boolean isPreferInterpreter(boolean joinArg);
 }

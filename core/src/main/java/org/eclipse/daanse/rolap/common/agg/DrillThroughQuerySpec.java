@@ -33,7 +33,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.type.BestFitColumnType;
+import org.eclipse.daanse.jdbc.db.api.type.BestFitColumnType;
+import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.olap.api.element.OlapElement;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.sql.statement.api.render.RenderedSql;
@@ -222,9 +223,9 @@ public class DrillThroughQuerySpec extends AbstractQuerySpec {
 
     @Override
 	public RenderedSql generateSql() {
-        // Authoritative: the builder reproduces every drill-through shape (count + detail), verified
-        // 46/46 corpus-wide; no legacy QueryRecorder is constructed. buildDrillThrough handles countOnly too.
-        org.eclipse.daanse.jdbc.db.dialect.api.Dialect dialect = getStar().getDialect();
+        // Authoritative: the builder reproduces every drill-through shape (count + detail); no
+        // QueryRecorder is constructed. buildDrillThrough handles countOnly too.
+        Dialect dialect = getStar().getDialect();
         return SqlBuildGuard.build(dialect,
             getStar().getContext().getConfigValue(
                 org.eclipse.daanse.olap.common.ConfigConstants.GENERATE_FORMATTED_SQL,
@@ -236,10 +237,10 @@ public class DrillThroughQuerySpec extends AbstractQuerySpec {
     /**
      * The drill-through SELECT via the generic {@link AggregateSqlMapper#drillThrough}: the detail-row
      * query (cut columns + measures + inapplicable-member NULL placeholders + row limit), or a
-     * {@code count(*)} query when {@code countOnly}. This is the authoritative producer — no legacy
+     * {@code count(*)} query when {@code countOnly}. This is the authoritative producer — no
      * QueryRecorder is built.
      */
-    private SelectStatement buildDrillThrough(org.eclipse.daanse.jdbc.db.dialect.api.Dialect dialect) {
+    private SelectStatement buildDrillThrough(Dialect dialect) {
         boolean allowsFieldAlias = dialect.allowsFieldAlias();
         List<AggregateSqlMapper.DrillColumn> drillColumns = new ArrayList<>();
         RolapStar.Column[] columns = getColumns();
@@ -250,7 +251,7 @@ public class DrillThroughQuerySpec extends AbstractQuerySpec {
             }
             StarColumnPredicate predicate = getColumnPredicate(i);
             Predicate filter = StarPredicateTranslator.isAlwaysTrue(predicate)
-                ? null : StarPredicateTranslator.toPredicate(predicate);
+                ? null : translateOrResidual(predicate, dialect);
             boolean selected = isPartOfSelect(column);
             String alias = (selected && allowsFieldAlias) ? getColumnAlias(i) : null;
             // The request's cut columns participate in ORDER BY (legacy addOrderBy when isOrdered()).
@@ -264,7 +265,10 @@ public class DrillThroughQuerySpec extends AbstractQuerySpec {
         List<Predicate> extraFilters = new ArrayList<>();
         Set<String> columnNameSet = new HashSet<>(columnNames);
         for (StarPredicate sp : getPredicateList()) {
-            extraFilters.add(StarPredicateTranslator.toPredicate(sp));
+            Predicate translated = translateOrResidual(sp, dialect);
+            if (translated != null) {
+                extraFilters.add(translated);
+            }
             for (RolapStar.Column c : sp.getConstrainedColumnList()) {
                 boolean inSelect = isPartOfSelect(c) && !columnNameSet.contains(c.getName());
                 String alias = inSelect ? makeAlias(c, columnNames, columnNameSet) : null;
@@ -283,8 +287,8 @@ public class DrillThroughQuerySpec extends AbstractQuerySpec {
                     continue;
                 }
                 // Dialect-free: the drill-through projects the raw measure column -> Column / computed
-                // RawVariant (renderer resolves per dialect == the legacy generateExprString chooseQuery, at
-                // render). A column-less measure keeps the legacy string (rare; never computed -> no chooseQuery).
+                // RawVariant (renderer resolves per dialect, at render). A column-less measure keeps the
+                // rendered string (rare; never computed).
                 raw.add(new AggregateSqlMapper.RawProjection(
                     measure.getExpression() == null
                         ? Expressions.raw(measure.generateExprString(dialect))
@@ -307,6 +311,21 @@ public class DrillThroughQuerySpec extends AbstractQuerySpec {
 
         return AggregateSqlMapper.drillThrough(getStar().getFactTable(), drillColumns, extraFilters, raw,
             countOnly, request.getMaxRowCount(), dialect);
+    }
+
+    /**
+     * {@link StarPredicate} → builder {@link Predicate}. The {@link StarPredicateTranslator} is
+     * total for every shape a drill-through feeds it (Value/List/And/Or/Literal plus Range /
+     * MemberTuple / Minus). An always-true predicate adds no restriction and returns {@code null}.
+     * A shape the translator cannot model throws {@code IllegalArgumentException} (defensively
+     * impossible — surfaced, never a silently dropped constraint). The {@code dialect} is retained
+     * for signature stability with the callers. Package-private for the unit test.
+     */
+    static Predicate translateOrResidual(StarPredicate predicate, Dialect dialect) {
+        if (StarPredicateTranslator.isAlwaysTrue(predicate)) {
+            return null;
+        }
+        return StarPredicateTranslator.toPredicate(predicate);
     }
 
     @Override

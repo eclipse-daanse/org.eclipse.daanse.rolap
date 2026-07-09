@@ -11,7 +11,11 @@
 *   SmartCity Jena - initial
 *   Stefan Bischof (bipolis.org) - initial
 */
-//TODO: RM EXPORT
+/**
+ * Message recorders ({@link MessageRecorder} and its {@link ListRecorder} implementation) that
+ * accumulate error, warning and info messages while a model is validated. Exported only so the
+ * core test fragment can reference {@code MessageRecorder}; it has no other external consumers.
+ */
 @org.osgi.annotation.bundle.Export
 @org.osgi.annotation.versioning.Version("0.0.1")
 package org.eclipse.daanse.rolap.recorder;

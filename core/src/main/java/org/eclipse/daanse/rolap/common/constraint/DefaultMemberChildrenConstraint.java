@@ -30,16 +30,12 @@ package org.eclipse.daanse.rolap.common.constraint;
 import java.util.List;
 import java.util.Optional;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;
 import org.eclipse.daanse.rolap.common.sqlbuild.JoinPlanner;
 import org.eclipse.daanse.rolap.common.sql.ConstraintContribution;
 import org.eclipse.daanse.rolap.common.sql.MemberChildrenConstraint;
-import org.eclipse.daanse.rolap.common.sql.QueryTape;
-import org.eclipse.daanse.rolap.common.sql.QueryRecorder;
 import org.eclipse.daanse.rolap.element.RolapCube;
-import org.eclipse.daanse.rolap.element.RolapLevel;
 
 /**
  * Restricts the SQL result set to the parent member of a
@@ -53,53 +49,6 @@ public class DefaultMemberChildrenConstraint
         new DefaultMemberChildrenConstraint();
 
     protected DefaultMemberChildrenConstraint() {
-    }
-
-    /**
-     * Records the single-parent member constraint ({@code WHERE parent = value}) on the fork.
-     */
-    @Override
-    public QueryTape addMemberConstraintOps(
-        Dialect dialect,
-        QueryRecorder.Fork fork,
-        RolapCube baseCube,
-        AggStar aggStar,
-        RolapMember parent)
-    {
-        MemberConstraintWriter.addMemberConstraint(
-            dialect, fork, baseCube, aggStar, parent, true);
-        return fork.ops();
-    }
-
-    /**
-     * Records the member-set constraint ({@code WHERE exp IN (...)}) for {@code parents} on the
-     * fork — see the single-parent form.
-     */
-    @Override
-    public QueryTape addMemberConstraintOps(
-        Dialect dialect,
-        QueryRecorder.Fork fork,
-        RolapCube baseCube,
-        AggStar aggStar,
-        List<RolapMember> parents)
-    {
-        boolean exclude = false;
-        MemberConstraintWriter.addMemberConstraint(
-            dialect, fork, baseCube, aggStar, parents, true, false, exclude);
-        return fork.ops();
-    }
-
-    /** No per-level restriction here; {@code ChildByNameConstraint} overrides this with its
-     *  name filter. */
-    @Override
-    public QueryTape addMemberLevelConstraintOps(
-        Dialect dialect,
-        QueryRecorder.Fork fork,
-        RolapCube baseCube,
-        AggStar aggStar,
-        RolapLevel level)
-    {
-        return fork.ops();
     }
 
     @Override

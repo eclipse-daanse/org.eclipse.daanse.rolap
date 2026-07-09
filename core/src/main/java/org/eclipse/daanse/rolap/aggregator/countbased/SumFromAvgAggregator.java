@@ -44,12 +44,13 @@ public class SumFromAvgAggregator extends AbstractFactCountBasedAggregator {
     }
 
     @Override
-    public org.eclipse.daanse.sql.statement.api.expression.SqlExpression getExpression(
+    public org.eclipse.daanse.sql.statement.api.expression.SqlExpression toNode(
             org.eclipse.daanse.sql.statement.api.expression.SqlExpression inner) {
-        // sum(<inner> * <factCount>) — the multiply is non-parenthesized (inside sum(...))
+        org.eclipse.daanse.sql.statement.api.expression.SqlExpression operand = nodeOperand(inner);
+        // sum(<operand> * <factCount>) — the multiply is non-parenthesized (inside sum(...))
         return org.eclipse.daanse.sql.statement.api.Expressions.aggregate("sum",
             org.eclipse.daanse.sql.statement.api.Expressions.infix(
-                inner,
+                operand,
                 org.eclipse.daanse.sql.statement.api.expression.ArithmeticOperator.MULTIPLY,
                 factCountNode));
     }
@@ -69,7 +70,7 @@ public class SumFromAvgAggregator extends AbstractFactCountBasedAggregator {
     public org.eclipse.daanse.sql.statement.api.expression.SqlExpression getScalarNode(
             org.eclipse.daanse.sql.statement.api.expression.SqlExpression operand) {
         // (<operand>) * (<factCount>) — each side individually parenthesized (empty-name Function renders
-        // exactly "(x)"), joined by a NON-parenthesized infix "*" — byte-identical to getScalarExpression.
+        // exactly "(x)"), joined by a NON-parenthesized infix "*".
         return org.eclipse.daanse.sql.statement.api.Expressions.infix(
             org.eclipse.daanse.sql.statement.api.Expressions.function("", operand),
             org.eclipse.daanse.sql.statement.api.expression.ArithmeticOperator.MULTIPLY,

@@ -88,6 +88,16 @@ public class RolapCatalogCache implements CatalogCache {
      * </ul>
      */
     private final Cache<RolapCatalogKey, CatalogCacheValue> cache = Caffeine.newBuilder()
+            // Deliver maintenance and removal notifications on the CALLING thread. The removal
+            // listener below parks EXPIRED entries into softCache; with the default asynchronous
+            // executor that parking races clear(): cache.invalidateAll() schedules the EXPIRED
+            // notification, softCache.invalidateAll() runs first, and the notification then
+            // re-inserts the just-flushed catalog into softCache — the next connection resurrects
+            // the OLD catalog (with all its per-catalog caches, e.g. the native-set tuple cache)
+            // instead of rebuilding, silently defeating CacheControl.flushSchemaCache(). With a
+            // same-thread executor the parking happens inside cache.invalidateAll(), strictly
+            // before softCache.invalidateAll(), so a flush deterministically drops the catalog.
+            .executor(Runnable::run)
             .expireAfter(new Expiry<RolapCatalogKey, CatalogCacheValue>() {
                 @Override
                 public long expireAfterCreate(RolapCatalogKey key, CatalogCacheValue value, long currentTime) {

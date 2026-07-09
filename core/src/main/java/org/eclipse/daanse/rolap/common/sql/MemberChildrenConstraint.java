@@ -26,13 +26,9 @@
 
 package org.eclipse.daanse.rolap.common.sql;
 
-import java.util.List;
-
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;
 import org.eclipse.daanse.rolap.element.RolapCube;
-import org.eclipse.daanse.rolap.element.RolapLevel;
 
 /**
  * Restricts the SQL result of a MembersChildren query in SqlMemberSource.
@@ -44,37 +40,12 @@ import org.eclipse.daanse.rolap.element.RolapLevel;
  */
 public interface MemberChildrenConstraint extends SqlConstraint {
 
-
-
-
-    QueryTape addMemberConstraintOps(
-        Dialect dialect,
-        QueryRecorder.Fork fork,
-        RolapCube baseCube,
-        AggStar aggStar,
-        RolapMember parent);
-
-    QueryTape addMemberConstraintOps(
-        Dialect dialect,
-        QueryRecorder.Fork fork,
-        RolapCube baseCube,
-        AggStar aggStar,
-        List<RolapMember> parents);
-
-    QueryTape addMemberLevelConstraintOps(
-        Dialect dialect,
-        QueryRecorder.Fork fork,
-        RolapCube baseCube,
-        AggStar aggStar,
-        RolapLevel level);
-
     /**
-     * The generic-builder counterpart of {@code addMemberConstraint}: the parent restriction as a
-     * {@link ConstraintContribution} (builder {@code WHERE} predicate + tables to join), so the
-     * {@code sqlbuild} mappers can build the member-children SELECT without the retired query facade.
+     * The parent restriction as a {@link ConstraintContribution} (builder {@code WHERE} predicate +
+     * tables to join), so the {@code sqlbuild} mappers can build the member-children SELECT.
      * <p>
      * Default returns {@link java.util.Optional#empty()} — "not expressible on the builder; use the
-     * the retired query facade path". Constraints that can translate override this.
+     * {@code QueryRecorder} fallback path". Constraints that can translate override this.
      */
     default java.util.Optional<ConstraintContribution> toContribution(
         RolapCube baseCube,

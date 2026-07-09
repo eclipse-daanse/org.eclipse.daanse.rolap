@@ -28,13 +28,10 @@ package org.eclipse.daanse.rolap.common.constraint;
 
 import java.util.List;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.olap.api.evaluator.Evaluator;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;
 import org.eclipse.daanse.rolap.common.sql.MemberChildrenConstraint;
-import org.eclipse.daanse.rolap.common.sql.QueryTape;
-import org.eclipse.daanse.rolap.common.sql.QueryRecorder;
 import org.eclipse.daanse.rolap.common.sql.TupleConstraint;
 import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.element.RolapLevel;
@@ -63,35 +60,6 @@ public class DescendantsConstraint implements TupleConstraint {
     {
         this.parentMembers = parentMembers;
         this.mcc = mcc;
-    }
-
-    /**
-     * Delegates to the wrapped member-children constraint's ops form on the SAME fork (a
-     * descendants read is the parents' member-children read).
-     */
-    @Override
-    public QueryTape addConstraintOps(
-        Dialect dialect,
-        QueryRecorder.Fork fork,
-        RolapCube baseCube,
-        AggStar aggStar)
-    {
-        return mcc.addMemberConstraintOps(dialect, fork, baseCube, aggStar, parentMembers);
-    }
-
-    /**
-     * Delegates the level constraint to the wrapped member-children constraint — see
-     * {@link #addConstraintOps}.
-     */
-    @Override
-    public QueryTape addLevelConstraintOps(
-        Dialect dialect,
-        QueryRecorder.Fork fork,
-        RolapCube baseCube,
-        AggStar aggStar,
-        RolapLevel level)
-    {
-        return mcc.addMemberLevelConstraintOps(dialect, fork, baseCube, aggStar, level);
     }
 
     @Override
@@ -127,9 +95,57 @@ public class DescendantsConstraint implements TupleConstraint {
      * one-element parent list is exactly that constraint's children contribution. Multiple parents (an
      * {@code IN}/{@code OR} over parent keys) are not yet expressible — returns empty.
      */
+    /**
+     * True when {@link #toContribution}'s WHERE reproduces the recorder's factored per-level IN
+     * ({@code generateSingleValueInExpr}), so a level-members consumer may build it
+     * authoritatively. A single (or no) parent delegates to the wrapped member-children constraint's
+     * single-member contribution — always reproduced. Multiple parents reproduce the recorder ONLY when
+     * they form a RECTANGLE (the distinct per-level key values cross EXACTLY to the parent set, e.g. all
+     * cities in one state): the factored {@code (city IN (..) AND state = X)} form then matches. A
+     * NON-rectangle multi-level parent set (e.g. cities spread across several states) makes the builder's
+     * {@code memberConstraintContribution} emit the exact tuple form while the descendants recorder keeps
+     * the factored bounding box, so the two diverge and the read stays on the recorder.
+     */
+    public boolean contributionReproducesRecorder() {
+        if (parentMembers.size() <= 1) {
+            return true;
+        }
+        RolapMember firstUniqueParent = parentMembers.get(0);
+        for (; firstUniqueParent != null && !firstUniqueParent.getLevel().isUnique();
+                firstUniqueParent = firstUniqueParent.getParentMember()) {
+            // advance to the first unique parent level, as memberConstraintContribution does
+        }
+        RolapLevel fromLevel = (firstUniqueParent != null) ? firstUniqueParent.getLevel() : null;
+        return MemberConstraintWriter.membersFormRectangle(parentMembers, fromLevel);
+    }
+
     @Override
     public java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution> toContribution(
         RolapCube baseCube, AggStar aggStar)
+    {
+        return toContribution(baseCube, aggStar, false);
+    }
+
+    /**
+     * Factored-member-form twin of {@link #toContribution}: the multi-parent member restriction is
+     * built via {@link MemberConstraintWriter#memberConstraintContributionFactored} — the
+     * recorder's factored per-level IN form ({@code (city in (..) and state in (..))}, the
+     * non-crossjoin {@code addMemberConstraint} bounding box) instead of the exact tuple IN, so it
+     * reproduces the recorder's form on a NON-rectangle parent set. AUTHORITATIVE for the
+     * computed-expression tuple route ({@code SqlTupleReader.computedTupleSql}) — that recorder path
+     * IS the factored form, so the rectangle guard
+     * of {@link #contributionReproducesRecorder} does not apply there. Other authoritative renders
+     * keep {@link #toContribution} (the cross-join tuple form). Single-parent and context
+     * composition are identical to {@link #toContribution}.
+     */
+    public java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution>
+        toContributionFactoredMemberForm(RolapCube baseCube, AggStar aggStar)
+    {
+        return toContribution(baseCube, aggStar, true);
+    }
+
+    private java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution> toContribution(
+        RolapCube baseCube, AggStar aggStar, boolean factoredMemberForm)
     {
         if (parentMembers.size() == 1) {
             return mcc.toContribution(baseCube, aggStar, parentMembers.get(0));
@@ -139,8 +155,30 @@ public class DescendantsConstraint implements TupleConstraint {
         // single-level multi-member set → one IN). Guarded at the consumer, so a shape it can't express (calc
         // member, computed / snowflake multi-table key) falls back to the reference query.
         if (!parentMembers.isEmpty()) {
+            // AGG MODE: with a non-null aggStar the member
+            // restriction is built AGG-SUBSTITUTED via the agg-threaded memberConstraintContribution (the
+            // same channel MemberConstraintWriter's SetConstraint args use) and the contribution carries
+            // the AggPlan provenance (aggMemberTable — the agg table of the parents' substituted key
+            // column). The FACTORED form stays base-only: its sole authoritative consumer
+            // (SqlTupleReader.computedTupleSql → toContributionFactoredMemberForm) requires
+            // aggStar == null, so the computed-tuple route is untouched. An agg-unresolvable
+            // member set (bailed threaded producer / no agg provenance) falls back to the BASE form
+            // WITHOUT a plan — the router keeps harvesting agg-unavailable:no-plan and the recorder
+            // keeps the read.
+            boolean aggMode = aggStar != null && !factoredMemberForm;
             java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution.ColumnPredicate> cp =
-                MemberConstraintWriter.memberConstraintContribution(baseCube, parentMembers, false, false);
+                factoredMemberForm
+                    ? MemberConstraintWriter.memberConstraintContributionFactored(
+                        baseCube, parentMembers, false, false)
+                    : MemberConstraintWriter.memberConstraintContribution(
+                        baseCube, aggMode ? aggStar : null, parentMembers, false, false);
+            java.util.Optional<AggStar.Table> aggMemberTable = aggMode && cp.isPresent()
+                ? MemberConstraintWriter.aggMemberTable(baseCube, aggStar, parentMembers.get(0).getLevel())
+                : java.util.Optional.empty();
+            if (aggMode && aggMemberTable.isEmpty()) {
+                aggMode = false;
+                cp = MemberConstraintWriter.memberConstraintContribution(baseCube, parentMembers, false, false);
+            }
             if (cp.isEmpty()) {
                 return java.util.Optional.empty();
             }
@@ -159,22 +197,52 @@ public class DescendantsConstraint implements TupleConstraint {
                 java.util.List<org.eclipse.daanse.sql.statement.api.expression.Predicate> wheres =
                     new java.util.ArrayList<>();
                 c.where().ifPresent(wheres::add);
-                wheres.add(cp.get().predicate());
+                // The parent-set conjunct is one parenthesised group; the mapper splits the top-level
+                // And, so the group must sit one level below the split (single-operand And wrap).
+                wheres.add(org.eclipse.daanse.sql.statement.api.Predicates.and(
+                    java.util.List.of(cp.get().predicate())));
                 java.util.List<org.eclipse.daanse.rolap.common.star.RolapStar.Table> joinTables =
                     new java.util.ArrayList<>(c.joinTables());
-                joinTables.add(cp.get().table());
+                if (cp.get().table() != null) {
+                    joinTables.add(cp.get().table());
+                }
                 java.util.List<org.eclipse.daanse.rolap.common.sql.ConstraintContribution.ColumnPredicate> ordered =
                     new java.util.ArrayList<>(c.orderedPredicates());
                 ordered.add(cp.get());
-                return java.util.Optional.of(new org.eclipse.daanse.rolap.common.sql.ConstraintContribution(
-                    java.util.Optional.of(wheres.size() == 1 ? wheres.get(0)
-                        : org.eclipse.daanse.sql.statement.api.Predicates.and(wheres)),
-                    joinTables, ordered, c.memberKeyGroup()).withFactJoinRequired(c.factJoinRequired()));
+                org.eclipse.daanse.rolap.common.sql.ConstraintContribution composed =
+                    new org.eclipse.daanse.rolap.common.sql.ConstraintContribution(
+                        java.util.Optional.of(wheres.size() == 1 ? wheres.get(0)
+                            : org.eclipse.daanse.sql.statement.api.Predicates.and(wheres)),
+                        joinTables, ordered, c.memberKeyGroup()).withFactJoinRequired(c.factJoinRequired());
+                // AGG MODE: the composed plan is the context constraint's agg predicates (its own
+                // AggPlan — present whenever the agg-routed SCC translation succeeded) followed by
+                // the parent-set group, mirroring the where composition order (context first, then
+                // the member IN — addContextConstraint → addMemberConstraint). A plan-less base
+                // (defensive; the SCC agg mode bails to an empty Optional instead) stays plan-less.
+                if (aggMode && c.aggPlan().isPresent()) {
+                    java.util.List<org.eclipse.daanse.rolap.common.sql.AggPlan.AggColumnPredicate> aggPredicates =
+                        new java.util.ArrayList<>(c.aggPlan().get().orderedAggPredicates());
+                    aggPredicates.add(new org.eclipse.daanse.rolap.common.sql.AggPlan.AggColumnPredicate(
+                        aggMemberTable.get(), cp.get().predicate()));
+                    composed = composed.withAggPlan(
+                        new org.eclipse.daanse.rolap.common.sql.AggPlan(aggStar, aggPredicates));
+                }
+                return java.util.Optional.of(composed);
             }
-            return java.util.Optional.of(new org.eclipse.daanse.rolap.common.sql.ConstraintContribution(
-                java.util.Optional.of(cp.get().predicate()),
-                java.util.List.of(cp.get().table()),
-                java.util.List.of(cp.get())));
+            org.eclipse.daanse.rolap.common.sql.ConstraintContribution flat =
+                new org.eclipse.daanse.rolap.common.sql.ConstraintContribution(
+                    // Single-operand And wrap: the parent-set group keeps its parentheses through the
+                    // mapper's top-level And split.
+                    java.util.Optional.of(org.eclipse.daanse.sql.statement.api.Predicates.and(
+                        java.util.List.of(cp.get().predicate()))),
+                    cp.get().table() != null ? java.util.List.of(cp.get().table()) : java.util.List.of(),
+                    java.util.List.of(cp.get()));
+            if (aggMode) {
+                flat = flat.withAggPlan(new org.eclipse.daanse.rolap.common.sql.AggPlan(aggStar,
+                    java.util.List.of(new org.eclipse.daanse.rolap.common.sql.AggPlan.AggColumnPredicate(
+                        aggMemberTable.get(), cp.get().predicate()))));
+            }
+            return java.util.Optional.of(flat);
         }
         return java.util.Optional.empty();
     }

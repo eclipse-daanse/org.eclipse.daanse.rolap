@@ -28,7 +28,6 @@ package org.eclipse.daanse.rolap.common.agg;
 import java.util.Collection;
 import java.util.List;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.star.StarColumnPredicate;
 import org.eclipse.daanse.rolap.common.star.StarPredicate;
@@ -147,9 +146,4 @@ public class LiteralStarPredicate extends AbstractColumnPredicate {
         return value;
     }
 
-    @Override
-	public void toSql(Dialect dialect, StringBuilder buf) {
-        // e.g. "true"
-        buf.append(value);
-    }
 }

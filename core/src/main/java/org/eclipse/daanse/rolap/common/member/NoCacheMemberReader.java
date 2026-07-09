@@ -43,7 +43,7 @@ import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.RolapUtil;
 import org.eclipse.daanse.rolap.common.TupleReader.MemberBuilder;
-import org.eclipse.daanse.rolap.common.constraint.SqlConstraintFactory;
+import org.eclipse.daanse.rolap.common.sql.SqlConstraintFactory;
 import org.eclipse.daanse.rolap.common.sql.MemberChildrenConstraint;
 import org.eclipse.daanse.rolap.common.sql.TupleConstraint;
 import org.eclipse.daanse.rolap.element.RolapHierarchy;

@@ -43,7 +43,7 @@ import org.eclipse.daanse.rolap.common.cache.SmartCache;
 import org.eclipse.daanse.rolap.common.cache.SoftSmartCache;
 import org.eclipse.daanse.rolap.common.constraint.ChildByNameConstraint;
 import org.eclipse.daanse.rolap.common.constraint.DefaultMemberChildrenConstraint;
-import org.eclipse.daanse.rolap.common.constraint.SqlConstraintFactory;
+import org.eclipse.daanse.rolap.common.sql.SqlConstraintFactory;
 import org.eclipse.daanse.rolap.common.sql.MemberChildrenConstraint;
 import org.eclipse.daanse.rolap.common.sql.TupleConstraint;
 import org.eclipse.daanse.rolap.element.RolapHierarchy;

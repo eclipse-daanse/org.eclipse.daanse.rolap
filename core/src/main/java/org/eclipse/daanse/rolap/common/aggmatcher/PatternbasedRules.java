@@ -204,7 +204,7 @@ public class PatternbasedRules {
      * given aggTable's columns all match upto the dbFactTable's columns (where
      * present) making the column usages as a result.
      */
-    public boolean columnsOK(
+    boolean columnsOK(
         final RolapStar star,
         final JdbcSchema.Table dbFactTable,
         final JdbcSchema.Table aggTable,

@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.sql.statement.api.Expressions;
 import org.eclipse.daanse.sql.statement.api.From;
@@ -67,7 +68,7 @@ public final class AggregateSqlMapper {
         List<RolapStar.Column> groupBy,
         List<Predicate> columnFilters,
         List<RolapStar.Measure> measures,
-        org.eclipse.daanse.jdbc.db.dialect.api.Dialect dialect)
+        Dialect dialect)
     {
         return aggregate(fact, groupBy, columnFilters, measures, dialect, java.util.List.of());
     }
@@ -76,6 +77,36 @@ public final class AggregateSqlMapper {
      *  tables its constrained columns require joined to the fact (per predicate: join each
      *  constrained column's table, then the predicate WHERE). */
     public record ExtraConjunct(Predicate where, List<RolapStar.Table> joinTables) {
+    }
+
+    /**
+     * The aggregate variants beyond the plain shape — countOnly, ordered, grouping-sets and rollup:
+     * <ul>
+     * <li>{@code countOnly} — the grand-total row: a single leading {@code count(*)} (auto-aliased
+     *     {@code c0}) replaces the per-column SELECT / GROUP BY / ORDER BY; measures still follow
+     *     (an inline {@code count(distinct col)} measure included — the distinct-SUBQUERY rewrite for
+     *     dialects without {@code allowsCountDistinct} stays with the recorder, gated at the caller).
+     *     Takes precedence over {@code ordered} and {@code groupingSets} (matching
+     *     {@code AbstractQuerySpec.generateSql} emission order: grouping sets/functions are added
+     *     only when not countOnly).</li>
+     * <li>{@code ordered} — deterministic results: ORDER BY each group-by projection ascending
+     *     (non-nullable, nulls-last flag set), deduped on the column node.</li>
+     * <li>{@code groupingSets} — the batched multi-rollup segment load: each inner list is one
+     *     {@code GROUPING SETS} entry. The plain group-by keys stay recorded alongside; the RENDERER
+     *     spells {@code GROUP BY GROUPING SETS} when the dialect supports it and falls back to the
+     *     plain keys otherwise — the capability is spelled at the renderer, never gated here (both
+     *     the grouping-set entries and the plain keys are recorded, so either capability branch is
+     *     covered).</li>
+     * <li>{@code rollupColumns} — the {@code grouping(x)} super-aggregate SELECT-tail columns
+     *     (auto-aliased {@code g{i}} by the renderer) that let the reader tell rolled-up rows
+     *     apart.</li>
+     * </ul>
+     */
+    public record Shape(boolean countOnly, boolean ordered,
+            List<List<RolapStar.Column>> groupingSets, List<RolapStar.Column> rollupColumns) {
+
+        /** The plain aggregate: no countOnly, no ORDER BY, no grouping sets. */
+        public static final Shape PLAIN = new Shape(false, false, List.of(), List.of());
     }
 
     /**
@@ -89,8 +120,26 @@ public final class AggregateSqlMapper {
         List<RolapStar.Column> groupBy,
         List<Predicate> columnFilters,
         List<RolapStar.Measure> measures,
-        org.eclipse.daanse.jdbc.db.dialect.api.Dialect dialect,
+        Dialect dialect,
         List<ExtraConjunct> extras)
+    {
+        return aggregate(fact, groupBy, columnFilters, measures, dialect, extras, Shape.PLAIN);
+    }
+
+    /**
+     * As {@link #aggregate(RolapStar.Table, List, List, List, Dialect, List)} but for an explicit
+     * {@link Shape}: countOnly, ordered and/or grouping-sets aggregates. FROM and WHERE are identical to
+     * the plain shape (countOnly still joins and constrains every group-by column — only the SELECT /
+     * GROUP BY / ORDER BY parts differ).
+     */
+    public static SelectStatement aggregate(
+        RolapStar.Table fact,
+        List<RolapStar.Column> groupBy,
+        List<Predicate> columnFilters,
+        List<RolapStar.Measure> measures,
+        Dialect dialect,
+        List<ExtraConjunct> extras,
+        Shape shape)
     {
         SelectStatementBuilder q = SelectStatementBuilder.create();
         // Diagnostic provenance (rendered only when comments are on; never part of the executed SQL).
@@ -144,16 +193,50 @@ public final class AggregateSqlMapper {
             emitJoinChain(m.getTable(), fact, emittedJoins, q, dialect, "snowflake measure");
         }
 
-        // SELECT: group-by columns (grouped), then aggregated measures (aliased m{i}).
-        for (RolapStar.Column col : groupBy) {
-            ProjectionRef ref = q.project(JoinPlanner.expressionFor(col), col.getInternalType(), null,
-                    "key " + columnLabel(col));
-            q.groupOn(ref);
+        // SELECT: group-by columns (grouped; ordered ascending when the shape asks), then aggregated
+        // measures (aliased m{i}). countOnly replaces the per-column SELECT / GROUP BY / ORDER BY with
+        // one leading count(*) (auto-aliased c0) while the measures still follow.
+        if (shape.countOnly()) {
+            q.project(Expressions.countStar(),
+                    org.eclipse.daanse.jdbc.db.api.type.BestFitColumnType.INT);
+        } else {
+            // ORDER BY dedup on the (value-equal) column node: two group-by columns rendering the same
+            // expression are ONE sort key (some dialects reject the duplicate).
+            Set<SqlExpression> orderedNodes = new java.util.LinkedHashSet<>();
+            for (RolapStar.Column col : groupBy) {
+                SqlExpression node = JoinPlanner.expressionFor(col);
+                ProjectionRef ref = q.project(node, col.getInternalType(), null,
+                        "key " + columnLabel(col));
+                q.groupOn(ref);
+                if (shape.ordered() && orderedNodes.add(node)) {
+                    // A non-nullable ascending key (no null-collation SQL is emitted for a
+                    // non-nullable key; the nulls-last flag is carried on the sort spec).
+                    q.orderOn(ref, new org.eclipse.daanse.sql.statement.api.model.SortSpec(
+                            org.eclipse.daanse.sql.statement.api.model.SortDirection.ASC, false,
+                            org.eclipse.daanse.sql.statement.api.model.NullOrder.LAST, false));
+                }
+            }
         }
         for (int i = 0; i < measures.size(); i++) {
             RolapStar.Measure m = measures.get(i);
             q.project(JoinPlanner.expressionFor(m, dialect), m.getInternalType(), ColumnAlias.of("m" + i),
                     measureComment(m));
+        }
+        // GROUPING SETS entries + grouping(x) SELECT-tail functions — skipped for countOnly (matching
+        // AbstractQuerySpec.generateSql: added only when not countOnly). The plain group keys recorded
+        // above stay: the renderer spells GROUP BY GROUPING SETS when the dialect supports it and falls
+        // back to the plain keys otherwise (capability spelled at the RENDERER — see Shape).
+        if (!shape.countOnly()) {
+            for (List<RolapStar.Column> set : shape.groupingSets()) {
+                List<SqlExpression> keys = new ArrayList<>();
+                for (RolapStar.Column c : set) {
+                    keys.add(JoinPlanner.expressionFor(c));
+                }
+                q.addGroupingSet(keys);
+            }
+            for (RolapStar.Column c : shape.rollupColumns()) {
+                q.addGroupingFunction(JoinPlanner.expressionFor(c));
+            }
         }
         SelectStatement statement = q.build();
         // Reached only on the builder fast path (AbstractQuerySpec.tryAggregateBuilder via SqlBuildGuard.build),
@@ -161,10 +244,294 @@ public final class AggregateSqlMapper {
         if (org.eclipse.daanse.rolap.common.RolapUtil.SQL_GEN_LOGGER.isDebugEnabled()) {
             int filterCount = columnFilters == null ? 0
                     : (int) columnFilters.stream().filter(java.util.Objects::nonNull).count();
-            new StatementBuildSummary("aggregate", "fact=" + fact.getAlias(), groupBy.size(), measures.size(),
+            new StatementBuildSummary("aggregate", "fact=" + fact.getAlias() + shapeSuffix(shape),
+                    groupBy.size(), measures.size(),
                     filterCount, joined.size(), 0, "builder-authoritative", null).log();
         }
         return statement;
+    }
+
+    /** Build-trace context suffix naming the non-plain shape parts (empty for the plain shape). */
+    private static String shapeSuffix(Shape shape) {
+        StringBuilder b = new StringBuilder();
+        if (shape.countOnly()) {
+            b.append(" shape=count-only");
+        }
+        if (shape.ordered()) {
+            b.append(" shape=ordered");
+        }
+        if (!shape.groupingSets().isEmpty()) {
+            b.append(" shape=grouping-sets(").append(shape.groupingSets().size()).append(')');
+        }
+        return b.toString();
+    }
+
+    /**
+     * One FROM participant of an aggregate-table segment load — the engine-free counterpart of an
+     * {@code AggStar.Table}: the {@code alias}, its rendered {@code from} clause,
+     * the {@code parent} toward the aggregate fact table ({@code null} for the fact itself), the
+     * {@code joinToParent} ON predicate in the join condition's <em>stored</em> orientation
+     * (fact-side {@code left = right} dim-side; {@code null} for the fact), an optional
+     * {@code tableFilter} (the table's own {@code sqlWhereExpression}, pre-parenthesised) and an
+     * optional provenance {@code comment} (diagnostic render only).
+     * <p>
+     * Instances must be shared: one record per agg-star table, with {@code parent} pointing at the
+     * caller's instance for that table — the FROM fold tracks identity through these records.
+     */
+    public record AggFromTable(String alias, FromClause from, AggFromTable parent,
+            Predicate joinToParent, Predicate tableFilter, String comment) {
+    }
+
+    /** A constraining (group-by) column of an aggregate-table segment: the {@link AggFromTable} it
+     *  lives on, its dialect-free column {@code node}, the result-reading type, an optional
+     *  translated constraint (a {@code null} filter means unconstrained) and a provenance label. */
+    public record AggSegmentColumn(AggFromTable table, SqlExpression node,
+            org.eclipse.daanse.jdbc.db.api.type.BestFitColumnType type, Predicate filter,
+            String label) {
+    }
+
+    /** A rolled-up measure of an aggregate-table segment: the pre-built aggregator node (the
+     *  {@code AggStar.FactTable.Measure.generateRollupExpression()} result) and a provenance
+     *  comment. Aliased {@code m{i}}; no result type is declared for agg measures (the type is
+     *  guessed in {@code RenderedSql.types()}). */
+    public record AggSegmentMeasure(SqlExpression node, String comment) {
+    }
+
+    /**
+     * The agg-table twin of {@link Shape} for the batched multi-rollup segment load: each inner
+     * {@code groupingSets} list is one {@code GROUPING SETS} entry (agg-column nodes),
+     * {@code groupingFunctions} are the {@code grouping(x)} super-aggregate SELECT-tail columns
+     * (renderer-aliased {@code g{i}}). Exactly like the base-star path, the plain group-by keys stay
+     * recorded alongside and the RENDERER picks the spelling ({@code GROUP BY GROUPING SETS} when the
+     * dialect supports it, the plain keys otherwise) — the capability is never gated in the mapper.
+     */
+    public record AggShape(List<List<SqlExpression>> groupingSets,
+            List<SqlExpression> groupingFunctions) {
+
+        /** The plain rolled-up segment: no grouping sets, no grouping functions. */
+        public static final AggShape PLAIN = new AggShape(List.of(), List.of());
+    }
+
+    /**
+     * The rolled-up aggregate-table segment SELECT — the counterpart of
+     * {@code AggQuerySpec.generateSql} for the plain rollup shape (no grouping sets, no
+     * distinct-rollup): {@code SELECT c0..cn, m0..mk FROM <first referenced table> JOIN … WHERE
+     * <filters> GROUP BY c0..cn}.
+     * <p>
+     * FROM parity with the recorder is structural, not fact-rooted: the recorder's
+     * {@code AggStar.Table.addToFrom} registers each constraining column's table chain
+     * <em>self-first</em> (table, then its parents up to the aggregate fact) and records each
+     * dim table's join edge parent-first; the assembler then folds the registered tables in
+     * registration order, joining each pending table by the first recorded edge whose other
+     * endpoint is already placed. This method replays exactly that: the base of the FROM tree is
+     * the FIRST registered table (a dimension table when the first constraining column lives on
+     * one — e.g. {@code FROM "store" JOIN "agg_c_14_…" ON …}), and a snowflake chain registered
+     * self-first still joins parent-first ({@code JOIN "product" … JOIN "product_class" …}).
+     * WHERE order is tape order: each newly registered table's own filter, then that column's
+     * constraint; the fold must consume every join edge and every table (a disconnected or
+     * diamond-shaped graph throws {@link IllegalStateException} — the caller declines to the
+     * recorder).
+     *
+     * @param columns   constraining columns in segment order (selected {@code c{i}}, grouped)
+     * @param measures  rolled-up measures in segment order (selected {@code m{i}})
+     * @param factTable the aggregate fact table (the measures' home; joined even when no
+     *                  constraining column references it)
+     * @param cubeName  provenance only (header comment), may be {@code null}
+     */
+    public static SelectStatement aggSegment(
+        List<AggSegmentColumn> columns,
+        List<AggSegmentMeasure> measures,
+        AggFromTable factTable,
+        String cubeName)
+    {
+        return aggSegment(columns, measures, factTable, cubeName, true);
+    }
+
+    /**
+     * As {@link #aggSegment(List, List, AggFromTable, String)} but with an explicit {@code rollup}
+     * flag. {@code rollup == true} is the authoritative rolled-up shape (every constraining column
+     * grouped, measures carry rolled-up aggregator nodes). {@code rollup == false} is the
+     * exact-granularity read — the constraining columns are projected but NOT grouped and the
+     * measures carry their plain (un-rolled) node — the exact-granularity segment shape.
+     */
+    public static SelectStatement aggSegment(
+        List<AggSegmentColumn> columns,
+        List<AggSegmentMeasure> measures,
+        AggFromTable factTable,
+        String cubeName,
+        boolean rollup)
+    {
+        return aggSegment(columns, measures, factTable, cubeName, rollup, AggShape.PLAIN);
+    }
+
+    /**
+     * As {@link #aggSegment(List, List, AggFromTable, String, boolean)} but for an explicit
+     * {@link AggShape}: the batched grouping-sets segment load. The grouping-set entries and the
+     * {@code grouping(x)} SELECT-tail functions are emitted after the measures — matching
+     * {@code AggQuerySpec.generateSql}'s emission order (columns, measures, {@code addGroupingSets},
+     * {@code addGroupingFunction}).
+     */
+    public static SelectStatement aggSegment(
+        List<AggSegmentColumn> columns,
+        List<AggSegmentMeasure> measures,
+        AggFromTable factTable,
+        String cubeName,
+        boolean rollup,
+        AggShape shape)
+    {
+        SelectStatementBuilder q = SelectStatementBuilder.create();
+        // Diagnostic provenance (rendered only when comments are on; never part of the executed SQL).
+        if (!measures.isEmpty() && cubeName != null) {
+            q.header("segment cube " + cubeName + " (agg table)");
+        }
+        q.footerComment("segment request (agg table)");
+
+        // Tape emulation: table registration order (self-first chains), join edges (parent-first,
+        // deduped) and the interleaved WHERE items ([table filter(s), column constraint] per column).
+        java.util.LinkedHashSet<AggFromTable> tableOrder = new java.util.LinkedHashSet<>();
+        java.util.Map<String, AggFromTable> byAlias = new java.util.HashMap<>();
+        java.util.Map<String, List<AggFromTable>> edgesByAlias = new java.util.HashMap<>();
+        java.util.LinkedHashSet<AggFromTable> edgeOwners = new java.util.LinkedHashSet<>();
+        record WhereItem(Predicate predicate, String comment) {
+        }
+        List<WhereItem> wheres = new ArrayList<>();
+        for (AggSegmentColumn c : columns) {
+            registerAggChain(c.table(), tableOrder, byAlias, edgesByAlias, edgeOwners,
+                    (p) -> wheres.add(new WhereItem(p, null)));
+            if (c.filter() != null) {
+                wheres.add(new WhereItem(c.filter(), "context " + c.label()));
+            }
+        }
+        if (!measures.isEmpty()) {
+            registerAggChain(factTable, tableOrder, byAlias, edgesByAlias, edgeOwners,
+                    (p) -> wheres.add(new WhereItem(p, null)));
+        }
+        if (tableOrder.isEmpty()) {
+            throw new IllegalStateException("agg segment: no tables referenced");
+        }
+
+        // FROM fold: base = first registered table; each pending table joins by the
+        // first recorded edge whose other endpoint is placed (edge orientation kept as stored).
+        java.util.Iterator<AggFromTable> order = tableOrder.iterator();
+        AggFromTable base = order.next();
+        q.from(base.comment() != null ? From.commentBase(base.from(), base.comment()) : base.from());
+        Set<String> placed = new java.util.HashSet<>();
+        placed.add(base.alias());
+        List<AggFromTable> pending = new ArrayList<>();
+        order.forEachRemaining(pending::add);
+        java.util.Set<AggFromTable> usedEdges = new java.util.HashSet<>();
+        boolean progress = true;
+        while (!pending.isEmpty() && progress) {
+            progress = false;
+            for (java.util.Iterator<AggFromTable> it = pending.iterator(); it.hasNext();) {
+                AggFromTable t = it.next();
+                AggFromTable edgeOwner = null;
+                for (AggFromTable owner : edgesByAlias.getOrDefault(t.alias(), List.of())) {
+                    String other = owner.alias().equals(t.alias())
+                            ? owner.parent().alias() : owner.alias();
+                    if (placed.contains(other)) {
+                        edgeOwner = owner;
+                        break;
+                    }
+                }
+                if (edgeOwner != null) {
+                    q.join(org.eclipse.daanse.sql.statement.api.model.JoinKind.INNER, t.from(),
+                            edgeOwner.joinToParent(), t.comment());
+                    placed.add(t.alias());
+                    usedEdges.add(edgeOwner);
+                    it.remove();
+                    progress = true;
+                }
+            }
+        }
+        if (!pending.isEmpty()) {
+            // The recorder would render this as a comma-product; out of builder scope — decline.
+            throw new IllegalStateException("agg segment: join graph not connected from "
+                    + base.alias());
+        }
+        if (usedEdges.size() != edgeOwners.size()) {
+            // A diamond edge the tree could not carry would leak to WHERE in the assembler — decline.
+            throw new IllegalStateException("agg segment: join edge not folded into the tree");
+        }
+
+        // WHERE in tape order (table filters interleaved with column constraints).
+        for (WhereItem w : wheres) {
+            if (w.comment() != null) {
+                q.where(w.predicate(), w.comment());
+            } else {
+                q.where(w.predicate());
+            }
+        }
+
+        // SELECT: constraining columns (auto-aliased c{i}, grouped only for the rollup shape), then
+        // the measures (aliased m{i}, no declared type).
+        for (AggSegmentColumn c : columns) {
+            ProjectionRef ref = q.project(c.node(), c.type(), null, "key " + c.label());
+            if (rollup) {
+                q.groupOn(ref);
+            }
+        }
+        for (int i = 0; i < measures.size(); i++) {
+            AggSegmentMeasure m = measures.get(i);
+            q.project(m.node(), null, ColumnAlias.of("m" + i), m.comment());
+        }
+        // GROUPING SETS entries + grouping(x) SELECT-tail functions, after the measures (matching
+        // AggQuerySpec.generateSql order). The plain group keys recorded above stay: the renderer
+        // spells GROUP BY GROUPING SETS when the dialect supports it and falls back to the plain keys
+        // otherwise (capability spelled at the RENDERER — see AggShape; same contract as the base-star
+        // Shape).
+        for (List<SqlExpression> set : shape.groupingSets()) {
+            q.addGroupingSet(set);
+        }
+        for (SqlExpression g : shape.groupingFunctions()) {
+            q.addGroupingFunction(g);
+        }
+        SelectStatement statement = q.build();
+        // rollup==true is the builder fast path (AggQuerySpec.tryBuilderAuthoritative via
+        // SqlBuildGuard.build) — builder-authoritative; rollup==false is the
+        // exact-granularity segment shape.
+        if (org.eclipse.daanse.rolap.common.RolapUtil.SQL_GEN_LOGGER.isDebugEnabled()) {
+            int filterCount = (int) columns.stream().filter(c -> c.filter() != null).count();
+            new StatementBuildSummary("agg-segment",
+                    "fact=" + factTable.alias()
+                        + (rollup ? "" : " shape=exact-granularity")
+                        + (shape.groupingSets().isEmpty() ? ""
+                            : " shape=grouping-sets(" + shape.groupingSets().size() + ")"),
+                    columns.size(), measures.size(), filterCount, tableOrder.size(), 0,
+                    "builder-authoritative", null)
+                    .log();
+        }
+        return statement;
+    }
+
+    /**
+     * Replays {@code AggStar.Table.addToFrom(query, false, true)} for one table: register the table
+     * (self-first; its own filter becomes a WHERE item at first registration), recurse to the
+     * parent, then record the table's join edge under both endpoint aliases (parent-first edge
+     * order, once per table). Two distinct tables sharing an alias would silently dedup in the
+     * recorder — here it throws so the caller declines.
+     */
+    private static void registerAggChain(AggFromTable t,
+            java.util.LinkedHashSet<AggFromTable> tableOrder,
+            java.util.Map<String, AggFromTable> byAlias,
+            java.util.Map<String, List<AggFromTable>> edgesByAlias,
+            java.util.LinkedHashSet<AggFromTable> edgeOwners,
+            java.util.function.Consumer<Predicate> tableFilterSink) {
+        AggFromTable known = byAlias.putIfAbsent(t.alias(), t);
+        if (known != null && !known.equals(t)) {
+            throw new IllegalStateException("agg segment: alias collision on " + t.alias());
+        }
+        if (tableOrder.add(t) && t.tableFilter() != null) {
+            tableFilterSink.accept(t.tableFilter());
+        }
+        if (t.parent() == null) {
+            return;
+        }
+        registerAggChain(t.parent(), tableOrder, byAlias, edgesByAlias, edgeOwners, tableFilterSink);
+        if (t.joinToParent() != null && edgeOwners.add(t)) {
+            edgesByAlias.computeIfAbsent(t.alias(), k -> new ArrayList<>()).add(t);
+            edgesByAlias.computeIfAbsent(t.parent().alias(), k -> new ArrayList<>()).add(t);
+        }
     }
 
     /** A constrained drill-through column: its star column, optional WHERE predicate, whether it is
@@ -178,9 +545,9 @@ public final class AggregateSqlMapper {
      *  with its result-reading column type (measure: {@code null}; NULL placeholder: STRING) and an
      *  optional provenance comment (rendered only when comments are on). */
     public record RawProjection(SqlExpression expr,
-            org.eclipse.daanse.jdbc.db.dialect.api.type.BestFitColumnType type, String alias, String comment) {
+            org.eclipse.daanse.jdbc.db.api.type.BestFitColumnType type, String alias, String comment) {
         public RawProjection(SqlExpression expr,
-                org.eclipse.daanse.jdbc.db.dialect.api.type.BestFitColumnType type, String alias) {
+                org.eclipse.daanse.jdbc.db.api.type.BestFitColumnType type, String alias) {
             this(expr, type, alias, null);
         }
     }
@@ -202,7 +569,7 @@ public final class AggregateSqlMapper {
         List<RawProjection> rawProjections,
         boolean countOnly,
         long rowLimit,
-        org.eclipse.daanse.jdbc.db.dialect.api.Dialect dialect)
+        Dialect dialect)
     {
         SelectStatementBuilder q = SelectStatementBuilder.create();
         // Diagnostic provenance (rendered only when comments are on; never part of the executed SQL).
@@ -244,7 +611,7 @@ public final class AggregateSqlMapper {
         if (countOnly) {
             org.eclipse.daanse.rolap.common.RolapUtil.SQL_GEN_LOGGER.debug(
                     "drill-through: countOnly=true -> SELECT count(*)");
-            q.project(Expressions.countStar(), org.eclipse.daanse.jdbc.db.dialect.api.type.BestFitColumnType.INT);
+            q.project(Expressions.countStar(), org.eclipse.daanse.jdbc.db.api.type.BestFitColumnType.INT);
             return q.build();
         }
 
@@ -306,7 +673,7 @@ public final class AggregateSqlMapper {
      *  wins for a table shared by several chains — the join is emitted once). */
     private static void emitJoinChain(RolapStar.Table table, RolapStar.Table fact,
             Set<RolapStar.Table> emitted, SelectStatementBuilder q,
-            org.eclipse.daanse.jdbc.db.dialect.api.Dialect dialect, String comment) {
+            Dialect dialect, String comment) {
         if (table == null || table == fact || !emitted.add(table)) {
             return;
         }
@@ -340,7 +707,7 @@ public final class AggregateSqlMapper {
      * `alias`}) and the query is malformed.
      */
     private static FromClause tableFromClause(RolapStar.Table table,
-            org.eclipse.daanse.jdbc.db.dialect.api.Dialect dialect) {
+            Dialect dialect) {
         String name = table.getTableName();
         if (name == null || name.isBlank()) {
             return RelationFromMapper.from(table.getRelation());

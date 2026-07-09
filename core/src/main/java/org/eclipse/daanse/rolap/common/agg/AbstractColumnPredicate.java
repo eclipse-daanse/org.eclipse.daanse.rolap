@@ -35,7 +35,6 @@ import java.util.List;
 
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.key.BitKey;
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.star.StarColumnPredicate;
 import org.eclipse.daanse.rolap.common.star.StarPredicate;
@@ -148,11 +147,6 @@ public abstract class AbstractColumnPredicate implements StarColumnPredicate {
         list.add(this);
         list.add(predicate);
         return new AndPredicate(list);
-    }
-
-    @Override
-	public void toSql(Dialect dialect, StringBuilder buf) {
-        throw Util.needToImplement(this);
     }
 
     protected static List<StarColumnPredicate> cloneListWithColumn(

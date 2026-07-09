@@ -47,8 +47,8 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
-import org.eclipse.daanse.jdbc.db.dialect.api.type.BestFitColumnType;
-import org.eclipse.daanse.jdbc.db.dialect.api.type.Datatype;
+import org.eclipse.daanse.jdbc.db.api.type.BestFitColumnType;
+import org.eclipse.daanse.jdbc.db.api.type.Datatype;
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
@@ -423,7 +423,7 @@ public class AggStar {
     }
 
     /**
-     * Get a QueryRecorder instance (P4-B5).
+     * Get a QueryRecorder instance.
      */
     private QueryRecorder newQueryRecorder() {
         return getStar().newQueryRecorder();
@@ -698,7 +698,7 @@ public class AggStar {
              * Dialect-free node for this aggregate column. A plain column renders identically to
              * {@link #generateExprString(Dialect)} (both quote the same table + name); a computed expression
              * becomes a {@link org.eclipse.daanse.sql.statement.api.expression.SqlExpression.RawVariant} the
-             * renderer resolves per dialect — the same per-dialect pick {@code chooseQuery} made, at render.
+             * renderer resolves per dialect, at render.
              */
             public org.eclipse.daanse.sql.statement.api.expression.SqlExpression toSqlExpression() {
                 String usagePrefix = getUsagePrefix();
@@ -1167,15 +1167,8 @@ public class AggStar {
                 if (node == null) {
                     return null;
                 }
-                Aggregator rollup = getRollupAggregator();
-                if (rollup instanceof org.eclipse.daanse.rolap.aggregator.AbstractAggregator agg) {
-                    return agg.getExpression(node);
-                }
-                // Dialect-generator rollup aggregator (PERCENTILE/LISTAGG/bit/NTH_VALUE) → its dialect-free node.
-                if (rollup instanceof org.eclipse.daanse.rolap.aggregator.NodeAggregate na) {
-                    return na.toNode(node);
-                }
-                return null;
+                return org.eclipse.daanse.rolap.aggregator.SqlNodeAggregator.toNodeOrNull(
+                    getRollupAggregator(), node);
             }
 
             private Aggregator getRollupAggregator() {
@@ -1220,7 +1213,7 @@ public class AggStar {
 
             /** Dialect-free node form of {@link #generateExprString(Dialect)}: the plain column node when this
              *  measure is not scalar-weighted; the fact-count scalar-weighted composite via
-             *  {@link AbstractFactCountBasedAggregator#getScalarNode} (renders byte-identically to
+             *  {@link AbstractFactCountBasedAggregator#getScalarNode} (renders identically to
              *  {@code getScalarExpression(exprString)}); {@code null} only when the plain column itself has no
              *  node form — caller uses the string form. */
             public org.eclipse.daanse.sql.statement.api.expression.SqlExpression generateExpression() {
@@ -1607,9 +1600,6 @@ public class AggStar {
                 numberOfRows = approxRowCount;
                 return;
             }
-            QueryRecorder query = newQueryRecorder();
-            query.addSelect("count(*)", null);
-            query.addFrom(getRelation(), getName(), false);
             Context context = getAggStar().getStar().getContext();
             ExecutionImpl execution = new ExecutionImpl(
                 star.getCatalog().getInternalConnection().getInternalStatement(),
@@ -1621,7 +1611,24 @@ public class AggStar {
                 0
             );
             ExecutionContext execContext = execution.asContext().createChild(metadata, Optional.empty());
-            final String sql = query.toSqlAndTypes(getAggStar().getStar().getDialect()).sql();
+            // The count(*) cardinality query the agg-star builds: the trivial
+            // "select count(*) from <agg> as <agg>" shape via the generic statement builder. A
+            // non-table (view/inline) aggregate fact returns null and keeps the QueryRecorder path
+            // below.
+            org.eclipse.daanse.sql.statement.api.model.SelectStatement countStmt =
+                org.eclipse.daanse.rolap.common.sqlbuild.TupleSqlMapper.aggTableCountSql(
+                    getRelation(), getName());
+            final String sql;
+            if (countStmt != null) {
+                sql = org.eclipse.daanse.rolap.common.SqlRender.render(
+                    countStmt, getAggStar().getStar().getDialect()).sql();
+            } else {
+                QueryRecorder query = newQueryRecorder();
+                query.addSelect("count(*)", null);
+                query.addFrom(getRelation(), getName(), false);
+                sql = org.eclipse.daanse.rolap.common.SqlRender.render(
+                    query.buildStatement(), getAggStar().getStar().getDialect(), query.renderOptions()).sql();
+            }
             SqlStatement stmt =
                 RolapUtil.executeQuery(
                         context,

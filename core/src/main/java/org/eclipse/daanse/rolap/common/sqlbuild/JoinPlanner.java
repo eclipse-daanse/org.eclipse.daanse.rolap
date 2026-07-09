@@ -90,13 +90,10 @@ public final class JoinPlanner {
         SqlExpression innerNode = measure.getExpression() == null
                 ? Expressions.star()
                 : expressionFor(measure.getExpression());
-        if (aggregator instanceof org.eclipse.daanse.rolap.aggregator.AbstractAggregator a) {
-            SqlExpression node = a.getExpression(innerNode);
-            if (node != null) {
-                return node;
-            }
-        } else if (aggregator instanceof org.eclipse.daanse.rolap.aggregator.NodeAggregate na) {
-            return na.toNode(innerNode);
+        SqlExpression node = org.eclipse.daanse.rolap.aggregator.SqlNodeAggregator.toNodeOrNull(
+                aggregator, innerNode);
+        if (node != null) {
+            return node;
         }
         // Bail: a custom aggregator without node support renders via its string form, kept raw.
         String inner = measure.getExpression() == null ? "*" : columnSql(dialect, measure.getExpression());
@@ -187,6 +184,60 @@ public final class JoinPlanner {
     public record JoinStep(RolapStar.Table table, Predicate on) {
     }
 
+    /** Registers {@code table} and its snowflake ancestors (self-first, up to but excluding the
+     *  fact) in {@code pending}, preserving first-appearance order. A {@code null} table (a shared /
+     *  non-cube level constrained via its key expression) registers nothing. */
+    public static void addChainSelfFirst(Set<RolapStar.Table> pending, RolapStar.Table table,
+            RolapStar.Table fact) {
+        for (RolapStar.Table t = table; t != null && t != fact; t = t.getParentTable()) {
+            pending.add(t);
+        }
+    }
+
+    /**
+     * The assembler's FROM/JOIN fold over the registered tables: starting from the fact,
+     * repeatedly scan {@code pending} in registration order and join every table whose parent is
+     * already in the tree ({@code JOIN t ON t.joinCondition}), until all are placed. Single-chain
+     * registrations reduce to the plain parent-first order; a mix of dimensions places each
+     * fact-adjacent table on its first eligible pass and deeper snowflake tables as soon as their
+     * parent lands. A table whose chain never reaches the tree (defensive; chains are registered
+     * whole) is appended parent-first so the SQL stays valid.
+     */
+    public static java.util.List<JoinStep> foldJoinSteps(java.util.LinkedHashSet<RolapStar.Table> pending,
+            RolapStar.Table fact) {
+        return foldJoinSteps(pending, fact, Set.of());
+    }
+
+    /**
+     * As {@link #foldJoinSteps(java.util.LinkedHashSet, RolapStar.Table)} with tables that are
+     * ALREADY part of the caller's FROM (e.g. a chain table whose alias lives inside the FROM-root
+     * relation): they are seeded as placed — never re-joined (the same alias twice is invalid SQL) —
+     * but their children still attach to them.
+     */
+    public static java.util.List<JoinStep> foldJoinSteps(java.util.LinkedHashSet<RolapStar.Table> pending,
+            RolapStar.Table fact, Set<RolapStar.Table> prePlaced) {
+        java.util.List<JoinStep> steps = new java.util.ArrayList<>();
+        Set<RolapStar.Table> placed = new java.util.HashSet<>(prePlaced);
+        placed.add(fact);
+        boolean progress = true;
+        while (!pending.isEmpty() && progress) {
+            progress = false;
+            for (java.util.Iterator<RolapStar.Table> it = pending.iterator(); it.hasNext();) {
+                RolapStar.Table t = it.next();
+                if (placed.contains(t.getParentTable())) {
+                    steps.add(new JoinStep(t, joinPredicate(t.getJoinCondition())));
+                    placed.add(t);
+                    it.remove();
+                    progress = true;
+                }
+            }
+        }
+        for (RolapStar.Table t : pending) {
+            steps.addAll(joinStepsFor(t, fact, placed));
+        }
+        return steps;
+    }
+
     /**
      * The join steps for the given referenced tables, in the order the reference query adds them: for
      * each referenced table (encounter order) the chain to the fact table is emitted
@@ -229,12 +280,15 @@ public final class JoinPlanner {
      * named table, or — when the table has no name (an inline {@code VALUES} table, or a view) — the
      * dialect-aware rendering of its relation via {@link RelationFromMapper#from}.
      */
-    public static FromClause tableFromClause(RolapStar.Table table, Dialect dialect) {
+    public static FromClause tableFromClause(RolapStar.Table table) {
         String name = table.getTableName();
         if (name == null || name.isBlank()) {
             return RelationFromMapper.from(table.getRelation());
         }
-        return From.table(name, TableAlias.of(table.getAlias()));
+        // A star table declared with a schema SQL filter carries it in the FromTable.filter
+        // slot — the renderer pushes it into WHERE, matching the recorder's addFromTable conjunct.
+        return From.table(From.tableRef(null, name), TableAlias.of(table.getAlias()),
+                RelationFromMapper.tableFilter(table.getRelation()), java.util.Map.of());
     }
 
     /**
@@ -292,11 +346,12 @@ public final class JoinPlanner {
     /**
      * A join-condition side as a builder expression. Core resolves plain columns to a
      * {@link JoinColumn} ({@code alias}+{@code name}); non-plain expressions (computed/composite
-     * keys) fall back to raw SQL via {@link SqlExpressionResolver#genericSql}.
+     * keys) fall back to a dialect-keyed {@code RawVariant} the renderer resolves at the render
+     * boundary (same as {@link #expressionFor}), rather than pre-rendering one generic variant.
      */
     private static SqlExpression joinConditionSide(Optional<JoinColumn> column,
             org.eclipse.daanse.olap.api.sql.SqlExpression raw) {
         return column.<SqlExpression>map(c -> Expressions.column(TableAlias.of(c.tableAlias()), c.columnName()))
-                .orElseGet(() -> Expressions.raw(SqlExpressionResolver.genericSql(raw)));
+                .orElseGet(() -> Expressions.rawVariant(SqlExpressionResolver.sqlVariants(raw)));
     }
 }

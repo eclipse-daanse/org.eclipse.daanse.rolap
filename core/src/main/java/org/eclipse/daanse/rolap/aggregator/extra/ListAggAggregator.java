@@ -18,18 +18,17 @@ import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.regex.Pattern;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.sql.OrderedColumn;
-import org.eclipse.daanse.jdbc.db.dialect.api.generator.SortDirection;
+import org.eclipse.daanse.jdbc.db.api.sql.OrderedColumn;
+import org.eclipse.daanse.jdbc.db.api.sql.SortDirection;
 import org.eclipse.daanse.olap.api.DataTypeJdbc;
 import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.olap.api.calc.Calc;
 import org.eclipse.daanse.olap.api.calc.tuple.TupleList;
 import org.eclipse.daanse.olap.api.evaluator.Evaluator;
-import org.eclipse.daanse.rolap.aggregator.NodeAggregate;
 import org.eclipse.daanse.rolap.element.RolapColumn;
 import org.eclipse.daanse.sql.statement.api.expression.SqlExpression;
 
-public class ListAggAggregator implements Aggregator, NodeAggregate {
+public class ListAggAggregator implements Aggregator, org.eclipse.daanse.rolap.aggregator.SqlNodeAggregator {
 
     private boolean distinct;
     private String separator;

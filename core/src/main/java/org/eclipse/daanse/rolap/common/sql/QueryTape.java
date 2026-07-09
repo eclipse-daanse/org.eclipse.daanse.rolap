@@ -15,39 +15,35 @@ package org.eclipse.daanse.rolap.common.sql;
 
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
+import java.util.function.Supplier;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
-import org.eclipse.daanse.jdbc.db.dialect.api.type.BestFitColumnType;
-import org.eclipse.daanse.jdbc.db.dialect.api.type.Datatype;
+import org.eclipse.daanse.jdbc.db.api.type.BestFitColumnType;
+import org.eclipse.daanse.jdbc.db.api.type.Datatype;
 import org.eclipse.daanse.olap.api.sql.SortingDirection;
 import org.eclipse.daanse.sql.statement.api.expression.Predicate;
 import org.eclipse.daanse.sql.statement.api.expression.SqlExpression;
 import org.eclipse.daanse.sql.statement.api.model.FromClause;
 
 /**
- * The immutable mutation tape of the retired query facade: one {@link QueryOp} per {@code track()}
- * step, in call order, plus the query-level flags a replay needs ({@code supported},
- * {@code distinct}, {@code formatted}).
+ * An immutable, ordered list of recorded builder operations — one {@link QueryOp} per mutation, in
+ * call order — plus the query-level flags a replay needs ({@code distinct}, {@code formatted}).
+ * {@code org.eclipse.daanse.rolap.common.sqlbuild.ContributionAssembler} replays a tape against a
+ * fresh {@code SelectStatementBuilder} to build the dialect-free {@code SelectStatement}.
  *
- * <p>Each op captures EXACTLY the information the corresponding {@code track()} lambda consumed —
- * dialect-free builder nodes ({@link SqlExpression} / {@link Predicate} / {@link FromClause} are
- * immutable values and are carried directly), raw strings, and flags. The only non-value payload is
- * the {@link FromDeferred} resolver closure (a view / inline-table / sub-query FROM that needs the
- * {@link Dialect} at render time); it is effectively immutable and is carried as-is.
- *
- * <p>{@code org.eclipse.daanse.rolap.common.sqlbuild.ContributionAssembler} replays a tape against
- * a fresh {@code SelectStatementBuilder} — running the byte-identical copied logic of each recorded
- * lambda plus the copied {@code buildStatement}/{@code buildFromClause} assembly — to produce the
- * same SQL as the live the retired query facade it was recorded from.
+ * <p>Each op captures EXACTLY the information the corresponding mutation consumed — dialect-free
+ * builder nodes ({@link SqlExpression} / {@link Predicate} / {@link FromClause} are immutable values
+ * and are carried directly), raw strings, and flags. The only non-value payload is the
+ * {@link FromDeferred} resolver closure (a sub-query FROM built lazily at assembly time); it is
+ * effectively immutable and is carried as-is. The resolver is dialect-free — it composes a nested
+ * dialect-free {@code SelectStatement}; the {@code DialectSqlRenderer} applies the dialect once at render.
  */
-public record QueryTape(List<QueryOp> ops, boolean supported, boolean distinct, boolean formatted) {
+public record QueryTape(List<QueryOp> ops, boolean distinct, boolean formatted) {
 
     public QueryTape {
         ops = List.copyOf(ops);
     }
 
-    /** One recorded {@code track()} mutation step of the retired query facade. */
+    /** One recorded builder mutation step. */
     public sealed interface QueryOp {
     }
 
@@ -57,20 +53,19 @@ public record QueryTape(List<QueryOp> ops, boolean supported, boolean distinct, 
 
     /**
      * {@code addFromRendered(...)} — a FROM item carried as an already-built immutable
-     * {@link FromClause} node: {@code FromRaw} (rendered subquery string via {@code addFromQuery}),
-     * {@code FromVariant} (view), or {@code FromInline} (inline table). Added only if {@code alias}
-     * is new to the builder-FROM alias set.
+     * {@link FromClause} node: {@code FromVariant} (view) or {@code FromInline} (inline table).
+     * Added only if {@code alias} is new to the builder-FROM alias set.
      */
     public record FromRendered(String alias, FromClause node) implements QueryOp {
     }
 
     /**
-     * {@code addDeferredFrom(...)} — a view / inline-table / sub-query FROM whose {@link FromClause}
-     * needs the live {@link Dialect}: a placeholder is added at the current FROM index and the
-     * resolver replaces it at assembly time. The resolver closure is effectively immutable (the
-     * sub-query variant closes over another the retired query facade — acceptable for 4.1a).
+     * {@code addDeferredFrom(...)} — a sub-query FROM whose {@link FromClause} is built lazily: a
+     * placeholder is added at the current FROM index and the resolver replaces it at assembly time.
+     * The resolver is dialect-free (it composes a nested dialect-free {@code SelectStatement}); it is
+     * effectively immutable (the sub-query variant closes over another recorder).
      */
-    public record FromDeferred(String alias, Function<Dialect, FromClause> resolver) implements QueryOp {
+    public record FromDeferred(String alias, Supplier<FromClause> resolver) implements QueryOp {
     }
 
     /**
@@ -95,7 +90,7 @@ public record QueryTape(List<QueryOp> ops, boolean supported, boolean distinct, 
      * Any of the SELECT-projection mutators ({@code addSelect}, {@code addSelectExpr},
      * {@code addSelectNode} and their {@code *Commented} variants) — a single projection:
      * <ul>
-     *   <li>{@code node} — the dialect-free expression node (a {@code Raw} for legacy string
+     *   <li>{@code node} — the dialect-free expression node (a {@code Raw} for string
      *       callers);</li>
      *   <li>{@code explicitAlias} — the explicit {@code ColumnAlias} fed to the builder, or
      *       {@code null} for the auto-{@code c<ordinal>} path (renderer synthesizes it);</li>
@@ -155,10 +150,9 @@ public record QueryTape(List<QueryOp> ops, boolean supported, boolean distinct, 
     }
 
     /**
-     * {@code addHaving(Predicate, String)} (P5-N4c) — a dialect-free HAVING conjunct
-     * predicate, deduped by node value (node equality is render-equality, so it mirrors the
-     * string dedup the retired raw HAVING op used); {@code comment} selects the commented
-     * builder overload when non-null.
+     * {@code addHaving(Predicate, String)} — a dialect-free HAVING conjunct predicate, deduped by
+     * node value (node equality is render-equality, so identical conjuncts dedup as their identical
+     * strings would); {@code comment} selects the commented builder overload when non-null.
      */
     public record HavingNode(Predicate predicate, String comment) implements QueryOp {
     }
@@ -189,9 +183,5 @@ public record QueryTape(List<QueryOp> ops, boolean supported, boolean distinct, 
 
     /** {@code addGroupingFunction(String)} — one {@code grouping(expr)} SELECT-tail function. */
     public record GroupingFunction(String columnExpr) implements QueryOp {
-    }
-
-    /** {@code setSupported(false)} — the query was marked unsupported (no builder effect). */
-    public record Unsupported() implements QueryOp {
     }
 }

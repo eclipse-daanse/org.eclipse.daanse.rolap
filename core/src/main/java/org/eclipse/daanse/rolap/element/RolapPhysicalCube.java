@@ -59,7 +59,7 @@ import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.member.CacheMemberReader;
 import org.eclipse.daanse.rolap.common.member.MeasureMemberSource;
 import org.eclipse.daanse.rolap.common.star.RolapSqlExpression;
-import org.eclipse.daanse.jdbc.db.dialect.api.type.Datatype;
+import org.eclipse.daanse.jdbc.db.api.type.Datatype;
 import org.eclipse.daanse.rolap.aggregator.extra.ListAggAggregator;
 import org.eclipse.daanse.rolap.common.writeback.RolapWritebackAttribute;
 import org.eclipse.daanse.rolap.common.writeback.RolapWritebackColumn;

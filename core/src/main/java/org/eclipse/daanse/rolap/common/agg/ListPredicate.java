@@ -32,7 +32,6 @@ import java.util.TreeSet;
 
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.key.BitKey;
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.star.StarPredicate;
 
@@ -181,23 +180,6 @@ public abstract class ListPredicate implements StarPredicate {
     @Override
 	public StarPredicate minus(StarPredicate predicate) {
         throw Util.needToImplement(this);
-    }
-
-    @Override
-	public void toSql(Dialect dialect, StringBuilder buf) {
-        if (children.size() == 1) {
-            children.getFirst().toSql(dialect, buf);
-        } else {
-            int k = 0;
-            buf.append("(");
-            for (StarPredicate child : children) {
-                if (k++ > 0) {
-                    buf.append(" ").append(getOp()).append(" ");
-                }
-                child.toSql(dialect, buf);
-            }
-            buf.append(")");
-        }
     }
 
     protected abstract String getOp();

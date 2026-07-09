@@ -40,7 +40,6 @@ import org.eclipse.daanse.olap.query.component.StringLiteralImpl;
 import org.eclipse.daanse.olap.util.type.TypeWrapperExp;
 import org.eclipse.daanse.rolap.common.nativize.NativeSqlContext;
 import org.eclipse.daanse.rolap.common.nativize.RolapNativeSql;
-import org.eclipse.daanse.rolap.common.sql.QueryRecorder;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -53,26 +52,14 @@ class NumberSqlCompilerTest {
     private static RolapNativeSql.NumberSqlCompiler compiler;
 
     @BeforeAll static void beforeAll() throws Exception {
+        // The node channel emits builder literal nodes; the dialect feeds only the
+        // regex-capability read at construction.
         Dialect dialect = mock(Dialect.class);
         when(dialect.name())
             .thenReturn("mysql");
 
-        when(dialect.quoteDecimalLiteral("1"))
-            .thenReturn(new StringBuilder("1"));
-
-        when(dialect.quoteDecimalLiteral("+1.01"))
-        .thenReturn(new StringBuilder("+1.01"));
-
-        when(dialect.quoteDecimalLiteral("-.00001"))
-        .thenReturn(new StringBuilder("-.00001"));
-
-        when(dialect.quoteDecimalLiteral("-1"))
-        .thenReturn(new StringBuilder("-1"));
-
-        QueryRecorder query = mock(QueryRecorder.class);
-
         RolapNativeSql sql = new RolapNativeSql(
-            NativeSqlContext.ofRecorder(query, dialect), null, null, null);
+            NativeSqlContext.scratch(dialect), null, null, null);
         compiler = sql.new NumberSqlCompiler();
     }
 
@@ -83,13 +70,13 @@ class NumberSqlCompilerTest {
     @Test
     void rejectsNonLiteral() {
         Expression exp = new TypeWrapperExp(NullType.INSTANCE);
-        assertThat(compiler.compile(exp)).isNull();
+        assertThat(compiler.compileNodeExpr(exp)).isNull();
     }
 
     @Test
     void acceptsNumeric() {
         Expression exp = NumericLiteralImpl.create(BigDecimal.ONE);
-        assertThat(compiler.compile(exp)).isNotNull();
+        assertThat(compiler.compileNodeExpr(exp)).isNotNull();
     }
 
     @Test
@@ -114,7 +101,7 @@ class NumberSqlCompilerTest {
 
     private void checkAcceptsString(String value) {
         Expression exp = StringLiteralImpl.create(value);
-        assertThat(value).as(compiler.compile(exp).toString()).isNotNull();
+        assertThat(compiler.compileNodeExpr(exp)).as(value).isNotNull();
     }
 
 
@@ -151,7 +138,7 @@ class NumberSqlCompilerTest {
     private void checkRejectsString(String value) {
         Expression exp = StringLiteralImpl.create(value);
         try {
-            compiler.compile(exp);
+            compiler.compileNodeExpr(exp);
         } catch (DaanseEvaluationException e) {
             return;
         }

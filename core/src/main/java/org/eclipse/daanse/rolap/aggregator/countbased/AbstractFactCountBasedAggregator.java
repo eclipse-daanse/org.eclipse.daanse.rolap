@@ -30,7 +30,7 @@ public abstract class AbstractFactCountBasedAggregator extends AbstractAggregato
 
     protected final String factCountExpr;
 
-    /** Dialect-free node twin of {@link #factCountExpr}: the agg table's fact-count column. */
+    /** Dialect-free SQL node for the agg table's fact-count column. */
     protected final SqlExpression factCountNode;
 
     protected AbstractFactCountBasedAggregator(final String name, final String factCountExpr,
@@ -50,10 +50,10 @@ public abstract class AbstractFactCountBasedAggregator extends AbstractAggregato
     public abstract String getScalarExpression(String operand);
 
     /**
-     * Dialect-free node twin of {@link #getScalarExpression(String)}: composes {@code operand} with
-     * {@link #factCountNode} so the render is byte-identical to the string form (each side individually
-     * parenthesized via the empty-name Function paren wrapper, joined by a non-parenthesized infix).
-     * Only defined where {@link #alwaysRequiresFactColumn()} is {@code true}.
+     * Returns the scalar aggregate as a dialect-free SQL node: composes {@code operand} with
+     * {@link #factCountNode} (each side individually parenthesized via the empty-name Function paren
+     * wrapper, joined by a non-parenthesized infix). Only defined where
+     * {@link #alwaysRequiresFactColumn()} is {@code true}.
      */
     public abstract SqlExpression getScalarNode(SqlExpression operand);
 }

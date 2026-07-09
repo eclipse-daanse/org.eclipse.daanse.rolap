@@ -27,9 +27,6 @@ package org.eclipse.daanse.rolap.common.agg;
 
 import java.util.Collection;
 
-import org.eclipse.daanse.olap.common.Util;
-import org.eclipse.daanse.olap.key.BitKey;
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.star.StarColumnPredicate;
 import org.eclipse.daanse.rolap.common.star.StarPredicate;
@@ -178,39 +175,4 @@ public class ValueColumnPredicate
         return new ValueColumnPredicate(column, value);
     }
 
-    @Override
-	public void toSql(Dialect dialect, StringBuilder buf) {
-        final RolapStar.Column column = getConstrainedColumn();
-        String expr = column.generateExprString(dialect);
-        buf.append(expr);
-        Object key = getValue();
-        if (key == Util.sqlNullValue) {
-            buf.append(" is null");
-        } else {
-            buf.append(" = ");
-            dialect.quote(buf, key, column.getDatatype());
-        }
-    }
-
-    public BitKey checkInList(BitKey inListLHSBitKey) {
-        // ValueColumn predicate by itself is not using IN list; when it is
-        // one of the children to an OR predicate, then using IN list
-        // is helpful. The later is checked by passing in a bitmap that
-        // represent the LHS or the IN list, i.e. the column that is
-        // constrained by the OR.
-        BitKey inListRHSBitKey = inListLHSBitKey.copy();
-
-        if (!getConstrainedColumnBitKey().equals(inListLHSBitKey)
-            || value == Util.sqlNullValue)
-        {
-            inListRHSBitKey.clear();
-        }
-
-        return inListRHSBitKey;
-    }
-
-    public void toInListSql(Dialect dialect, StringBuilder buf) {
-        dialect.quote(
-            buf, value, getConstrainedColumn().getDatatype());
-    }
 }

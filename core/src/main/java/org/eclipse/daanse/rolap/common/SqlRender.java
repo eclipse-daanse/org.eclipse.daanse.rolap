@@ -28,19 +28,51 @@ import org.eclipse.daanse.sql.statement.render.DialectSqlRenderer;
  */
 public final class SqlRender {
 
+    /** Diagnostic channel for the commented-SQL double-render (see {@link #logCommented}); enabled purely by
+     *  logback configuration — no system property needed. Distinct from the file log in {@code CommentedSqlLog}
+     *  (which is gated on {@code -Ddaanse.sql.commentlog.dir}). */
+    private static final org.slf4j.Logger COMMENTED_SQL_LOGGER =
+            org.slf4j.LoggerFactory.getLogger("org.eclipse.daanse.rolap.sql.CommentedSql");
+
+    /** Multi-line, comments-on options for the diagnostic commented copy (readable regardless of the executed
+     *  query's formatting). */
+    private static final RenderOptions COMMENTED =
+            RenderOptions.multiLine().withComments(true, RenderOptions.CommentStyle.LINE);
+
     private SqlRender() {
     }
 
     /** Renders a statement with default (compact) options. */
     public static RenderedSql render(SelectStatement statement, Dialect dialect) {
         org.eclipse.daanse.rolap.common.sqlbuild.CommentedSqlLog.append(statement, dialect);
-        return new DialectSqlRenderer(dialect).render(statement);
+        DialectSqlRenderer renderer = new DialectSqlRenderer(dialect);
+        logCommented(renderer, statement);
+        return renderer.render(statement);
     }
 
     /** Renders a statement with explicit render options. */
     public static RenderedSql render(SelectStatement statement, Dialect dialect, RenderOptions options) {
         org.eclipse.daanse.rolap.common.sqlbuild.CommentedSqlLog.append(statement, dialect);
-        return new DialectSqlRenderer(dialect).render(statement, options);
+        DialectSqlRenderer renderer = new DialectSqlRenderer(dialect);
+        logCommented(renderer, statement);
+        return renderer.render(statement, options);
+    }
+
+    /**
+     * Diagnostic double-hit: whenever the commented-SQL logger is enabled (a pure logback decision), render the
+     * SAME statement a second time WITH comments and log it. This is a pure side effect — the renderer is
+     * stateless and the returned/executed SQL is rendered separately with the caller's options, so the executed
+     * SQL is unaffected; the commented copy goes only to the log. Never throws (render problems are
+     * logged as a single WARN and swallowed).
+     */
+    private static void logCommented(DialectSqlRenderer renderer, SelectStatement statement) {
+        if (COMMENTED_SQL_LOGGER.isInfoEnabled()) {
+            try {
+                COMMENTED_SQL_LOGGER.info("commented sql:\n{}", renderer.render(statement, COMMENTED).sql());
+            } catch (RuntimeException e) {
+                COMMENTED_SQL_LOGGER.warn("commented-sql render failed (ignored): {}", e.toString());
+            }
+        }
     }
 
     /** Renders a single predicate to its dialect SQL fragment (no surrounding SELECT). */

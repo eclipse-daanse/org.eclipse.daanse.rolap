@@ -86,6 +86,16 @@ public class MinusStarPredicate extends AbstractColumnPredicate {
         return plus.getConstrainedColumn();
     }
 
+    /** The positive ("plus") side: rows must satisfy this. */
+    public StarColumnPredicate getPlus() {
+        return plus;
+    }
+
+    /** The negative ("minus") side: rows satisfying this are excluded. */
+    public StarColumnPredicate getMinus() {
+        return minus;
+    }
+
     @Override
 	public void values(Collection<Object> collection) {
         Set<Object> plusValues = new HashSet<>();

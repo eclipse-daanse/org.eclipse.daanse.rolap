@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Set;
 
 import org.eclipse.daanse.olap.common.Util;
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.star.StarColumnPredicate;
 import org.eclipse.daanse.rolap.common.star.StarPredicate;
@@ -336,83 +335,4 @@ public class ListColumnPredicate extends AbstractColumnPredicate {
             cloneListWithColumn(column, children));
     }
 
-    @Override
-	public void toSql(Dialect dialect, StringBuilder buf) {
-        List<StarColumnPredicate> predicates = getPredicates();
-        if (predicates.size() == 1) {
-            predicates.getFirst().toSql(dialect, buf);
-            return;
-        }
-
-        int notNullCount = 0;
-        final RolapStar.Column column = getConstrainedColumn();
-        final String expr = column.generateExprString(dialect);
-        final int marker = buf.length(); // to allow backtrack later
-        buf.append(expr);
-        ValueColumnPredicate firstNotNull = null;
-        buf.append(" in (");
-        for (StarColumnPredicate predicate1 : predicates) {
-            final ValueColumnPredicate predicate2 =
-                (ValueColumnPredicate) predicate1;
-            Object key = predicate2.getValue();
-            if (key == Util.sqlNullValue) {
-                continue;
-            }
-            if (notNullCount > 0) {
-                buf.append(", ");
-            } else {
-                firstNotNull = predicate2;
-            }
-            ++notNullCount;
-            dialect.quote(buf, key, column.getDatatype());
-        }
-        buf.append(')');
-
-        // If all of the predicates were non-null, return what we've got, for
-        // example, "x in (1, 2, 3)".
-        if (notNullCount >= predicates.size()) {
-            return;
-        }
-
-        // There was at least one null. Reset the buffer to how we
-        // originally found it, and generate a more concise expression.
-        switch (notNullCount) {
-        case 0:
-            // Special case -- there were no values besides null.
-            // Return, for example, "x is null".
-            buf.setLength(marker);
-            buf.append(expr);
-            buf.append(" is null");
-            break;
-
-        case 1:
-            // Special case -- one not-null value, and null, for
-            // example "(x = 1 or x is null)".
-            assert firstNotNull != null;
-            buf.setLength(marker);
-            buf.append('(');
-            buf.append(expr);
-            buf.append(" = ");
-            dialect.quote(
-                buf,
-                firstNotNull.getValue(),
-                column.getDatatype());
-            buf.append(" or ");
-            buf.append(expr);
-            buf.append(" is null)");
-            break;
-
-        default:
-            // Nulls and values, for example,
-            // "(x in (1, 2) or x IS NULL)".
-            String save = buf.substring(marker);
-            buf.setLength(marker); // backtrack
-            buf.append('(');
-            buf.append(save);
-            buf.append(" or ");
-            buf.append(expr);
-            buf.append(" is null)");
-            break;
-        }
-    }
 }

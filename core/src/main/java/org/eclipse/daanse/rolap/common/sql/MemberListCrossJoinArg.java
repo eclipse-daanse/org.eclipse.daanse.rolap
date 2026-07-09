@@ -30,7 +30,6 @@ package org.eclipse.daanse.rolap.common.sql;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;
@@ -253,18 +252,6 @@ public class MemberListCrossJoinArg implements CrossJoinArg {
             // eval, since the members are already known.
             return true;
         }
-    }
-
-    @Override
-	public void addConstraint(
-        Dialect dialect,
-        QueryRecorder sqlQuery,
-        RolapCube baseCube,
-        AggStar aggStar)
-    {
-        MemberConstraintWriter.addMemberConstraint(
-            dialect, sqlQuery, baseCube, aggStar,
-            members, restrictMemberTypes, true, exclude);
     }
 
     /**

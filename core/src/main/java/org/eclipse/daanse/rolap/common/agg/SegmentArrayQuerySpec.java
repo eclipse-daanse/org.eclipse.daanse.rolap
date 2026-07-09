@@ -180,8 +180,17 @@ class SegmentArrayQuerySpec extends AbstractQuerySpec {
         return true;
     }
 
+    /** The grouping-sets column lists for the builder {@code Shape} — empty unless
+     *  {@link GroupingSetsList#useGroupingSets()} (the list returns empty then). */
     @Override
-    protected boolean hasGroupingSets() {
-        return groupingSetsList.useGroupingSets();
+    protected List<RolapStar.Column[]> getGroupingSetsColumns() {
+        return groupingSetsList.getGroupingSetsColumns();
+    }
+
+    /** The rollup columns emitted as {@code grouping(x)} SELECT-tail functions — empty unless
+     *  grouping sets are in use. */
+    @Override
+    protected List<RolapStar.Column> getRollupColumns() {
+        return groupingSetsList.getRollupColumns();
     }
 }

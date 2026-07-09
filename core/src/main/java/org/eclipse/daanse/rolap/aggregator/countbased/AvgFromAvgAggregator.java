@@ -51,16 +51,17 @@ public class AvgFromAvgAggregator extends AbstractFactCountBasedAggregator {
     }
 
     @Override
-    public org.eclipse.daanse.sql.statement.api.expression.SqlExpression getExpression(
+    public org.eclipse.daanse.sql.statement.api.expression.SqlExpression toNode(
             org.eclipse.daanse.sql.statement.api.expression.SqlExpression inner) {
-        // sum(<inner> * <factCount>) * 1e0 / sum(<factCount>) — non-parenthesized, matching the
-        // string form; see getExpression(CharSequence) for the 1e0 rationale.
+        org.eclipse.daanse.sql.statement.api.expression.SqlExpression operand = nodeOperand(inner);
+        // sum(<operand> * <factCount>) * 1e0 / sum(<factCount>) — non-parenthesized;
+        // see getExpression(CharSequence) for the 1e0 rationale.
         var fc = factCountNode;
         return org.eclipse.daanse.sql.statement.api.Expressions.infix(
             org.eclipse.daanse.sql.statement.api.Expressions.infix(
                 org.eclipse.daanse.sql.statement.api.Expressions.aggregate("sum",
                     org.eclipse.daanse.sql.statement.api.Expressions.infix(
-                        inner, org.eclipse.daanse.sql.statement.api.expression.ArithmeticOperator.MULTIPLY, fc)),
+                        operand, org.eclipse.daanse.sql.statement.api.expression.ArithmeticOperator.MULTIPLY, fc)),
                 org.eclipse.daanse.sql.statement.api.expression.ArithmeticOperator.MULTIPLY,
                 org.eclipse.daanse.sql.statement.api.Expressions.raw("1e0")),
             org.eclipse.daanse.sql.statement.api.expression.ArithmeticOperator.DIVIDE,

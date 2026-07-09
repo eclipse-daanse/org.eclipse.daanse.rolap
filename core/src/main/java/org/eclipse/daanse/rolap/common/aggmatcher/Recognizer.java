@@ -122,10 +122,10 @@ public abstract class Recognizer {
     protected final RolapStar star;
     protected final JdbcSchema.Table dbFactTable;
     protected final JdbcSchema.Table aggTable;
-    protected final MessageRecorder msgRecorder;
+    final MessageRecorder msgRecorder;
     protected boolean returnValue;
 
-    protected Recognizer(
+    Recognizer(
         final RolapStar star,
         final JdbcSchema.Table dbFactTable,
         final JdbcSchema.Table aggTable,

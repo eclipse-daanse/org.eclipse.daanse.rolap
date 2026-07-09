@@ -17,7 +17,7 @@ import java.util.List;
 import org.eclipse.daanse.olap.api.DataTypeJdbc;
 import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 
-public abstract class AbstractAggregator implements Aggregator {
+public abstract class AbstractAggregator implements Aggregator, SqlNodeAggregator {
 
     protected String name;
     private int ordinal;
@@ -70,15 +70,31 @@ public abstract class AbstractAggregator implements Aggregator {
     }
 
     /**
-     * Dialect-free node form of {@link #getExpression(CharSequence)}, for callers that already hold a builder
-     * {@link org.eclipse.daanse.sql.statement.api.expression.SqlExpression} for the operand. Returns
-     * {@code null} when this aggregator cannot be represented as a simple {@code name(operand)} builder node
-     * (composite count-based or dialect-generator aggregators) — the caller then falls back to the
-     * {@link CharSequence} string form. The simple {@code name(operand)} aggregators override this.
+     * The {@link #toNode} operand for simple {@code name(operand)} aggregators: a {@code null}
+     * operand means "no measure column" and renders as {@code *} (e.g. {@code count(*)}).
      */
-    public org.eclipse.daanse.sql.statement.api.expression.SqlExpression getExpression(
+    protected static org.eclipse.daanse.sql.statement.api.expression.SqlExpression nodeOperand(
             org.eclipse.daanse.sql.statement.api.expression.SqlExpression inner) {
-        return null;
+        return inner == null ? org.eclipse.daanse.sql.statement.api.Expressions.star() : inner;
+    }
+
+    /**
+     * Returns the aggregate expression as a dialect-free SQL node: a plain {@code name(operand)}
+     * aggregate call over {@link #getName()}. This covers the simple non-distinct aggregators
+     * ({@code None}, {@code Ipp}, {@code Rnd}). DISTINCT aggregators return {@code null} here (no
+     * node form; the String form is used) because a distinct node spelling is a per-aggregator
+     * choice ({@code distinct-count} renders {@code count(distinct …)}, not
+     * {@code distinct-count(distinct …)}), so a distinct aggregator that needs a node MUST override
+     * this. Custom user aggregators keep their own dialect-opaque String templates (a render-time
+     * callback node is neither cache- nor equality-safe).
+     */
+    @Override
+    public org.eclipse.daanse.sql.statement.api.expression.SqlExpression toNode(
+            org.eclipse.daanse.sql.statement.api.expression.SqlExpression operand) {
+        if (distinct) {
+            return null;
+        }
+        return org.eclipse.daanse.sql.statement.api.Expressions.aggregate(getName(), nodeOperand(operand));
     }
 
     /**
