@@ -30,25 +30,28 @@ package org.eclipse.daanse.rolap.common.cache;
 import java.util.Iterator;
 import java.util.Map;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
+import org.apache.commons.collections4.map.AbstractReferenceMap.ReferenceStrength;
+import org.apache.commons.collections4.map.ReferenceMap;
 
 /**
- * An implementation of {@link SmartCacheImpl} backed by a bounded, strong,
- * equals-keyed Caffeine cache. Under memory pressure the cache is cleared via
- * {@link MemoryPressureCacheRegistry}.
+ * An implementation of {@link SmartCacheImpl} backed by a commons-collections
+ * {@link ReferenceMap} whose keys AND values are soft references.
  *
- * <p>Historically this used soft references for both keys and values
- * (Apache {@code ReferenceMap(SOFT, SOFT)}), so the cyclic member graph could
- * be reclaimed as a unit under memory pressure. That was migrated to Caffeine
- * {@code softValues()} with strong keys, which broke it: a strong
- * {@code MemberKeyR} key pins its parent member (a soft value stored elsewhere),
- * so whole member ancestor chains could never be collected. Caffeine cannot
- * express soft keys, and its {@code weakKeys()} compares by identity. This
- * implementation instead uses strong, equals-based keys with a generous
- * backstop size bound and adaptive clearing on memory pressure, restoring the
- * "shed when the heap is tight" behaviour without any reference-semantics
- * traps. The name is kept for source compatibility.</p>
+ * <p>This is the reference semantics the original mondrian used
+ * ({@code org.apache.commons.collections.map.ReferenceMap(SOFT, SOFT)}), now on
+ * commons-collections4. Both the key and the value of an entry are soft, so the
+ * garbage collector reclaims a member and the ancestor chain it points at as a
+ * unit under memory pressure — nothing strong pins a soft value in place.</p>
+ *
+ * <p>The two intermediate attempts each broke this differently. Caffeine cannot
+ * express soft <em>keys</em>, so {@code softValues()} with strong keys let a
+ * strong {@code MemberKeyR} key pin its parent's soft value: whole ancestor
+ * chains could never be reclaimed (an unbounded-retention leak). Replacing that
+ * with a strong, {@code maximumSize(100_000)}-bounded cache plus a
+ * memory-pressure clear-all fixed the leak but held up to 100k entries strongly
+ * between clears, so the GC could not shed them incrementally and thrashed under
+ * a full heap — measured at roughly 3x the full-suite wall time. The soft/soft
+ * map restores the original per-entry behaviour without either trap.</p>
  *
  * This class does not enforce any synchronization, because
  * this is handled by SmartCacheImpl.
@@ -58,19 +61,8 @@ import com.github.benmanes.caffeine.cache.Caffeine;
  */
 public class SoftSmartCache<K, V> extends SmartCacheImpl<K, V> {
 
-    /**
-     * Backstop bound on the number of cached entries. The primary shedding
-     * mechanism under memory pressure is {@link MemoryPressureCacheRegistry};
-     * this cap only prevents unbounded growth when the memory monitor is
-     * unavailable, so it is chosen generously to rarely evict in normal use.
-     */
-    private static final int MAX_ENTRIES = 100_000;
-
-    private final Cache<K, V> cache = Caffeine.newBuilder().maximumSize(MAX_ENTRIES).build();
-
-    public SoftSmartCache() {
-        MemoryPressureCacheRegistry.register(this);
-    }
+    private final Map<K, V> cache =
+        new ReferenceMap<>(ReferenceStrength.SOFT, ReferenceStrength.SOFT);
 
     @Override
 	public V putImpl(K key, V value) {
@@ -78,35 +70,35 @@ public class SoftSmartCache<K, V> extends SmartCacheImpl<K, V> {
         // Convert the operation because ReferenceMap doesn't
         // like null values.
         if (value == null) {
-            return cache.asMap().remove(key);
+            return cache.remove(key);
         } else {
-            return cache.asMap().put(key, value);
+            return cache.put(key, value);
         }
     }
 
     @Override
 	public V getImpl(K key) {
-        return cache.asMap().get(key);
+        return cache.get(key);
     }
 
     @Override
 	public V removeImpl(K key) {
-        return cache.asMap().remove(key);
+        return cache.remove(key);
     }
 
     @Override
 	public void clearImpl() {
-        cache.asMap().clear();
+        cache.clear();
     }
 
     @Override
 	public int sizeImpl() {
-        return cache.asMap().size();
+        return cache.size();
     }
 
     @Override
 	public Iterator<Map.Entry<K, V>> iteratorImpl() {
-        return cache.asMap().entrySet().iterator();
+        return cache.entrySet().iterator();
     }
 }
 
