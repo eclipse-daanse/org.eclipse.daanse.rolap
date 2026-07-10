@@ -202,6 +202,10 @@ public class SegmentWithData extends Segment {
             Object o = data.getObject(cellKey);
             if (o == null) {
                 o = Util.nullValue;
+            } else if (o instanceof Double d && Double.isNaN(d)) {
+                // NaN aggregate = undefined 0/0 (e.g. avg over zero facts).
+                // Present as empty, matching NULL from division-by-zero.
+                o = Util.nullValue;
             }
             return o;
         }
