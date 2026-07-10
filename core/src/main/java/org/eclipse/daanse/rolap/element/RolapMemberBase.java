@@ -33,6 +33,7 @@ import java.util.Map;
 
 import org.eclipse.daanse.olap.api.calc.Calc;
 import org.eclipse.daanse.olap.api.catalog.CatalogReader;
+import org.eclipse.daanse.jdbc.db.api.type.Datatype;
 import org.eclipse.daanse.olap.api.connection.Connection;
 import org.eclipse.daanse.olap.api.element.Catalog;
 import org.eclipse.daanse.olap.api.element.Dimension;
@@ -274,7 +275,7 @@ public class RolapMemberBase
         if (parentMember == null && key != null) {
             String n = hierarchyUsage.getName();
             if (n != null) {
-                String name = keyToString(key);
+                String name = keyToName(key);
                 n = Util.quoteMdxIdentifier(n);
                 this.uniqueName = Util.makeFqName(n, name);
                 if (getLogger().isDebugEnabled()) {
@@ -286,7 +287,7 @@ public class RolapMemberBase
     }
 
     public void setUniqueName(Object key) {
-        String name = keyToString(key);
+        String name = keyToName(key);
 
         // Drop the '[All Xxxx]' segment in regular members.
         // Keep the '[All Xxxx]' segment in the 'all' member.
@@ -340,7 +341,7 @@ public class RolapMemberBase
             getPropertyValue(StandardProperty.NAME.getName());
         return (name != null)
             ? String.valueOf(name)
-            : keyToString(key);
+            : keyToName(key);
     }
 
     @Override
@@ -985,6 +986,24 @@ public class RolapMemberBase
             name = name.substring(0, name.length() - 2);
         }
         return name;
+    }
+
+    /**
+     * Renders the key as a member name. For a BOOLEAN-typed level the key may arrive as a
+     * {@code Number} (0/1) when the column is physically stored as SMALLINT, so it is mapped to
+     * {@code true}/{@code false}. Falls back to {@link #keyToString(Object)} otherwise.
+     */
+    private String keyToName(Object k) {
+        final RolapLevel level = getLevel();
+        if (level != null && level.getDatatype() == Datatype.BOOLEAN) {
+            if (k instanceof Boolean b) {
+                return b ? "true" : "false";
+            }
+            if (k instanceof Number num) {
+                return num.intValue() != 0 ? "true" : "false";
+            }
+        }
+        return keyToString(k);
     }
 
     @Override
