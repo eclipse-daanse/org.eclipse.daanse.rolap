@@ -39,7 +39,7 @@ public class LevelUtil {
         if (level.getColumn() instanceof org.eclipse.daanse.rolap.mapping.model.database.relational.ExpressionColumn sec) {
             return new RolapSqlExpression(sec);
         } else if (level.getColumn() != null) {
-            return new RolapColumn(ownerAlias(hierarchy, level.getColumn()), level.getColumn().getName());
+            return new RolapColumn(levelAlias(hierarchy, level), level.getColumn().getName());
         } else {
             return null;
         }
@@ -53,7 +53,7 @@ public class LevelUtil {
         if (level.getNameColumn() instanceof org.eclipse.daanse.rolap.mapping.model.database.relational.ExpressionColumn sec) {
             return new RolapSqlExpression(sec);
         } else if (level.getNameColumn() != null && !Objects.equals(level.getNameColumn(), level.getColumn())) {
-            return new RolapColumn(ownerAlias(hierarchy, level.getColumn()), level.getNameColumn().getName());
+            return new RolapColumn(levelAlias(hierarchy, level), level.getNameColumn().getName());
         } else {
             return null;
         }
@@ -80,6 +80,22 @@ public class LevelUtil {
         return owner != null ? owner.getName() : null;
     }
 
+    /**
+     * Returns the alias for the given level's columns. When the level references a
+     * {@link org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource}, that
+     * source's alias is used; otherwise the alias is inferred from the key column's owning table
+     * via {@link #ownerAlias}. The explicit source disambiguates self-joins, where the same table
+     * appears under multiple aliases.
+     */
+    private static String levelAlias(RolapHierarchy hierarchy,
+            org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.Level level) {
+        var source = level.getRelationalSource();
+        if (source != null && source.getAlias() != null) {
+            return source.getAlias();
+        }
+        return ownerAlias(hierarchy, level.getColumn());
+    }
+
 	public static RolapSqlExpression getCaptionExp(org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.Level level) {
         return getCaptionExp(level, null);
     }
@@ -88,7 +104,7 @@ public class LevelUtil {
 	    if (level.getCaptionColumn() instanceof org.eclipse.daanse.rolap.mapping.model.database.relational.ExpressionColumn sec) {
             return new RolapSqlExpression(sec);
         } else if (level.getCaptionColumn() != null) {
-            return new RolapColumn(ownerAlias(hierarchy, level.getColumn()), level.getCaptionColumn().getName());
+            return new RolapColumn(levelAlias(hierarchy, level), level.getCaptionColumn().getName());
         } else {
             return null;
         }
@@ -104,7 +120,7 @@ public class LevelUtil {
                 if (oc.getColumn() instanceof org.eclipse.daanse.rolap.mapping.model.database.relational.ExpressionColumn sec) {
                     return new RolapSqlExpression(sec, SortingDirection.valueOf(oc.getDirection().name()));
                 }
-                return new RolapColumn(ownerAlias(hierarchy, level.getColumn()), oc.getColumn().getName(), SortingDirection.valueOf(oc.getDirection().getName()));
+                return new RolapColumn(levelAlias(hierarchy, level), oc.getColumn().getName(), SortingDirection.valueOf(oc.getDirection().getName()));
             }).toList();
         } else {
             return List.of();
@@ -130,6 +146,6 @@ public class LevelUtil {
     }
 
     public static RolapSqlExpression getPropertyExp(org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.Level level, int i, RolapHierarchy hierarchy) {
-        return new RolapColumn(ownerAlias(hierarchy, level.getColumn()), level.getMemberProperties().get(i).getColumn().getName());
+        return new RolapColumn(levelAlias(hierarchy, level), level.getMemberProperties().get(i).getColumn().getName());
     }
 }
