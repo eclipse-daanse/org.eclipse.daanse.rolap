@@ -76,6 +76,11 @@
       <version>3.1.8</version>
     </dependency>
     <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-collections4</artifactId>
+      <version>4.5.0</version>
+    </dependency>
+    <dependency>
       <groupId>org.eclipse.daanse</groupId>
       <artifactId>org.eclipse.daanse.jdbc.db.dialect.db.common</artifactId>
       <version>0.0.1-SNAPSHOT</version>
