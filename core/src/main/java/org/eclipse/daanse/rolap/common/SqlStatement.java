@@ -346,8 +346,14 @@ public class SqlStatement implements SqlStatementI {
   }
     String status = formatTimingStatus( duration, rowCount );
 
+    // Tag the timing marker with the execution's component name (e.g. "SqlTupleReader.readTuples")
+    // so it identifies which operation ran the SQL; fall back to "SqlStatement" when absent.
+    String component = executionContext.metadata() != null
+            && executionContext.metadata().component() != null
+        ? executionContext.metadata().component()
+        : "SqlStatement";
     executionContext.getExecution().getQueryTiming().markFull(
-      TIMING_NAME + "SqlStatement", duration );
+      TIMING_NAME + component, duration );
     String msg  = new StringBuilder().append(id).append(": ").append(status).toString();
     RolapUtil.SQL_LOGGER.debug( msg );
 
