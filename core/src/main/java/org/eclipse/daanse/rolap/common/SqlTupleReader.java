@@ -67,7 +67,8 @@ import org.eclipse.daanse.olap.calc.base.type.tuplebase.TupleCollections;
 import org.eclipse.daanse.olap.calc.base.type.tuplebase.UnaryTupleList;
 import org.eclipse.daanse.olap.common.ConfigConstants;
 import org.eclipse.daanse.rolap.common.sql.BuiltSql;
-import org.eclipse.daanse.rolap.common.sqlbuild.SqlBuildGuard;
+import org.eclipse.daanse.rolap.common.sqlbuild.QueryBuildContext;
+import org.eclipse.daanse.rolap.common.sqlbuild.AggTupleQueries;
 import org.eclipse.daanse.rolap.common.sqlbuild.TupleSqlMapper;
 import org.eclipse.daanse.olap.common.ExecuteDurationUtil;
 import org.eclipse.daanse.olap.common.SystemWideProperties;
@@ -1337,231 +1338,22 @@ public TupleList readTuples(
       //   - a multi-target group emits each target's levels in target order; every non-first
       //     target joins to the fact through its star chain (the recorder's per-level
       //     joinLevelTableToFactTable), so the fact join is mandatory here.
-      final boolean unionArm = whichSelect != WhichSelect.ONLY;
-      final List<RolapLevel> targetLevels = sqlTargetGroup.stream()
-        .map( TargetBase::getLevel ).toList();
-      final java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution>
-        contribution = constraint.toContribution( baseCube, aggStar );
-      String reason = null;
-      if ( contribution.isEmpty() ) {
-        reason = "constraint " + constraint.getClass().getSimpleName()
-          + " not expressible as a contribution";
-      } else if ( !contribution.get().requiresFactJoin() ) {
-        // A no-fact-join contribution is the
-        // recorder's DISCONNECTED-COMPONENT assembly — the comma-product read
-        // (TupleSqlMapper.productTupleLevelMembersSql: FROM = first target's subset + further
-        // targets' tables comma-appended, their internal join equalities as trailing WHERE
-        // conjuncts). Routed authoritatively when the shape gate passes; the gate requires no
-        // native order (the recorder's arm/order interplay is not part of this shape) and logs
-        // its grep-stable "product-tuple decline reason=" census line for the residue
-        // (single-target arm, level-unsupported, projection/join/predicate outside the targets'
-        // relations), which keeps the recorder via the reason below.
-        final org.eclipse.daanse.rolap.common.sql.ConstraintContribution c = contribution.get();
-        if ( c.nativeOrder().isEmpty()
-            && TupleSqlMapper.supportsProductTupleRead( targetLevels, c.joinTables(),
-                c.orderedPredicates() ) ) {
-          RolapUtil.SQL_GEN_LOGGER.debug(
-            "level members: product tuple read (whichSelect={} targets={}) -> builder authoritative",
-            whichSelect, sqlTargetGroup.size() );
-          return SqlBuildGuard.build( context.getDialect(),
-            context.getConfigValue( ConfigConstants.GENERATE_FORMATTED_SQL,
-              ConfigConstants.GENERATE_FORMATTED_SQL_DEFAULT_VALUE, Boolean.class ),
-            () -> TupleSqlMapper.productTupleLevelMembersSql( targetLevels, true,
-              c.where(), c.orderedPredicates(), c.nativeOrder(), c.nativeHaving(), baseCube,
-              !unionArm ) );
-        }
-        reason = "contribution carries no fact join";
-        // A native TopCount measure
-        // ORDER on a union arm is not a decline. The recorder emits the measure projection +
-        // measure ORDER BY on every arm (addConstraintOps runs without arm knowledge —
-        // illegal-but-emitted SQL inside the union, reproduced by the builder:
-        // emitOrderBy=false suppresses only the LEVEL ordering, the native order is always
-        // carried). A native HAVING alone is also fine.
-      } else if ( targetLevels.stream().anyMatch( RolapLevel::isParentChild )
-          && TupleSqlMapper.supportsTupleReadAllowingParentChild( targetLevels, baseCube ) ) {
-        // Parent-child is the ONLY strict-gate
-        // blocker here — the PC-relaxed gate routes the read through the SAME tupleLevelMembersSql call
-        // below (reason stays null). The emission already exists in projectTargetLevels: parent
-        // key ahead of the level key, nulls-first collation incl. non-null nullParentValue; a
-        // NOT_LAST arm suppresses the parent PROJECTION with the level ordering (emitOrderBy=
-        // false). Checked BEFORE the strict gate so its "level-unsupported … pc=true" census line
-        // does not fire for this shape — it narrows to PC reads with a second blocker.
-        RolapUtil.SQL_GEN_LOGGER.debug(
-          "level members: pc-tuple (PC-relaxed gate, whichSelect={} targets={}) -> builder authoritative",
-          whichSelect, sqlTargetGroup.size() );
-      } else if ( !TupleSqlMapper.supportsTupleRead( targetLevels, baseCube ) ) {
-        // Capability gate: the sub-reason (parent-child/computed/view level, no star
-        // key on the base cube, chain reaching a different fact, out-of-scope projection) is logged
-        // by supportsTupleRead itself on the gen channel for the census attribution.
-        // The `projection-scope` route — the virtual-cube
-        // alias-mapping route, authoritative BEFORE the T4 decline: strict per-level gates pass
-        // but the star-scope check declines because the VIRTUAL-cube target levels carry OTHER
-        // relation aliases than the base cube's star chains. The recorder base-maps the
-        // hierarchy (findBaseCubeHierarchy in addLevelMemberSql) before projecting; the route
-        // does the same — baseMappedTargetLevels, then the standard tuple emission over the
-        // mapped levels (whose chains/subsets now resolve; quiet gate — the loud gate above
-        // already attributed the shape). Routing parity: the SetConstraint family reads through
-        // the chain-contiguous variant, everything else through the standard fold.
-        final List<RolapLevel> mapped = targetLevels.stream().allMatch( TupleSqlMapper::supports )
-          ? baseMappedTargetLevels( baseCube, targetLevels ) : null;
-        if ( mapped != null && !mapped.equals( targetLevels )
-            && TupleSqlMapper.supportsTupleReadQuiet( mapped, baseCube ) ) {
-          final org.eclipse.daanse.rolap.common.sql.ConstraintContribution c = contribution.get();
-          final boolean setFamily =
-            constraint instanceof org.eclipse.daanse.rolap.common.nativize.RolapNativeSet.SetConstraint;
-          RolapUtil.SQL_GEN_LOGGER.debug(
-            "level members: projection-scope base-mapped {} (whichSelect={} targets={}) -> builder authoritative",
-            unionArm ? "union arm" : "tuple read", whichSelect, sqlTargetGroup.size() );
-          return SqlBuildGuard.build( context.getDialect(),
-            context.getConfigValue( ConfigConstants.GENERATE_FORMATTED_SQL,
-              ConfigConstants.GENERATE_FORMATTED_SQL_DEFAULT_VALUE, Boolean.class ),
-            () -> setFamily
-              ? TupleSqlMapper.tupleLevelMembersSqlRecorderJoinOrder( mapped,
-                  true, c.where(), c.joinTables(), c.orderedPredicates(),
-                  c.nativeOrder(), c.nativeHaving(), c.factJoinRequired(), baseCube, !unionArm )
-              : TupleSqlMapper.tupleLevelMembersSql( mapped, true,
-                  c.where(), c.joinTables(), c.orderedPredicates(), c.nativeOrder(),
-                  c.nativeHaving(), c.factJoinRequired(), baseCube, !unionArm ) );
-        }
-        reason = "tuple/arm shape outside the builder's authoritative scope";
-        // T4 capture (census fires below only if no builder route takes the read).
-        t4CensusLevels = targetLevels;
-        t4CensusContribution = contribution.get();
-        t4CensusUnionArm = unionArm;
+      final TupleRouteOutcome outcome =
+        multiTargetRoute( context, baseCube, aggStar, whichSelect, sqlTargetGroup );
+      if ( outcome.built() != null ) {
+        return outcome.built();
       }
-      if ( reason == null ) {
-        final org.eclipse.daanse.rolap.common.sql.ConstraintContribution c = contribution.get();
-        // Routing parity: EVERY SetConstraint-family read through this
-        // branch executes the CHAIN-CONTIGUOUS variant (tupleLevelMembersSqlRecorderJoinOrder —
-        // the exact addToFrom replay reproducing the recorder's join sequence, including a
-        // displaced snowflake table that the breadth-first fold would order differently). Routing
-        // ALL SetConstraint reads — not only the calc-lifted ones — is
-        // neutral for the SetConstraint events by construction: the two
-        // variants share every emission except the fact-side join SEQUENCE ("same steps, same
-        // ON conditions"), so wherever the breadth-first fold already matched the recorder,
-        // the fold's sequence WAS the recorder's — which is what the chain-contiguous variant
-        // replays (the recorder's order for computed-tuple and calc-set reads). Pinned
-        // both ways on a matching shape in TupleSqlMapperTupleReadTest.
-        final boolean setFamily =
-          constraint instanceof org.eclipse.daanse.rolap.common.nativize.RolapNativeSet.SetConstraint;
-        RolapUtil.SQL_GEN_LOGGER.debug(
-          "level members: {} (whichSelect={} targets={}) -> builder authoritative",
-          unionArm ? "union arm" : "tuple read", whichSelect, sqlTargetGroup.size() );
-        return SqlBuildGuard.build( context.getDialect(),
-          context.getConfigValue( ConfigConstants.GENERATE_FORMATTED_SQL,
-            ConfigConstants.GENERATE_FORMATTED_SQL_DEFAULT_VALUE, Boolean.class ),
-          () -> setFamily
-            ? TupleSqlMapper.tupleLevelMembersSqlRecorderJoinOrder( targetLevels,
-                true, c.where(), c.joinTables(), c.orderedPredicates(),
-                c.nativeOrder(), c.nativeHaving(), c.factJoinRequired(), baseCube, !unionArm )
-            : TupleSqlMapper.tupleLevelMembersSql( targetLevels, true,
-                c.where(), c.joinTables(), c.orderedPredicates(), c.nativeOrder(), c.nativeHaving(),
-                c.factJoinRequired(), baseCube, !unionArm ) );
-      }
-      // The first-target-no-star-key residue —
-      // dominated by an (All) first/co-target on a virtual-cube arm — reads authoritatively
-      // through the (All)-dropped tupleLevelMembersSql build. An empty
-      // Optional keeps the recorder via the reason line below (documented decline).
-      final java.util.Optional<BuiltSql> noStarKeyAuthoritative = firstTargetNoStarKeySql(
-        context, baseCube, targetLevels, contribution, unionArm );
-      if ( noStarKeyAuthoritative.isPresent() ) {
-        return noStarKeyAuthoritative.get();
-      }
-      // The routing line, extended with the blocking reason (grep-stable prefix). Deferred
-      // until after the builder routes below so a builder-rescued read does not log this phantom.
-      final String reasonForCensus = reason;
-      recorderPathCensus = () -> RolapUtil.SQL_GEN_LOGGER.debug(
-        "level members: recorder path (whichSelect={} aggStar={} targets={} reason={})",
-        whichSelect, false, sqlTargetGroup.size(), reasonForCensus );
+      recorderPathCensus = outcome.recorderPathCensus();
+      t4CensusLevels = outcome.t4Levels();
+      t4CensusContribution = outcome.t4Contribution();
+      t4CensusUnionArm = outcome.t4UnionArm();
     } else {
-      TargetBase only = sqlTargetGroup.get( 0 );
-        // Compute the contribution once; it steers every branch below. Same baseCube the recorded
-        // ops would receive — the contribution must translate against the same star.
-        java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution> contribution =
-          constraint.toContribution( baseCube, aggStar );
-        // An unrestricted constraint (plain level members) on a shape the dialect overload renders:
-        // supportsAllowingExpressions covers plain tables/joins, view/inline relations (incl. a view
-        // nested in a join) and computed (expression) columns; the dialect overload renders each via
-        // the dialect-aware subset/whole-relation + dialect-specific expression SQL, so all are built
-        // authoritatively here (result-verified). supportsParentChildComputedParent adds the
-        // `pc-parent-expr` shape: a PC level whose parent key is a
-        // computed <SQL> expression (RTRIM(supervisor_id)) — the emission machinery already carries
-        // the shape (RawVariant parent projection, non-null nullParentValue collation via
-        // SortSpec.withNullSortValue).
-        if ( contribution.isPresent() && contribution.get().producesPlainLevelMembers()
-            && ( TupleSqlMapper.supportsAllowingExpressions( only.getLevel() )
-                || TupleSqlMapper.supportsParentChild( only.getLevel() )
-                || TupleSqlMapper.supportsParentChildComputedParent( only.getLevel() ) ) ) {
-          RolapUtil.SQL_GEN_LOGGER.debug(
-              "level-members {}: standalone unconstrained -> builder authoritative",
-              only.getLevel().getUniqueName() );
-          return SqlBuildGuard.build( context.getDialect(),
-            context.getConfigValue( ConfigConstants.GENERATE_FORMATTED_SQL,
-                ConfigConstants.GENERATE_FORMATTED_SQL_DEFAULT_VALUE, Boolean.class ),
-            () -> TupleSqlMapper.levelMembersSql( only.getLevel(), true ) );
-        }
-        // Diagnostic: tag every level-members query with its constraint class so a builder/reference
-        // divergence can be attributed to the constraint whose toContribution did not reproduce it.
-        RolapUtil.SQL_GEN_LOGGER.debug(
-          "level members {} constraint={} present={} restricted={}",
-          only.getLevel().getUniqueName(), constraint.getClass().getSimpleName(),
-          contribution.isPresent(), contribution.filter( cc -> !cc.producesPlainLevelMembers() ).isPresent() );
-        if ( !TupleSqlMapper.supports( only.getLevel() ) ) {
-          // A COMPUTED-EXPRESSION level (strict supports() rejects a computed key/caption/ordinal/
-          // property column, supportsAllowingExpressions accepts it): route the CONSTRAINED level-members
-          // read onto the builder. The constrained levelMembersSql overload renders each computed column
-          // via the dialect-aware expression SQL and reproduces the recorder. A restricting contribution only
-          // (!producesPlainLevelMembers): a PLAIN computed read is already built above via
-          // supportsAllowingExpressions. GUARD: a multi-parent DescendantsConstraint whose parent set does
-          // NOT form a rectangle (the distinct per-level key values cross WIDER than the set, e.g. cities
-          // spread across several states) makes the recorder emit a factored bounding-box IN
-          // ("city in (..) and state in (..)") while the builder emits the exact tuple form — that one
-          // shape stays on the recorder.
-          if ( TupleSqlMapper.supportsAllowingExpressions( only.getLevel() )
-              && contribution.isPresent() && !contribution.get().producesPlainLevelMembers()
-              && computedLevelContributionReproducesRecorder( constraint ) ) {
-            final org.eclipse.daanse.rolap.common.sql.ConstraintContribution c = contribution.get();
-            final boolean formatted = context.getConfigValue( ConfigConstants.GENERATE_FORMATTED_SQL,
-                ConfigConstants.GENERATE_FORMATTED_SQL_DEFAULT_VALUE, Boolean.class );
-            RolapUtil.SQL_GEN_LOGGER.debug(
-              "level-members {}: computed-expression constrained -> builder authoritative",
-              only.getLevel().getUniqueName() );
-            return SqlBuildGuard.build( context.getDialect(), formatted,
-              () -> TupleSqlMapper.levelMembersSql( only.getLevel(), true, c.where(),
-                c.joinTables(), c.orderedPredicates(), c.nativeOrder(), c.nativeHaving(),
-                c.factJoinRequired(), baseCube ) );
-          }
-          // View/inline, guarded-computed and parent-child level shapes stay on the recorder:
-          // the guarded non-rectangle descendants read diverges (see above); the builder is
-          // not authoritative here.
-          // Deferred until after the builder routes below so a builder-rescued read
-          // (noFactAdjacentTupleSql / computedTupleSql) does not log this phantom.
-          recorderPathCensus = () -> RolapUtil.SQL_GEN_LOGGER.debug(
-            "level members {}: recorder path (level shape outside the builder's authoritative scope)",
-            only.getLevel().getUniqueName() );
-        } else if ( contribution.isPresent() ) {
-          // A constraint that translates to a contribution is built authoritatively: unrestricted
-          // (plain level members) compact or formatted per config; restricted through the constrained
-          // SELECT (the 7-arg overload).
-          final org.eclipse.daanse.rolap.common.sql.ConstraintContribution c = contribution.get();
-          final boolean formatted = context.getConfigValue( ConfigConstants.GENERATE_FORMATTED_SQL,
-              ConfigConstants.GENERATE_FORMATTED_SQL_DEFAULT_VALUE, Boolean.class );
-          if ( c.producesPlainLevelMembers() ) {
-            return SqlBuildGuard.build( context.getDialect(), formatted,
-              () -> TupleSqlMapper.levelMembersSql( only.getLevel(), true ) );
-          }
-          return SqlBuildGuard.build( context.getDialect(), formatted,
-            () -> TupleSqlMapper.levelMembersSql( only.getLevel(), true, c.where(),
-              c.joinTables(), c.orderedPredicates(), c.nativeOrder(), c.nativeHaving(),
-              c.factJoinRequired(), baseCube ) );
-        } else {
-          // A constraint that does NOT translate (empty contribution) keeps the recorder: the
-          // builder cannot express its restriction, and building the plain SELECT would silently
-          // drop it.
-          RolapUtil.SQL_GEN_LOGGER.debug(
-            "level members {}: recorder path (constraint {} not expressible as a contribution)",
-            only.getLevel().getUniqueName(), constraint.getClass().getSimpleName() );
-        }
+      final TupleRouteOutcome outcome =
+        singleTargetRoute( context, baseCube, aggStar, sqlTargetGroup );
+      if ( outcome.built() != null ) {
+        return outcome.built();
+      }
+      recorderPathCensus = outcome.recorderPathCensus();
     }
 
     // The two remaining supportsTupleRead-declined tuple families (see the routing methods): the
@@ -1607,6 +1399,253 @@ public TupleList readTuples(
     throw new IllegalStateException(
       "tuple/member read shape not modellable by the builder: targets=" + deadTargetLevels
         + " constraint=" + constraint.getClass().getSimpleName() );
+  }
+
+
+  /**
+   * The union-arm / multi-target tuple routing ladder (moved verbatim out of
+   * {@link #generateSelectForLevels}): the product-tuple, PC-relaxed, projection-scope and
+   * standard tuple builds, plus the first-target-no-star-key rescue. A decline returns the
+   * deferred census (and the T4 capture) instead of logging inline, so a later rescue route does
+   * not produce a phantom recorder-path line.
+   */
+  private TupleRouteOutcome multiTargetRoute( Context<?> context, RolapCube baseCube,
+    AggStar aggStar, WhichSelect whichSelect, List<TargetBase> sqlTargetGroup ) {
+    List<RolapLevel> t4CensusLevels = null;
+    org.eclipse.daanse.rolap.common.sql.ConstraintContribution t4CensusContribution = null;
+    boolean t4CensusUnionArm = false;
+      final boolean unionArm = whichSelect != WhichSelect.ONLY;
+      final List<RolapLevel> targetLevels = sqlTargetGroup.stream()
+        .map( TargetBase::getLevel ).toList();
+      final org.eclipse.daanse.rolap.common.sql.ContributionResult
+        contribution = constraint.toContribution( baseCube, aggStar );
+      // The decline reason is PRODUCER-OWNED: an Unsupported result carries the constraint's own
+      // grep-stable bail reason for the census line below.
+      String reason = null;
+      if ( !contribution.isSupported() ) {
+        reason = contribution.reason();
+      } else if ( !contribution.contribution().requiresFactJoin() ) {
+        // A no-fact-join contribution is the
+        // recorder's DISCONNECTED-COMPONENT assembly — the comma-product read
+        // (TupleSqlMapper.productTupleLevelMembersSql: FROM = first target's subset + further
+        // targets' tables comma-appended, their internal join equalities as trailing WHERE
+        // conjuncts). Routed authoritatively when the shape gate passes; the gate requires no
+        // native order (the recorder's arm/order interplay is not part of this shape) and logs
+        // its grep-stable "product-tuple decline reason=" census line for the residue
+        // (single-target arm, level-unsupported, projection/join/predicate outside the targets'
+        // relations), which keeps the recorder via the reason below.
+        final org.eclipse.daanse.rolap.common.sql.ConstraintContribution c = contribution.contribution();
+        if ( c.nativeOrder().isEmpty()
+            && TupleSqlMapper.supportsProductTupleRead( targetLevels, c.joinTables(),
+                c.orderedPredicates() ) ) {
+          RolapUtil.SQL_GEN_LOGGER.debug(
+            "level members: product tuple read (whichSelect={} targets={}) -> builder authoritative",
+            whichSelect, sqlTargetGroup.size() );
+          return TupleRouteOutcome.built( QueryBuildContext.of( context ).build(
+            () -> TupleSqlMapper.productTupleLevelMembersSql( targetLevels, true,
+              c.where(), c.orderedPredicates(), c.nativeOrder(), c.nativeHaving(), baseCube,
+              !unionArm ) ) );
+        }
+        reason = "contribution carries no fact join";
+        // A native TopCount measure
+        // ORDER on a union arm is not a decline. The recorder emits the measure projection +
+        // measure ORDER BY on every arm (addConstraintOps runs without arm knowledge —
+        // illegal-but-emitted SQL inside the union, reproduced by the builder:
+        // emitOrderBy=false suppresses only the LEVEL ordering, the native order is always
+        // carried). A native HAVING alone is also fine.
+      } else if ( targetLevels.stream().anyMatch( RolapLevel::isParentChild )
+          && TupleSqlMapper.supportsTupleReadAllowingParentChild( targetLevels, baseCube ) ) {
+        // Parent-child is the ONLY strict-gate
+        // blocker here — the PC-relaxed gate routes the read through the SAME tupleLevelMembersSql call
+        // below (reason stays null). The emission already exists in projectTargetLevels: parent
+        // key ahead of the level key, nulls-first collation incl. non-null nullParentValue; a
+        // NOT_LAST arm suppresses the parent PROJECTION with the level ordering (emitOrderBy=
+        // false). Checked BEFORE the strict gate so its "level-unsupported … pc=true" census line
+        // does not fire for this shape — it narrows to PC reads with a second blocker.
+        RolapUtil.SQL_GEN_LOGGER.debug(
+          "level members: pc-tuple (PC-relaxed gate, whichSelect={} targets={}) -> builder authoritative",
+          whichSelect, sqlTargetGroup.size() );
+      } else if ( !TupleSqlMapper.supportsTupleRead( targetLevels, baseCube ) ) {
+        // Capability gate: the sub-reason (parent-child/computed/view level, no star
+        // key on the base cube, chain reaching a different fact, out-of-scope projection) is logged
+        // by supportsTupleRead itself on the gen channel for the census attribution.
+        // The `projection-scope` route — the virtual-cube
+        // alias-mapping route, authoritative BEFORE the T4 decline: strict per-level gates pass
+        // but the star-scope check declines because the VIRTUAL-cube target levels carry OTHER
+        // relation aliases than the base cube's star chains. The recorder base-maps the
+        // hierarchy (findBaseCubeHierarchy in addLevelMemberSql) before projecting; the route
+        // does the same — baseMappedTargetLevels, then the standard tuple emission over the
+        // mapped levels (whose chains/subsets now resolve; quiet gate — the loud gate above
+        // already attributed the shape). Routing parity: the SetConstraint family reads through
+        // the chain-contiguous variant, everything else through the standard fold.
+        final List<RolapLevel> mapped = targetLevels.stream().allMatch( TupleSqlMapper::supports )
+          ? baseMappedTargetLevels( baseCube, targetLevels ) : null;
+        if ( mapped != null && !mapped.equals( targetLevels )
+            && TupleSqlMapper.supportsTupleReadQuiet( mapped, baseCube ) ) {
+          final org.eclipse.daanse.rolap.common.sql.ConstraintContribution c = contribution.contribution();
+          final boolean setFamily =
+            constraint instanceof org.eclipse.daanse.rolap.common.nativize.RolapNativeSet.SetConstraint;
+          RolapUtil.SQL_GEN_LOGGER.debug(
+            "level members: projection-scope base-mapped {} (whichSelect={} targets={}) -> builder authoritative",
+            unionArm ? "union arm" : "tuple read", whichSelect, sqlTargetGroup.size() );
+          return TupleRouteOutcome.built( QueryBuildContext.of( context ).build(
+            () -> setFamily
+              ? TupleSqlMapper.tupleLevelMembersSqlRecorderJoinOrder( mapped, true, c, baseCube, !unionArm )
+              : TupleSqlMapper.tupleLevelMembersSql( mapped, true, c, baseCube, !unionArm ) ) );
+        }
+        reason = "tuple/arm shape outside the builder's authoritative scope";
+        // T4 capture (census fires below only if no builder route takes the read).
+        t4CensusLevels = targetLevels;
+        t4CensusContribution = contribution.contribution();
+        t4CensusUnionArm = unionArm;
+      }
+      if ( reason == null ) {
+        final org.eclipse.daanse.rolap.common.sql.ConstraintContribution c = contribution.contribution();
+        // Routing parity: EVERY SetConstraint-family read through this
+        // branch executes the CHAIN-CONTIGUOUS variant (tupleLevelMembersSqlRecorderJoinOrder —
+        // the exact addToFrom replay reproducing the recorder's join sequence, including a
+        // displaced snowflake table that the breadth-first fold would order differently). Routing
+        // ALL SetConstraint reads — not only the calc-lifted ones — is
+        // neutral for the SetConstraint events by construction: the two
+        // variants share every emission except the fact-side join SEQUENCE ("same steps, same
+        // ON conditions"), so wherever the breadth-first fold already matched the recorder,
+        // the fold's sequence WAS the recorder's — which is what the chain-contiguous variant
+        // replays (the recorder's order for computed-tuple and calc-set reads). Pinned
+        // both ways on a matching shape in TupleSqlMapperTupleReadTest.
+        final boolean setFamily =
+          constraint instanceof org.eclipse.daanse.rolap.common.nativize.RolapNativeSet.SetConstraint;
+        RolapUtil.SQL_GEN_LOGGER.debug(
+          "level members: {} (whichSelect={} targets={}) -> builder authoritative",
+          unionArm ? "union arm" : "tuple read", whichSelect, sqlTargetGroup.size() );
+        return TupleRouteOutcome.built( QueryBuildContext.of( context ).build(
+          () -> setFamily
+            ? TupleSqlMapper.tupleLevelMembersSqlRecorderJoinOrder( targetLevels, true, c, baseCube, !unionArm )
+            : TupleSqlMapper.tupleLevelMembersSql( targetLevels, true, c, baseCube, !unionArm ) ) );
+      }
+      // The first-target-no-star-key residue —
+      // dominated by an (All) first/co-target on a virtual-cube arm — reads authoritatively
+      // through the (All)-dropped tupleLevelMembersSql build. An empty
+      // Optional keeps the recorder via the reason line below (documented decline).
+      final java.util.Optional<BuiltSql> noStarKeyAuthoritative = firstTargetNoStarKeySql(
+        context, baseCube, targetLevels, contribution, unionArm );
+      if ( noStarKeyAuthoritative.isPresent() ) {
+        return TupleRouteOutcome.built( noStarKeyAuthoritative.get() );
+      }
+      // The routing line, extended with the blocking reason (grep-stable prefix). Deferred
+      // until after the builder routes below so a builder-rescued read does not log this phantom.
+      final String reasonText = reason;
+      return new TupleRouteOutcome( null,
+        () -> RolapUtil.SQL_GEN_LOGGER.debug(
+          "level members: recorder path (whichSelect={} aggStar={} targets={} reason={})",
+          whichSelect, false, sqlTargetGroup.size(), reasonText ),
+        t4CensusLevels, t4CensusContribution, t4CensusUnionArm );
+  }
+
+  /**
+   * The standalone single-target routing ladder (moved verbatim out of
+   * {@link #generateSelectForLevels}): the unconstrained, computed-constrained and constrained
+   * level-members builds. A decline returns the deferred census instead of logging inline, so a
+   * later rescue route (noFactAdjacentTupleSql / computedTupleSql) does not produce a phantom
+   * recorder-path line.
+   */
+  private TupleRouteOutcome singleTargetRoute( Context<?> context, RolapCube baseCube,
+    AggStar aggStar, List<TargetBase> sqlTargetGroup ) {
+    Runnable recorderPathCensus = null;
+    TargetBase only = sqlTargetGroup.get( 0 );
+        // Compute the contribution once; it steers every branch below. Same baseCube the recorded
+        // ops would receive — the contribution must translate against the same star.
+        org.eclipse.daanse.rolap.common.sql.ContributionResult contribution =
+          constraint.toContribution( baseCube, aggStar );
+        // An unrestricted constraint (plain level members) on a shape the dialect overload renders:
+        // supportsAllowingExpressions covers plain tables/joins, view/inline relations (incl. a view
+        // nested in a join) and computed (expression) columns; the dialect overload renders each via
+        // the dialect-aware subset/whole-relation + dialect-specific expression SQL, so all are built
+        // authoritatively here (result-verified). supportsParentChildComputedParent adds the
+        // `pc-parent-expr` shape: a PC level whose parent key is a
+        // computed <SQL> expression (RTRIM(supervisor_id)) — the emission machinery already carries
+        // the shape (RawVariant parent projection, non-null nullParentValue collation via
+        // SortSpec.withNullSortValue).
+        if ( contribution.isSupported() && contribution.contribution().producesPlainLevelMembers()
+            && ( TupleSqlMapper.supportsAllowingExpressions( only.getLevel() )
+                || TupleSqlMapper.supportsParentChild( only.getLevel() )
+                || TupleSqlMapper.supportsParentChildComputedParent( only.getLevel() ) ) ) {
+          RolapUtil.SQL_GEN_LOGGER.debug(
+              "level-members {}: standalone unconstrained -> builder authoritative",
+              only.getLevel().getUniqueName() );
+          return TupleRouteOutcome.built( QueryBuildContext.of( context ).build(
+            () -> TupleSqlMapper.levelMembersSql( only.getLevel(), true ) ) );
+        }
+        // Diagnostic: tag every level-members query with its constraint class so a builder/reference
+        // divergence can be attributed to the constraint whose toContribution did not reproduce it.
+        RolapUtil.SQL_GEN_LOGGER.debug(
+          "level members {} constraint={} present={} restricted={}",
+          only.getLevel().getUniqueName(), constraint.getClass().getSimpleName(),
+          contribution.isSupported(),
+          contribution.isSupported() && !contribution.contribution().producesPlainLevelMembers() );
+        if ( !TupleSqlMapper.supports( only.getLevel() ) ) {
+          // A COMPUTED-EXPRESSION level (strict supports() rejects a computed key/caption/ordinal/
+          // property column, supportsAllowingExpressions accepts it): route the CONSTRAINED level-members
+          // read onto the builder. The constrained levelMembersSql overload renders each computed column
+          // via the dialect-aware expression SQL and reproduces the recorder. A restricting contribution only
+          // (!producesPlainLevelMembers): a PLAIN computed read is already built above via
+          // supportsAllowingExpressions. GUARD: a multi-parent DescendantsConstraint whose parent set does
+          // NOT form a rectangle (the distinct per-level key values cross WIDER than the set, e.g. cities
+          // spread across several states) makes the recorder emit a factored bounding-box IN
+          // ("city in (..) and state in (..)") while the builder emits the exact tuple form — that one
+          // shape stays on the recorder.
+          if ( TupleSqlMapper.supportsAllowingExpressions( only.getLevel() )
+              && contribution.isSupported() && !contribution.contribution().producesPlainLevelMembers()
+              && computedLevelContributionReproducesRecorder( constraint ) ) {
+            final org.eclipse.daanse.rolap.common.sql.ConstraintContribution c = contribution.contribution();
+            final QueryBuildContext buildCtx = QueryBuildContext.of( context );
+            RolapUtil.SQL_GEN_LOGGER.debug(
+              "level-members {}: computed-expression constrained -> builder authoritative",
+              only.getLevel().getUniqueName() );
+            return TupleRouteOutcome.built( buildCtx.build(
+              () -> TupleSqlMapper.levelMembersSql( only.getLevel(), true, c, baseCube ) ) );
+          }
+          // View/inline, guarded-computed and parent-child level shapes stay on the recorder:
+          // the guarded non-rectangle descendants read diverges (see above); the builder is
+          // not authoritative here.
+          // Deferred until after the builder routes below so a builder-rescued read
+          // (noFactAdjacentTupleSql / computedTupleSql) does not log this phantom.
+          recorderPathCensus = () -> RolapUtil.SQL_GEN_LOGGER.debug(
+            "level members {}: recorder path (level shape outside the builder's authoritative scope)",
+            only.getLevel().getUniqueName() );
+        } else if ( contribution.isSupported() ) {
+          // A constraint that translates to a contribution is built authoritatively: unrestricted
+          // (plain level members) compact or formatted per config; restricted through the constrained
+          // SELECT (the 7-arg overload).
+          final org.eclipse.daanse.rolap.common.sql.ConstraintContribution c = contribution.contribution();
+          final QueryBuildContext buildCtx = QueryBuildContext.of( context );
+          if ( c.producesPlainLevelMembers() ) {
+            return TupleRouteOutcome.built( buildCtx.build(
+              () -> TupleSqlMapper.levelMembersSql( only.getLevel(), true ) ) );
+          }
+          return TupleRouteOutcome.built( buildCtx.build(
+            () -> TupleSqlMapper.levelMembersSql( only.getLevel(), true, c, baseCube ) ) );
+        } else {
+          // A constraint that does NOT translate (empty contribution) keeps the recorder: the
+          // builder cannot express its restriction, and building the plain SELECT would silently
+          // drop it.
+          RolapUtil.SQL_GEN_LOGGER.debug(
+            "level members {}: recorder path (constraint {} not expressible as a contribution)",
+            only.getLevel().getUniqueName(), constraint.getClass().getSimpleName() );
+        }
+    return new TupleRouteOutcome( null, recorderPathCensus, null, null, false );
+  }
+
+  /**
+   * Outcome of a routing ladder: the authoritative build, or the deferred recorder-path census
+   * (plus the T4 sub-census capture on the multi-target ladder) for the caller's decline tail.
+   */
+  private record TupleRouteOutcome( BuiltSql built, Runnable recorderPathCensus,
+    List<RolapLevel> t4Levels,
+    org.eclipse.daanse.rolap.common.sql.ConstraintContribution t4Contribution,
+    boolean t4UnionArm ) {
+    static TupleRouteOutcome built( BuiltSql b ) {
+      return new TupleRouteOutcome( b, null, null, null, false );
+    }
   }
 
   /**
@@ -1667,9 +1706,9 @@ public TupleList readTuples(
    */
   private java.util.Optional<BuiltSql> firstTargetNoStarKeySql(
     Context<?> context, RolapCube baseCube, List<RolapLevel> targetLevels,
-    java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution> contribution,
+    org.eclipse.daanse.rolap.common.sql.ContributionResult contribution,
     boolean unionArm ) {
-    if ( contribution.isEmpty()
+    if ( !contribution.isSupported()
         || targetLevels.stream().anyMatch( l -> !TupleSqlMapper.supports( l ) ) ) {
       return java.util.Optional.empty(); // inexpressible / level-unsupported family — not this shape
     }
@@ -1688,16 +1727,13 @@ public TupleList readTuples(
         "level members: recorder path (first-target-no-star-key survivor set not buildable)" );
       return java.util.Optional.empty();
     }
-    final org.eclipse.daanse.rolap.common.sql.ConstraintContribution c = contribution.get();
-    final boolean formatted = context.getConfigValue( ConfigConstants.GENERATE_FORMATTED_SQL,
-        ConfigConstants.GENERATE_FORMATTED_SQL_DEFAULT_VALUE, Boolean.class );
+    final org.eclipse.daanse.rolap.common.sql.ConstraintContribution c = contribution.contribution();
+    final QueryBuildContext buildCtx = QueryBuildContext.of( context );
     RolapUtil.SQL_GEN_LOGGER.debug(
       "level members: first-target-no-star-key (all-dropped, targets={}) -> builder authoritative",
       targetLevels.size() );
-    return java.util.Optional.of( SqlBuildGuard.build( context.getDialect(), formatted,
-      () -> TupleSqlMapper.tupleLevelMembersSql( nonAll, true,
-        c.where(), c.joinTables(), c.orderedPredicates(), c.nativeOrder(), c.nativeHaving(),
-        c.factJoinRequired(), baseCube, !unionArm ) ) );
+    return java.util.Optional.of( buildCtx.build(
+      () -> TupleSqlMapper.tupleLevelMembersSql( nonAll, true, c, baseCube, !unionArm ) ) );
   }
 
   /**
@@ -1714,7 +1750,7 @@ public TupleList readTuples(
     org.eclipse.daanse.rolap.common.sql.ConstraintContribution contribution,
     org.eclipse.daanse.rolap.common.sql.AggPlan aggPlan,
     java.util.Optional<org.eclipse.daanse.sql.statement.api.expression.Predicate> having,
-    java.util.List<org.eclipse.daanse.rolap.common.sqlbuild.TupleSqlMapper.HavingJoin> havingJoins,
+    java.util.List<org.eclipse.daanse.rolap.common.sqlbuild.AggTupleQueries.HavingJoin> havingJoins,
     java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution.NativeOrder> order ) {
     static AggReadPlan harvest( String label ) {
       return new AggReadPlan( label, null, null, null, null, null, null, null );
@@ -1762,12 +1798,12 @@ public TupleList readTuples(
     if ( targetLevels.isEmpty() ) {
       return AggReadPlan.harvest( "agg-unclassified" );
     }
-    final java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution> contribution =
+    final org.eclipse.daanse.rolap.common.sql.ContributionResult contribution =
       constraint.toContribution( baseCube, aggStar );
-    if ( contribution.isEmpty() ) {
+    if ( !contribution.isSupported() ) {
       return AggReadPlan.harvest( "agg-unavailable:no-contribution" );
     }
-    return planAggReadFrom( baseCube, aggStar, targetLevels, contribution.get() );
+    return planAggReadFrom( baseCube, aggStar, targetLevels, contribution.contribution() );
   }
 
   /**
@@ -1853,7 +1889,7 @@ public TupleList readTuples(
     }
     // ONE HAVING/ORDER channel (see the method javadoc): the SCC agg twins, else the contribution.
     final java.util.Optional<org.eclipse.daanse.sql.statement.api.expression.Predicate> having;
-    final java.util.List<org.eclipse.daanse.rolap.common.sqlbuild.TupleSqlMapper.HavingJoin> havingJoins;
+    final java.util.List<org.eclipse.daanse.rolap.common.sqlbuild.AggTupleQueries.HavingJoin> havingJoins;
     final java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution.NativeOrder> order;
     if ( constraint instanceof SqlContextConstraint scc ) {
       final SqlContextConstraint.AggHaving aggHaving = scc.levelMembersAggHavingWithJoins( aggStar );
@@ -1877,10 +1913,10 @@ public TupleList readTuples(
    *     (it serves its shape already, incl. the candidate twin);</li>
    * <li>the classified labels ({@link #planAggRead} + {@link #classifyAggShape}):
    *     {@code agg-mt-collapsed} through
-   *     {@code TupleSqlMapper.collapsedTupleLevelMembersSql}; {@code agg-st-factjoin},
+   *     {@code AggTupleQueries.collapsedTupleLevelMembersSql}; {@code agg-st-factjoin},
    *     {@code agg-mt-factjoin}, {@code agg-mt-dimjoin}, {@code agg-st-neutral}
    *     and {@code agg-st-dimjoin}
-   *     through {@code TupleSqlMapper.aggTupleLevelMembersSql}, with the constraint's
+   *     through {@code AggTupleQueries.aggTupleLevelMembersSql}, with the constraint's
    *     {@code HavingJoin}s replayed.</li>
    * </ol>
    * Empty Optional = recorder: only the harvest labels remain ({@code agg-arm},
@@ -1903,17 +1939,16 @@ public TupleList readTuples(
       return java.util.Optional.empty();
     }
     final org.eclipse.daanse.rolap.common.sql.ConstraintContribution c = plan.contribution();
-    final boolean formatted = context.getConfigValue( ConfigConstants.GENERATE_FORMATTED_SQL,
-        ConfigConstants.GENERATE_FORMATTED_SQL_DEFAULT_VALUE, Boolean.class );
+    final QueryBuildContext buildCtx = QueryBuildContext.of( context );
     RolapUtil.SQL_GEN_LOGGER.debug(
       "level members: {} (targets={}) -> builder authoritative", plan.label(), targetLevels.size() );
     if ( "agg-mt-collapsed".equals( plan.label() ) ) {
-      return java.util.Optional.of( SqlBuildGuard.build( context.getDialect(), formatted,
-        () -> TupleSqlMapper.collapsedTupleLevelMembersSql( plan.collapsedTargets(), aggStar,
+      return java.util.Optional.of( buildCtx.build(
+        () -> AggTupleQueries.collapsedTupleLevelMembersSql( plan.collapsedTargets(), aggStar,
           c.where(), plan.order(), plan.having() ) ) );
     }
-    return java.util.Optional.of( SqlBuildGuard.build( context.getDialect(), formatted,
-      () -> TupleSqlMapper.aggTupleLevelMembersSql( plan.targetLevels(), aggStar,
+    return java.util.Optional.of( buildCtx.build(
+      () -> AggTupleQueries.aggTupleLevelMembersSql( plan.targetLevels(), aggStar,
         true, c.where(), plan.aggPlan().orderedAggPredicates(),
         plan.havingJoins(), plan.order(), plan.having(), c.factJoinRequired(), baseCube, true ) ) );
   }
@@ -2005,26 +2040,24 @@ public TupleList readTuples(
     if ( !isComputedExpressionTupleFamily( targetLevels ) ) {
       return java.util.Optional.empty();
     }
-    final java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution> contribution =
+    final org.eclipse.daanse.rolap.common.sql.ContributionResult contribution =
       ( constraint instanceof org.eclipse.daanse.rolap.common.constraint.DescendantsConstraint dc )
         ? dc.toContributionFactoredMemberForm( baseCube, aggStar )
         : constraint.toContribution( baseCube, aggStar );
-    if ( contribution.isEmpty() ) {
+    if ( !contribution.isSupported() ) {
       RolapUtil.SQL_GEN_LOGGER.debug(
         "level members: recorder path (computed-tuple constraint {} not expressible as a contribution)",
         constraint.getClass().getSimpleName() );
       return java.util.Optional.empty();
     }
-    final org.eclipse.daanse.rolap.common.sql.ConstraintContribution c = contribution.get();
-    final boolean formatted = context.getConfigValue( ConfigConstants.GENERATE_FORMATTED_SQL,
-        ConfigConstants.GENERATE_FORMATTED_SQL_DEFAULT_VALUE, Boolean.class );
+    final org.eclipse.daanse.rolap.common.sql.ConstraintContribution c = contribution.contribution();
+    final QueryBuildContext buildCtx = QueryBuildContext.of( context );
     RolapUtil.SQL_GEN_LOGGER.debug(
       "level members: computed-expression tuple read (whichSelect={} targets={}) -> builder authoritative",
       whichSelect, targetGroup.size() );
-    return java.util.Optional.of( SqlBuildGuard.build( context.getDialect(), formatted,
-      () -> TupleSqlMapper.tupleLevelMembersSqlRecorderJoinOrder( targetLevels, true,
-        c.where(), c.joinTables(), c.orderedPredicates(), c.nativeOrder(), c.nativeHaving(),
-        c.factJoinRequired(), baseCube, whichSelect == WhichSelect.ONLY ) ) );
+    return java.util.Optional.of( buildCtx.build(
+      () -> TupleSqlMapper.tupleLevelMembersSqlRecorderJoinOrder( targetLevels, true, c, baseCube,
+        whichSelect == WhichSelect.ONLY ) ) );
   }
 
   /**
@@ -2082,23 +2115,22 @@ public TupleList readTuples(
     if ( TupleSqlMapper.supportsTupleRead( targetLevels, baseCube ) ) {
       return java.util.Optional.empty(); // authoritative branch took it (or would have)
     }
-    final java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution> contribution =
+    final org.eclipse.daanse.rolap.common.sql.ContributionResult contribution =
       constraint.toContribution( baseCube, aggStar );
-    if ( contribution.isEmpty() ) {
+    if ( !contribution.isSupported() ) {
       RolapUtil.SQL_GEN_LOGGER.debug(
         "level members: recorder path (no-fact-adjacent constraint {} not expressible as a contribution)",
         constraint.getClass().getSimpleName() );
       return java.util.Optional.empty();
     }
-    final org.eclipse.daanse.rolap.common.sql.ConstraintContribution c = contribution.get();
-    final boolean formatted = context.getConfigValue( ConfigConstants.GENERATE_FORMATTED_SQL,
-        ConfigConstants.GENERATE_FORMATTED_SQL_DEFAULT_VALUE, Boolean.class );
+    final org.eclipse.daanse.rolap.common.sql.ConstraintContribution c = contribution.contribution();
+    final QueryBuildContext buildCtx = QueryBuildContext.of( context );
     final List<RolapLevel> nonAll = targetLevels.stream().filter( l -> !l.isAll() ).toList();
     if ( nonAll.size() == 1 ) {
       RolapUtil.SQL_GEN_LOGGER.debug(
         "level members {}: no-fact-adjacent (all-dropped) -> builder authoritative",
         nonAll.get( 0 ).getUniqueName() );
-      return java.util.Optional.of( SqlBuildGuard.build( context.getDialect(), formatted,
+      return java.util.Optional.of( buildCtx.build(
         () -> c.producesPlainLevelMembers()
           ? TupleSqlMapper.levelMembersSql( nonAll.get( 0 ), true )
           : TupleSqlMapper.levelMembersSql( nonAll.get( 0 ), true, c.where(),
@@ -2110,7 +2142,7 @@ public TupleList readTuples(
       RolapUtil.SQL_GEN_LOGGER.debug(
         "level members {}: no-fact-adjacent (all-dropped) tuple -> builder authoritative",
         nonAll.get( 0 ).getUniqueName() );
-      return java.util.Optional.of( SqlBuildGuard.build( context.getDialect(), formatted,
+      return java.util.Optional.of( buildCtx.build(
         () -> TupleSqlMapper.tupleLevelMembersSql( nonAll, true,
           c.where(), c.joinTables(), c.orderedPredicates(), c.nativeOrder(), c.nativeHaving(),
           c.factJoinRequired(), baseCube, true ) ) );
@@ -2124,7 +2156,7 @@ public TupleList readTuples(
     RolapUtil.SQL_GEN_LOGGER.debug(
       "level members: no-fact-adjacent same-table (targets={}) -> builder authoritative",
       targetGroup.size() );
-    return java.util.Optional.of( SqlBuildGuard.build( context.getDialect(), formatted,
+    return java.util.Optional.of( buildCtx.build(
       () -> TupleSqlMapper.sameTableTupleLevelMembersSql( targetLevels, true,
         c.where(), c.joinTables(), c.orderedPredicates(), c.nativeOrder(), c.nativeHaving(),
         baseCube, true ) ) );
@@ -2140,7 +2172,7 @@ public TupleList readTuples(
    * the context WHERE against the agg columns, {@link SqlContextConstraint#levelMembersAggHaving}
    * / {@link SqlContextConstraint#levelMembersAggOrder} carry a nativised filter's HAVING / a
    * TopCount's measure ORDER (also agg-substituted), and {@link TupleSqlMapper#collapsedSingleColumnSql}
-   * rebuilds the body; this renders that statement through {@link SqlBuildGuard} and returns it as the
+   * rebuilds the body; this renders that statement through {@link org.eclipse.daanse.rolap.common.sqlbuild.QueryBuildContext#build} and returns it as the
    * executed SQL. Restricted to the aggStar
    * single-target standalone read ({@code WhichSelect.ONLY}, no union arm / multi-target / enumerated)
    * where every projected level is collapsed single-column AND the context WHERE is agg-expressible OR
@@ -2247,13 +2279,12 @@ public TupleList readTuples(
         scc.levelMembersAggHaving( aggStar );
       final java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution.NativeOrder> candidateOrder =
         scc.levelMembersAggOrder( aggStar );
-      final boolean candidateFormatted = context.getConfigValue( ConfigConstants.GENERATE_FORMATTED_SQL,
-          ConfigConstants.GENERATE_FORMATTED_SQL_DEFAULT_VALUE, Boolean.class );
+      final QueryBuildContext buildCtx = QueryBuildContext.of( context );
       RolapUtil.SQL_GEN_LOGGER.debug(
         "level members {}: aggstar collapsed single-column (candidate twin) -> builder authoritative",
         targetLevel.getUniqueName() );
-      return java.util.Optional.of( SqlBuildGuard.build( context.getDialect(), candidateFormatted,
-        () -> TupleSqlMapper.collapsedSingleColumnSql( collapsedLevels, aggStar, candidateWhere,
+      return java.util.Optional.of( buildCtx.build(
+        () -> AggTupleQueries.collapsedSingleColumnSql( collapsedLevels, aggStar, candidateWhere,
           candidateOrder, candidateHaving ) ) );
     }
     // Every builder read MUST carry nativeHaving + nativeOrder or it is a guaranteed differ against a
@@ -2264,16 +2295,15 @@ public TupleList readTuples(
       scc.levelMembersAggHaving( aggStar );
     final java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution.NativeOrder> aggOrder =
       scc.levelMembersAggOrder( aggStar );
-    // Authoritative render: TupleSqlMapper.collapsedSingleColumnSql rebuilds the pure agg-column
-    // projection body; SqlBuildGuard.build wraps it into the executed BuiltSql (compact/formatted per
+    // Authoritative render: AggTupleQueries.collapsedSingleColumnSql rebuilds the pure agg-column
+    // projection body; QueryBuildContext.build wraps it into the executed BuiltSql (compact/formatted per
     // config), mirroring every other builder-authoritative tuple read above.
-    final boolean formatted = context.getConfigValue( ConfigConstants.GENERATE_FORMATTED_SQL,
-        ConfigConstants.GENERATE_FORMATTED_SQL_DEFAULT_VALUE, Boolean.class );
+    final QueryBuildContext buildCtx = QueryBuildContext.of( context );
     RolapUtil.SQL_GEN_LOGGER.debug(
       "level members {}: aggstar collapsed single-column -> builder authoritative",
       targetLevel.getUniqueName() );
-    return java.util.Optional.of( SqlBuildGuard.build( context.getDialect(), formatted,
-      () -> TupleSqlMapper.collapsedSingleColumnSql( collapsedLevels, aggStar, aggWhere, aggOrder, aggHaving ) ) );
+    return java.util.Optional.of( buildCtx.build(
+      () -> AggTupleQueries.collapsedSingleColumnSql( collapsedLevels, aggStar, aggWhere, aggOrder, aggHaving ) ) );
   }
 
   /**

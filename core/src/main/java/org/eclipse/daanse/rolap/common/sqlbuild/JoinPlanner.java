@@ -100,7 +100,13 @@ public final class JoinPlanner {
         return Expressions.raw(aggregator.getExpression(inner).toString());
     }
 
-    /** The dialect-quoted SQL for a column expression, matching how the renderer quotes a column. */
+    /**
+     * The dialect-quoted SQL for a column expression, matching how the renderer quotes a column.
+     * THE single sanctioned producer-side quoting site: it feeds only the custom-aggregator bail
+     * above (an aggregator without a node form renders its string once, kept raw); everything
+     * else travels as dialect-free nodes. Do not add callers — retire it with the aggregator
+     * node-form completion.
+     */
     private static String columnSql(Dialect dialect, org.eclipse.daanse.olap.api.sql.SqlExpression expression) {
         if (expression instanceof org.eclipse.daanse.rolap.element.RolapColumn c) {
             return dialect.quoteIdentifier(c.getTable()) + "." + dialect.quoteIdentifier(c.getName());

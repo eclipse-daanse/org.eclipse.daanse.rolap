@@ -103,7 +103,14 @@ public final class AggregateSqlMapper {
      * </ul>
      */
     public record Shape(boolean countOnly, boolean ordered,
-            List<List<RolapStar.Column>> groupingSets, List<RolapStar.Column> rollupColumns) {
+            List<List<RolapStar.Column>> groupingSets, List<RolapStar.Column> rollupColumns,
+            boolean distinctCountOnly) {
+
+        /** Compatibility form: no distinct-countOnly. */
+        public Shape(boolean countOnly, boolean ordered,
+                List<List<RolapStar.Column>> groupingSets, List<RolapStar.Column> rollupColumns) {
+            this(countOnly, ordered, groupingSets, rollupColumns, false);
+        }
 
         /** The plain aggregate: no countOnly, no ORDER BY, no grouping sets. */
         public static final Shape PLAIN = new Shape(false, false, List.of(), List.of());
@@ -197,8 +204,13 @@ public final class AggregateSqlMapper {
         // measures (aliased m{i}). countOnly replaces the per-column SELECT / GROUP BY / ORDER BY with
         // one leading count(*) (auto-aliased c0) while the measures still follow.
         if (shape.countOnly()) {
-            q.project(Expressions.countStar(),
-                    org.eclipse.daanse.jdbc.db.api.type.BestFitColumnType.INT);
+            // The DISTINCT-countOnly shape emits NO count(*): the legacy distinctGenerateSql
+            // countOnly output is the nonDistinct re-aggregation of the distinct measures only
+            // (the renderer's subquery rewrite reproduces it from the flat distinct measures).
+            if (!shape.distinctCountOnly()) {
+                q.project(Expressions.countStar(),
+                        org.eclipse.daanse.jdbc.db.api.type.BestFitColumnType.INT);
+            }
         } else {
             // ORDER BY dedup on the (value-equal) column node: two group-by columns rendering the same
             // expression are ONE sort key (some dialects reject the duplicate).
@@ -239,7 +251,7 @@ public final class AggregateSqlMapper {
             }
         }
         SelectStatement statement = q.build();
-        // Reached only on the builder fast path (AbstractQuerySpec.tryAggregateBuilder via SqlBuildGuard.build),
+        // Reached only on the builder fast path (AbstractQuerySpec.tryAggregateBuilder via QueryBuildContext.build),
         // so the path is always builder-authoritative here.
         if (org.eclipse.daanse.rolap.common.RolapUtil.SQL_GEN_LOGGER.isDebugEnabled()) {
             int filterCount = columnFilters == null ? 0
@@ -488,7 +500,7 @@ public final class AggregateSqlMapper {
         }
         SelectStatement statement = q.build();
         // rollup==true is the builder fast path (AggQuerySpec.tryBuilderAuthoritative via
-        // SqlBuildGuard.build) — builder-authoritative; rollup==false is the
+        // QueryBuildContext.build) — builder-authoritative; rollup==false is the
         // exact-granularity segment shape.
         if (org.eclipse.daanse.rolap.common.RolapUtil.SQL_GEN_LOGGER.isDebugEnabled()) {
             int filterCount = (int) columns.stream().filter(c -> c.filter() != null).count();
@@ -615,9 +627,13 @@ public final class AggregateSqlMapper {
             return q.build();
         }
 
-        // SELECT: selected columns (named alias); ORDER BY each selected column, deduped by rendered
-        // SQL (the same column must not be ordered twice); then the raw projections.
-        Set<String> orderedColumns = new java.util.LinkedHashSet<>();
+        // SELECT: selected columns (named alias); ORDER BY each selected column, deduped by the
+        // COLUMN NODE's value equality (the same expression must not be ordered twice — a duplicate
+        // is illegal on e.g. MSSQL and redundant everywhere); then the raw projections. The node key
+        // is dialect-free: it subsumes the former requiresOrderByAlias/rendered-string signatures
+        // (an alias-keyed dedup only approximated expression identity, and collapsing two aliases
+        // of the same expression to one sort key is a semantic no-op).
+        Set<SqlExpression> orderedColumns = new java.util.LinkedHashSet<>();
         for (DrillColumn c : columns) {
             if (!c.selected()) {
                 continue;
@@ -627,24 +643,8 @@ public final class AggregateSqlMapper {
             SqlExpression colExpr = JoinPlanner.expressionFor(c.column().getExpression());
             ProjectionRef ref = q.project(colExpr, c.column().getInternalType(),
                     c.alias() == null ? null : ColumnAlias.of(c.alias()));
-            if (c.ordered()) {
-                // ORDER BY dedups by the rendered item: the alias when the dialect requires
-                // ORDER-BY aliases (e.g. MySQL), else the column expression. Order on the projection
-                // ref so the renderer spells it the same way. The signature is a DEDUP KEY only (never
-                // emitted): a plain column uses its dialect-quoted spelling; a COMPUTED column must
-                // not be dialect-string-rendered — its node (a value-equal RawVariant record) is the
-                // key instead. MySQL (requiresOrderByAlias) always takes the alias branch.
-                String sig;
-                if (dialect.requiresOrderByAlias() && c.alias() != null) {
-                    sig = c.alias();
-                } else if (c.column().getExpression() instanceof org.eclipse.daanse.rolap.element.RolapColumn) {
-                    sig = c.column().generateExprString(dialect);
-                } else {
-                    sig = colExpr.toString();
-                }
-                if (orderedColumns.add(sig)) {
-                    q.orderOn(ref, org.eclipse.daanse.sql.statement.api.model.SortSpec.asc());
-                }
+            if (c.ordered() && orderedColumns.add(colExpr)) {
+                q.orderOn(ref, org.eclipse.daanse.sql.statement.api.model.SortSpec.asc());
             }
         }
         for (RawProjection p : rawProjections) {

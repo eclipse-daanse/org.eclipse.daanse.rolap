@@ -52,13 +52,13 @@ public class DefaultMemberChildrenConstraint
     }
 
     @Override
-    public Optional<ConstraintContribution> toContribution(
+    public org.eclipse.daanse.rolap.common.sql.ContributionResult toContribution(
         RolapCube baseCube,
         AggStar aggStar,
         RolapMember parent)
     {
         // Only the parent-member key restriction, on the dimension's own tables — no fact join.
-        return Optional.of(new ConstraintContribution(
+        return org.eclipse.daanse.rolap.common.sql.ContributionResult.of(new ConstraintContribution(
             JoinPlanner.memberKeyConstraint(parent), List.of()));
     }
 

@@ -98,37 +98,43 @@ public class ChildByNameConstraint extends DefaultMemberChildrenConstraint {
      * (result-verified, like {@link DefaultMemberChildrenConstraint}); only the WHERE parenthesization may
      * differ from the recorded form (a semantic no-op).
      * <p>
-     * Returns {@link java.util.Optional#empty()} (→ the {@link org.eclipse.daanse.rolap.common.sql.QueryRecorder}
-     * fallback) when the child level / name column cannot be expressed as a node (computed column), or the
+     * Declines (→ the {@link org.eclipse.daanse.rolap.common.sql.QueryRecorder} fallback, reason
+     * carried on the {@link org.eclipse.daanse.rolap.common.sql.ContributionResult.Unsupported})
+     * when the child level / name column cannot be expressed as a node (computed column), or the
      * inherited contribution carries a fact join.
      */
     @Override
-    public java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution> toContribution(
+    public org.eclipse.daanse.rolap.common.sql.ContributionResult toContribution(
         org.eclipse.daanse.rolap.element.RolapCube baseCube,
         org.eclipse.daanse.rolap.common.aggmatcher.AggStar aggStar,
         org.eclipse.daanse.rolap.api.element.RolapMember parent)
     {
-        java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution> base =
+        org.eclipse.daanse.rolap.common.sql.ContributionResult base =
             super.toContribution(baseCube, aggStar, parent);
-        if (base.isEmpty() || !base.get().joinTables().isEmpty()) {
-            return java.util.Optional.empty();
+        if (!base.isSupported() || !base.contribution().joinTables().isEmpty()) {
+            return org.eclipse.daanse.rolap.common.sql.ContributionResult.unsupported(
+                "child-by-name parent restriction outside the builder's scope");
         }
         // The level whose members are being read (the level the name filter applies to).
         if (parent == null || !(parent.getLevel().getChildLevel() instanceof RolapLevel childLevel)) {
-            return java.util.Optional.empty();
+            return org.eclipse.daanse.rolap.common.sql.ContributionResult.unsupported(
+                "child-by-name without a resolvable child level");
         }
         java.util.Optional<org.eclipse.daanse.sql.statement.api.expression.Predicate> namePred =
             LevelConstraintGenerator.constrainLevelPredicate(childLevel, baseCube, aggStar, childNames, true);
         if (namePred.isEmpty()) {
-            return java.util.Optional.empty();
+            return org.eclipse.daanse.rolap.common.sql.ContributionResult.unsupported(
+                "child-by-name filter column not expressible as a node");
         }
         // Parent key (a parenthesized group, when present) AND the name filter, as the WHERE.
-        org.eclipse.daanse.sql.statement.api.expression.Predicate where = base.get().where().isPresent()
+        org.eclipse.daanse.sql.statement.api.expression.Predicate where =
+            base.contribution().where().isPresent()
             ? org.eclipse.daanse.sql.statement.api.Predicates.and(
-                java.util.List.of(base.get().where().get(), namePred.get()))
+                java.util.List.of(base.contribution().where().get(), namePred.get()))
             : namePred.get();
-        return java.util.Optional.of(new org.eclipse.daanse.rolap.common.sql.ConstraintContribution(
-            java.util.Optional.of(where), java.util.List.of()));
+        return org.eclipse.daanse.rolap.common.sql.ContributionResult.of(
+            new org.eclipse.daanse.rolap.common.sql.ConstraintContribution(
+                java.util.Optional.of(where), java.util.List.of()));
     }
 
 }

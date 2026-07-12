@@ -103,8 +103,8 @@ class LevelMemberCountSqlTest {
     @Test
     void singleKeyLevelCountMatchesCorpusSql() {
         List<RolapLevel> levels = customerLevels();
-        assertThat(TupleSqlMapper.countSupports(levels.get(1))).isTrue();
-        assertThat(render(TupleSqlMapper.levelMemberCountSql(levels.get(1)))).isEqualTo(
+        assertThat(CountQueries.countSupports(levels.get(1))).isTrue();
+        assertThat(render(CountQueries.levelMemberCountSql(levels.get(1)))).isEqualTo(
                 "select count(*) as \"c0\" from"
                 + " (select distinct \"customer\".\"country\" as \"c0\""
                 + " from \"customer\" as \"customer\") as \"init\"");
@@ -115,8 +115,8 @@ class LevelMemberCountSqlTest {
     @Test
     void multiLevelCountStopsAtUniqueLevelAndMatchesCorpusSql() {
         List<RolapLevel> levels = customerLevels();
-        assertThat(TupleSqlMapper.countSupports(levels.get(3))).isTrue();
-        assertThat(render(TupleSqlMapper.levelMemberCountSql(levels.get(3)))).isEqualTo(
+        assertThat(CountQueries.countSupports(levels.get(3))).isTrue();
+        assertThat(render(CountQueries.levelMemberCountSql(levels.get(3)))).isEqualTo(
                 "select count(*) as \"c0\" from"
                 + " (select distinct \"customer\".\"city\" as \"c0\","
                 + " \"customer\".\"state_province\" as \"c1\""
@@ -134,8 +134,8 @@ class LevelMemberCountSqlTest {
                 new RolapColumn("customer", "customer_id"),
                 new RolapColumn("customer", "parent_id"), RolapLevel.FLAG_UNIQUE);
         levels.set(1, parentChild);
-        assertThat(TupleSqlMapper.countSupports(parentChild)).isTrue();
-        assertThat(render(TupleSqlMapper.levelMemberCountSql(parentChild))).isEqualTo(
+        assertThat(CountQueries.countSupports(parentChild)).isTrue();
+        assertThat(render(CountQueries.levelMemberCountSql(parentChild))).isEqualTo(
                 "select count(*) as \"c0\" from"
                 + " (select distinct \"customer\".\"customer_id\" as \"c0\""
                 + " from \"customer\" as \"customer\") as \"init\"");
@@ -149,7 +149,7 @@ class LevelMemberCountSqlTest {
         RolapLevel computed = level(hierarchy, "FullName", 1, mock(SqlExpression.class), null,
                 RolapLevel.FLAG_UNIQUE);
         levels.set(1, computed);
-        assertThat(TupleSqlMapper.countSupports(computed)).isTrue();
+        assertThat(CountQueries.countSupports(computed)).isTrue();
     }
 
     /**
@@ -159,8 +159,8 @@ class LevelMemberCountSqlTest {
     @Test
     void viewBackedSingleRelationSupportedAndRendersCorpusSql() {
         List<RolapLevel> levels = viewLevels("select 0 as promo_id");
-        assertThat(TupleSqlMapper.countSupports(levels.get(1))).isTrue();
-        assertThat(render(TupleSqlMapper.levelMemberCountSql(levels.get(1)))).isEqualTo(
+        assertThat(CountQueries.countSupports(levels.get(1))).isTrue();
+        assertThat(render(CountQueries.levelMemberCountSql(levels.get(1)))).isEqualTo(
                 "select count(*) as \"c0\" from"
                 + " (select distinct \"v\".\"promo_id\" as \"c0\""
                 + " from (select 0 as promo_id) as \"v\") as \"init\"");
@@ -174,7 +174,7 @@ class LevelMemberCountSqlTest {
     @Test
     void emptyViewRelationDeclined() {
         List<RolapLevel> levels = viewLevels("");
-        assertThat(TupleSqlMapper.countSupports(levels.get(1))).isFalse();
+        assertThat(CountQueries.countSupports(levels.get(1))).isFalse();
     }
 
     /** A parent-child level on a single view/inline relation stays declined (the exotic gate
@@ -186,7 +186,7 @@ class LevelMemberCountSqlTest {
         RolapLevel pc = level(hierarchy, "Promo", 1, new RolapColumn("v", "promo_id"),
                 new RolapColumn("v", "parent_id"), RolapLevel.FLAG_UNIQUE);
         levels.set(1, pc);
-        assertThat(TupleSqlMapper.countSupports(pc)).isFalse();
+        assertThat(CountQueries.countSupports(pc)).isFalse();
     }
 
     /**

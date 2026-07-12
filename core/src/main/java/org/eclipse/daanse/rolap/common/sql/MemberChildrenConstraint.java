@@ -44,15 +44,17 @@ public interface MemberChildrenConstraint extends SqlConstraint {
      * The parent restriction as a {@link ConstraintContribution} (builder {@code WHERE} predicate +
      * tables to join), so the {@code sqlbuild} mappers can build the member-children SELECT.
      * <p>
-     * Default returns {@link java.util.Optional#empty()} — "not expressible on the builder; use the
-     * {@code QueryRecorder} fallback path". Constraints that can translate override this.
+     * Default returns {@link ContributionResult.Unsupported} — "not expressible on the builder".
+     * Constraints that can translate override this; a declining override carries its own
+     * grep-stable reason.
      */
-    default java.util.Optional<ConstraintContribution> toContribution(
+    default ContributionResult toContribution(
         RolapCube baseCube,
         AggStar aggStar,
         RolapMember parent)
     {
-        return java.util.Optional.empty();
+        return ContributionResult.unsupported(
+            "constraint " + getClass().getSimpleName() + " not expressible as a contribution");
     }
 
 }

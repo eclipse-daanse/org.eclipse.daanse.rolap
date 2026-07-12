@@ -42,7 +42,7 @@ import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.star.StarColumnPredicate;
 import org.eclipse.daanse.rolap.common.star.StarPredicate;
 import org.eclipse.daanse.rolap.common.sqlbuild.AggregateSqlMapper;
-import org.eclipse.daanse.rolap.common.sqlbuild.SqlBuildGuard;
+import org.eclipse.daanse.rolap.common.sqlbuild.QueryBuildContext;
 import org.eclipse.daanse.rolap.common.sqlbuild.StarPredicateTranslator;
 import org.eclipse.daanse.sql.statement.api.expression.Predicate;
 import org.eclipse.daanse.sql.statement.api.expression.SqlExpression;
@@ -195,7 +195,7 @@ public abstract class AbstractQuerySpec implements QuerySpec {
             final Dialect dialect = getStar().getDialect();
             final String alias =
                     query.addSelectExpr(column.getExpression(), column.getInternalType(),
-                        dialect.allowsFieldAlias() ? getColumnAlias(i) : null);
+                        caps().fieldAlias() ? getColumnAlias(i) : null);
 
             if (isAggregate()) {
                 query.addGroupByExpr(column.getExpression(), alias);
@@ -251,6 +251,11 @@ public abstract class AbstractQuerySpec implements QuerySpec {
         return false;
     }
 
+    /** The narrow capability view for the planner probes of this spec. */
+    protected final org.eclipse.daanse.rolap.common.sql.SqlQueryCapabilities caps() {
+        return org.eclipse.daanse.rolap.common.sql.SqlQueryCapabilities.of(getStar().getDialect());
+    }
+
     @Override
 	public RenderedSql generateSql() {
         int k = getDistinctMeasureCount();
@@ -267,8 +272,9 @@ public abstract class AbstractQuerySpec implements QuerySpec {
         // SPELLING stays in the Dialect/renderer. supportsGroupingSets is deliberately NOT gated here:
         // the statement model carries both the plain group keys and the grouping sets, and the renderer
         // picks the spelling per dialect — identical for recorder and builder.
-        boolean distinctRewrite = (!dialect.allowsCountDistinct() && k > 0)
-            || (!dialect.allowsMultipleCountDistinct() && k > 1);
+        final org.eclipse.daanse.rolap.common.sql.SqlQueryCapabilities caps = caps();
+        boolean distinctRewrite = (!caps.countDistinct() && k > 0)
+            || (!caps.multipleCountDistinct() && k > 1);
         boolean usesNonDistinct = !distinctRewrite;
         // The count-distinct SUBQUERY rewrite is the RENDERER's job — DialectSqlRenderer degrades
         // the flat count(distinct) into the nested dummyname subquery for a dialect that cannot execute it
@@ -278,10 +284,16 @@ public abstract class AbstractQuerySpec implements QuerySpec {
         // simple single-column aggregate node — count(*) / percentile / a string-fallback aggregator) stays
         // on the recorder's distinctGenerateSql below, whose output already IS the nested form. The
         // capability boolean still gates HERE; the SPELLING stays in the renderer.
-        boolean distinctBuilderEligible = distinctRewrite && !countOnly && !isOrdered()
+        // countOnly is builder-eligible: the distinct-countOnly shape emits the flat distinct
+        // measures WITHOUT count(*) (legacy distinctGenerateSql column semantics); the renderer's
+        // subquery rewrite handles the dims-empty form. isOrdered() is vacuous on this path (only
+        // DrillThroughQuerySpec overrides it, and that spec overrides generateSql entirely).
+        // grouping sets stay on the recorder residual — BatchLoader splits distinct measures out
+        // of grouping-set batches on restrictive dialects, so the combo is defensively rare.
+        boolean distinctBuilderEligible = distinctRewrite
             && getGroupingSetsColumns().isEmpty() && measuresAreSimpleAggregates(dialect);
         if (isAggregate() && (usesNonDistinct || distinctBuilderEligible)) {
-            RenderedSql built = tryAggregateBuilderAuthoritative(dialect);
+            RenderedSql built = tryAggregateBuilderAuthoritative(dialect, distinctRewrite);
             if (built != null) {
                 return built;
             }
@@ -290,7 +302,7 @@ public abstract class AbstractQuerySpec implements QuerySpec {
             org.eclipse.daanse.rolap.common.RolapUtil.SQL_GEN_LOGGER.debug(
                 "aggregate segment: path=recorder reason={} distinctMeasures={} allowsCountDistinct={} allowsMultipleCountDistinct={}",
                 isAggregate() ? "distinct-subquery-rewrite" : "not-aggregate",
-                k, dialect.allowsCountDistinct(), dialect.allowsMultipleCountDistinct());
+                k, caps.countDistinct(), caps.multipleCountDistinct());
         }
 
         QueryRecorder query = newQuery();
@@ -298,8 +310,8 @@ public abstract class AbstractQuerySpec implements QuerySpec {
         final Map<RolapStar.Column, String> groupingSetsAliases;
         // Same capability reads as above — gate by capability boolean at the decision point, spell at
         // the renderer.
-        if (!dialect.allowsCountDistinct() && k > 0
-            || !dialect.allowsMultipleCountDistinct() && k > 1)
+        if (!caps.countDistinct() && k > 0
+            || !caps.multipleCountDistinct() && k > 1)
         {
             groupingSetsAliases =
                 distinctGenerateSql(query, countOnly);
@@ -328,7 +340,7 @@ public abstract class AbstractQuerySpec implements QuerySpec {
      * back to the {@link QueryRecorder} path (each decline debug-logged as
      * {@code path=recorder reason=...}).
      */
-    private RenderedSql tryAggregateBuilderAuthoritative(Dialect dialect) {
+    private RenderedSql tryAggregateBuilderAuthoritative(Dialect dialect, boolean distinctRewriteShape) {
         try {
             RolapStar.Table fact = getStar().getFactTable();
             RolapStar.Column[] columns = getColumns();
@@ -382,13 +394,10 @@ public abstract class AbstractQuerySpec implements QuerySpec {
                 groupingSets.add(List.of(set));
             }
             AggregateSqlMapper.Shape shape = new AggregateSqlMapper.Shape(
-                countOnly, isOrdered(), groupingSets, getRollupColumns());
-            return SqlBuildGuard.build(dialect,
-                getStar().getContext().getConfigValue(
-                    org.eclipse.daanse.olap.common.ConfigConstants.GENERATE_FORMATTED_SQL,
-                    org.eclipse.daanse.olap.common.ConfigConstants.GENERATE_FORMATTED_SQL_DEFAULT_VALUE,
-                    Boolean.class),
-                () -> AggregateSqlMapper.aggregate(fact, groupBy, columnFilters, measures, dialect, extras,
+                countOnly, isOrdered(), groupingSets, getRollupColumns(),
+                countOnly && distinctRewriteShape);
+            return QueryBuildContext.of(dialect, getStar().getContext())
+                .build(() -> AggregateSqlMapper.aggregate(fact, groupBy, columnFilters, measures, dialect, extras,
                     shape))
                 .render();
         } catch (RuntimeException e) {
@@ -509,7 +518,7 @@ public abstract class AbstractQuerySpec implements QuerySpec {
 
         // GREENPLUM not support InnerDistinct
         final QueryRecorder innerQuery = newQuery();
-        innerQuery.setDistinct(dialect.allowsInnerDistinct());
+        innerQuery.setDistinct(caps().innerDistinct());
 
         // Register the fact table first (as nonDistinctGenerateSql does), so the inner subquery's FROM
         // roots at the fact and reads fact-first — matching the builder's flat form the renderer
@@ -552,13 +561,17 @@ public abstract class AbstractQuerySpec implements QuerySpec {
             // Dialect-free: pass the column expression for SELECT / GROUP BY.
             String alias = "d" + i;
             alias = innerQuery.addSelectExpr(column.getExpression(), null, alias);
-            if (!dialect.allowsInnerDistinct()) {
+            if (!caps().innerDistinct()) {
                 innerQuery.addGroupByExpr(column.getExpression(), alias);
             }
-            final String quotedAlias = dialect.quoteIdentifier(alias);
-            outerQuery.addSelectGroupBy(quotedAlias, null);
-            // Add this alias to the map of grouping sets aliases, keyed by the column (not the rendered
-            // string) so the consumer needn't re-render it via the dialect.
+            // Node channel: the outer SELECT/GROUP BY reference the inner alias as a column node —
+            // the renderer quotes it per dialect.
+            org.eclipse.daanse.sql.statement.api.expression.SqlExpression aliasNode =
+                org.eclipse.daanse.sql.statement.api.Expressions.column(alias);
+            String outerAlias = outerQuery.addSelectNode(aliasNode, null);
+            outerQuery.addGroupByNode(aliasNode, outerAlias);
+            // Grouping-sets alias map (defensive distinct+grouping-sets residual): the consumer emits
+            // these strings into GROUPING SETS, so they stay dialect-quoted here.
             groupingSetsAliases.put(
                 column,
                 dialect.quoteIdentifier(
@@ -581,20 +594,31 @@ public abstract class AbstractQuerySpec implements QuerySpec {
                 // the outer query applies the aggregator. Plain column -> Column node, computed
                 // -> RawVariant the renderer resolves per dialect. Bail to the string for a column-less measure.
                 innerQuery.addSelectExpr(measure.getExpression(), measure.getInternalType(), alias);
-                if (!dialect.allowsInnerDistinct()) {
+                if (!caps().innerDistinct()) {
                     innerQuery.addGroupByExpr(measure.getExpression(), alias);
                 }
             } else {
                 String expr = measure.generateExprString(dialect);
                 innerQuery.addSelect(expr, measure.getInternalType(), alias);
-                if (!dialect.allowsInnerDistinct()) {
+                if (!caps().innerDistinct()) {
                     innerQuery.addGroupBy(expr, alias);
                 }
             }
-            outerQuery.addSelect(
-                measure.getAggregator().getNonDistinctAggregator()
-                    .getExpression(dialect.quoteIdentifier(alias)),
-                measure.getInternalType());
+            // Node channel: re-aggregate the inner alias with the non-distinct sibling as a node
+            // (count(distinct x) -> count("m0")); an aggregator without a node form keeps the
+            // rendered-string fallback.
+            org.eclipse.daanse.sql.statement.api.expression.SqlExpression reAgg =
+                org.eclipse.daanse.rolap.aggregator.SqlNodeAggregator.toNodeOrNull(
+                    measure.getAggregator().getNonDistinctAggregator(),
+                    org.eclipse.daanse.sql.statement.api.Expressions.column(alias));
+            if (reAgg != null) {
+                outerQuery.addSelectNode(reAgg, measure.getInternalType());
+            } else {
+                outerQuery.addSelect(
+                    measure.getAggregator().getNonDistinctAggregator()
+                        .getExpression(dialect.quoteIdentifier(alias)),
+                    measure.getInternalType());
+            }
         }
         outerQuery.addFrom(innerQuery, "dummyname", true);
         return groupingSetsAliases;

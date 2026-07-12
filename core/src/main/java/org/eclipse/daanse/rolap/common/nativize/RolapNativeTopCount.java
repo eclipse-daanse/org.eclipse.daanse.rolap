@@ -142,12 +142,12 @@ public class RolapNativeTopCount extends RolapNativeSet {
          * context cannot be expressed.
          */
         @Override
-        protected java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution> toContribution(
+        protected org.eclipse.daanse.rolap.common.sql.ContributionResult toContribution(
             RolapCube baseCube, AggStar aggStar, CalcLift lift) {
             return contribution(baseCube, aggStar, true, lift);
         }
 
-        private java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution> contribution(
+        private org.eclipse.daanse.rolap.common.sql.ContributionResult contribution(
             RolapCube baseCube, AggStar aggStar, boolean liftNonStoredOrder, CalcLift lift) {
             if (aggStar != null && orderByExpr != null) {
                 // Agg routing: compile the order node through the agg-aware
@@ -172,9 +172,9 @@ public class RolapNativeTopCount extends RolapNativeSet {
                 }
                 return naturalOrderContribution(baseCube);
             }
-            java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution> base =
+            org.eclipse.daanse.rolap.common.sql.ContributionResult base =
                 super.toContribution(baseCube, aggStar, lift);
-            if (base.isEmpty()) {
+            if (!base.isSupported()) {
                 return bail("topcount-base-context-empty");
             }
             org.eclipse.daanse.sql.statement.api.expression.SqlExpression innerNode =
@@ -192,18 +192,13 @@ public class RolapNativeTopCount extends RolapNativeSet {
             if (measureNode == null) {
                 throw dead("topcount-non-node-aggregator");
             }
-            org.eclipse.daanse.rolap.common.sql.ConstraintContribution c = base.get();
-            // Carry the base's factJoinRequired — same re-wrap as RolapNativeFilter: without it the
-            // mapper's same-dimension gate skips the fact join the measure ORDER BY references. Carry
-            // the base's aggPlan too — unreachable here today (agg routings take the compile channel
-            // above), kept for re-wrap hygiene.
-            org.eclipse.daanse.rolap.common.sql.ConstraintContribution rewrapped =
-                new org.eclipse.daanse.rolap.common.sql.ConstraintContribution(
-                    c.where(), c.joinTables(), c.orderedPredicates(), c.memberKeyGroup(),
-                    java.util.Optional.of(new org.eclipse.daanse.rolap.common.sql.ConstraintContribution.NativeOrder(
-                        measureNode, sortingDirection, deduceNullability(orderByExpr))))
-                    .withFactJoinRequired(c.factJoinRequired());
-            return java.util.Optional.of(c.aggPlan().map(rewrapped::withAggPlan).orElse(rewrapped));
+            // withNativeOrder carries everything else — incl. factJoinRequired (without it the
+            // mapper's same-dimension gate skips the fact join the measure ORDER BY references) and
+            // the agg-join channel.
+            return org.eclipse.daanse.rolap.common.sql.ContributionResult.of(
+                base.contribution().withNativeOrder(
+                    new org.eclipse.daanse.rolap.common.sql.ConstraintContribution.NativeOrder(
+                        measureNode, sortingDirection, deduceNullability(orderByExpr))));
         }
 
         /**
@@ -216,18 +211,19 @@ public class RolapNativeTopCount extends RolapNativeSet {
          * {@code RolapNativeFilter} contribution. Returns {@link java.util.Optional#empty()} when the
          * inherited context is not expressible or the order compiler fails / yields no node.
          */
-        private java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution>
+        private org.eclipse.daanse.rolap.common.sql.ContributionResult
             nonStoredOrderContribution(RolapCube baseCube, AggStar aggStar, CalcLift lift) {
-            java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution> base =
+            org.eclipse.daanse.rolap.common.sql.ContributionResult base =
                 super.toContribution(baseCube, aggStar, lift);
-            if (base.isEmpty()) {
+            if (!base.isSupported()) {
                 return bail("topcount-candidate-base-context-empty");
             }
             org.eclipse.daanse.sql.statement.api.expression.SqlExpression orderByNode;
             try {
                 RolapNativeSql sql = new RolapNativeSql(
                     NativeSqlContext.scratch(
-                        getEvaluator().getCatalogReader().getContext().getDialect()),
+                        org.eclipse.daanse.rolap.common.sql.SqlQueryCapabilities.of(
+                            getEvaluator().getCatalogReader().getContext().getDialect())),
                     aggStar, getEvaluator(), null);
                 orderByNode = sql.generateTopCountOrderByNode(orderByExpr);
             } catch (RuntimeException e) {
@@ -236,19 +232,14 @@ public class RolapNativeTopCount extends RolapNativeSet {
             if (orderByNode == null) {
                 throw dead("topcount-candidate-order-null");
             }
-            org.eclipse.daanse.rolap.common.sql.ConstraintContribution c = base.get();
-            // Carry the base's factJoinRequired — same re-wrap as the stored-measure path and
-            // RolapNativeFilter: without it the mapper's same-dimension gate skips the fact join the
-            // order-by node references. Carry the base's aggPlan too: under an agg routing the order
-            // node above was compiled agg-substituted (RolapNativeSql + aggStar) and the base context
-            // carries the agg-join channel this re-wrap must not strip.
-            org.eclipse.daanse.rolap.common.sql.ConstraintContribution rewrapped =
-                new org.eclipse.daanse.rolap.common.sql.ConstraintContribution(
-                    c.where(), c.joinTables(), c.orderedPredicates(), c.memberKeyGroup(),
-                    java.util.Optional.of(new org.eclipse.daanse.rolap.common.sql.ConstraintContribution.NativeOrder(
-                        orderByNode, sortingDirection, deduceNullability(orderByExpr))))
-                    .withFactJoinRequired(c.factJoinRequired());
-            return java.util.Optional.of(c.aggPlan().map(rewrapped::withAggPlan).orElse(rewrapped));
+            // withNativeOrder carries everything else — incl. factJoinRequired (without it the
+            // mapper's same-dimension gate skips the fact join the order-by node references) and the
+            // agg-join channel of an agg-routed base contribution (the order node above was compiled
+            // agg-substituted).
+            return org.eclipse.daanse.rolap.common.sql.ContributionResult.of(
+                base.contribution().withNativeOrder(
+                    new org.eclipse.daanse.rolap.common.sql.ConstraintContribution.NativeOrder(
+                        orderByNode, sortingDirection, deduceNullability(orderByExpr))));
         }
 
         /**
@@ -268,7 +259,8 @@ public class RolapNativeTopCount extends RolapNativeSet {
           }
           try {
             RolapNativeSql sql = new RolapNativeSql(
-                NativeSqlContext.scratch( getEvaluator().getCatalogReader().getContext().getDialect() ),
+                NativeSqlContext.scratch( org.eclipse.daanse.rolap.common.sql.SqlQueryCapabilities.of(
+                    getEvaluator().getCatalogReader().getContext().getDialect() ) ),
                 aggStar, getEvaluator(), null );
             org.eclipse.daanse.sql.statement.api.expression.SqlExpression node =
                 sql.generateTopCountOrderByNode( orderByExpr );
@@ -291,12 +283,12 @@ public class RolapNativeTopCount extends RolapNativeSet {
          * no {@code factJoinRequired} are reported. Arg shapes without a single-ColumnPredicate
          * member restriction return {@link java.util.Optional#empty()}.
          */
-        private java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution>
+        private org.eclipse.daanse.rolap.common.sql.ContributionResult
             naturalOrderContribution(RolapCube baseCube) {
             if (args.length != 1) {
                 // The non-join branch applies no constraint at all for multi-arg sets (isValid()
                 // rejects them before evaluator creation) — mirror "adds nothing".
-                return java.util.Optional.of(
+                return org.eclipse.daanse.rolap.common.sql.ContributionResult.of(
                     org.eclipse.daanse.rolap.common.sql.ConstraintContribution.EMPTY);
             }
             CrossJoinArg arg = args[0];
@@ -318,7 +310,7 @@ public class RolapNativeTopCount extends RolapNativeSet {
             }
             if (argMembers == null) {
                 // The arg constrains nothing -> the plain level-members query.
-                return java.util.Optional.of(
+                return org.eclipse.daanse.rolap.common.sql.ContributionResult.of(
                     org.eclipse.daanse.rolap.common.sql.ConstraintContribution.EMPTY);
             }
             if (argMembers.isEmpty()
@@ -333,7 +325,7 @@ public class RolapNativeTopCount extends RolapNativeSet {
             if (argCp.isEmpty()) {
                 if (argMembers.stream().allMatch(org.eclipse.daanse.olap.api.element.Member::isAll)) {
                     // An all-member set restricts nothing on this no-join path.
-                    return java.util.Optional.of(
+                    return org.eclipse.daanse.rolap.common.sql.ContributionResult.of(
                         org.eclipse.daanse.rolap.common.sql.ConstraintContribution.EMPTY);
                 }
                 throw dead("topcount-natural-arg-inexpressible");
@@ -342,7 +334,7 @@ public class RolapNativeTopCount extends RolapNativeSet {
             // no join tables are reported (reporting the arg's star table would force the fact join).
             // Single-operand And wrap: the member-set conjunct is one parenthesised group and must
             // sit one level below the mapper's top-level And split.
-            return java.util.Optional.of(new org.eclipse.daanse.rolap.common.sql.ConstraintContribution(
+            return org.eclipse.daanse.rolap.common.sql.ContributionResult.of(new org.eclipse.daanse.rolap.common.sql.ConstraintContribution(
                 java.util.Optional.of(org.eclipse.daanse.sql.statement.api.Predicates.and(
                     java.util.List.of(argCp.get().predicate()))), List.of()));
         }
@@ -456,7 +448,8 @@ public class RolapNativeTopCount extends RolapNativeSet {
         // TopCountConstraint.toContribution).
         RolapNativeSql sql =
             new RolapNativeSql(
-                NativeSqlContext.scratch(context.getDialect()), null, evaluator, null);
+                NativeSqlContext.scratch(org.eclipse.daanse.rolap.common.sql.SqlQueryCapabilities.of(context.getDialect())),
+                null, evaluator, null);
         Expression orderByExpr = null;
         if (args.length == 3) {
             orderByExpr = args[2];

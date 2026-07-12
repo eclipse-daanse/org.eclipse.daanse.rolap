@@ -2634,16 +2634,21 @@ public abstract class RolapCube extends CubeBase {
                     List<Map<String, Entry<Datatype, Object>>> rolapSessionValues = EnumConvertor.convertSessionValues(sessionValues);
                     if (fact instanceof org.eclipse.daanse.rolap.mapping.model.database.source.TableSource mappingTable) {
                         String alias = mappingTable.getAlias() != null ? mappingTable.getAlias() : mappingTable.getTable().getName();
-                        StringBuilder sql = new StringBuilder("select ").append(writebackTable.getColumns().stream().map( c -> dialect.quoteIdentifier(c.getColumn().getName()) )
-                        .collect(Collectors.joining(", "))).append(" from ").append(dialect.quoteIdentifier(mappingTable.getTable().getName()));
-                        sql.append(getWriteBackSql(dialect, writebackTable, rolapSessionValues));
+                        // The writeback fact view on the statement model: fact columns UNION ALL
+                        // writeback table UNION ALL the session-value literal rows — rendered ONCE
+                        // (quoting and literal spelling live in the renderer). Stored per the
+                        // mapping-model contract as a pre-rendered string, tagged with the live
+                        // dialect only (the body is dialect-rendered, not generic).
+                        java.util.List<org.eclipse.daanse.sql.statement.api.model.Statement> arms =
+                            new ArrayList<>();
+                        arms.add(writebackColumnsArm(writebackTable, mappingTable.getTable().getName()));
+                        arms.addAll(writebackUnionArms(writebackTable, rolapSessionValues));
+                        String sql = org.eclipse.daanse.rolap.common.SqlRender.render(
+                            org.eclipse.daanse.sql.statement.api.model.SetOperation.unionAll(arms),
+                            dialect).sql();
                         org.eclipse.daanse.rolap.mapping.model.database.source.SqlStatement sqlStatement = SourceFactory.eINSTANCE.createSqlStatement();
-                        sqlStatement.setSql(sql.toString());
-                        sqlStatement.getDialects().add("generic");
+                        sqlStatement.setSql(sql);
                         sqlStatement.getDialects().add(dialect.name());
-                        
-                        org.eclipse.daanse.cwm.model.cwm.resource.relational.Schema schema = org.eclipse.daanse.cwm.model.cwm.resource.relational.RelationalFactory.eINSTANCE.createSchema();
-                        schema.setName(mappingTable.getTable().getNamespace().getName());
                         org.eclipse.daanse.rolap.mapping.model.database.relational.DialectSqlView sqlView = org.eclipse.daanse.rolap.mapping.model.database.relational.RelationalFactory.eINSTANCE.createDialectSqlView();
                         sqlView.getDialectStatements().add(sqlStatement);
                         org.eclipse.daanse.rolap.mapping.model.database.source.SqlSelectSource sqlSelectQuery = SourceFactory.eINSTANCE.createSqlSelectSource();
@@ -2667,10 +2672,13 @@ public abstract class RolapCube extends CubeBase {
 
     private void changeFact(org.eclipse.daanse.rolap.mapping.model.database.source.SqlSelectSource mappingView, Dialect dialect, RolapWritebackTable writebackTable, List<Map<String, Map.Entry<Datatype, Object>>> sessionValues) {
         if (mappingView.getSql() != null && mappingView.getSql().getDialectStatements() != null) {
+            // The appended arms rendered once on the statement model; the existing per-dialect
+            // view body stays the mapping-model string it always was.
+            final String appended = renderWritebackUnionArms(dialect, writebackTable, sessionValues);
             List<? extends org.eclipse.daanse.rolap.mapping.model.database.source.SqlStatement> statements = mappingView.getSql().getDialectStatements().stream()
                 .map(sql -> {
                     SqlStatement sqlStatement = SourceFactory.eINSTANCE.createSqlStatement();
-                    sqlStatement.setSql(new StringBuilder(sql.getSql()).append(getWriteBackSql(dialect, writebackTable, sessionValues)).toString());
+                    sqlStatement.setSql(new StringBuilder(sql.getSql()).append(appended).toString());
                     sqlStatement.getDialects().addAll(sql.getDialects());
                     return sqlStatement;
                 })
@@ -2689,16 +2697,53 @@ public abstract class RolapCube extends CubeBase {
         register();
     }
 
-    static CharSequence getWriteBackSql(Dialect dialect, RolapWritebackTable writebackTable, List<Map<String, Map.Entry<Datatype, Object>>> sessionValues) {
-        StringBuilder sql = new StringBuilder();
-        sql.append(" union all select ");
-        sql.append(writebackTable.getColumns().stream().map( c -> dialect.quoteIdentifier(c.getColumn().getName()) )
-            .collect(Collectors.joining(", "))).append(" from ")
-            .append(dialect.quoteIdentifier(writebackTable.getName()));
-        if (sessionValues != null && !sessionValues.isEmpty()) {
-            sql.append(dialect.sqlGenerator().generateUnionAllSql(sessionValues));
+    /** One {@code select <writeback columns> from <table>} arm of the writeback fact view. */
+    static org.eclipse.daanse.sql.statement.api.model.Statement writebackColumnsArm(
+            RolapWritebackTable writebackTable, String table) {
+        org.eclipse.daanse.sql.statement.api.SelectStatementBuilder q =
+            org.eclipse.daanse.sql.statement.api.SelectStatementBuilder.create();
+        for (org.eclipse.daanse.rolap.common.writeback.RolapWritebackColumn c : writebackTable.getColumns()) {
+            q.project(org.eclipse.daanse.sql.statement.api.Expressions.column(c.getColumn().getName()), null);
         }
-        return sql;
+        q.from(org.eclipse.daanse.sql.statement.api.From.table(table,
+            org.eclipse.daanse.sql.statement.api.model.TableAlias.of(table)));
+        return q.build();
+    }
+
+    /**
+     * The writeback-table arm plus one FROM-less literal SELECT per session-value row (the
+     * legacy {@code generateUnionAllSql} shape) — the {@code union all} tail of the writeback
+     * fact view, dialect-free until the renderer spells literals and quoting.
+     */
+    static java.util.List<org.eclipse.daanse.sql.statement.api.model.Statement> writebackUnionArms(
+            RolapWritebackTable writebackTable, List<Map<String, Map.Entry<Datatype, Object>>> sessionValues) {
+        java.util.List<org.eclipse.daanse.sql.statement.api.model.Statement> arms = new ArrayList<>();
+        arms.add(writebackColumnsArm(writebackTable, writebackTable.getName()));
+        if (sessionValues != null) {
+            for (Map<String, Map.Entry<Datatype, Object>> row : sessionValues) {
+                org.eclipse.daanse.sql.statement.api.SelectStatementBuilder q =
+                    org.eclipse.daanse.sql.statement.api.SelectStatementBuilder.create();
+                for (Map.Entry<String, Map.Entry<Datatype, Object>> en : row.entrySet()) {
+                    q.project(org.eclipse.daanse.sql.statement.api.Expressions.literal(
+                            en.getValue().getValue(), en.getValue().getKey()), null,
+                        org.eclipse.daanse.sql.statement.api.model.ColumnAlias.of(en.getKey()));
+                }
+                arms.add(q.build());
+            }
+        }
+        return arms;
+    }
+
+    /** The rendered {@code " union all ..."} tail appended to an existing view-fact body. */
+    static String renderWritebackUnionArms(Dialect dialect, RolapWritebackTable writebackTable,
+            List<Map<String, Map.Entry<Datatype, Object>>> sessionValues) {
+        java.util.List<org.eclipse.daanse.sql.statement.api.model.Statement> arms =
+            writebackUnionArms(writebackTable, sessionValues);
+        String rendered = arms.size() == 1
+            ? org.eclipse.daanse.rolap.common.SqlRender.render(arms.get(0), dialect).sql()
+            : org.eclipse.daanse.rolap.common.SqlRender.render(
+                org.eclipse.daanse.sql.statement.api.model.SetOperation.unionAll(arms), dialect).sql();
+        return " union all " + rendered;
     }
 
 

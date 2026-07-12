@@ -978,9 +978,9 @@ class TupleSqlMapperTupleReadTest {
         RolapCubeLevel pc = parentChildLevel();
         when(pc.isUnique()).thenReturn(true);
 
-        assertThat(TupleSqlMapper.countSupports(pc)).isTrue();
+        assertThat(CountQueries.countSupports(pc)).isTrue();
 
-        String sql = render(TupleSqlMapper.levelMemberCountSql(pc));
+        String sql = render(CountQueries.levelMemberCountSql(pc));
 
         assertThat(sql).isEqualTo(
                 "select count(*) as \"c0\""

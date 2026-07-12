@@ -853,18 +853,17 @@ public class QueryRecorder {
      * it to WHERE for {@code allowsJoinOn=false} dialects (the comma-join fallback). No-op unless BOTH tables are
      * already in the FROM, so callers must {@code addToFrom} both tables BEFORE calling this.
      *
-     * <p>The no-op has TWO distinct cases:
+     * <p>Two special cases:
      * <ol>
-     *   <li>Both sides resolve to a table alias but one is NOT in the FROM — the parent-walk guard
+     *   <li>A side resolves to a table alias that is NOT in the FROM — the parent-walk guard
      *       (e.g. {@code RolapHierarchy.addToFrom} walking join conditions past the added relation
-     *       subset). Legitimate, silent.</li>
-     *   <li>A side is a computed {@code <SQL>} expression, so {@code getTableAlias} returns null and
-     *       FROM membership cannot be checked at all. CORRECTNESS HAZARD: this condition would need to
-     *       be emitted unconditionally as a WHERE constraint ({@code AggStar.Table.addToFrom}),
-     *       so silently dropping it here can leave a cross join with wrong aggregates. Kept as a
-     *       no-op for now — the builder twin ({@code MemberSqlMapper.addAggEdge}) deliberately
-     *       reproduces the vanish, and the parent-walk relies on it for computed parent keys — but
-     *       logged loudly with the grep-stable marker {@code agg-join-dropped}.</li>
+     *       subset). Legitimate, silent no-op — also when the OTHER side is computed.</li>
+     *   <li>A side is a computed {@code <SQL>} expression ({@code getTableAlias} returns null), the
+     *       resolvable counterpart (if any) being in the FROM. The condition cannot enter the JOIN
+     *       tree, but silently dropping it leaves a cross join with wrong aggregates — so it is
+     *       emitted as a WHERE predicate (the legacy SqlQuery behavior), the computed side as a
+     *       per-dialect RawVariant node. Logged (debug) with the grep-stable marker {@code agg-join-dropped}
+     *       for attribution; the emission is gate-certified.</li>
      * </ol>
      */
     public void addJoinCondition(org.eclipse.daanse.olap.api.sql.SqlExpression left,
@@ -872,15 +871,22 @@ public class QueryRecorder {
         String leftAlias = getTableAlias(left);
         String rightAlias = getTableAlias(right);
         if (leftAlias == null || rightAlias == null) {
-            // Case (2): a computed <SQL> join-expression side — no resolvable table alias, condition
-            // dropped. Wrong-results class (cross join) when the tables ARE in the FROM; WARN loudly
-            // instead of throwing so currently-green paths keep working.
-            RolapUtil.SQL_GEN_LOGGER.warn(
-                "agg-join-dropped: join condition suppressed — a side is a computed <SQL> expression "
-                    + "with no resolvable table alias (leftAlias={}, rightAlias={}, left={}, right={}). "
-                    + "Legacy SqlQuery emitted this unconditionally as a WHERE string; dropping it can "
-                    + "produce a cross join with wrong aggregates.",
+            // Case (2): a computed <SQL> join-expression side — no resolvable table alias, so the
+            // condition cannot enter the JOIN tree. A resolvable counterpart OUTSIDE the FROM is the
+            // parent-walk guard (case 1): silent no-op. Otherwise the condition is emitted as a
+            // WHERE predicate — the legacy SqlQuery behavior; dropping it produced a cross join with
+            // wrong aggregates. Marker logged at debug — the emission is gate-certified.
+            String resolvable = leftAlias != null ? leftAlias : rightAlias;
+            if (resolvable != null && !fromAliases.contains(resolvable)) {
+                return;
+            }
+            RolapUtil.SQL_GEN_LOGGER.debug(
+                "agg-join-dropped: join condition has a computed <SQL> side with no resolvable table "
+                    + "alias (leftAlias={}, rightAlias={}, left={}, right={}); emitted as a WHERE "
+                    + "predicate (legacy SqlQuery behavior) instead of being dropped.",
                 leftAlias, rightAlias, left, right);
+            addWhere(Predicates.comparison(nodeOf(left, null), ComparisonOperator.EQ,
+                nodeOf(right, null)));
             return;
         }
         if (fromAliases.contains(leftAlias) && fromAliases.contains(rightAlias)) {

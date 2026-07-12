@@ -120,7 +120,7 @@ public class DescendantsConstraint implements TupleConstraint {
     }
 
     @Override
-    public java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution> toContribution(
+    public org.eclipse.daanse.rolap.common.sql.ContributionResult toContribution(
         RolapCube baseCube, AggStar aggStar)
     {
         return toContribution(baseCube, aggStar, false);
@@ -138,13 +138,13 @@ public class DescendantsConstraint implements TupleConstraint {
      * keep {@link #toContribution} (the cross-join tuple form). Single-parent and context
      * composition are identical to {@link #toContribution}.
      */
-    public java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution>
+    public org.eclipse.daanse.rolap.common.sql.ContributionResult
         toContributionFactoredMemberForm(RolapCube baseCube, AggStar aggStar)
     {
         return toContribution(baseCube, aggStar, true);
     }
 
-    private java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution> toContribution(
+    private org.eclipse.daanse.rolap.common.sql.ContributionResult toContribution(
         RolapCube baseCube, AggStar aggStar, boolean factoredMemberForm)
     {
         if (parentMembers.size() == 1) {
@@ -180,7 +180,8 @@ public class DescendantsConstraint implements TupleConstraint {
                 cp = MemberConstraintWriter.memberConstraintContribution(baseCube, parentMembers, false, false);
             }
             if (cp.isEmpty()) {
-                return java.util.Optional.empty();
+                return org.eclipse.daanse.rolap.common.sql.ContributionResult.unsupported(
+                    "descendants parent set not expressible as a member IN");
             }
             // Compose the wrapped constraint's CONTEXT: the list-parents member constraint is
             // addContextConstraint + addMemberConstraint, so a context-bearing mcc (SqlContextConstraint)
@@ -188,12 +189,12 @@ public class DescendantsConstraint implements TupleConstraint {
             // slicer WHERE (e.g. promotion_name = '…') and its joins are silently dropped.
             // Mirrors RolapNativeSet's composition.
             if (mcc instanceof SqlContextConstraint contextConstraint) {
-                java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution> base =
+                org.eclipse.daanse.rolap.common.sql.ContributionResult base =
                     contextConstraint.toContribution(baseCube, aggStar);
-                if (base.isEmpty()) {
-                    return java.util.Optional.empty();
+                if (!base.isSupported()) {
+                    return base;
                 }
-                org.eclipse.daanse.rolap.common.sql.ConstraintContribution c = base.get();
+                org.eclipse.daanse.rolap.common.sql.ConstraintContribution c = base.contribution();
                 java.util.List<org.eclipse.daanse.sql.statement.api.expression.Predicate> wheres =
                     new java.util.ArrayList<>();
                 c.where().ifPresent(wheres::add);
@@ -227,7 +228,7 @@ public class DescendantsConstraint implements TupleConstraint {
                     composed = composed.withAggPlan(
                         new org.eclipse.daanse.rolap.common.sql.AggPlan(aggStar, aggPredicates));
                 }
-                return java.util.Optional.of(composed);
+                return org.eclipse.daanse.rolap.common.sql.ContributionResult.of(composed);
             }
             org.eclipse.daanse.rolap.common.sql.ConstraintContribution flat =
                 new org.eclipse.daanse.rolap.common.sql.ConstraintContribution(
@@ -242,8 +243,8 @@ public class DescendantsConstraint implements TupleConstraint {
                     java.util.List.of(new org.eclipse.daanse.rolap.common.sql.AggPlan.AggColumnPredicate(
                         aggMemberTable.get(), cp.get().predicate()))));
             }
-            return java.util.Optional.of(flat);
+            return org.eclipse.daanse.rolap.common.sql.ContributionResult.of(flat);
         }
-        return java.util.Optional.empty();
+        return org.eclipse.daanse.rolap.common.sql.ContributionResult.unsupported("descendants without parent members");
     }
 }

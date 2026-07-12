@@ -899,7 +899,7 @@ public class RolapNativeSql {
         this.ctx = ctx;
         this.rolapLevel = rolapLevel;
         this.evaluator = evaluator;
-        this.regexInWhereSupported = ctx.getDialect().allowsRegularExpressionInWhereClause();
+        this.regexInWhereSupported = ctx.capabilities().regexInWhere();
         this.aggStar = aggStar;
 
         numericCompiler = new CompositeSqlCompiler();

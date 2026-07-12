@@ -19,7 +19,7 @@ import org.eclipse.daanse.sql.statement.api.render.RenderedSql;
 /**
  * A built SELECT: the executable {@link RenderedSql} together with the {@link SelectStatement} it
  * was rendered from. Produced by
- * {@code org.eclipse.daanse.rolap.common.sqlbuild.SqlBuildGuard#build} on the builder paths, and by
+ * {@code org.eclipse.daanse.rolap.common.sqlbuild.QueryBuildContext#build} on the builder paths, and by
  * {@link QueryRecorder} on the recorder fallback paths.
  *
  * <p>{@link #render()} is THE executable text — authoritative; consumers execute it as-is.

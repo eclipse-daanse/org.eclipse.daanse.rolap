@@ -127,7 +127,7 @@ public class RolapNativeFilter extends RolapNativeSet {
      * expressible, or the condition compiler fails outright.
      */
     @Override
-    protected java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution> toContribution(
+    protected org.eclipse.daanse.rolap.common.sql.ContributionResult toContribution(
         RolapCube baseCube, AggStar aggStar, CalcLift lift ) {
       java.util.Optional<org.eclipse.daanse.sql.statement.api.expression.Predicate> having;
       try {
@@ -135,7 +135,8 @@ public class RolapNativeFilter extends RolapNativeSet {
         // aliases; a HAVING-alias dialect resolves the SELECT alias at render time), and the FROM side
         // effects are owned by the contribution (joinTables / factJoinRequired below).
         RolapNativeSql sql = new RolapNativeSql(
-            NativeSqlContext.scratch( getEvaluator().getCatalogReader().getContext().getDialect() ),
+            NativeSqlContext.scratch( org.eclipse.daanse.rolap.common.sql.SqlQueryCapabilities.of(
+                getEvaluator().getCatalogReader().getContext().getDialect() ) ),
             aggStar, getEvaluator(), args[0].getLevel() );
         having = java.util.Optional.ofNullable( sql.generateFilterPredicate( filterExpr ) );
       } catch ( RuntimeException e ) {
@@ -143,31 +144,24 @@ public class RolapNativeFilter extends RolapNativeSet {
         return bail( "filter-condition-error" );
       }
       if ( getEvaluator().isNonEmpty() || isJoinRequired() ) {
-        java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution> base =
+        org.eclipse.daanse.rolap.common.sql.ContributionResult base =
             super.toContribution( baseCube, aggStar, lift );
-        if ( base.isEmpty() ) {
+        if ( !base.isSupported() ) {
           return bail( "filter-base-context-empty" );
         }
-        org.eclipse.daanse.rolap.common.sql.ConstraintContribution c = base.get();
-        // Carry the base's factJoinRequired — dropping it in this re-wrap would let the mapper's
-        // same-dimension gate skip the fact join while the measure HAVING (sum(fact.col)) references
-        // the fact. Carry the base's aggPlan too: the re-wrap must not strip the agg-join channel
-        // of an agg-routed base contribution.
-        org.eclipse.daanse.rolap.common.sql.ConstraintContribution rewrapped =
-            new org.eclipse.daanse.rolap.common.sql.ConstraintContribution(
-                c.where(), c.joinTables(), c.orderedPredicates(), c.memberKeyGroup(), c.nativeOrder(),
-                having ).withFactJoinRequired( c.factJoinRequired() );
-        return java.util.Optional.of( c.aggPlan().map( rewrapped::withAggPlan ).orElse( rewrapped ) );
+        // withNativeHaving carries everything else — incl. factJoinRequired (dropping it would let
+        // the mapper's same-dimension gate skip the fact join the measure HAVING references) and the
+        // agg-join channel of an agg-routed base contribution.
+        return org.eclipse.daanse.rolap.common.sql.ContributionResult.of(
+            base.contribution().withNativeHaving( having ) );
       }
       // No context: just the condition HAVING over the plain level-members snowflake. Under an agg
       // routing the HAVING above was compiled agg-substituted (RolapNativeSql + aggStar), so the
       // translation is complete with no context predicates — a PRESENT, empty-predicates AggPlan
       // (the valid unconstrained plan), never an absent one.
       org.eclipse.daanse.rolap.common.sql.ConstraintContribution pureHaving =
-          new org.eclipse.daanse.rolap.common.sql.ConstraintContribution(
-              java.util.Optional.empty(), java.util.List.of(), java.util.List.of(),
-              java.util.Optional.empty(), java.util.Optional.empty(), having );
-      return java.util.Optional.of( aggStar == null ? pureHaving
+          org.eclipse.daanse.rolap.common.sql.ConstraintContribution.EMPTY.withNativeHaving( having );
+      return org.eclipse.daanse.rolap.common.sql.ContributionResult.of( aggStar == null ? pureHaving
           : pureHaving.withAggPlan( new org.eclipse.daanse.rolap.common.sql.AggPlan(
               aggStar, java.util.List.of() ) ) );
     }
@@ -211,14 +205,15 @@ public class RolapNativeFilter extends RolapNativeSet {
     @Override
     public org.eclipse.daanse.rolap.common.constraint.SqlContextConstraint.AggHaving
         levelMembersAggHavingWithJoins( AggStar aggStar ) {
-      final java.util.List<org.eclipse.daanse.rolap.common.sqlbuild.TupleSqlMapper.HavingJoin> joins =
+      final java.util.List<org.eclipse.daanse.rolap.common.sqlbuild.AggTupleQueries.HavingJoin> joins =
           new java.util.ArrayList<>();
       try {
         RolapNativeSql sql = new RolapNativeSql(
             NativeSqlContext.scratchCollecting(
-                getEvaluator().getCatalogReader().getContext().getDialect(),
+                org.eclipse.daanse.rolap.common.sql.SqlQueryCapabilities.of(
+                    getEvaluator().getCatalogReader().getContext().getDialect() ),
                 ( hierarchy, expression ) -> joins.add(
-                    new org.eclipse.daanse.rolap.common.sqlbuild.TupleSqlMapper.HavingJoin(
+                    new org.eclipse.daanse.rolap.common.sqlbuild.AggTupleQueries.HavingJoin(
                         hierarchy, expression ) ) ),
             aggStar, getEvaluator(), args[0].getLevel() );
         return new org.eclipse.daanse.rolap.common.constraint.SqlContextConstraint.AggHaving(
@@ -265,7 +260,7 @@ public class RolapNativeFilter extends RolapNativeSet {
      * per-column loop) — those fall back to non-native evaluation: always correct, at most slower.
      */
     public boolean isSupported( Context<?> context ) {
-      if ( context.getDialect().supportsUnlimitedValueList() ) {
+      if ( org.eclipse.daanse.rolap.common.sql.SqlQueryCapabilities.of( context.getDialect() ).unlimitedValueList() ) {
         // The single limit producer cannot fire on an unlimited-value-list dialect.
         return true;
       }
@@ -366,7 +361,8 @@ NativeEvaluator createEvaluator( RolapEvaluator evaluator, FunctionDefinition fu
     // convertibility; the node is discarded (the real HAVING is regenerated in
     // FilterConstraint.toContribution).
     RolapNativeSql sql = new RolapNativeSql(
-        NativeSqlContext.scratch( context.getDialect() ), null, evaluator, cjArgs[0].getLevel() );
+        NativeSqlContext.scratch( org.eclipse.daanse.rolap.common.sql.SqlQueryCapabilities.of( context.getDialect() ) ),
+        null, evaluator, cjArgs[0].getLevel() );
     final Expression filterExpr = args[1];
     if ( sql.generateFilterPredicate( filterExpr ) == null ) {
       return null;
