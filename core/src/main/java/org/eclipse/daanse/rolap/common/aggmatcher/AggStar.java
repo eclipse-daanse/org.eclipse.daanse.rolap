@@ -673,6 +673,10 @@ public class AggStar {
             /**
              * Generates a SQL expression, which typically this looks like
              * this: <i>tableName</i>.<i>columnName</i>.
+             *
+             * <p>DEBUG/RECORDER STRING SHIM: executable builder SQL takes the dialect-free
+             * {@link #toSqlExpression()} twin; the remaining callers are the diagnostic printers
+             * and the shrinking recorder string path (aggStar union arms).
              */
             public String generateExprString(final Dialect dialect) {
                 String usagePrefix = getUsagePrefix();
@@ -1616,7 +1620,7 @@ public class AggStar {
             // non-table (view/inline) aggregate fact returns null and keeps the QueryRecorder path
             // below.
             org.eclipse.daanse.sql.statement.api.model.SelectStatement countStmt =
-                org.eclipse.daanse.rolap.common.sqlbuild.TupleSqlMapper.aggTableCountSql(
+                org.eclipse.daanse.rolap.common.sqlbuild.CountQueries.aggTableCountSql(
                     getRelation(), getName());
             final String sql;
             if (countStmt != null) {

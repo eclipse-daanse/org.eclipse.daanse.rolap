@@ -130,13 +130,13 @@ public class MemberExcludeConstraint implements TupleConstraint {
     private static final org.slf4j.Logger BAIL_LOG =
         org.slf4j.LoggerFactory.getLogger("daanse.sql.gen.bail");
 
-    private java.util.Optional<ConstraintContribution> bail(String reason) {
+    private org.eclipse.daanse.rolap.common.sql.ContributionResult bail(String reason) {
         BAIL_LOG.debug("MemberExcludeConstraint toContribution bail reason={}", reason);
-        return java.util.Optional.empty();
+        return org.eclipse.daanse.rolap.common.sql.ContributionResult.unsupported(reason);
     }
 
     @Override
-    public java.util.Optional<ConstraintContribution> toContribution(RolapCube baseCube, AggStar aggStar) {
+    public org.eclipse.daanse.rolap.common.sql.ContributionResult toContribution(RolapCube baseCube, AggStar aggStar) {
         if (aggStar != null) {
             return bail("exclude-agg-star");
         }
@@ -160,12 +160,12 @@ public class MemberExcludeConstraint implements TupleConstraint {
             MemberConstraintWriter.generateSingleValueInPredicatePure(
                 baseCube, excludes, firstUniqueParentLevel, true, true, true);
         if (parts.isEmpty()) {
-            return java.util.Optional.empty();
+            return bail("exclude-not-expressible-as-predicates");
         }
         // exclude => OR across the per-level parts; the Or's parens reproduce the recorder's outer "(" + … + ")".
         org.eclipse.daanse.sql.statement.api.expression.Predicate where =
             org.eclipse.daanse.sql.statement.api.Predicates.or(parts.get());
-        return java.util.Optional.of(
+        return org.eclipse.daanse.rolap.common.sql.ContributionResult.of(
             new ConstraintContribution(java.util.Optional.of(where), java.util.List.of()));
     }
 
@@ -193,7 +193,7 @@ public class MemberExcludeConstraint implements TupleConstraint {
      * never joins the fact; {@link #addConstraintOps} is empty). Anything non-composable bails with a
      * grep-stable {@code exclude-csc-*} reason.
      */
-    private java.util.Optional<ConstraintContribution> toContributionCscComposition(RolapCube baseCube) {
+    private org.eclipse.daanse.rolap.common.sql.ContributionResult toContributionCscComposition(RolapCube baseCube) {
         if (excludes.isEmpty()) {
             return bail("exclude-csc-empty-excludes"); // defensive — toContribution bails earlier
         }
@@ -259,7 +259,7 @@ public class MemberExcludeConstraint implements TupleConstraint {
             return bail("exclude-csc-no-conjuncts");
         }
         // Dimension-only: the mapper splits the top-level And into the recorder's WHERE conjuncts.
-        return java.util.Optional.of(new ConstraintContribution(
+        return org.eclipse.daanse.rolap.common.sql.ContributionResult.of(new ConstraintContribution(
             java.util.Optional.of(org.eclipse.daanse.sql.statement.api.Predicates.and(conjuncts)),
             java.util.List.of()));
     }

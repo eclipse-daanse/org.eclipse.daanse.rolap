@@ -268,7 +268,11 @@ public class RolapStar {
     public void remove() {
         localBars.remove();
     }
-    /** Renders {@code expression} with only a {@link Dialect}. */
+    /**
+     * DEBUG-PRINT SHIM: renders a plain-column {@code expression} to its quoted string. Producers
+     * building executable SQL must use the node channel ({@code JoinPlanner.expressionFor}) —
+     * the remaining callers are the diagnostic printers and the shrinking recorder string path.
+     */
     public static String generateExprString(SqlExpression expression, Dialect dialect) {
         if(expression instanceof org.eclipse.daanse.rolap.element.RolapColumn col) {
             return dialect.quoteIdentifier(col.getTable(), col.getName());

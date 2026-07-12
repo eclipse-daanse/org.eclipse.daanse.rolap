@@ -290,7 +290,7 @@ public class FastBatchingCellReader implements CellReader {
                     new BatchLoader.LoadBatchCommand(
                         ExecutionContext.current(),
                         cacheMgr,
-                        getDialect(),
+                        org.eclipse.daanse.rolap.common.sql.SqlQueryCapabilities.of(getDialect()),
                         cube,
                         Collections.unmodifiableList(cellRequests1)));
 

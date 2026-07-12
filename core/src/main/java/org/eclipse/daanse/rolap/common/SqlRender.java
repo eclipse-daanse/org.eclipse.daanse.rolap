@@ -43,6 +43,16 @@ public final class SqlRender {
     }
 
     /** Renders a statement with default (compact) options. */
+    /**
+     * As {@link #render(SelectStatement, Dialect)} for any {@code Statement} — the writeback view
+     * renders a {@code SetOperation} (fact UNION ALL writeback UNION ALL session rows) directly.
+     */
+    public static RenderedSql render(org.eclipse.daanse.sql.statement.api.model.Statement statement,
+            Dialect dialect) {
+        return new org.eclipse.daanse.sql.statement.render.DialectSqlRenderer(dialect)
+            .render(statement, org.eclipse.daanse.sql.statement.api.render.RenderOptions.compact());
+    }
+
     public static RenderedSql render(SelectStatement statement, Dialect dialect) {
         org.eclipse.daanse.rolap.common.sqlbuild.CommentedSqlLog.append(statement, dialect);
         DialectSqlRenderer renderer = new DialectSqlRenderer(dialect);

@@ -59,7 +59,9 @@ class NumberSqlCompilerTest {
             .thenReturn("mysql");
 
         RolapNativeSql sql = new RolapNativeSql(
-            NativeSqlContext.scratch(dialect), null, null, null);
+            NativeSqlContext.scratch(
+                org.eclipse.daanse.rolap.common.sql.SqlQueryCapabilities.of(dialect)),
+            null, null, null);
         compiler = sql.new NumberSqlCompiler();
     }
 

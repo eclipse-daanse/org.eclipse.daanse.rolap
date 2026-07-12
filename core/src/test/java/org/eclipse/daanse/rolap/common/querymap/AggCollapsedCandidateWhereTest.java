@@ -77,7 +77,7 @@ class AggCollapsedCandidateWhereTest {
         Optional<Predicate> candidateWhere = Optional.of(Predicates.and(List.of(keyGroup)));
 
         String sql = new DialectSqlRenderer(new AnsiDialect())
-                .render(TupleSqlMapper.collapsedSingleColumnSql(List.of(year, quarter), aggStar,
+                .render(AggTupleQueries.collapsedSingleColumnSql(List.of(year, quarter), aggStar,
                         candidateWhere, Optional.empty(), Optional.empty()))
                 .sql();
 
@@ -105,7 +105,7 @@ class AggCollapsedCandidateWhereTest {
         Optional<Predicate> candidateWhere = Optional.of(Predicates.and(List.of(context, keyGroup)));
 
         String sql = new DialectSqlRenderer(new AnsiDialect())
-                .render(TupleSqlMapper.collapsedSingleColumnSql(List.of(quarter), aggStar,
+                .render(AggTupleQueries.collapsedSingleColumnSql(List.of(quarter), aggStar,
                         candidateWhere, Optional.empty(), Optional.empty()))
                 .sql();
 

@@ -56,7 +56,7 @@ class AggTableCountSqlTest {
      *  allowsFieldAlias dialect. */
     @Test
     void aggTableCountMatchesCorpusSql() {
-        SelectStatement stmt = TupleSqlMapper.aggTableCountSql(
+        SelectStatement stmt = CountQueries.aggTableCountSql(
                 tableSource("agg_c_10_sales_fact_1997", null), "agg_c_10_sales_fact_1997");
         assertThat(stmt).isNotNull();
         assertThat(render(stmt)).isEqualTo(
@@ -67,7 +67,7 @@ class AggTableCountSqlTest {
     /** A schema-qualified aggregate fact renders the schema prefix, alias unchanged. */
     @Test
     void aggTableCountWithSchema() {
-        SelectStatement stmt = TupleSqlMapper.aggTableCountSql(
+        SelectStatement stmt = CountQueries.aggTableCountSql(
                 tableSource("agg_c_14_sales_fact_1997", "foodmart"), "agg_c_14_sales_fact_1997");
         assertThat(render(stmt)).isEqualTo(
                 "select count(*) as \"c0\" from \"foodmart\".\"agg_c_14_sales_fact_1997\""
@@ -78,6 +78,6 @@ class AggTableCountSqlTest {
     @Test
     void viewAggFactDeclines() {
         RelationalSource view = mock(SqlSelectSource.class);
-        assertThat(TupleSqlMapper.aggTableCountSql(view, "agg_view")).isNull();
+        assertThat(CountQueries.aggTableCountSql(view, "agg_view")).isNull();
     }
 }

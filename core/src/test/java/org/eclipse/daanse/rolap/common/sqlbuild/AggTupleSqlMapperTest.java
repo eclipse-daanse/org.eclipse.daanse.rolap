@@ -189,7 +189,7 @@ class AggTupleSqlMapperTest {
                 List.of(), null, 4, "[Gender].[Gender]");
         hierarchy(tableSource("customer", "customer"), gender);
 
-        String sql = render(TupleSqlMapper.collapsedTupleLevelMembersSql(
+        String sql = render(AggTupleQueries.collapsedTupleLevelMembersSql(
                 List.of(List.of(year, quarter, month), List.of(gender)), aggStar,
                 Optional.of(Predicates.and(List.of(Predicates.and(List.of(
                         Predicates.raw("\"exp_agg_test\".\"gender\" = 'M'")))))),
@@ -261,7 +261,7 @@ class AggTupleSqlMapperTest {
                 Predicates.and(List.of(Predicates.raw(
                         "\"agg_g_ms_pcat_sales_fact_1997\".\"gender\" = 'M'"))));
 
-        String sql = render(TupleSqlMapper.aggTupleLevelMembersSql(
+        String sql = render(AggTupleQueries.aggTupleLevelMembersSql(
                 List.of(month, gender), aggStar, true,
                 Optional.empty(), List.of(memberSet), List.of(), Optional.empty(), Optional.empty(),
                 true, null, true));
@@ -347,10 +347,10 @@ class AggTupleSqlMapperTest {
                 "[Product].[Product].[Category]");
         RolapCubeHierarchy h = hierarchy(relation, category);
 
-        String sql = render(TupleSqlMapper.aggTupleLevelMembersSql(
+        String sql = render(AggTupleQueries.aggTupleLevelMembersSql(
                 List.of((RolapLevel) category), aggStar, true,
                 Optional.empty(), List.of(),
-                List.of(new TupleSqlMapper.HavingJoin(h, new RolapColumn("cat", "cap"))),
+                List.of(new AggTupleQueries.HavingJoin(h, new RolapColumn("cat", "cap"))),
                 Optional.empty(),
                 Optional.of(Predicates.raw("c1 IS NOT NULL AND UPPER(c1) REGEXP '.*TWO.*'")),
                 false, null, true));
@@ -393,7 +393,7 @@ class AggTupleSqlMapperTest {
                 "[Product].[Product].[Category]");
         hierarchy(relation, category);
 
-        String sql = render(TupleSqlMapper.aggTupleLevelMembersSql(
+        String sql = render(AggTupleQueries.aggTupleLevelMembersSql(
                 List.of((RolapLevel) category), aggStar, true,
                 Optional.empty(), List.of(), List.of(), Optional.empty(), Optional.empty(),
                 false, null, true));
@@ -435,7 +435,7 @@ class AggTupleSqlMapperTest {
         AggPlan.AggColumnPredicate roleAccess = new AggPlan.AggColumnPredicate(fact,
                 Predicates.raw("\"agg_c_14_sales_fact_1997\".\"the_year\" = 1997"));
 
-        String sql = render(TupleSqlMapper.aggTupleLevelMembersSql(
+        String sql = render(AggTupleQueries.aggTupleLevelMembersSql(
                 List.of((RolapLevel) state), aggStar, true,
                 Optional.empty(), List.of(roleAccess), List.of(), Optional.empty(),
                 Optional.of(Predicates.raw("c1 IS NOT NULL AND UPPER(c1) REGEXP '.*CA.*'")),
@@ -486,7 +486,7 @@ class AggTupleSqlMapperTest {
                 List.of(), new RolapColumn("time_by_day", "the_month"), 3, "[Time].[Month]");
         hierarchy(tableSource("time_by_day", "time_by_day"), year, month);
 
-        String sql = render(TupleSqlMapper.aggTupleLevelMembersSql(
+        String sql = render(AggTupleQueries.aggTupleLevelMembersSql(
                 List.of((RolapLevel) month), aggStar, true,
                 Optional.empty(), List.of(), List.of(), Optional.empty(), Optional.empty(),
                 true, null, true));
@@ -530,7 +530,7 @@ class AggTupleSqlMapperTest {
                 List.of(), null, 2, "[Time].[Quarter]");
         hierarchy(tableSource("time_by_day", "time_by_day"), year, quarter);
 
-        String sql = render(TupleSqlMapper.collapsedSingleColumnSql(
+        String sql = render(AggTupleQueries.collapsedSingleColumnSql(
                 List.of(year, quarter), aggStar,
                 Optional.of(Predicates.and(List.of(Predicates.raw(
                         "\"agg_c_10_sales_fact_1997\".\"the_year\" = 1997")))),

@@ -248,4 +248,50 @@ class AbstractQuerySpecShapeTest {
 
         assertThat(spec.generateSql().sql()).contains("dummyname").contains("distinct");
     }
+
+    /** A REAL distinct-count measure on a no-count-distinct dialect: builder-eligible — the flat
+     *  {@code count(distinct x)} is emitted by the mapper and the RENDERER degrades it into the
+     *  nested {@code dummyname} form (no QueryRecorder constructed). */
+    @Test
+    void distinctSimpleMeasureIsBuilderEligibleAndRendererRewritten() {
+        Dialect dialect = new AnsiDialect() {
+            @Override
+            public boolean allowsCountDistinct() {
+                return false;
+            }
+        };
+        Fixture f = fixture(dialect);
+        when(f.measure().getAggregator())
+                .thenReturn(org.eclipse.daanse.rolap.aggregator.DistinctCountAggregator.INSTANCE);
+        TestSpec spec = new TestSpec(f.star(), f.idCol(), f.measure(), false, false,
+                List.of(), List.of());
+
+        assertThat(spec.generateSql().sql()).isEqualTo(
+                "select \"d0\" as \"c0\", count(\"m0\") as \"c1\" from ("
+                + "select distinct \"schul_jahr\".\"id\" as \"d0\","
+                + " \"fact_personal\".\"anzahl_personen\" as \"m0\""
+                + BASE_FROM + ") as \"dummyname\" group by \"d0\"");
+    }
+
+    /** The distinct-countOnly shape: NO count(*) column (legacy distinctGenerateSql semantics) —
+     *  the flat distinct measure alone, renderer-rewritten into the nested count form. */
+    @Test
+    void distinctCountOnlyEmitsMeasuresOnly() {
+        Dialect dialect = new AnsiDialect() {
+            @Override
+            public boolean allowsCountDistinct() {
+                return false;
+            }
+        };
+        Fixture f = fixture(dialect);
+        when(f.measure().getAggregator())
+                .thenReturn(org.eclipse.daanse.rolap.aggregator.DistinctCountAggregator.INSTANCE);
+        TestSpec spec = new TestSpec(f.star(), f.idCol(), f.measure(), true, false,
+                List.of(), List.of());
+
+        assertThat(spec.generateSql().sql()).isEqualTo(
+                "select count(\"m0\") as \"c0\" from ("
+                + "select distinct \"fact_personal\".\"anzahl_personen\" as \"m0\""
+                + BASE_FROM + ") as \"dummyname\"");
+    }
 }

@@ -29,9 +29,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.sql.DataSource;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
 import org.eclipse.daanse.olap.api.sql.SqlExpression;
 import org.eclipse.daanse.olap.common.ExecuteDurationUtil;
 import org.eclipse.daanse.olap.execution.ExecutionImpl;
@@ -69,10 +67,8 @@ public class RolapStatisticsCache {
             return approxRowCount;
         }
         if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.TableSource table) {
-            return getTableCardinality(
-                null, table.getTable());
+            return getTableCardinality(table.getTable());
         } else {
-            final Dialect dialect = star.getDialect();
             SelectStatementBuilder q = SelectStatementBuilder.create();
             org.eclipse.daanse.sql.statement.api.model.FromClause from = RelationFromMapper.from(relation);
             // Diagnostic provenance (rendered only when comments are on; never part of the executed
@@ -82,23 +78,19 @@ public class RolapStatisticsCache {
             q.footerComment("cardinality probe (count rows)");
             q.from(from);
             q.project(Expressions.star(), null);
-            return getQueryCardinality(SqlRender.render(q.build(), dialect).sql());
+            return getQueryCardinality(SqlRender.render(q.build(), star.getDialect()).sql());
         }
     }
 
     private long getTableCardinality(
-        String catalog,
         org.eclipse.daanse.cwm.model.cwm.resource.relational.NamedColumnSet table)
     {
     	String schema = table.getNamespace() != null ? table.getNamespace().getName() : null;
-        final List<String> key = Arrays.asList(catalog, schema, table.getName());
+        final List<String> key = Arrays.asList(schema, table.getName());
         long rowCount = -1;
         if (tableMap.containsKey(key)) {
             rowCount = tableMap.get(key);
         } else {
-            final Dialect dialect = star.getDialect();
-            //final List<StatisticsProvider> statisticsProviders =
-            //    dialect.getStatisticsProviders();
             final List<SqlStatisticsProviderNew> statisticsProviders = List.of(new SqlStatisticsProviderNew());
             final ExecutionImpl execution =
                 new ExecutionImpl(
@@ -108,7 +100,6 @@ public class RolapStatisticsCache {
             for (SqlStatisticsProviderNew statisticsProvider : statisticsProviders) {
                 rowCount = statisticsProvider.getTableCardinality(
                     star.getContext(),
-                    catalog,
                     schema,
                     table.getName(),
                     execution);
@@ -129,9 +120,6 @@ public class RolapStatisticsCache {
         if (queryMap.containsKey(sql)) {
             rowCount = queryMap.get(sql);
         } else {
-            final Dialect dialect = star.getDialect();
-            //final List<StatisticsProvider> statisticsProviders =
-            //    dialect.getStatisticsProviders();
             final List<SqlStatisticsProviderNew> statisticsProviders = List.of(new SqlStatisticsProviderNew());
             final ExecutionImpl execution =
                 new ExecutionImpl(
@@ -164,11 +152,9 @@ public class RolapStatisticsCache {
             && expression instanceof org.eclipse.daanse.rolap.element.RolapColumn column)
         {
             return getColumnCardinality(
-                null,
                 table.getTable(),
                 column.getName());
         } else {
-            final Dialect dialect = star.getDialect();
             SelectStatementBuilder q = SelectStatementBuilder.create();
             org.eclipse.daanse.sql.statement.api.model.FromClause from = RelationFromMapper.from(relation);
             // Diagnostic provenance: the distinct-values read the statistics cache wraps as
@@ -178,25 +164,21 @@ public class RolapStatisticsCache {
             q.distinct(true);
             q.from(from);
             q.project(JoinPlanner.expressionFor(expression), null);
-            return getQueryCardinality(SqlRender.render(q.build(), dialect).sql());
+            return getQueryCardinality(SqlRender.render(q.build(), star.getDialect()).sql());
         }
     }
 
     private long getColumnCardinality(
-        String catalog,
         org.eclipse.daanse.cwm.model.cwm.resource.relational.NamedColumnSet table,
         String column)
     {
     	String schema = table.getNamespace() != null ? table.getNamespace().getName() : null;
-        final List<String> key = Arrays.asList(catalog, schema, table.getName(), column);
+        final List<String> key = Arrays.asList(schema, table.getName(), column);
         long rowCount = -1;
         if (columnMap.containsKey(key)) {
             rowCount = columnMap.get(key);
         } else {
-            final Dialect dialect = star.getDialect();
             final List<SqlStatisticsProviderNew> statisticsProviders = List.of(new SqlStatisticsProviderNew());
-            //final List<StatisticsProvider> statisticsProviders =
-            //    dialect.getStatisticsProviders();
             final ExecutionImpl execution =
                 new ExecutionImpl(
                     star.getCatalog().getInternalConnection()
@@ -205,7 +187,6 @@ public class RolapStatisticsCache {
             for (SqlStatisticsProviderNew statisticsProvider : statisticsProviders) {
                 rowCount = statisticsProvider.getColumnCardinality(
                     star.getContext(),
-                    catalog,
                     schema,
                     table.getName(),
                     column,
@@ -243,14 +224,4 @@ public class RolapStatisticsCache {
         return "expression on " + relationName(null, from);
     }
 
-    public int getColumnCardinality2(
-        DataSource dataSource,
-        Dialect dialect,
-        String catalog,
-        String schema,
-        String table,
-        String column)
-    {
-        return -1;
-    }
 }

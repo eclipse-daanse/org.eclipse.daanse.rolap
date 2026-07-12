@@ -142,13 +142,9 @@ class AggQuerySpec {
             org.eclipse.daanse.sql.statement.api.model.SelectStatement nonRollup =
                 nonRollupSegmentStatement();
             if (nonRollup != null) {
-                return org.eclipse.daanse.rolap.common.sqlbuild.SqlBuildGuard.build(
-                    getStar().getDialect(),
-                    getStar().getContext().getConfigValue(
-                        org.eclipse.daanse.olap.common.ConfigConstants.GENERATE_FORMATTED_SQL,
-                        org.eclipse.daanse.olap.common.ConfigConstants.GENERATE_FORMATTED_SQL_DEFAULT_VALUE,
-                        Boolean.class),
-                    () -> nonRollup)
+                return org.eclipse.daanse.rolap.common.sqlbuild.QueryBuildContext
+                    .of(getStar().getDialect(), getStar().getContext())
+                    .build(() -> nonRollup)
                     .render();
             }
         } catch (RuntimeException e) {
@@ -275,13 +271,9 @@ class AggQuerySpec {
                 // The decline was already logged with its reason inside rollupSegmentStatement.
                 return null;
             }
-            return org.eclipse.daanse.rolap.common.sqlbuild.SqlBuildGuard.build(
-                getStar().getDialect(),
-                getStar().getContext().getConfigValue(
-                    org.eclipse.daanse.olap.common.ConfigConstants.GENERATE_FORMATTED_SQL,
-                    org.eclipse.daanse.olap.common.ConfigConstants.GENERATE_FORMATTED_SQL_DEFAULT_VALUE,
-                    Boolean.class),
-                () -> statement)
+            return org.eclipse.daanse.rolap.common.sqlbuild.QueryBuildContext
+                .of(getStar().getDialect(), getStar().getContext())
+                .build(() -> statement)
                 .render();
         } catch (RuntimeException e) {
             // A translator/mapper shape outside builder scope: the recorder builds this segment.

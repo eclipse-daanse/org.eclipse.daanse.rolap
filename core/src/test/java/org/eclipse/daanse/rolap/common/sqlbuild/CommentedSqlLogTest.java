@@ -96,7 +96,7 @@ class CommentedSqlLogTest {
     void dedupesImmediateReRenderOfSameStatement() throws Exception {
         System.setProperty(CommentedSqlLog.DIR_PROPERTY, dir.toString());
         SelectStatement statement = recorder().buildStatement();
-        // The SqlBuildGuard promote path renders the SAME statement instance twice in a row.
+        // The authoritative build path renders the SAME statement instance twice in a row.
         SqlRender.render(statement, ansi);
         SqlRender.render(statement, ansi,
                 org.eclipse.daanse.sql.statement.api.render.RenderOptions.multiLine());

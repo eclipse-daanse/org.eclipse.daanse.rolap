@@ -84,12 +84,12 @@ class SqlContextConstraintSlicerTupleLiftTest {
             stubSeams(writer, agg, structWith(disjoined), new RolapStar.Column[0], new Object[0]);
             stubTuplePredicate(writer, translator, cube, disjoined, tuplePredicate1, 3);
 
-            Optional<ConstraintContribution> c = scc.toContribution(cube, null);
-            assertThat(c)
+            org.eclipse.daanse.rolap.common.sql.ContributionResult c = scc.toContribution(cube, null);
+            assertThat(c.isSupported())
                 .as("executed reads now replay the disjoined tuple lists (no more bail)")
-                .isPresent();
-            assertThat(c.get().orderedPredicates()).hasSize(1);
-            assertThat(c.get().orderedPredicates().get(0).predicate()).isSameAs(tuplePredicate1);
+                .isTrue();
+            assertThat(c.contribution().orderedPredicates()).hasSize(1);
+            assertThat(c.contribution().orderedPredicates().get(0).predicate()).isSameAs(tuplePredicate1);
         }
     }
 
@@ -122,10 +122,10 @@ class SqlContextConstraintSlicerTupleLiftTest {
             joinPlanner.when(() -> JoinPlanner.expressionFor(statusColumn))
                 .thenReturn(org.eclipse.daanse.sql.statement.api.Expressions.star());
 
-            Optional<ConstraintContribution> lifted = scc.toContribution(cube, null);
+            org.eclipse.daanse.rolap.common.sql.ContributionResult lifted = scc.toContribution(cube, null);
 
-            assertThat(lifted).isPresent();
-            ConstraintContribution c = lifted.get();
+            assertThat(lifted.isSupported()).isTrue();
+            ConstraintContribution c = lifted.contribution();
             // Per-list replay order: [status col, list1 tuples, status col again, list2 tuples].
             assertThat(c.orderedPredicates()).hasSize(4);
             assertThat(c.orderedPredicates().get(0).table()).isSameAs(statusTable);
@@ -160,12 +160,12 @@ class SqlContextConstraintSlicerTupleLiftTest {
                 new RolapStar.Column[] {coveredColumn}, new Object[] {"1997"});
             stubTuplePredicate(writer, translator, cube, list1, tuplePredicate1, 3);
 
-            Optional<ConstraintContribution> lifted = scc.toContribution(cube, null);
+            org.eclipse.daanse.rolap.common.sql.ContributionResult lifted = scc.toContribution(cube, null);
 
-            assertThat(lifted).isPresent();
+            assertThat(lifted.isSupported()).isTrue();
             // Only the tuple predicate: the covered column is constrained BY it, never twice.
-            assertThat(lifted.get().orderedPredicates()).hasSize(1);
-            assertThat(lifted.get().orderedPredicates().get(0).predicate())
+            assertThat(lifted.contribution().orderedPredicates()).hasSize(1);
+            assertThat(lifted.contribution().orderedPredicates().get(0).predicate())
                 .isSameAs(tuplePredicate1);
         }
     }
@@ -196,13 +196,13 @@ class SqlContextConstraintSlicerTupleLiftTest {
             stubTuplePredicate(writer, translator, cube, disjoined, tuplePredicate1, 3);
             stubTuplePredicate(writer, translator, cube, optimized, tuplePredicate2, 4);
 
-            Optional<ConstraintContribution> lifted = scc.toContribution(cube, null);
+            org.eclipse.daanse.rolap.common.sql.ContributionResult lifted = scc.toContribution(cube, null);
 
-            assertThat(lifted).isPresent();
-            assertThat(lifted.get().orderedPredicates()).hasSize(2);
-            assertThat(lifted.get().orderedPredicates().get(0).predicate())
+            assertThat(lifted.isSupported()).isTrue();
+            assertThat(lifted.contribution().orderedPredicates()).hasSize(2);
+            assertThat(lifted.contribution().orderedPredicates().get(0).predicate())
                 .isSameAs(tuplePredicate1);
-            assertThat(lifted.get().orderedPredicates().get(1).predicate())
+            assertThat(lifted.contribution().orderedPredicates().get(1).predicate())
                 .isSameAs(tuplePredicate2);
             // isTuple = the disjointSlicerTuples flag.
             writer.verify(() -> ContextConstraintWriter.makeContextConstraintSet(
@@ -223,7 +223,7 @@ class SqlContextConstraintSlicerTupleLiftTest {
                     any(), anyBoolean(), anyBoolean()))
                 .thenThrow(new IllegalStateException("boom"));
 
-            assertThat(scc.toContribution(cube, null)).isEmpty();
+            assertThat(scc.toContribution(cube, null).isSupported()).isFalse();
         }
     }
 
