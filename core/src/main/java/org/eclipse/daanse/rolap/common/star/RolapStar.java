@@ -124,26 +124,26 @@ public class RolapStar {
 
     /**
      * Number of columns (column and columnName).
-     */
+ */
     private int columnCount;
 
     /**
      * Keeps track of the columns across all tables. Should have
      * a number of elements equal to columnCount.
-     */
+ */
     private final List<Column> columnList = new ArrayList<>();
 
 
     /**
      * If true, then database aggregation information is cached, otherwise
      * it is flushed after each query.
-     */
+ */
     private boolean cacheAggregations;
 
     /**
      * Partially ordered list of AggStars associated with this RolapStar's fact
      * table.
-     */
+ */
     private final List<AggStar> aggStars = new LinkedList<>();
 
 
@@ -161,7 +161,7 @@ public class RolapStar {
      * Creates a RolapStar. Please use
      * RolapCatalog.RolapStarRegistry#getOrCreateStar to create a
      * RolapStar.
-     */
+ */
     protected RolapStar(
         final RolapCatalog catalog,
         final Context context,
@@ -187,8 +187,8 @@ public class RolapStar {
      * step will presumably be to request a segment that contains the cell
      * from the global cache, external cache, or by issuing a SQL statement.
      *
-     * Returns {@link Util#nullValue} if a segment contains the cell and the
-     * cell's value is null.
+     * Returns {@link org.eclipse.daanse.olap.api.result.NullValue#INSTANCE}
+     * if a segment contains the cell and the cell's value is null.
      *
      * If pinSet is not null, pins the segment that holds it
      * into the local cache. pinSet ensures that a segment is
@@ -198,9 +198,11 @@ public class RolapStar {
      *
      * @param pinSet Set into which to pin the segment; or null
      *
-     * @return Cell value, or {@link Util#nullValue} if the cell value is null,
-     * or null if the cell is not in any segment in the local cache.
-     */
+     * @return Cell value, or
+     * {@link org.eclipse.daanse.olap.api.result.NullValue#INSTANCE} if the
+     * cell value is null, or null if the cell is not in any segment in the
+     * local cache.
+ */
     public Object getCellFromCache(
         CellRequest request,
         RolapAggregationManager.PinSet pinSet)
@@ -287,7 +289,7 @@ public class RolapStar {
      * it is accessed via a thread-local, the data structures can be accessed
      * without acquiring locks.
      *
-     */
+ */
     public static class Bar {
         /** Holds all thread-local aggregations of this star. */
 
@@ -411,7 +413,7 @@ public class RolapStar {
      * @param primaryKey the join key of the relation
      * @param primaryKeyTable the join table of the relation
      * @return if necessary a new relation that has been re-aliased
-     */
+ */
     public org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource getUniqueRelation(
         org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource rel,
         String factForeignKey,
@@ -515,7 +517,7 @@ public class RolapStar {
     /**
      * Returns this RolapStar's column count. After a star has been created with
      * all of its columns, this is the number of columns in the star.
-     */
+ */
     public int getColumnCount() {
         return columnCount;
     }
@@ -523,7 +525,7 @@ public class RolapStar {
     /**
      * This is used by the {@link Column} constructor to get a unique id (per
      * its parent {@link RolapStar}).
-     */
+ */
     private int nextColumnCount() {
         return columnCount++;
     }
@@ -532,7 +534,7 @@ public class RolapStar {
      * Place holder in case in the future we wish to be able to
      * reload aggregates. In that case, if aggregates had already been loaded,
      * i.e., this star has some aggstars, then those aggstars are cleared.
-     */
+ */
     public void prepareToLoadAggregates() {
         aggStars.clear();
     }
@@ -543,7 +545,7 @@ public class RolapStar {
      * Internally the AggStars are added in sort order, smallest row count
      * to biggest, so that the most efficient AggStar is encountered first;
      * ties do not matter.
-     */
+ */
     public void addAggStar(AggStar aggStar) {
         // Add it before the first AggStar which is larger, if there is one.
         boolean chooseAggregateByVolume = catalog.getInternalConnection().getContext().getConfigValue(ConfigConstants.CHOOSE_AGGREGATE_BY_VOLUME, ConfigConstants.CHOOSE_AGGREGATE_BY_VOLUME_DEFAULT_VALUE ,Boolean.class);
@@ -564,7 +566,7 @@ public class RolapStar {
 
     /**
      * Clears the list of agg stars.
-     */
+ */
     void clearAggStarList() {
         aggStars.clear();
     }
@@ -572,7 +574,7 @@ public class RolapStar {
     /**
      * Reorder the list of aggregate stars. This should be called if the
      * algorithm used to order the AggStars has been changed.
-     */
+ */
     public void reOrderAggStarList() {
         List<AggStar> oldList = new ArrayList<>(aggStars);
         aggStars.clear();
@@ -584,7 +586,7 @@ public class RolapStar {
     /**
      * Returns this RolapStar's aggregate table AggStars, ordered in ascending
      * order of size.
-     */
+ */
     public List<AggStar> getAggStars() {
         return aggStars;
     }
@@ -593,7 +595,7 @@ public class RolapStar {
      * Returns the fact table at the center of this RolapStar.
      *
      * @return fact table
-     */
+ */
     public Table getFactTable() {
         return factTable;
     }
@@ -601,7 +603,7 @@ public class RolapStar {
     /**
      * Creates an empty {@link QueryRecorder} for a query against this star (the accumulation
      * surface producers record onto).
-     */
+ */
     public QueryRecorder newQueryRecorder() {
         return new QueryRecorder(
             context.getConfigValue(ConfigConstants.GENERATE_FORMATTED_SQL, ConfigConstants.GENERATE_FORMATTED_SQL_DEFAULT_VALUE, Boolean.class));
@@ -609,7 +611,7 @@ public class RolapStar {
 
     /**
      * Returns this RolapStar's SQL dialect.
-     */
+ */
     public Dialect getDialect() {
         return context.getDialect();
     }
@@ -624,7 +626,7 @@ public class RolapStar {
      * caching turned off, then caching is turned off for all of them.
      *
      * @param cacheAggregations Whether to cache database aggregation
-     */
+ */
     public void setCacheAggregations(boolean cacheAggregations) {
         // this can only change from true to false
         this.cacheAggregations = cacheAggregations;
@@ -635,7 +637,7 @@ public class RolapStar {
      * Returns whether the this RolapStar cache aggregates.
      *
      * @see #setCacheAggregations(boolean)
-     */
+ */
     public boolean isCacheAggregations() {
         return this.cacheAggregations;
     }
@@ -650,7 +652,7 @@ public class RolapStar {
      *
      * @param forced If true, clears cached aggregations regardless of any other
      *   settings.  If false, clears only cache from the current thread
-     */
+ */
     public void clearCachedAggregations(boolean forced) {
         if (forced || !cacheAggregations || isCacheDisabled()) {
             if (LOGGER.isDebugEnabled()) {
@@ -675,7 +677,7 @@ public class RolapStar {
      * When a new aggregation is created, it is marked as thread local.
      *
      * @param aggregationKey this is the constrained column bitkey
-     */
+ */
     public Aggregation lookupOrCreateAggregation(
         AggregationKey aggregationKey)
     {
@@ -701,7 +703,7 @@ public class RolapStar {
      *
      * Must be called from synchronized context.
      *
-     */
+ */
     public Aggregation lookupSegment(AggregationKey aggregationKey) {
         return localBars.get().aggregations.get(aggregationKey);
     }
@@ -712,7 +714,7 @@ public class RolapStar {
      * Returns the DataSource used to connect to the underlying DBMS.
      *
      * @return DataSource
-     */
+ */
     public DataSource getDataSource() {
         return context.getDataSource();
     }
@@ -722,21 +724,21 @@ public class RolapStar {
      * Returns the Context
      *
      * @return Context
-     */
+ */
     public Context<?> getContext() {
         return context;
     }
 
     /**
      * Retrieves the {@link RolapStar.Measure} in which a measure is stored.
-     */
+ */
     public static Measure getStarMeasure(Member member) {
         return (Measure) ((RolapStoredMeasure) member).getStarMeasure();
     }
 
     /**
      * Retrieves a named column, returns null if not found.
-     */
+ */
     public Column[] lookupColumns(String tableAlias, String columnName) {
         final Table table = factTable.findDescendant(tableAlias);
         return (table == null) ? null : table.lookupColumns(columnName);
@@ -744,7 +746,7 @@ public class RolapStar {
 
     /**
      * This is used by TestAggregationManager only.
-     */
+ */
     public Column lookupColumn(String tableAlias, String columnName) {
         final Table table = factTable.findDescendant(tableAlias);
         return (table == null) ? null : table.lookupColumn(columnName);
@@ -764,7 +766,7 @@ public class RolapStar {
 
     /**
      * Returns a list of all aliases used in this star.
-     */
+ */
     public List<String> getAliasList() {
         List<String> aliasList = new ArrayList<>();
         if (factTable != null) {
@@ -775,7 +777,7 @@ public class RolapStar {
 
     /**
      * Finds all of the table aliases in a table and its children.
-     */
+ */
     private static void collectAliases(List<String> aliasList, Table table) {
         aliasList.add(table.getAlias());
         for (Table child : table.children) {
@@ -787,7 +789,7 @@ public class RolapStar {
      * Collects all columns in this table and its children.
      * If joinColumn is specified, only considers child tables
      * joined by the given column.
-     */
+ */
     public static void collectColumns(
         Collection<Column> columnList,
         Table table,
@@ -809,7 +811,7 @@ public class RolapStar {
      * Adds a column to the star's list of all columns across all tables.
      *
      * @param c the column to add
-     */
+ */
     private void addColumn(Column c) {
         columnList.add(c.getBitPosition(), c);
     }
@@ -819,7 +821,7 @@ public class RolapStar {
      *
      * @param bitPos bit position to look up
      * @return column at the given position
-     */
+ */
     public Column getColumn(int bitPos) {
         return columnList.get(bitPos);
     }
@@ -843,7 +845,7 @@ public class RolapStar {
      * @param pw Writer
      * @param prefix Prefix to print at the start of each line
      * @param structure Whether to print the structure of the star
-     */
+ */
     public void print(PrintWriter pw, String prefix, boolean structure) {
         if (structure) {
             pw.print(prefix);
@@ -862,7 +864,7 @@ public class RolapStar {
 
     /**
      * A column in a star schema.
-     */
+ */
     public static class Column {
         public static final Comparator<Column> COMPARATOR =
             new Comparator<>() {
@@ -886,7 +888,7 @@ public class RolapStar {
         /**
          * When a Column is a column, and not a Measure, the parent column
          * is the coloumn associated with next highest Level.
-         */
+ */
         private final Column parentColumn;
 
         /**
@@ -894,13 +896,13 @@ public class RolapStar {
          * table generation. For multiple dimension usages, multiple shared
          * dimension or unshared dimension with the same column names,
          * this is used to disambiguate aggregate column names.
-         */
+ */
         private final String usagePrefix;
         /**
          * This is only used in RolapAggregationManager and adds
          * non-constraining columns making the drill-through queries easier for
          * humans to understand.
-         */
+ */
         private final Column nameColumn;
 
         private boolean isNameColumn;
@@ -910,7 +912,7 @@ public class RolapStar {
         /**
          * The estimated cardinality of the column.
          * {@link Integer#MIN_VALUE} means unknown.
-         */
+ */
         private AtomicLong approxCardinality = new AtomicLong(
             Long.MIN_VALUE);
 
@@ -961,7 +963,7 @@ public class RolapStar {
          * Fake column.
          *
          * @param datatype Datatype
-         */
+ */
         protected Column(Datatype datatype)
         {
             this(
@@ -1037,7 +1039,7 @@ public class RolapStar {
         /**
          * Generates a SQL expression, which typically this looks like
          * this: <i>tableName</i>.<i>columnName</i>.
-         */
+ */
         public String generateExprString(Dialect dialect) {
             return RolapStar.generateExprString(getExpression(), dialect);
         }
@@ -1048,7 +1050,7 @@ public class RolapStar {
          * the cardinality and stores it in the cache.
          *
          * @return the column cardinality.
-         */
+ */
         public long getCardinality() {
             if (approxCardinality.get() < 0) {
                 approxCardinality.set(
@@ -1073,7 +1075,7 @@ public class RolapStar {
          *
          * @param pw Print writer
          * @param prefix Prefix to print first, such as spaces for indentation
-         */
+ */
         public void print(PrintWriter pw, String prefix) {
             pw.print(prefix);
             pw.print(getName());
@@ -1097,7 +1099,7 @@ public class RolapStar {
      *
      * A measure is basically just a column; except that its
      * {@link #aggregator} defines how it is to be rolled up.
-     */
+ */
     public static class Measure extends Column {
         private final String cubeName;
         private final Aggregator aggregator;
@@ -1174,7 +1176,7 @@ public class RolapStar {
      * table, and a condition which specifies how it is joined to its parent.
      * So the star schema is, in effect, a hierarchy with the fact table at
      * its root.
-     */
+ */
     public static class Table {
         private final RolapStar star;
         private final org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation;
@@ -1208,7 +1210,7 @@ public class RolapStar {
         /**
          * Returns the condition by which a dimension table is connected to its
          * {@link #getParentTable() parent}; or null if this is the fact table.
-         */
+ */
         public Condition getJoinCondition() {
             return joinCondition;
         }
@@ -1216,7 +1218,7 @@ public class RolapStar {
         /**
          * Returns this table's parent table, or null if this is the fact table
          * (which is at the center of the star).
-         */
+ */
         public Table getParentTable() {
             return parent;
         }
@@ -1232,7 +1234,7 @@ public class RolapStar {
          * Note: This method is slow, but that's acceptable because it is
          * only used for tracing. It would be more efficient to store an
          * array in the {@link RolapStar} mapping column ordinals to columns.
-         */
+ */
         private void collectColumns(BitKey bitKey, List<Column> list) {
             for (Column column : getColumns()) {
                 if (bitKey.get(column.getBitPosition())) {
@@ -1246,7 +1248,7 @@ public class RolapStar {
 
         /**
          * Returns an array of all columns in this star with a given name.
-         */
+ */
         public Column[] lookupColumns(String columnName) {
             List<Column> l = new ArrayList<>();
             for (Column column : getColumns()) {
@@ -1283,7 +1285,7 @@ public class RolapStar {
         /**
          * Given a Expression return a column with that expression
          * or null.
-         */
+ */
         private Column lookupColumnByExpression(SqlExpression expr) {
             for (Column column : getColumns()) {
                 if (column instanceof Measure) {
@@ -1315,7 +1317,7 @@ public class RolapStar {
         /**
          * Look up a {@link Measure} by its name.
          * Returns null if not found.
-         */
+ */
         public Measure lookupMeasureByName(String cubeName, String name) {
             for (Column column : getColumns()) {
                 if (column instanceof Measure measure && measure.getName().equals(name)
@@ -1354,7 +1356,7 @@ public class RolapStar {
         /**
          * Sometimes one need to get to the "real" name when the table has
          * been given an alias.
-         */
+ */
         public String getTableName() {
             if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.TableSource t) {
                 return t.getTable().getName();
@@ -1393,7 +1395,7 @@ public class RolapStar {
         /**
          * Decrements the column counter; used if a newly
          * created column is found to already exist.
-         */
+ */
         private int decrementColumnCount() {
             return star.columnCount--;
         }
@@ -1407,7 +1409,7 @@ public class RolapStar {
          * @param cube Cube
          * @param level Level
          * @param parentColumn Parent column
-         */
+ */
         public synchronized Column makeColumns(
             RolapCube cube,
             RolapCubeLevel level,
@@ -1648,7 +1650,7 @@ public class RolapStar {
          * already present, does not create it again. Stores the unaliased
          * table names to RolapStar.Table mapping associated with the
          * input cube.
-         */
+ */
         public synchronized Table addJoin(
             RolapCube cube,
             org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relationOrJoin,
@@ -1716,7 +1718,7 @@ public class RolapStar {
         /**
          * Returns a child relation which maps onto a given relation, or null
          * if there is none.
-         */
+ */
         public Table findChild(
         		org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation,
             Condition joinCondition)
@@ -1742,7 +1744,7 @@ public class RolapStar {
 
         /**
          * Returns a descendant with a given alias, or null if none found.
-         */
+ */
         public Table findDescendant(String seekAlias) {
             if (getAlias().equals(seekAlias)) {
                 return this;
@@ -1758,7 +1760,7 @@ public class RolapStar {
 
         /**
          * Returns an ancestor with a given alias, or null if not found.
-         */
+ */
         public Table findAncestor(String tableName) {
             for (Table t = this; t != null; t = t.parent) {
                 if (RelationUtil.getAlias(t.relation).equals(tableName)) {
@@ -1781,7 +1783,7 @@ public class RolapStar {
          *     the table before and if that happens you want to do nothing.
          * @param joinToParent Pass in true if you are constraining a cell
          *     calculation, false if you are retrieving members.
-         */
+ */
         public void addToFrom(
             QueryRecorder query,
             boolean failIfExists,
@@ -1804,14 +1806,14 @@ public class RolapStar {
 
         /**
          * Returns a list of child {@link Table}s.
-         */
+ */
         public List<Table> getChildren() {
             return children;
         }
 
         /**
          * Returns a list of this table's {@link Column}s.
-         */
+ */
         public List<Column> getColumns() {
             return columnList;
         }
@@ -1820,7 +1822,7 @@ public class RolapStar {
          * Finds the child table of the fact table with the given columnName
          * used in its left join condition. This is used by the AggTableManager
          * while characterizing the fact table columns.
-         */
+ */
         public RolapStar.Table findTableWithLeftJoinCondition(
             final String columnName)
         {
@@ -1837,7 +1839,7 @@ public class RolapStar {
          * This is used during aggregate table validation to make sure that the
          * mapping from for the aggregate join condition is valid. It returns
          * the child table with the matching left join condition.
-         */
+ */
         public RolapStar.Table findTableWithLeftCondition(
             final RolapSqlExpression left)
         {
@@ -1852,7 +1854,7 @@ public class RolapStar {
 
         /**
          * Note: I do not think that this is ever true.
-         */
+ */
         public boolean isFunky() {
             return (relation == null);
         }
@@ -1880,7 +1882,7 @@ public class RolapStar {
 
         /**
          * Prints this table and its children.
-         */
+ */
         public void print(PrintWriter pw, String prefix) {
             pw.print(prefix);
             pw.println("Table:");
@@ -1915,7 +1917,7 @@ public class RolapStar {
 
         /**
          * Returns whether this table has a column with the given name.
-         */
+ */
         public boolean containsColumn(String columnName) {
             if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource) {
                 // todo: Deal with join.
@@ -2037,7 +2039,7 @@ public class RolapStar {
 
         /**
          * Prints this table and its children.
-         */
+ */
         public void print(PrintWriter pw, String prefix) {
             Dialect dialect = table.star.getDialect();
             pw.print(prefix);
@@ -2066,7 +2068,7 @@ public class RolapStar {
     /**
      * Creates a copy of an expression, everywhere replacing one alias
      * with another.
-     */
+ */
     public static class AliasReplacer {
         private final String oldAlias;
         private final String newAlias;
@@ -2111,7 +2113,7 @@ public class RolapStar {
 
     /**
      * Comparator to compare columns based on their name and table that contains them
-     */
+ */
     public static class ColumnComparator implements Comparator<Column> {
 
         public static final ColumnComparator instance = new ColumnComparator();
@@ -2122,7 +2124,7 @@ public class RolapStar {
         /* Compares two columns by their names.
          * If the names of the columns do not differ,
          * compare the tables to which the columns belong
-         */
+ */
         @Override
 		public int compare(Column o1, Column o2) {
           int result = o1.getName().compareTo(o2.getName());

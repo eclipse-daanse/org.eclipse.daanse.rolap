@@ -29,23 +29,26 @@
 
 package org.eclipse.daanse.rolap.common.result;
 
-import org.eclipse.daanse.olap.common.Util;
+import org.eclipse.daanse.olap.api.result.CellValue;
 import org.eclipse.daanse.rolap.common.evaluator.RolapEvaluator;
 
 /**
  * A CellReader finds the cell value for the current context
  * held by evaluator.
  *
- * It returns:
- * null if the source is unable to evaluate the cell (for
- *   example, AggregatingCellReader does not have the cell
- *   in its cache). This value should only be returned if the caller is
- *   expecting it.
- * {@link Util#nullValue} if the cell evaluates to null
- * if the cell evaluates to an
- *   error
- * an Object representing a value (often a {@link Double} or a {@link
- *   java.math.BigDecimal}), otherwise
+ * It returns a non-null {@link CellValue} state:
+ * {@link org.eclipse.daanse.olap.api.result.NullValue#INSTANCE} if the cell
+ *   evaluates to MDX NULL (also used when the reader cannot evaluate the
+ *   cell at all, e.g. the request is unsatisfiable or, for the aggregating
+ *   reader, no aggregation contains the cell)
+ * {@link org.eclipse.daanse.olap.api.result.NotLoaded#INSTANCE} if the cell
+ *   is not in the cache yet (batching pass; the evaluation is marked dirty
+ *   and repeated after the batch load)
+ * {@link org.eclipse.daanse.olap.api.result.ErrorValue} if the cell
+ *   evaluates to an error
+ * an {@link org.eclipse.daanse.olap.api.result.ObjectValue} carrying the
+ *   value (often a {@link Double} or a {@link java.math.BigDecimal}),
+ *   otherwise
  *
  *
  * @author jhyde
@@ -59,25 +62,20 @@ public interface CellReader {
      * using the Aggregate function. These compound members are contained in the
      * evaluator.
      *
-     * If no aggregation contains the required cell, returns null.
-     *
-     * If the value is null, returns {@link Util#nullValue}.
-     *
-     * @return Cell value, or null if not found, or {@link Util#nullValue} if
-     * the value is null
-     */
-    Object get(RolapEvaluator evaluator);
+     * @return Cell value state; never Java null
+ */
+    CellValue get(RolapEvaluator evaluator);
 
     /**
      * Returns the number of times this cell reader has told a lie
      * (since creation), because the required cell value is not in the
      * cache.
-     */
+ */
     int getMissCount();
 
     /**
      * @return whether thus cell reader has any pending cell requests that are
      * not loaded yet.
-     */
+ */
     boolean isDirty();
 }

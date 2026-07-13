@@ -289,7 +289,7 @@ public final class StarPredicateTranslator {
         for (RolapStar.Column col : columns) {
             int nulls = 0;
             for (Map<Integer, ValueColumnPredicate> m : rowMaps) {
-                if (isNullValue(m.get(col.getBitPosition()))) {
+                if (isSqlNullValue(m.get(col.getBitPosition()))) {
                     nulls++;
                 }
             }
@@ -358,7 +358,7 @@ public final class StarPredicateTranslator {
     }
 
     /** Whether a per-column predicate carries the SQL null value (rendered {@code col IS NULL}). */
-    private static boolean isNullValue(ValueColumnPredicate v) {
+    private static boolean isSqlNullValue(ValueColumnPredicate v) {
         return v == null || v.getValue() == null || v.getValue() == Util.sqlNullValue;
     }
 

@@ -40,6 +40,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
+import org.eclipse.daanse.olap.calc.base.NullSemantics;
 import org.eclipse.daanse.olap.api.cache.ExpCacheDescriptor;
 import org.eclipse.daanse.olap.api.calc.Calc;
 import org.eclipse.daanse.olap.api.calc.compiler.ParameterSlot;
@@ -56,6 +57,11 @@ import org.eclipse.daanse.olap.api.execution.Statement;
 import org.eclipse.daanse.olap.api.function.FunctionMetaData;
 import org.eclipse.daanse.olap.api.query.component.Expression;
 import org.eclipse.daanse.olap.api.query.component.Query;
+import org.eclipse.daanse.olap.api.result.CellValue;
+import org.eclipse.daanse.olap.api.result.ErrorValue;
+import org.eclipse.daanse.olap.api.result.NotLoaded;
+import org.eclipse.daanse.olap.api.result.NullValue;
+import org.eclipse.daanse.olap.api.result.ObjectValue;
 import org.eclipse.daanse.olap.calc.base.type.tuplebase.DelegatingTupleList;
 import org.eclipse.daanse.olap.common.ConfigConstants;
 import org.eclipse.daanse.olap.common.StandardProperty;
@@ -121,7 +127,7 @@ public class RolapEvaluator implements Evaluator {
 
   /**
    * Dummy value to represent null results in the expression cache.
-   */
+ */
   private static final Object nullResult = new Object();
     public static final String NULL_MEMBER_IN = "null member in ";
 
@@ -144,7 +150,7 @@ public class RolapEvaluator implements Evaluator {
   /**
    * List of lists of tuples or members, rarely used, but overrides the ordinary dimensional context if set when a cell
    * value comes to be evaluated.
-   */
+ */
   protected final List<List<List<Member>>> aggregationLists;
 
   private CompoundPredicateInfo slicerPredicateInfo;
@@ -166,7 +172,7 @@ public class RolapEvaluator implements Evaluator {
    * Set of expressions actively being expanded. Prevents infinite cycle of expansions.
    *
    * @return Mutable set of expressions being expanded
-   */
+ */
   public Set<Expression> getActiveNativeExpansions() {
     return root.activeNativeExpansions;
   }
@@ -182,7 +188,7 @@ public class RolapEvaluator implements Evaluator {
 
   /**
    * States of the finite state machine for determining the max solve order for the "scoped" behavior.
-   */
+ */
   private enum ScopedMaxSolveOrderFinderState {
     START, AGG_SCOPE, CUBE_SCOPE, QUERY_SCOPE
   }
@@ -196,7 +202,7 @@ public class RolapEvaluator implements Evaluator {
    *          Parent evaluator, not null
    * @param aggregationList
    *          List of tuples to add to aggregation context, or null
-   */
+ */
   protected RolapEvaluator( RolapEvaluatorRoot root, RolapEvaluator parent, List<List<Member>> aggregationList ) {
     this.iterationLength = 1;
     this.root = root;
@@ -254,7 +260,7 @@ public class RolapEvaluator implements Evaluator {
    *
    * @param root
    *          Shared context between this evaluator and its children
-   */
+ */
   public RolapEvaluator( RolapEvaluatorRoot root ) {
     this.iterationLength = 1;
     this.root = root;
@@ -287,7 +293,7 @@ public class RolapEvaluator implements Evaluator {
 
   /**
    * Creates an evaluator.
-   */
+ */
   public static Evaluator create( Statement statement ) {
     final RolapEvaluatorRoot root = new RolapEvaluatorRoot( statement );
     return new RolapEvaluator( root );
@@ -339,7 +345,7 @@ public RolapEvaluatorRoot getRoot() {
 public boolean currentIsEmpty() {
     // If a cell evaluates to null, it is always deemed empty.
     Object o = evaluateCurrent();
-    if ( o == Util.nullValue || o == null ) {
+    if ( NullSemantics.isNull( o ) ) {
       return true;
     }
     final RolapCube measureCube = getMeasureCube();
@@ -478,7 +484,7 @@ public final RolapEvaluator push() {
    * Returns true so that can conveniently be called from 'assert'.
    *
    * @return true
-   */
+ */
   private boolean addChecksumStateCommand() {
     // assume that caller has checked that command array is large enough
     commands[commandCount++] = checksumState();
@@ -491,7 +497,7 @@ public final RolapEvaluator push() {
    *
    * @param aggregationList
    *          List of tuples to add to aggregation context, or null
-   */
+ */
   protected RolapEvaluator pushClone(List<List<Member>> aggregationList ) {
     root.execution.checkCancelOrTimeout();
     return new RolapEvaluator( root, this, aggregationList );
@@ -511,7 +517,7 @@ public final Evaluator pushAggregation( List<List<Member>> list ) {
 
   /**
    * Returns true if the other object is a {@link RolapEvaluator} with identical context.
-   */
+ */
   @Override
 public final boolean equals( Object obj ) {
     if ( !( obj instanceof RolapEvaluator that ) ) {
@@ -534,7 +540,7 @@ public final int hashCode() {
    *          members in slicer
    * @param membersByHierarchy
    *          members in slicer by hierarchy
-   */
+ */
   public final void setSlicerContext( List<Member> members, Map<Hierarchy, Set<Member>> membersByHierarchy ) {
     for ( Member member : members ) {
       setContext( member );
@@ -547,7 +553,7 @@ public final int hashCode() {
    * Return the list of slicer members in the current evaluator context.
    *
    * @return slicerMembers
-   */
+ */
   @Override
   public final List<Member> getSlicerMembers() {
     return slicerMembers;
@@ -563,7 +569,7 @@ public final int hashCode() {
    *
    * @param tuples
    *          slicer
-   */
+ */
   public final void setSlicerTuples( TupleList tuples ) {
     slicerTuples = tuples;
     if ( tuples != null ) {
@@ -578,7 +584,7 @@ public final int hashCode() {
 
   /**
    * Return the list of compound slicer tuples
-   */
+ */
   public final TupleList getSlicerTuples() {
     return slicerTuples;
   }
@@ -602,7 +608,7 @@ public final int hashCode() {
    *          if this is a virtual cube, remove the unrelated tuples from the slicer.
    *
    * @return optimized slicer tuple list
-   */
+ */
   public final TupleList getOptimizedSlicerTuples( RolapCube baseCube ) {
     // removes members in the tuple list that are no longer compound.
     // for each member in the tuple, see if the evaluator is still set to
@@ -738,7 +744,7 @@ public final void setContext( Member member, boolean safe ) {
    * @param ordinal
    *          Hierarchy ordinal
    * @return Whether there is a member with the given hierarchy ordinal on the stack
-   */
+ */
   private boolean exists( int ordinal ) {
     for ( int i = commandCount - 1;; ) {
       final Command command = (Command) commands[i];
@@ -818,7 +824,7 @@ public final RolapMember getContext( Hierarchy hierarchy ) {
    * @param hierarchy
    *          Hierarchy
    * @return current member
-   */
+ */
   public final RolapMember getContext( RolapHierarchy hierarchy ) {
     return currentMembers[hierarchy.getOrdinalInCube()];
   }
@@ -831,11 +837,17 @@ public final Object evaluateCurrent() {
     RolapCalculation maxSolveMember;
     switch ( calculationCount ) {
       case 0:
-        final Object o = cellReader.get( this );
-        if ( o == Util.nullValue ) {
-          return null;
-        }
-        return o;
+        // Seam A: unwrap the CellValue state delivered by the cell/cache
+        // layer into the calc-layer conventions (MDX NULL is Java null,
+        // NotLoaded propagates as the marker object, an evaluation error
+        // is represented by its Throwable).
+        final CellValue cv = cellReader.get( this );
+        return switch ( cv ) {
+          case NullValue v -> null;
+          case NotLoaded n -> n;
+          case ErrorValue e -> e.cause();
+          case ObjectValue ov -> ov.value();
+        };
 
       case 1:
         maxSolveMember = calculations[0];
@@ -856,9 +868,6 @@ public final Object evaluateCurrent() {
       o = calc.evaluate( this );
     } finally {
       restore( savepoint );
-    }
-    if ( o == Util.nullValue ) {
-      return null;
     }
     return o;
   }
@@ -891,7 +900,7 @@ public final Object evaluateCurrent() {
    * members can share the same {@link Calc} object.
    *
    * @return Calculated member currently being expanded
-   */
+ */
   public Member getExpanding() {
     return expandingMember;
   }
@@ -903,7 +912,7 @@ public final Object evaluateCurrent() {
    *          Evaluator
    * @throws org.eclipse.daanse.olap.fun.MondrianEvaluationException
    *           if there is a loop
-   */
+ */
   private static void checkRecursion( RolapEvaluator eval, int c ) {
     RolapMember[] members = eval.currentMembers.clone();
 
@@ -1029,7 +1038,7 @@ public final Object getProperty( String name, Object defaultValue ) {
    * context, and therefore different cells may have different format strings.
    *
    *  return != null
-   */
+ */
   @Override
 public final String getFormatString() {
     final Expression formatExp = (Expression) getProperty( StandardProperty.FORMAT_EXP_PARSED.getName(), null );
@@ -1060,9 +1069,6 @@ public final Locale getConnectionLocale() {
 
   @Override
 public final String format( Object o ) {
-    if ( o == Util.nullValue ) {
-      o = null;
-    }
     if ( o instanceof Throwable ) {
       return "#ERR: " + o.toString();
     }
@@ -1072,9 +1078,6 @@ public final String format( Object o ) {
 
   @Override
 public final String format( Object o, String formatString ) {
-    if ( o == Util.nullValue ) {
-      o = null;
-    }
     if ( o instanceof Throwable ) {
       return "#ERR: " + o.toString();
     }
@@ -1085,7 +1088,7 @@ public final String format( Object o, String formatString ) {
   /**
    * Creates a key which uniquely identifes an expression and its context. The context includes members of dimensions
    * which the expression is dependent upon.
-   */
+ */
   private Object getExpResultCacheKey( ExpCacheDescriptor descriptor ) {
     boolean includeAggregationList = false;
     if ( aggregationLists != null && !aggregationLists.isEmpty() ) {
@@ -1220,7 +1223,7 @@ public final Object getParameterValue( ParameterSlot slot ) {
    *
    * 
    * No special consideration is given to the aggregate function.
-   */
+ */
   private RolapCalculation getAbsoluteMaxSolveOrder() {
     // Find member with the highest solve order.
     RolapCalculation maxSolveMember = calculations[0];
@@ -1244,7 +1247,7 @@ public final Object getParameterValue( ParameterSlot slot ) {
    * 
    * The aggregate function is always applied to base members; i.e. as if SOLVE_ORDER was defined to be the lowest value
    * in a given evaluation in a SSAS2000 sense.
-   */
+ */
   private RolapCalculation getScopedMaxSolveOrder() {
     // Finite state machine that determines the member with the highest
     // solve order.
@@ -1315,7 +1318,7 @@ public final Object getParameterValue( ParameterSlot slot ) {
    * @param calc2
    *          Second calculated member or tuple
    * @return Whether calc1 expands before calc2
-   */
+ */
   private boolean expandsBefore( RolapCalculation calc1, RolapCalculation calc2 ) {
     final int solveOrder1 = calc1.getSolveOrder();
     final int solveOrder2 = calc2.getSolveOrder();
@@ -1402,7 +1405,7 @@ public final void setEvalAxes( boolean evalAxes ) {
    * Checks if unrelated dimensions to the measure in the current context should be ignored.
    *
    * @return boolean
-   */
+ */
   private enum Command {
     SET_CONTEXT( 2 ) {
       @Override

@@ -47,7 +47,7 @@ abstract class DenseSegmentBodyTestBase<T extends AbstractSegmentBody, V>
 {
 
   final V nonNull = createNonNullValue();
-  final V nullValue = createNullValue();
+  final V nullCellValue = createNullValue();
 
     @Test void getObjectNonNull() {
     T body = withOutAxes(nonNull);
@@ -55,7 +55,7 @@ abstract class DenseSegmentBodyTestBase<T extends AbstractSegmentBody, V>
   }
 
     @Test void getObjectNull() {
-    T body = withOutAxes(nullValue);
+    T body = withOutAxes(nullCellValue);
         assertThat(body.getObject(0)).isNull();
   }
 
@@ -65,13 +65,13 @@ abstract class DenseSegmentBodyTestBase<T extends AbstractSegmentBody, V>
   }
 
     @Test void getSizeHasNulls() {
-    T body = withOutAxes(nonNull, nullValue, nonNull);
+    T body = withOutAxes(nonNull, nullCellValue, nonNull);
         assertThat(body.getSize()).isEqualTo(3);
         assertThat(body.getEffectiveSize()).isEqualTo(2);
   }
 
     @Test void getSizeOnlyNulls() {
-    T body = withOutAxes(nullValue, nullValue, nullValue);
+    T body = withOutAxes(nullCellValue, nullCellValue, nullCellValue);
         assertThat(body.getSize()).isEqualTo(3);
         assertThat(body.getEffectiveSize()).isEqualTo(0);
   }
@@ -99,7 +99,7 @@ abstract class DenseSegmentBodyTestBase<T extends AbstractSegmentBody, V>
     SortedSet<Comparable> axis2 = new TreeSet<>(asList(3));
     List<Pair<SortedSet<Comparable>, Boolean>> axes = asList(
         of(axis1, false), of(axis2, false));
-    T body = withAxes(axes, nonNull, nullValue, nonNull, nullValue, nonNull);
+    T body = withAxes(axes, nonNull, nullCellValue, nonNull, nullCellValue, nonNull);
     assertValuesMapIsCorrect(body, 3);
   }
 
@@ -109,7 +109,7 @@ abstract class DenseSegmentBodyTestBase<T extends AbstractSegmentBody, V>
     List<Pair<SortedSet<Comparable>, Boolean>> axes = asList(
         of(axis1, false), of(axis2, true));
     T body = withAxes(
-        axes, nonNull, nullValue, nonNull, nullValue, nonNull, nonNull);
+        axes, nonNull, nullCellValue, nonNull, nullCellValue, nonNull, nonNull);
     assertValuesMapIsCorrect(body, 4);
   }
 
@@ -118,7 +118,7 @@ abstract class DenseSegmentBodyTestBase<T extends AbstractSegmentBody, V>
     SortedSet<Comparable> axis2 = new TreeSet<>(asList(3));
     List<Pair<SortedSet<Comparable>, Boolean>> axes = asList(
         of(axis1, false), of(axis2, false));
-    T body = withAxes(axes, nullValue, nullValue);
+    T body = withAxes(axes, nullCellValue, nullCellValue);
     assertValuesMapIsCorrect(body, 0);
   }
 
@@ -127,7 +127,7 @@ abstract class DenseSegmentBodyTestBase<T extends AbstractSegmentBody, V>
     SortedSet<Comparable> axis2 = new TreeSet<>(asList(3));
     List<Pair<SortedSet<Comparable>, Boolean>> axes = asList(
         of(axis1, false), of(axis2, true));
-    T body = withAxes(axes, nullValue, nullValue);
+    T body = withAxes(axes, nullCellValue, nullCellValue);
     assertValuesMapIsCorrect(body, 0);
   }
 

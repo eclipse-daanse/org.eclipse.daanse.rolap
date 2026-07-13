@@ -19,6 +19,7 @@ import org.eclipse.daanse.olap.api.calc.Calc;
 import org.eclipse.daanse.olap.api.calc.tuple.TupleList;
 import org.eclipse.daanse.olap.api.evaluator.Evaluator;
 import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
+import org.eclipse.daanse.olap.calc.base.CompensatedSum;
 import org.eclipse.daanse.olap.fun.FunUtil;
 
 public class SumAggregator extends AbstractAggregator {
@@ -54,30 +55,27 @@ public class SumAggregator extends AbstractAggregator {
         assert !rawData.isEmpty();
         switch (datatype) {
         case INTEGER:
-            int sumInt = Integer.MIN_VALUE;
+            Integer sumInt = null;
             for (Object data : rawData) {
                 if (data != null) {
-                    if (sumInt == Integer.MIN_VALUE) {
-                        sumInt = 0;
-                    }
                     if (data instanceof Double) {
                         data = ((Double) data).intValue();
                     }
-                    sumInt += (Integer) data;
+                    sumInt = sumInt == null ? (Integer) data : sumInt + (Integer) data;
                 }
             }
-            return sumInt == Integer.MIN_VALUE ? null : sumInt;
+            return sumInt;
         case NUMERIC:
-            double sumDouble = Double.MIN_VALUE;
+            CompensatedSum sumDouble = null;
             for (Object data : rawData) {
                 if (data != null) {
-                    if (sumDouble == Double.MIN_VALUE) {
-                        sumDouble = 0;
+                    if (sumDouble == null) {
+                        sumDouble = new CompensatedSum();
                     }
-                    sumDouble += ((Number) data).doubleValue();
+                    sumDouble.add(((Number) data).doubleValue());
                 }
             }
-            return sumDouble == Double.MIN_VALUE ? null : sumDouble;
+            return sumDouble == null ? null : sumDouble.value();
         default:
             throw new OlapRuntimeException(new StringBuilder("Aggregator ").append(name)
                     .append(" does not support datatype").append(datatype.getValue()).toString());
