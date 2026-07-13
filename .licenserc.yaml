@@ -47,5 +47,6 @@ header:
     - '**/logback-test.xml'
     - '**/*.svg'
     - '**/*.mdx'
+    - '**/org.mockito.plugins.MockMaker'
 
   comment: always
