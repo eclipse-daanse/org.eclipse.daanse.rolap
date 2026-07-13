@@ -38,6 +38,9 @@ import java.util.Set;
 import java.util.concurrent.Future;
 
 import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
+import org.eclipse.daanse.olap.api.result.CellValue;
+import org.eclipse.daanse.olap.api.result.NotLoaded;
+import org.eclipse.daanse.olap.api.result.NullValue;
 import org.eclipse.daanse.olap.api.agg.OlapAggregationManager;
 import org.eclipse.daanse.olap.api.cache.CacheCommand;
 import org.eclipse.daanse.olap.api.exception.CellRequestQuantumExceededException;
@@ -87,18 +90,18 @@ public class FastBatchingCellReader implements CellReader {
      * the request count stays the same during an operation, you know that the
      * FastBatchingCellReader has not told any lies during that operation, and
      * therefore the result is true. The field is also useful for debugging.
-     */
+ */
     private int missCount;
 
     /**
      * Number of occasions that a requested cell was already in cache.
-     */
+ */
     private int hitCount;
 
     /**
      * Number of occasions that requested cell was in the process of being
      * loaded into cache but not ready.
-     */
+ */
     private int pendingCount;
 
     private final AggregationManager aggMgr;
@@ -111,7 +114,7 @@ public class FastBatchingCellReader implements CellReader {
 
     /**
      * Indicates that the reader has given incorrect results.
-     */
+ */
     private boolean dirty;
 
     private final List<CellRequest> cellRequests = new ArrayList<>();
@@ -125,7 +128,7 @@ public class FastBatchingCellReader implements CellReader {
      *                  to check for cancel
      * @param cube      Cube that requests belong to
      * @param aggMgr    Aggregation manager
-     */
+ */
     public FastBatchingCellReader(
         Execution execution,
         RolapCube cube,
@@ -149,22 +152,23 @@ public class FastBatchingCellReader implements CellReader {
     }
 
     @Override
-	public Object get(RolapEvaluator evaluator) {
+	public CellValue get(RolapEvaluator evaluator) {
         final CellRequest request =
             RolapAggregationManager.makeRequest(evaluator);
 
         if (request == null || request.isUnsatisfiable()) {
-            return Util.nullValue; // request not satisfiable.
+            return NullValue.INSTANCE; // request not satisfiable.
         }
 
         // Try to retrieve a cell and simultaneously pin the segment which
-        // contains it.
+        // contains it. The probe API uses the object convention (raw value /
+        // NullValue.INSTANCE / null-for-absent); this reader is the
+        // CellValue boundary.
         final Object o = aggMgr.getCellFromCache(request, pinnedSegments);
 
-        assert o != Boolean.TRUE : "getCellFromCache no longer returns TRUE";
         if (o != null) {
             ++hitCount;
-            return o;
+            return RolapAggregationManager.toCellValue(o, NullValue.INSTANCE);
         }
 
         // If this query has not had any cache misses, it's worth doing a
@@ -181,7 +185,7 @@ public class FastBatchingCellReader implements CellReader {
                     aggMgr.getCellFromCache(request, pinnedSegments);
                 if (o2 != null) {
                     ++hitCount;
-                    return o2;
+                    return RolapAggregationManager.toCellValue(o2, NullValue.INSTANCE);
                 }
             }
         }
@@ -189,7 +193,7 @@ public class FastBatchingCellReader implements CellReader {
         // if there is no such cell, record that we need to fetch it, and
         // return 'error'
         recordCellRequest(request);
-        return Util.valueNotReadyException;
+        return NotLoaded.INSTANCE;
     }
 
     @Override
@@ -222,7 +226,7 @@ public class FastBatchingCellReader implements CellReader {
      * Returns whether this reader has told a lie. This is the case if there
      * are pending batches to load or if {@link #setDirty(boolean)} has been
      * called.
-     */
+ */
     @Override
 	public boolean isDirty() {
         return dirty || !cellRequests.isEmpty();
@@ -263,7 +267,7 @@ public class FastBatchingCellReader implements CellReader {
      * needs to be made to the cache manager.
      *
      * @return Whether any aggregations were loaded.
-     */
+ */
     public boolean loadAggregations() {
         if (!isDirty()) {
             return false;
@@ -497,7 +501,7 @@ public class FastBatchingCellReader implements CellReader {
      * thread, potentially causing a deadlock when interleaved with
      * other threads that depend both on db connections and Actor responses.
      *
-     */
+ */
     private void preloadColumnCardinality(List<CellRequest> cellRequests) {
         List<BitKey> loaded = new ArrayList<>();
         for (CellRequest req : cellRequests) {
@@ -523,7 +527,7 @@ public class FastBatchingCellReader implements CellReader {
      *
      * @return Collection of segment headers and bodies suitable for rollup,
      * or null
-     */
+ */
     private Map<SegmentHeader, SegmentBody> findResidentRollupCandidate(
         Map<SegmentHeader, SegmentBody> headerBodies,
         BatchLoader.RollupInfo rollup)
@@ -569,7 +573,7 @@ public class FastBatchingCellReader implements CellReader {
      * Returns the SQL dialect. Overridden in some unit tests.
      *
      * @return Dialect
-     */
+ */
     public Dialect getDialect() {
 
         final RolapStar star = cube.getStar();
@@ -582,7 +586,7 @@ public class FastBatchingCellReader implements CellReader {
 
     /**
      * Sets the flag indicating that the reader has told a lie.
-     */
+ */
     void setDirty(boolean dirty) {
         this.dirty = dirty;
     }

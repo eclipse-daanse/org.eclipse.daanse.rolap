@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.daanse.olap.common.Util;
+import org.eclipse.daanse.olap.api.result.NullValue;
 import org.eclipse.daanse.olap.key.BitKey;
 import org.eclipse.daanse.olap.key.CellKey;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
@@ -47,7 +48,7 @@ public class SegmentWithData extends Segment {
     /**
      * An array of axes, one for each constraining column, containing the values
      * returned for that constraining column.
-     */
+ */
     final SegmentAxis[] axes;
 
     /**
@@ -73,7 +74,7 @@ public class SegmentWithData extends Segment {
      * for a given thread, any read access to data which comes after
      * dataGate.await() (or, by extension,
      * waitUntilLoaded will be threadsafe.
-     */
+ */
     private final SegmentDataset data;
 
     /**
@@ -81,7 +82,7 @@ public class SegmentWithData extends Segment {
      *
      * @param segment Segment (without data)
      * @param data Data set
-     */
+ */
     public SegmentWithData(
         Segment segment,
         SegmentDataset data,
@@ -110,7 +111,7 @@ public class SegmentWithData extends Segment {
      * @param predicates List of axes; each is a constraint plus a list of
      *     values.
      * @param excludedRegions List of regions which are not in this segment.
-     */
+ */
     private SegmentWithData(
         RolapStar star,
         BitKey constrainedColumnsBitKey,
@@ -158,17 +159,15 @@ public class SegmentWithData extends Segment {
      *
      * Returns
      *
-     * {@link org.eclipse.daanse.olap.common.Util#nullValue} if the cell value
-     * is null (because no fact table rows met those criteria);
+     * {@link org.eclipse.daanse.olap.api.result.NullValue#INSTANCE} if the
+     * cell value is null (because no fact table rows met those criteria) or
+     * a NaN aggregate;
      *
      * null if the value is not supposed to be in this segment
      * (because one or more of the keys do not pass the axis criteria);
      *
      * the data value otherwise
-     *
-     *
-     *
-     */
+ */
     public Object getCellValue(Object[] keys) {
         assert keys.length == axes.length;
         int missed = 0;
@@ -197,15 +196,15 @@ public class SegmentWithData extends Segment {
         if (missed > 0) {
             // the value should be in this segment, but isn't, because one
             // or more of its keys does have any values
-            return Util.nullValue;
+            return NullValue.INSTANCE;
         } else {
             Object o = data.getObject(cellKey);
             if (o == null) {
-                o = Util.nullValue;
+                o = NullValue.INSTANCE;
             } else if (o instanceof Double d && Double.isNaN(d)) {
                 // NaN aggregate = undefined 0/0 (e.g. avg over zero facts).
                 // Present as empty, matching NULL from division-by-zero.
-                o = Util.nullValue;
+                o = NullValue.INSTANCE;
             }
             return o;
         }
@@ -214,7 +213,7 @@ public class SegmentWithData extends Segment {
     /**
      * Returns whether the given set of key values will be in this segment
      * when it finishes loading.
-     */
+ */
     boolean wouldContain(Object[] keys) {
         Util.assertTrue(keys.length == axes.length);
         for (int i = 0; i < keys.length; i++) {
@@ -236,7 +235,7 @@ public class SegmentWithData extends Segment {
      * regions will be counted twice.
      *
      * @return Number of cells in this Segment
-     */
+ */
     public int getCellCount() {
         int cellCount = 1;
         for (SegmentAxis axis : axes) {
@@ -261,7 +260,7 @@ public class SegmentWithData extends Segment {
      * @param bestPredicate
      * @param excludedRegions List of regions to exclude from segment
      * @return Segment containing a subset of the values
-     */
+ */
     SegmentWithData createSubSegment(
         BitSet[] axisKeepBitSets,
         int bestColumn,
@@ -371,7 +370,7 @@ public class SegmentWithData extends Segment {
      * it is assumed to be invariant.
      *
      * @return The data reference
-     */
+ */
     public final SegmentDataset getData() {
         return data;
     }

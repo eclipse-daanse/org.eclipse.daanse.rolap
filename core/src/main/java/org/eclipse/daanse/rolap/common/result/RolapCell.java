@@ -70,6 +70,10 @@ import org.eclipse.daanse.olap.api.query.component.ResolvedFunCall;
 import org.eclipse.daanse.olap.api.query.component.UnresolvedFunCall;
 import org.eclipse.daanse.olap.api.result.Axis;
 import org.eclipse.daanse.olap.api.result.Cell;
+import org.eclipse.daanse.olap.api.result.ErrorValue;
+import org.eclipse.daanse.olap.api.result.NotLoaded;
+import org.eclipse.daanse.olap.api.result.NullValue;
+import org.eclipse.daanse.olap.api.result.ObjectValue;
 import org.eclipse.daanse.olap.api.result.Position;
 import org.eclipse.daanse.olap.api.sql.SqlStatementI;
 import org.eclipse.daanse.olap.common.ConfigConstants;
@@ -112,7 +116,7 @@ public class RolapCell implements Cell {
     /**
      * @see mondrian.util.Bug#olap4jUpgrade Use
      * {@link mondrian.xmla.XmlaConstants}.ActionType.DRILLTHROUGH when present
-     */
+ */
     private static final int MDACTION_TYPE_DRILLTHROUGH = 0x100;
 
     private final RolapResult result;
@@ -127,7 +131,7 @@ public class RolapCell implements Cell {
      * @param result Result cell belongs to
      * @param pos Coordinates of cell
      * @param ci Cell information, containing value et cetera
-     */
+ */
     RolapCell(RolapResult result, int[] pos, RolapResult.CellInfo ci) {
         this.result = result;
         this.pos = pos;
@@ -151,10 +155,17 @@ public class RolapCell implements Cell {
 
     @Override
 	public Object getValue() {
-        if (ci.value == Util.nullValue) {
-            return null;
-        }
-        return ci.value;
+        // Exhaustive unwrap of the cell state (seam B). Contract of the
+        // public Cell API: NULL cells yield Java null, error cells yield
+        // the Throwable that caused the failure (pinned by an XMLA
+        // characterization test), regular cells the raw value.
+        return switch (ci.value) {
+            case null -> null;
+            case NullValue v -> null;
+            case NotLoaded n -> n;
+            case ErrorValue e -> e.cause();
+            case ObjectValue o -> o.value();
+        };
     }
 
     @Override
@@ -169,12 +180,15 @@ public class RolapCell implements Cell {
 
     @Override
 	public boolean isNull() {
-        return (Objects.equals(ci.value ,Util.nullValue));
+        // State check: NULL-ness is carried by the CellValue
+        // state, no sentinel or value comparison involved (a Java null means
+        // the cell was never evaluated, which renders as NULL as well).
+        return ci.value == null || ci.value instanceof NullValue;
     }
 
     @Override
 	public boolean isError() {
-        return (ci.value instanceof Throwable);
+        return (ci.value instanceof ErrorValue);
     }
 
     @Override
@@ -316,7 +330,7 @@ public class RolapCell implements Cell {
      * @return an instance of StarPredicate representing all
      * of the the positions from the slicer if it has more than one,
      * or null otherwise.
-     */
+ */
     private StarPredicate buildDrillthroughSlicerPredicate(
         Member[] membersForDrillthrough,
         Axis slicerAxis)
@@ -413,7 +427,7 @@ public class RolapCell implements Cell {
     /**
      * Returns appropriate non-virtual cube that will be used
      * for retrieving base star key column.
-     */
+ */
     private RolapCube getDrillThroughBaseCube() {
         if (result.getCube() instanceof RolapVirtualCube) {
             Member[] membersForDrillThrough = this.getMembersForDrillThrough();
@@ -432,7 +446,7 @@ public class RolapCell implements Cell {
      * and not possible for calculated measures.
      *
      * @return true if can drill through
-     */
+ */
     @Override
 	public boolean canDrillThrough() {
         if (!((Context<?>)(result.getExecution().getDaanseStatement().getDaanseConnection().getContext()))
@@ -565,7 +579,7 @@ public class RolapCell implements Cell {
      *                          queries easier for humans to understand.
      * @param logger Logger. If not null and debug is enabled, log SQL here
      * @return executed SQL statement
-     */
+ */
     public SqlStatementI drillThroughInternal(
         int maxRowCount,
         int firstRowOrdinal,
@@ -793,7 +807,7 @@ public class RolapCell implements Cell {
      * Calculated member with expression
      *     ([Measures].[Unit Sales], [Time].PrevMember) is not drillable
      *
-     */
+ */
     private static class DrillThroughVisitor extends MdxVisitorImpl {
         static final RuntimeException bomb = new RuntimeException();
         RolapCube cube = null;

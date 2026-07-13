@@ -79,7 +79,7 @@ public class AggregationManager extends RolapAggregationManager implements OlapA
 
     /**
      * Creates the AggregationManager.
-     */
+ */
     public AggregationManager(RolapContext context) {
         this.context = context;
         this.cacheMgr = new SegmentCacheManager(context);
@@ -89,7 +89,7 @@ public class AggregationManager extends RolapAggregationManager implements OlapA
      * Returns the logger.
      *
      * @return Logger
-     */
+ */
     public final Logger getLogger() {
         return LOGGER;
     }
@@ -107,7 +107,7 @@ public class AggregationManager extends RolapAggregationManager implements OlapA
      * @param groupingSetsCollector grouping sets collector
      * @param segmentFutures List of futures into which each statement will
      *     place a list of the segments it has loaded, when it completes
-     */
+ */
     public static void loadAggregation(
         SegmentCacheManager cacheMgr,
         int cellRequestCount,
@@ -137,7 +137,7 @@ public class AggregationManager extends RolapAggregationManager implements OlapA
      * @param connection Server whose cache to control
      * @param pw Print writer, for tracing
      * @return CacheControl API
-     */
+ */
     @Override
     public CacheControl getCacheControl(
         Connection connection,
@@ -245,7 +245,7 @@ public class AggregationManager extends RolapAggregationManager implements OlapA
      *
      * @return A pair consisting of a SQL statement and a list of suggested
      *     types of columns
-     */
+ */
     public static RenderedSql generateSql(
         GroupingSetsList groupingSetsList,
         List<StarPredicate> compoundPredicateList, boolean useAggregates)
@@ -363,7 +363,7 @@ public class AggregationManager extends RolapAggregationManager implements OlapA
      * @param rollup Out parameter, is set to true if the aggregate is not
      *   an exact match
      * @return An aggregate, or null if none is suitable.
-     */
+ */
     public static AggStar findAgg(
         RolapStar star,
         final BitKey levelBitKey,
@@ -503,7 +503,7 @@ public class AggregationManager extends RolapAggregationManager implements OlapA
 
     /**
      * Sets the bits for parent columns.
-     */
+ */
     private static BitKey expandLevelBitKey(
         RolapStar star, BitKey levelBitKey)
     {
@@ -544,7 +544,7 @@ public class AggregationManager extends RolapAggregationManager implements OlapA
     /**
      * Implementation of {@link org.eclipse.daanse.rolap.common.RolapAggregationManager.PinSet}
      * using a {@link HashSet}.
-     */
+ */
     public static class PinSetImpl
         extends HashSet<Segment>
         implements RolapAggregationManager.PinSet

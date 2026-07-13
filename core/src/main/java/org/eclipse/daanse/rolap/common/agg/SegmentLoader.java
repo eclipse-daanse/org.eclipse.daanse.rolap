@@ -58,6 +58,7 @@ import org.eclipse.daanse.olap.api.execution.Execution;
 import org.eclipse.daanse.olap.api.execution.Execution.Purpose;
 import org.eclipse.daanse.olap.api.execution.ExecutionContext;
 import org.eclipse.daanse.olap.api.execution.ExecutionMetadata;
+import org.eclipse.daanse.olap.api.result.NullValue;
 import org.eclipse.daanse.olap.common.ConfigConstants;
 import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.olap.common.Util;
@@ -693,7 +694,7 @@ public class SegmentLoader {
           case STRING:
             Object o = rawRows.getObject( columnIndex + 1 );
             if ( o == null ) {
-              o = Util.nullValue; // convert to placeholder
+              o = NullValue.INSTANCE; // convert to placeholder
             } else if ( numeric[i] ) {
               if ( o instanceof Double ) {
                 // nothing to do

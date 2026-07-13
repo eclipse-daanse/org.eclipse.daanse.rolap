@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.eclipse.daanse.jdbc.db.api.type.Datatype;
+import org.eclipse.daanse.olap.api.result.NotLoaded;
 import org.eclipse.daanse.olap.api.DataTypeJdbc;
 import org.eclipse.daanse.olap.api.calc.Calc;
 import org.eclipse.daanse.olap.api.connection.Connection;
@@ -69,7 +70,7 @@ public class ScenarioImpl implements Scenario {
 
     /**
      * Creates a ScenarioImpl.
-     */
+ */
     public ScenarioImpl() {
         id = nextId++;
     }
@@ -107,7 +108,7 @@ public class ScenarioImpl implements Scenario {
      * @param currentValue Current value
      * @param allocationPolicy Allocation policy
      * @param allocationArgs Additional arguments of allocation policy
-     */
+ */
     @Override
     public void setCellValue(
         Connection connection,
@@ -261,7 +262,7 @@ public class ScenarioImpl implements Scenario {
      * are ignored — text cells are not "spread" across descendants the way
      * numeric values are; the per-level rollup happens on the read side via
      * the {@code TextAggMeasure}'s ListAgg aggregator.
-     */
+ */
     private void writeTextRow(
             RolapWritebackTable writebackTable,
             RolapWritebackMeasure target,
@@ -319,7 +320,7 @@ public class ScenarioImpl implements Scenario {
      * intermediate (non-leaf) members are written verbatim because that's
      * exactly what the user clicked on; the read-side {@code TextAggMeasure}
      * aggregator rolls descendants in via the standard SQL aggregation path.
-     */
+ */
     private Object findKeyForDimension(RolapWritebackAttribute attr, List<Member> members) {
         String dimName = attr.getDimension().getName();
         for (int i = 1; i < members.size(); i++) {
@@ -356,7 +357,7 @@ public class ScenarioImpl implements Scenario {
      *
      * @param member Wrapper member
      * @return Wrapped scenario
-     */
+ */
     public static Scenario forMember(final Member member) {
         if (isScenario(member.getHierarchy())) {
             final Formula formula = ((RolapCalculatedMember) member)
@@ -377,7 +378,7 @@ public class ScenarioImpl implements Scenario {
      * a cube has writeback enabled iff it has a dimension called "Scenario".)
      *
      * @param schema Schema
-     */
+ */
     public void register(RolapCatalog schema) {
         // Add a value to the [Scenario] dimension of every cube that has
         // writeback enabled.
@@ -402,7 +403,7 @@ public class ScenarioImpl implements Scenario {
      *
      * @param hierarchy Hierarchy
      * @return Whether hierarchy is the scenario hierarchy
-     */
+ */
     public static boolean isScenario(Hierarchy hierarchy) {
         return hierarchy.getName().equals("Scenario");
     }
@@ -413,13 +414,18 @@ public class ScenarioImpl implements Scenario {
      *
      * @param evaluator Evaluator
      * @return Number of atomic cells in the current cell
-     */
+ */
     private static double evaluateAtomicCellCount(RolapEvaluator evaluator) {
         final int savepoint = evaluator.savepoint();
         try {
             evaluator.setContext(
                 evaluator.getCube().getAtomicCellCountMeasure());
             final Object o = evaluator.evaluateCurrent();
+            if (o == NotLoaded.INSTANCE) {
+                // dirty batching pass whose results are discarded - the
+                // legacy Double(0) marker used to yield a count of 0 here
+                return 0;
+            }
             return ((Number) o).doubleValue();
         } finally {
             evaluator.restore(savepoint);
@@ -441,7 +447,7 @@ public class ScenarioImpl implements Scenario {
      * @param cube Cube
      * @param memberList Coordinate members of cell
      * @return Number of atomic cells in cell
-     */
+ */
     private static double computeAtomicCellCount(
         RolapCube cube, List<Member> memberList)
     {
@@ -491,7 +497,7 @@ public class ScenarioImpl implements Scenario {
      * has been called.
      *
      * @return Scenario member
-     */
+ */
     public Member getMember() {
         return member;
     }
@@ -507,7 +513,7 @@ public class ScenarioImpl implements Scenario {
      *
      * In future, a {@link ScenarioImpl} could be persisted by
      * serializing all {@code WritebackCell}s to a file.
-     */
+ */
     public static class WritebackCellImpl implements WritebackCell {
 
 
@@ -527,7 +533,7 @@ public class ScenarioImpl implements Scenario {
          * @param newValue New value
          * @param currentValue Current value
          * @param allocationPolicy Allocation policy
-         */
+ */
         WritebackCellImpl(
             RolapCube cube,
             List<Member> members,
@@ -597,7 +603,7 @@ public class ScenarioImpl implements Scenario {
          * override.
          *
          * @return Amount by which value has increased
-         */
+ */
         @Override
         public double getOffset() {
             return newValue - currentValue;
@@ -613,7 +619,7 @@ public class ScenarioImpl implements Scenario {
          * @param members Co-ordinates of another cell
          * @return Relation of this writeback cell to other co-ordinate, never
          * null
-         */
+ */
         @Override
         public WritebackCell.CellRelation getRelationTo(Member[] members) {
             int aboveCount = 0;
@@ -664,7 +670,7 @@ public class ScenarioImpl implements Scenario {
      * {@link Cell#setValue(Object, AllocationPolicy, Object...)},
      * and modifies the values of ancestors or descendants of such cells
      * according to the allocation policy.
-     */
+ */
     private static class ScenarioCalc extends AbstractProfilingNestedUnknownCalc {
         private final ScenarioImpl scenario;
 
@@ -673,7 +679,7 @@ public class ScenarioImpl implements Scenario {
          *
          * @param scenario Scenario whose writeback values should be substituted
          * for the values stored in the database.
-         */
+ */
         public ScenarioCalc(ScenarioImpl scenario) {
             super(ScalarType.INSTANCE);
             this.scenario = scenario;
@@ -683,7 +689,7 @@ public class ScenarioImpl implements Scenario {
          * Returns the Scenario this writeback cell belongs to.
          *
          * @return Scenario, never null
-         */
+ */
         private Scenario getScenario() {
             return scenario;
         }

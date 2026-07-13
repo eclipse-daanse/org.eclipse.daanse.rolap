@@ -40,6 +40,8 @@ import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.element.OlapElement;
 import org.eclipse.daanse.olap.api.evaluator.Evaluator;
 import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
+import org.eclipse.daanse.olap.api.result.CellValue;
+import org.eclipse.daanse.olap.api.result.NullValue;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.key.BitKey;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
@@ -86,7 +88,7 @@ public abstract class RolapAggregationManager {
 
     /**
      * Creates the RolapAggregationManager.
-     */
+ */
     protected RolapAggregationManager() {
     }
 
@@ -100,7 +102,7 @@ public abstract class RolapAggregationManager {
      *
      * @param members Set of members which constrain the cell
      * @return Cell request, or null if the requst is unsatisfiable
-     */
+ */
     public static CellRequest makeRequest(final Member[] members) {
         return makeCellRequest(
             members, false, false, null, null, null,
@@ -123,7 +125,7 @@ public abstract class RolapAggregationManager {
      *
      * @param cube              Cube
      * @return Cell request, or null if the requst is unsatisfiable
-     */
+ */
     public static DrillThroughCellRequest makeDrillThroughRequest(
         final Member[] members,
         final boolean extendedContext,
@@ -148,7 +150,7 @@ public abstract class RolapAggregationManager {
      * Returns a List of OlapElement consisting of elements present on
      * the base cube in context.  If drillthrough is happening on a virtual
      * cube this may exclude non-conforming dimensions, for example.
-     */
+ */
     private static List<OlapElement> getApplicableReturnClauseMembers(
         RolapCube cube, Member[] members,
         List<OlapElement> returnClauseMembers, boolean extendedContext)
@@ -228,7 +230,7 @@ public abstract class RolapAggregationManager {
      *
      * @param evaluator the cell specified by the evaluator context
      * @return Cell request, or null if the requst is unsatisfiable
-     */
+ */
     public static CellRequest makeRequest(
         RolapEvaluator evaluator)
     {
@@ -261,7 +263,7 @@ public abstract class RolapAggregationManager {
      * aggregationLists.  Uses this to add the predicate (and its string
      * representation) to the cell request.
      * Returns false if any predicate results in an unsatisfiable request.
-     */
+ */
     private static boolean applyCompoundPredicates(
         RolapEvaluator evaluator, CellRequest request)
     {
@@ -291,7 +293,7 @@ public abstract class RolapAggregationManager {
      * If the aggregationList is the slicer, will attempt to retrieve the
      * pre-built slicer predicate info from the evaluator.  This avoids the
      * overhead of building the slicer predicates for every cell request.
-     */
+ */
     private static CompoundPredicateInfo getCompoundPredicateInfo(
         RolapEvaluator evaluator,
         RolapStoredMeasure measure,
@@ -451,7 +453,7 @@ public abstract class RolapAggregationManager {
      * @param member Member to constraint
      * @param baseCube base cube if virtual
      * @param request Cell request
-     */
+ */
     private static void addNonConstrainingColumns(
         final RolapCubeMember member,
         final RolapCube baseCube,
@@ -579,7 +581,7 @@ public abstract class RolapAggregationManager {
      * can be created from the aggregationList. It is possible that only part
      * of the aggregationList can be applied, which still leads to a (partial)
      * constraint that is represented by the compoundGroupMap.
-     */
+ */
     private static boolean makeCompoundGroup(
         int starColumnCount,
         RolapCube baseCube,
@@ -745,7 +747,7 @@ public abstract class RolapAggregationManager {
      * @param compoundGroupMap Map from dimensionality to groups
      * @param baseCube base cube if virtual
      * @return compound predicate for a tuple or a member
-     */
+ */
     private static StarPredicate makeCompoundPredicate(
         Map<BitKey, List<RolapCubeMember[]>> compoundGroupMap,
         RolapCube baseCube)
@@ -824,8 +826,9 @@ public abstract class RolapAggregationManager {
      * @param request Cell request
      *  request != null and !request.isUnsatisfiable()
      * @return Cell value, or null if cell is not in any aggregation in cache,
-     *   or {@link Util#nullValue} if cell's value is null
-     */
+     *   or {@link org.eclipse.daanse.olap.api.result.NullValue#INSTANCE} if
+     *   cell's value is null
+ */
     public abstract Object getCellFromCache(CellRequest request);
 
     public abstract Object getCellFromCache(
@@ -842,7 +845,7 @@ public abstract class RolapAggregationManager {
      * that could not be represented by the CellRequest, or
      * null if no additional predicate is necessary.
      * @return SQL statement
-     */
+ */
     public abstract String getDrillThroughSql(
         DrillThroughCellRequest request,
         StarPredicate starPredicateSlicer,
@@ -943,18 +946,23 @@ public abstract class RolapAggregationManager {
 
     /**
      * Returns a {@link org.eclipse.daanse.rolap.common.result.CellReader} which reads cells from cache.
-     */
+ */
     public CellReader getCacheCellReader() {
         return new CellReader() {
             // implement CellReader
             @Override
-			public Object get(RolapEvaluator evaluator) {
+			public CellValue get(RolapEvaluator evaluator) {
                 CellRequest request = makeRequest(evaluator);
                 if (request == null || request.isUnsatisfiable()) {
                     // request out of bounds
-                    return Util.nullValue;
+                    return NullValue.INSTANCE;
                 }
-                return getCellFromCache(request);
+                final Object o = getCellFromCache(request);
+                // This reader never lies: a cell that is in no aggregation
+                // is treated as an evaluated NULL. The probe API keeps the
+                // object convention (raw value / NullValue.INSTANCE / null);
+                // the CellValue boundary starts at this reader.
+                return toCellValue(o, NullValue.INSTANCE);
             }
 
             @Override
@@ -973,13 +981,32 @@ public abstract class RolapAggregationManager {
      * Creates a {@link PinSet}.
      *
      * @return a new PinSet
-     */
+ */
     public abstract PinSet createPinSet();
+
+    /**
+     * Bridges the object convention of the cache probe API (raw value,
+     * {@link NullValue#INSTANCE} for a stored NULL, Java {@code null} for
+     * "not in cache") into the sealed {@link CellValue} protocol of the
+     * {@link org.eclipse.daanse.rolap.common.result.CellReader} chain.
+     *
+     * @param o          cell value from the probe API
+     * @param whenAbsent state to report when the cache has no answer
+ */
+    public static CellValue toCellValue(Object o, CellValue whenAbsent) {
+        if (o == null) {
+            return whenAbsent;
+        }
+        if (o instanceof CellValue cv) {
+            return cv;
+        }
+        return CellValue.fromLegacyValue(o);
+    }
 
     /**
      * A set of segments which are pinned (prevented from garbage collection)
      * for a short duration as a result of a cache inquiry.
-     */
+ */
     public interface PinSet {
     }
 }
