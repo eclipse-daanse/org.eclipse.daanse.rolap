@@ -545,7 +545,7 @@ public final class MemberSqlMapper {
      * (every projected level column grouped, {@code completeNonAggregatesGroupBy} for restrictive
      * dialects). NO {@code Dialect} parameter: every node built here is dialect-free (computed
      * expressions travel as {@code RawVariant} maps) — the dialect enters only at the render
-     * seam ({@code SqlBuildGuard.build}), per the confinement invariant.
+     * seam ({@code QueryBuildContext.build}), per the confinement invariant.
      * <p>
      * Called by the children router ({@code SqlMemberSource.makeChildMemberSql}); the caller
      * must only route reads that actually join the fact (an
@@ -635,6 +635,13 @@ public final class MemberSqlMapper {
                 q.where(e.on(), "agg join");
             }
         }
+        // Computed-side join conditions (no table alias — cannot enter the JOIN tree): emitted as
+        // WHERE conjuncts, the legacy behavior (agg-join-dropped fix).
+        for (Predicate p : st.computedJoinWheres) {
+            if (st.treeOns.add(p)) {
+                q.where(p, "agg join");
+            }
+        }
         projectLevel(q, level, needsGroupBy);
         return q.build();
     }
@@ -650,6 +657,9 @@ public final class MemberSqlMapper {
         final List<Edge> edges = new ArrayList<>();
         /** ONs used by the FROM tree (and WHERE-folded edges) — the duplicate-edge dedup set. */
         final Set<Predicate> treeOns = new LinkedHashSet<>();
+        /** Join conditions with a computed (alias-less) side: they cannot enter the JOIN tree and
+         *  are emitted as WHERE conjuncts instead (the legacy behavior; agg-join-dropped fix). */
+        final List<Predicate> computedJoinWheres = new ArrayList<>();
 
         boolean registerFrom(String alias, FromClause item) {
             return fromItems.putIfAbsent(alias, item) == null;
@@ -734,8 +744,12 @@ public final class MemberSqlMapper {
     }
 
     /**
-     * The {@code dimKey = aggColumn} edge, added only when BOTH tables are already registered (a
-     * computed key has no table alias, so its edge vanishes).
+     * The {@code dimKey = aggColumn} edge, added to the JOIN tree when BOTH tables are already
+     * registered. A computed key has no table alias, so its edge cannot enter the tree — the ON
+     * condition is emitted as a WHERE conjunct instead (mirroring
+     * {@code QueryRecorder.addJoinCondition}'s agg-join-dropped fix; dropping it produced a cross
+     * join with wrong aggregates). A resolvable counterpart OUTSIDE the FROM stays a silent no-op
+     * (the parent-walk guard).
      */
     private static void addAggEdge(AggFromState st, SqlExpression dimKeyExp,
             org.eclipse.daanse.rolap.common.aggmatcher.AggStar.Table.Column aggColumn, Predicate on) {
@@ -744,6 +758,19 @@ public final class MemberSqlMapper {
         if (dimAlias != null && aggAlias != null
                 && st.fromItems.containsKey(dimAlias) && st.fromItems.containsKey(aggAlias)) {
             st.edges.add(new AggFromState.Edge(dimAlias, aggAlias, on));
+            return;
+        }
+        if (dimAlias == null || aggAlias == null) {
+            String resolvable = dimAlias != null ? dimAlias : aggAlias;
+            if (resolvable != null && !st.fromItems.containsKey(resolvable)) {
+                return; // parent-walk guard past the added relation subset
+            }
+            org.eclipse.daanse.rolap.common.RolapUtil.SQL_GEN_LOGGER.debug(
+                "agg-join-dropped: join condition has a computed <SQL> side with no resolvable table "
+                    + "alias (dimAlias={}, aggAlias={}); emitted as a WHERE predicate (legacy SqlQuery "
+                    + "behavior) instead of being dropped.",
+                dimAlias, aggAlias);
+            st.computedJoinWheres.add(on);
         }
     }
 

@@ -61,6 +61,7 @@ import org.eclipse.daanse.rolap.common.star.StarColumnPredicate;
 import org.eclipse.daanse.rolap.common.star.StarPredicate;
 import org.eclipse.daanse.rolap.common.sql.AggPlan;
 import org.eclipse.daanse.rolap.common.sql.ConstraintContribution;
+import org.eclipse.daanse.rolap.common.sql.ContributionResult;
 import org.eclipse.daanse.rolap.common.sql.MemberChildrenConstraint;
 import org.eclipse.daanse.rolap.common.sql.TupleConstraint;
 import org.eclipse.daanse.rolap.element.MultiCardinalityDefaultMember;
@@ -101,7 +102,7 @@ public class SqlContextConstraint
     private static final org.slf4j.Logger BAIL_LOG =
         org.slf4j.LoggerFactory.getLogger("daanse.sql.gen.bail");
 
-    private java.util.Optional<ConstraintContribution> bail(String reason) {
+    private ContributionResult bail(String reason) {
         if (BAIL_LOG.isDebugEnabled()) {
             try {
                 BAIL_LOG.debug("contextContribution bail reason={} cube={} members={} slicer={}",
@@ -112,7 +113,7 @@ public class SqlContextConstraint
                 BAIL_LOG.debug("contextContribution bail reason={}", reason);
             }
         }
-        return java.util.Optional.empty();
+        return ContributionResult.unsupported(reason);
     }
 
     /**
@@ -354,17 +355,17 @@ public class SqlContextConstraint
      * calculated dimension member the class's {@link #executedCalcLift()} mode bails on, an
      * agg-unresolvable column, or a
      * slicer/role shape the pure predicate builders cannot express. A present contribution is executed authoritatively
-     * ({@code SqlBuildGuard} renders without runtime fallback — the routing condition IS the
+     * ({@code QueryBuildContext} renders without runtime fallback — the routing condition IS the
      * guard); an empty one routes to the recorder.
      */
     @Override
-    public java.util.Optional<ConstraintContribution> toContribution(
+    public ContributionResult toContribution(
         RolapCube baseCube,
         AggStar aggStar,
         RolapMember parent)
     {
         if (parent.isCalculated()) {
-            return java.util.Optional.empty();
+            return ContributionResult.unsupported("calculated parent member");
         }
         // The member-children form takes no set composition (mirrored by the lifted parent twin),
         // so the class's executed calc mode is applied to the plain context leg directly: LIFTED
@@ -378,7 +379,7 @@ public class SqlContextConstraint
      * as a {@link ConstraintContribution}, no parent-key restriction.
      */
     @Override
-    public java.util.Optional<ConstraintContribution> toContribution(
+    public ContributionResult toContribution(
         RolapCube baseCube,
         AggStar aggStar)
     {
@@ -441,7 +442,7 @@ public class SqlContextConstraint
      * implementation is the plain context leg. The executed dispatch passes
      * {@link #executedCalcLift()} (per-class — the one-override revert switch).
      */
-    protected java.util.Optional<ConstraintContribution> toContribution(
+    protected ContributionResult toContribution(
         RolapCube baseCube, AggStar aggStar, CalcLift lift)
     {
         return contextContribution(baseCube, aggStar, java.util.Optional.empty(), lift);
@@ -449,7 +450,7 @@ public class SqlContextConstraint
 
     /**
      * The authoritative builder WHERE for the collapsed single-column aggStar member-children
-     * read (executed via {@code SqlBuildGuard} when present). Reproduces the WHERE that the
+     * read (executed via {@code QueryBuildContext} when present). Reproduces the WHERE that the
      * member-children recorder route built for a collapsed level (the context columns after
      * {@code setContext(parent)} PLUS the
      * parenthesised parent-key group) as one builder {@link org.eclipse.daanse.sql.statement.api.expression.Predicate},
@@ -637,7 +638,7 @@ public class SqlContextConstraint
      * native-filter subclass ({@code RolapNativeFilter.FilterConstraint}) overrides this with a
      * collecting scratch compile ({@code NativeSqlContext.scratchCollecting}). A consumer building
      * an authoritative/candidate agg statement must replay {@code joins()} into its FROM
-     * ({@code TupleSqlMapper.aggTupleLevelMembersSql}) or the byte contract breaks whenever the
+     * ({@code AggTupleQueries.aggTupleLevelMembersSql}) or the byte contract breaks whenever the
      * filter references a dim-table caption/name.
      */
     public AggHaving levelMembersAggHavingWithJoins(AggStar aggStar) {
@@ -648,7 +649,7 @@ public class SqlContextConstraint
      *  (empty when the constraint carries none) plus the FROM registrations its compile performed. */
     public record AggHaving(
         java.util.Optional<org.eclipse.daanse.sql.statement.api.expression.Predicate> having,
-        java.util.List<org.eclipse.daanse.rolap.common.sqlbuild.TupleSqlMapper.HavingJoin> joins) {
+        java.util.List<org.eclipse.daanse.rolap.common.sqlbuild.AggTupleQueries.HavingJoin> joins) {
     }
 
     /**
@@ -922,7 +923,7 @@ public class SqlContextConstraint
      * agg-join channel — dormant until the agg routing). {@link java.util.Optional#empty()} for anything
      * outside the simple scope.
      */
-    private java.util.Optional<ConstraintContribution> contextContribution(
+    private ContributionResult contextContribution(
         RolapCube baseCube,
         AggStar aggStar,
         java.util.Optional<RolapMember> parent,
@@ -981,7 +982,7 @@ public class SqlContextConstraint
         //                 AND quarter IN ('Q1','Q2','Q3')). The downstream machinery this method
         //                 already calls (makeContextConstraintSet at the try below; getSlicerMemberMap)
         //                 reproduces that expansion, so this class is liftable IN PRINCIPLE — but only
-        //                 with a full-TCK validation, because SqlBuildGuard has no runtime fallback:
+        //                 with a full-TCK validation, because QueryBuildContext.build has no runtime fallback:
         //                 a returned contribution is executed authoritatively. Deferred, NOT
         //                 declined-forever.
         //   -unsupported: an arbitrary calc member no expander can reduce to plain-member predicates —
@@ -1059,7 +1060,7 @@ public class SqlContextConstraint
                 // Under an agg routing this unrestricted contribution still carries a PRESENT,
                 // empty-predicates AggPlan — the valid unconstrained translation, never collapsed
                 // into "absent".
-                return java.util.Optional.of(withAggPlanIfRouted(
+                return ContributionResult.of(withAggPlanIfRouted(
                     ConstraintContribution.EMPTY.withFactJoinRequired(isJoinRequired()),
                     aggStar, List.of()));
             }
@@ -1230,7 +1231,7 @@ public class SqlContextConstraint
                     // the shared EMPTY constant is false, so build a fresh contribution for it.
                     // AGG MODE: the empty-predicates case STILL carries a PRESENT AggPlan — the valid
                     // unconstrained translation, never collapsed into "absent".
-                    return java.util.Optional.of(withAggPlanIfRouted(
+                    return ContributionResult.of(withAggPlanIfRouted(
                         ConstraintContribution.EMPTY.withFactJoinRequired(isJoinRequired()),
                         aggStar, aggPredicates));
                 }
@@ -1255,7 +1256,7 @@ public class SqlContextConstraint
             // The parent-key group (addMemberConstraint) is rendered parenthesized, so it is NOT a
             // duplicate of the unparenthesised context columns and survives as a trailing WHERE conjunct.
             // The member mapper appends it after the interleaved context (tuple path: empty parent).
-            return java.util.Optional.of(withAggPlanIfRouted(
+            return ContributionResult.of(withAggPlanIfRouted(
                 new ConstraintContribution(java.util.Optional.of(where), joinTables, orderedToUse,
                     parentPredicate).withFactJoinRequired(isJoinRequired()),
                 aggStar, aggPredicates));
@@ -1291,7 +1292,7 @@ public class SqlContextConstraint
      * {@code contextContribution}'s non-agg tail: parent-key group appended, ALWAYS the And wrap,
      * {@code factJoinRequired} carried.
      */
-    private java.util.Optional<ConstraintContribution> slicerTupleListsContribution(
+    private ContributionResult slicerTupleListsContribution(
         RolapCube cube,
         List<org.eclipse.daanse.olap.api.calc.tuple.TupleList> slicerTupleLists,
         CellRequest request,
@@ -1342,7 +1343,7 @@ public class SqlContextConstraint
         parentPredicate.ifPresent(predicates::add);
         org.eclipse.daanse.sql.statement.api.expression.Predicate where =
             org.eclipse.daanse.sql.statement.api.Predicates.and(predicates);
-        return java.util.Optional.of(
+        return ContributionResult.of(
             new ConstraintContribution(java.util.Optional.of(where), joinTables, ordered,
                 parentPredicate).withFactJoinRequired(isJoinRequired()));
     }

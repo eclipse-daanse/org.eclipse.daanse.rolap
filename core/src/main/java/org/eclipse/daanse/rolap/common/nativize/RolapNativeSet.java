@@ -145,9 +145,9 @@ public abstract class RolapNativeSet extends RolapNative {
     private static final org.slf4j.Logger SET_BAIL_LOG =
         org.slf4j.LoggerFactory.getLogger( "daanse.sql.gen.bail" );
 
-    protected java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution> bail( String reason ) {
+    protected org.eclipse.daanse.rolap.common.sql.ContributionResult bail( String reason ) {
       SET_BAIL_LOG.debug( "{} toContribution bail reason={}", getClass().getSimpleName(), reason );
-      return java.util.Optional.empty();
+      return org.eclipse.daanse.rolap.common.sql.ContributionResult.unsupported( reason );
     }
 
     /**
@@ -168,20 +168,20 @@ public abstract class RolapNativeSet extends RolapNative {
      * applicable cross-join arg's member constraint. Plain {@link MemberListCrossJoinArg}s and
      * descendants args whose member set is expressible as a single {@code ColumnPredicate} are
      * modelled; anything inexpressible (multi-value / multi-level member sets, no context
-     * contribution) returns {@link java.util.Optional#empty()} so the caller falls back to the
+     * contribution) declines with its bail reason so the caller falls back to the
      * reference query.
      */
     @Override
-    protected java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution> toContribution(
+    protected org.eclipse.daanse.rolap.common.sql.ContributionResult toContribution(
         RolapCube baseCube, AggStar aggStar, CalcLift lift ) {
-      java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution> base =
+      org.eclipse.daanse.rolap.common.sql.ContributionResult base =
           super.toContribution( baseCube, aggStar, lift );
-      if ( base.isEmpty() ) {
+      if ( !base.isSupported() ) {
         // The inherited context could not be expressed (a deep composition the calc gate could
         // not lift); the context bail below logs its own precise reason.
         return bail( "set-base-context-empty" );
       }
-      org.eclipse.daanse.rolap.common.sql.ConstraintContribution c = base.get();
+      org.eclipse.daanse.rolap.common.sql.ConstraintContribution c = base.contribution();
       if ( aggStar != null && c.aggPlan().isEmpty() ) {
         // Defensive: an agg-routed context contribution always carries its plan (possibly with
         // empty predicates); a plan-less one cannot feed the agg-join channel.
@@ -342,7 +342,7 @@ public abstract class RolapNativeSet extends RolapNative {
         result = result.withAggPlan(
             new org.eclipse.daanse.rolap.common.sql.AggPlan( aggStar, aggPredicates ) );
       }
-      return java.util.Optional.of( result );
+      return org.eclipse.daanse.rolap.common.sql.ContributionResult.of( result );
     }
 
     /**

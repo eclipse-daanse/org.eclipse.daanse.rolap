@@ -52,12 +52,13 @@ public class DefaultTupleConstraint implements TupleConstraint {
     }
 
     @Override
-    public java.util.Optional<org.eclipse.daanse.rolap.common.sql.ConstraintContribution> toContribution(
+    public org.eclipse.daanse.rolap.common.sql.ContributionResult toContribution(
         RolapCube baseCube,
         AggStar aggStar)
     {
         // Unrestricted level members — no predicate, no extra tables.
-        return java.util.Optional.of(org.eclipse.daanse.rolap.common.sql.ConstraintContribution.EMPTY);
+        return org.eclipse.daanse.rolap.common.sql.ContributionResult.of(
+            org.eclipse.daanse.rolap.common.sql.ConstraintContribution.EMPTY);
     }
 
     @Override

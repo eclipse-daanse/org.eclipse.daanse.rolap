@@ -58,9 +58,9 @@ class ContextContributionLazySlicerExpansionTest {
              MockedStatic<SlicerAnalyzer> slicer = mockStatic(SlicerAnalyzer.class)) {
             stubExpansionSeams(writer, agg, new RolapStar.Column[0], new Object[0]);
 
-            assertThat(scc.toContribution(mock(RolapCube.class), null))
-                .as("zero-column context translates to the EMPTY (present, unrestricted) contribution")
-                .isPresent();
+            assertThat(scc.toContribution(mock(RolapCube.class), null).isSupported())
+                .as("zero-column context translates to the EMPTY (supported, unrestricted) contribution")
+                .isTrue();
 
             // No constrained column was processed, so the slicer expansion never fired.
             slicer.verifyNoInteractions();
@@ -89,7 +89,7 @@ class ContextContributionLazySlicerExpansionTest {
             joinPlanner.when(() -> JoinPlanner.expressionFor(column)).thenReturn(
                 org.eclipse.daanse.sql.statement.api.Expressions.star());
 
-            assertThat(scc.toContribution(mock(RolapCube.class), null)).isPresent();
+            assertThat(scc.toContribution(mock(RolapCube.class), null).isSupported()).isTrue();
 
             // The loop's first processed column fetches the map, exactly once.
             slicer.verify(() -> SlicerAnalyzer.getSlicerMemberMap(any()));
@@ -125,9 +125,9 @@ class ContextContributionLazySlicerExpansionTest {
             joinPlanner.when(() -> JoinPlanner.expressionFor(column)).thenReturn(
                 org.eclipse.daanse.sql.statement.api.Expressions.star());
 
-            assertThat(scc.toContribution(mock(RolapCube.class), null))
+            assertThat(scc.toContribution(mock(RolapCube.class), null).isSupported())
                 .as("the executed LIFTED dispatch expands and translates under a result root")
-                .isPresent();
+                .isTrue();
 
             slicer.verify(() -> SlicerAnalyzer.getSlicerMemberMap(any()));
         }

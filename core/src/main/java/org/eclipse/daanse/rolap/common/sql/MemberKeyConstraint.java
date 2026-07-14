@@ -92,7 +92,7 @@ public class MemberKeyConstraint
      * restriction). Mirrors {@code LevelConstraintGenerator.constrainKeyValue}.
      */
     @Override
-    public java.util.Optional<ConstraintContribution> toContribution(RolapCube baseCube, AggStar aggStar) {
+    public ContributionResult toContribution(RolapCube baseCube, AggStar aggStar) {
         java.util.List<org.eclipse.daanse.sql.statement.api.expression.Predicate> predicates =
             new java.util.ArrayList<>();
         for (int i = 0; i < columnList.size(); i++) {
@@ -109,11 +109,11 @@ public class MemberKeyConstraint
         }
         if (predicates.isEmpty()) {
             // No key columns to constrain — fall back rather than build unconstrained authoritatively.
-            return java.util.Optional.empty();
+            return ContributionResult.unsupported("member-key constraint without key columns");
         }
         org.eclipse.daanse.sql.statement.api.expression.Predicate where = (predicates.size() == 1)
             ? predicates.get(0)
             : org.eclipse.daanse.sql.statement.api.Predicates.and(predicates);
-        return java.util.Optional.of(new ConstraintContribution(java.util.Optional.of(where), java.util.List.of()));
+        return ContributionResult.of(new ConstraintContribution(java.util.Optional.of(where), java.util.List.of()));
     }
 }

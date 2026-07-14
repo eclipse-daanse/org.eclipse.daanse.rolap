@@ -29,7 +29,7 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.concurrent.Future;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
+import org.eclipse.daanse.rolap.common.sql.SqlQueryCapabilities;
 import org.eclipse.daanse.olap.api.cache.CacheCommand;
 import org.eclipse.daanse.olap.api.cache.OlapSegmentCacheManager;
 import org.eclipse.daanse.olap.api.execution.ExecutionContext;
@@ -76,7 +76,7 @@ public class BatchLoader {
 
     private final ExecutionContext executionContext;
     private final SegmentCacheManager cacheMgr;
-    private final Dialect dialect;
+    private final SqlQueryCapabilities capabilities;
     private final RolapCube cube;
 
     private final Map<AggregationKey, Batch> batches =
@@ -98,19 +98,19 @@ public class BatchLoader {
     public BatchLoader(
         ExecutionContext executionContext,
         OlapSegmentCacheManager cacheMgr,
-        Dialect dialect,
+        SqlQueryCapabilities capabilities,
         RolapCube cube)
     {
         this.executionContext = executionContext;
         this.cacheMgr = (SegmentCacheManager)cacheMgr;
-        this.dialect = dialect;
+        this.capabilities = capabilities;
         this.cube = cube;
     }
 
     public final boolean shouldUseGroupingFunction() {
         return cube.getCatalog().getInternalConnection().getContext()
                 .getConfigValue(ConfigConstants.ENABLE_GROUPING_SETS, ConfigConstants.ENABLE_GROUPING_SETS_DEFAULT_VALUE, Boolean.class)
-            && dialect.supportsGroupingSets();
+            && capabilities.groupingSets();
     }
 
     private void recordCellRequest2(final CellRequest request) {
@@ -515,27 +515,27 @@ public class BatchLoader {
     {
         private final ExecutionContext executionContext;
         private final SegmentCacheManager cacheMgr;
-        private final Dialect dialect;
+        private final SqlQueryCapabilities capabilities;
         private final RolapCube cube;
         private final List<CellRequest> cellRequests;
 
         public LoadBatchCommand(
             ExecutionContext executionContext,
             SegmentCacheManager cacheMgr,
-            Dialect dialect,
+            SqlQueryCapabilities capabilities,
             RolapCube cube,
             List<CellRequest> cellRequests)
         {
             this.executionContext = executionContext;
             this.cacheMgr = cacheMgr;
-            this.dialect = dialect;
+            this.capabilities = capabilities;
             this.cube = cube;
             this.cellRequests = cellRequests;
         }
 
         @Override
         public LoadBatchResponse call() {
-            return new BatchLoader(executionContext, cacheMgr, dialect, cube)
+            return new BatchLoader(executionContext, cacheMgr, capabilities, cube)
                 .load(cellRequests);
         }
 
@@ -789,11 +789,11 @@ public class BatchLoader {
             int distinctMeasureCount = getDistinctMeasureCount(measuresList);
             boolean tooManyDistinctMeasures =
                 distinctMeasureCount > 0
-                && !dialect.allowsCountDistinct()
+                && !capabilities.countDistinct()
                 || distinctMeasureCount > 1
-                   && !dialect.allowsMultipleCountDistinct()
+                   && !capabilities.multipleCountDistinct()
                 || distinctMeasureCount > 0
-                   && !dialect.allowsCountDistinctWithOtherAggs();
+                   && !capabilities.countDistinctWithOtherAggs();
 
             if (tooManyDistinctMeasures) {
                 doSpecialHandlingOfDistinctCountMeasures(
@@ -804,7 +804,7 @@ public class BatchLoader {
 
             // Load agg(distinct <SQL expression>) measures individually
             // for DBs that does allow multiple distinct SQL measures.
-            if (!dialect.allowsMultipleDistinctSqlMeasures()) {
+            if (!capabilities.multipleDistinctSqlMeasures()) {
                 // Note that the intention was originally to capture the
                 // subquery SQL measures and separate them out; However,
                 // without parsing the SQL string, Mondrian cannot distinguish

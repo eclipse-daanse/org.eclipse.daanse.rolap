@@ -75,7 +75,8 @@ class CalcLiftLabelTest {
                 mock(RolapNativeTopCount.TopCountConstraint.class);
         when(tc.toContribution(null, null)).thenCallRealMethod();
         when(tc.executedCalcLift()).thenCallRealMethod(); // LIFTED
-        Optional<ConstraintContribution> sentinel = Optional.of(ConstraintContribution.EMPTY);
+        org.eclipse.daanse.rolap.common.sql.ContributionResult sentinel =
+                org.eclipse.daanse.rolap.common.sql.ContributionResult.of(ConstraintContribution.EMPTY);
         when(tc.toContribution(null, null, CalcLift.LIFTED)).thenReturn(sentinel);
 
         assertThat(tc.toContribution(null, null)).isSameAs(sentinel);

@@ -80,15 +80,15 @@ class SetConstraintCompoundNullParentRetryTest {
         try (MockedStatic<RolapAggregationManager> agg = mockStatic(RolapAggregationManager.class)) {
             stubEmptyContextSeams(agg);
 
-            Optional<ConstraintContribution> candidate = sc.toContribution(null, null);
+            org.eclipse.daanse.rolap.common.sql.ContributionResult candidate = sc.toContribution(null, null);
 
-            assertThat(candidate)
+            assertThat(candidate.isSupported())
                 .as("the null-ancestor arg takes the compound node form")
-                .isPresent();
-            assertThat(candidate.get().orderedPredicates()).hasSize(1);
-            assertThat(candidate.get().orderedPredicates().get(0).table()).isSameAs(warehouse);
-            assertThat(candidate.get().joinTables()).containsExactly(warehouse);
-            assertThat(candidate.get().where()).isPresent();
+                .isTrue();
+            assertThat(candidate.contribution().orderedPredicates()).hasSize(1);
+            assertThat(candidate.contribution().orderedPredicates().get(0).table()).isSameAs(warehouse);
+            assertThat(candidate.contribution().joinTables()).containsExactly(warehouse);
+            assertThat(candidate.contribution().where()).isPresent();
         }
     }
 
@@ -103,10 +103,10 @@ class SetConstraintCompoundNullParentRetryTest {
         try (MockedStatic<RolapAggregationManager> agg = mockStatic(RolapAggregationManager.class)) {
             stubEmptyContextSeams(agg);
 
-            Optional<ConstraintContribution> c = sc.toContribution(null, null);
-            assertThat(c).isPresent();
-            assertThat(c.get().orderedPredicates()).isEmpty();
-            assertThat(c.get().where()).isEmpty();
+            org.eclipse.daanse.rolap.common.sql.ContributionResult c = sc.toContribution(null, null);
+            assertThat(c.isSupported()).isTrue();
+            assertThat(c.contribution().orderedPredicates()).isEmpty();
+            assertThat(c.contribution().where()).isEmpty();
         }
     }
 

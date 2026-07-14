@@ -29,7 +29,11 @@ public class SqlExpressionResolver {
             return expression.getSqls().getFirst().getSql();
     }
 
-    /** Renders {@code expression} with only a {@link Dialect}. */
+    /**
+     * LEGACY RENDER SHIM: quotes a plain column; throws for anything computed (those must travel
+     * as dialect-free RawVariant nodes). Kept only for the diagnostic printers and the shrinking
+     * recorder string path — new producers use {@code JoinPlanner.expressionFor}.
+     */
     public static String render(SqlExpression expression, Dialect dialect) {
         if (expression instanceof RolapColumn c) {
             return dialect.quoteIdentifier(c.getTable(), c.getName());

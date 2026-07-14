@@ -43,7 +43,7 @@ import org.eclipse.daanse.rolap.common.star.RolapStar.Column;
 import org.eclipse.daanse.rolap.common.star.StarColumnPredicate;
 import org.eclipse.daanse.rolap.common.star.StarPredicate;
 import org.eclipse.daanse.rolap.common.sqlbuild.AggregateSqlMapper;
-import org.eclipse.daanse.rolap.common.sqlbuild.SqlBuildGuard;
+import org.eclipse.daanse.rolap.common.sqlbuild.QueryBuildContext;
 import org.eclipse.daanse.rolap.common.sqlbuild.StarPredicateTranslator;
 import org.eclipse.daanse.sql.statement.api.Expressions;
 import org.eclipse.daanse.sql.statement.api.expression.Predicate;
@@ -77,7 +77,8 @@ public class DrillThroughQuerySpec extends AbstractQuerySpec {
             this.listOfStarPredicates = Collections.emptyList();
         }
         int tmpMaxColumnNameLength =
-            getStar().getDialect().getMaxColumnNameLength();
+            org.eclipse.daanse.rolap.common.sql.SqlQueryCapabilities.of(getStar().getDialect())
+                .maxColumnNameLength();
         if (tmpMaxColumnNameLength == 0) {
             // From java.sql.DatabaseMetaData: "a result of zero means that
             // there is no limit or the limit is not known"
@@ -226,12 +227,8 @@ public class DrillThroughQuerySpec extends AbstractQuerySpec {
         // Authoritative: the builder reproduces every drill-through shape (count + detail); no
         // QueryRecorder is constructed. buildDrillThrough handles countOnly too.
         Dialect dialect = getStar().getDialect();
-        return SqlBuildGuard.build(dialect,
-            getStar().getContext().getConfigValue(
-                org.eclipse.daanse.olap.common.ConfigConstants.GENERATE_FORMATTED_SQL,
-                org.eclipse.daanse.olap.common.ConfigConstants.GENERATE_FORMATTED_SQL_DEFAULT_VALUE,
-                Boolean.class),
-            () -> buildDrillThrough(dialect)).render();
+        return QueryBuildContext.of(dialect, getStar().getContext())
+            .build(() -> buildDrillThrough(dialect)).render();
     }
 
     /**
@@ -241,7 +238,7 @@ public class DrillThroughQuerySpec extends AbstractQuerySpec {
      * QueryRecorder is built.
      */
     private SelectStatement buildDrillThrough(Dialect dialect) {
-        boolean allowsFieldAlias = dialect.allowsFieldAlias();
+        boolean allowsFieldAlias = caps().fieldAlias();
         List<AggregateSqlMapper.DrillColumn> drillColumns = new ArrayList<>();
         RolapStar.Column[] columns = getColumns();
         for (int i = 0; i < columns.length; i++) {

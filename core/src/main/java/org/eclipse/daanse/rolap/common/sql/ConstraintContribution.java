@@ -108,6 +108,20 @@ public record ConstraintContribution(Optional<Predicate> where, List<RolapStar.T
                         nativeOrder, nativeHaving, required, aggPlan);
     }
 
+    /** This contribution with a native TopCount/Order measure ordering attached; everything else
+     *  (incl. factJoinRequired and aggPlan) is carried unchanged. */
+    public ConstraintContribution withNativeOrder(NativeOrder order) {
+        return new ConstraintContribution(where, joinTables, orderedPredicates, memberKeyGroup,
+                Optional.of(order), nativeHaving, factJoinRequired, aggPlan);
+    }
+
+    /** This contribution with a native Filter HAVING attached; everything else
+     *  (incl. factJoinRequired and aggPlan) is carried unchanged. */
+    public ConstraintContribution withNativeHaving(Optional<Predicate> having) {
+        return new ConstraintContribution(where, joinTables, orderedPredicates, memberKeyGroup,
+                nativeOrder, having, factJoinRequired, aggPlan);
+    }
+
     /** This contribution with the agg-star translation attached (see the {@code aggPlan} component). */
     public ConstraintContribution withAggPlan(AggPlan plan) {
         return new ConstraintContribution(where, joinTables, orderedPredicates, memberKeyGroup,
