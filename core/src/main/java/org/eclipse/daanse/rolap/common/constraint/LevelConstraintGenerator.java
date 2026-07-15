@@ -32,7 +32,7 @@ package org.eclipse.daanse.rolap.common.constraint;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.daanse.jdbc.db.api.type.Datatype;
+import org.eclipse.daanse.sql.model.type.Datatype;
 import org.eclipse.daanse.olap.api.sql.SqlExpression;
 import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.rolap.common.RolapUtil;

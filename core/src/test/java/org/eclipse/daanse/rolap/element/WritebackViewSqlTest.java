@@ -22,8 +22,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.daanse.olap.api.element.db.DatabaseColumn;
-import org.eclipse.daanse.jdbc.db.api.type.Datatype;
-import org.eclipse.daanse.jdbc.db.dialect.db.common.AnsiDialect;
+import org.eclipse.daanse.sql.model.type.Datatype;
+import org.eclipse.daanse.sql.dialect.db.common.AnsiDialect;
 import org.eclipse.daanse.rolap.common.writeback.RolapWritebackColumn;
 import org.eclipse.daanse.rolap.common.writeback.RolapWritebackTable;
 import org.junit.jupiter.api.Test;

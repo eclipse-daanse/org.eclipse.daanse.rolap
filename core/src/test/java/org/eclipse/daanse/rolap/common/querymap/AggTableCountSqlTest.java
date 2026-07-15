@@ -19,7 +19,7 @@ import static org.mockito.Mockito.when;
 
 import org.eclipse.daanse.cwm.model.cwm.resource.relational.NamedColumnSet;
 import org.eclipse.daanse.cwm.model.cwm.resource.relational.Schema;
-import org.eclipse.daanse.jdbc.db.dialect.db.common.AnsiDialect;
+import org.eclipse.daanse.sql.dialect.db.common.AnsiDialect;
 import org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource;
 import org.eclipse.daanse.rolap.mapping.model.database.source.SqlSelectSource;
 import org.eclipse.daanse.rolap.mapping.model.database.source.TableSource;

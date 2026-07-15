@@ -13,7 +13,7 @@
  */
 package org.eclipse.daanse.rolap.common.sql;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
+import org.eclipse.daanse.sql.dialect.api.Dialect;
 
 /**
  * The one adapter from the full {@link Dialect} to the narrow {@link SqlQueryCapabilities}

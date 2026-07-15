@@ -20,7 +20,7 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import java.util.Optional;
 
-import org.eclipse.daanse.jdbc.db.api.type.BestFitColumnType;
+import org.eclipse.daanse.sql.model.type.BestFitColumnType;
 import org.eclipse.daanse.olap.api.sql.SqlExpression;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.star.RolapStar.Condition.JoinColumn;

@@ -23,7 +23,7 @@ import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Optional;
 
-import org.eclipse.daanse.jdbc.db.api.type.Datatype;
+import org.eclipse.daanse.sql.model.type.Datatype;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.rolap.api.element.RolapMember;

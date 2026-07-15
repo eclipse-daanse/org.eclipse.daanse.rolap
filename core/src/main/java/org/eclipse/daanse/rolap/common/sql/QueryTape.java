@@ -17,8 +17,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import org.eclipse.daanse.jdbc.db.api.type.BestFitColumnType;
-import org.eclipse.daanse.jdbc.db.api.type.Datatype;
+import org.eclipse.daanse.sql.model.type.BestFitColumnType;
+import org.eclipse.daanse.sql.model.type.Datatype;
 import org.eclipse.daanse.olap.api.sql.SortingDirection;
 import org.eclipse.daanse.sql.statement.api.expression.Predicate;
 import org.eclipse.daanse.sql.statement.api.expression.SqlExpression;

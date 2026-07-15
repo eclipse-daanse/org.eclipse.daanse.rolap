@@ -40,7 +40,7 @@ import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.olap.api.sql.SqlExpression;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.rolap.api.RolapContext;
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
+import org.eclipse.daanse.sql.dialect.api.Dialect;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.element.RolapColumn;
 import org.slf4j.Logger;
@@ -49,7 +49,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Renders the {@code CREATE} / {@code INSERT … SELECT} SQL for candidate "lost" and
  * "collapsed" aggregate tables of a {@link RolapStar}, with identifiers quoted for the star's
- * {@link org.eclipse.daanse.jdbc.db.dialect.api.Dialect}. The generated DDL/DML is diagnostic
+ * {@link org.eclipse.daanse.sql.dialect.api.Dialect}. The generated DDL/DML is diagnostic
  * only: it is written to the log by {@code BatchLoader.generateAggregateSql} when aggregate-SQL
  * generation is enabled, and is never executed against the database.
  *

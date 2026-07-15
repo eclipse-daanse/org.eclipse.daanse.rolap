@@ -17,9 +17,9 @@ import java.util.Map;
 
 import javax.sql.DataSource;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
-import org.eclipse.daanse.jdbc.db.dialect.api.DialectFactory;
-import org.eclipse.daanse.jdbc.db.dialect.api.DialectInitData;
+import org.eclipse.daanse.sql.dialect.api.Dialect;
+import org.eclipse.daanse.sql.dialect.api.DialectFactory;
+import org.eclipse.daanse.sql.dialect.api.DialectInitData;
 import org.eclipse.daanse.mdx.parser.ccc.CCCMdxParserProvider;
 import org.eclipse.daanse.olap.api.aggregator.CustomAggregatorFactory;
 import org.eclipse.daanse.olap.calc.base.compiler.BaseExpressionCompilerFactory;

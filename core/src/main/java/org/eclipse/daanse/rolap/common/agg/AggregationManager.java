@@ -37,7 +37,7 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
-import org.eclipse.daanse.jdbc.db.api.type.BestFitColumnType;
+import org.eclipse.daanse.sql.model.type.BestFitColumnType;
 import org.eclipse.daanse.olap.api.agg.OlapAggregationManager;
 import org.eclipse.daanse.olap.api.cache.CacheControl;
 import org.eclipse.daanse.olap.api.cache.OlapSegmentCacheManager;

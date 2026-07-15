@@ -130,7 +130,7 @@ public final class StarPredicateTranslator {
      */
     public static Predicate toColumnPredicate(
             org.eclipse.daanse.rolap.common.star.StarColumnPredicate predicate, SqlExpression col,
-            org.eclipse.daanse.jdbc.db.api.type.Datatype fallbackType) {
+            org.eclipse.daanse.sql.model.type.Datatype fallbackType) {
         if (predicate instanceof ValueColumnPredicate value) {
             Object v = value.getValue();
             if (v == null || v == Util.sqlNullValue) {
@@ -173,8 +173,8 @@ public final class StarPredicateTranslator {
     }
 
     /** The literal datatype: the predicate's star column when present, else the caller's fallback. */
-    private static org.eclipse.daanse.jdbc.db.api.type.Datatype literalType(
-            ValueColumnPredicate value, org.eclipse.daanse.jdbc.db.api.type.Datatype fallbackType) {
+    private static org.eclipse.daanse.sql.model.type.Datatype literalType(
+            ValueColumnPredicate value, org.eclipse.daanse.sql.model.type.Datatype fallbackType) {
         return value.getConstrainedColumn() != null ? value.getConstrainedColumn().getDatatype() : fallbackType;
     }
 

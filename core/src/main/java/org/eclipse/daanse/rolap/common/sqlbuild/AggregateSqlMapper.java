@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
+import org.eclipse.daanse.sql.dialect.api.Dialect;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.sql.statement.api.Expressions;
 import org.eclipse.daanse.sql.statement.api.From;
@@ -209,7 +209,7 @@ public final class AggregateSqlMapper {
             // (the renderer's subquery rewrite reproduces it from the flat distinct measures).
             if (!shape.distinctCountOnly()) {
                 q.project(Expressions.countStar(),
-                        org.eclipse.daanse.jdbc.db.api.type.BestFitColumnType.INT);
+                        org.eclipse.daanse.sql.model.type.BestFitColumnType.INT);
             }
         } else {
             // ORDER BY dedup on the (value-equal) column node: two group-by columns rendering the same
@@ -298,7 +298,7 @@ public final class AggregateSqlMapper {
      *  lives on, its dialect-free column {@code node}, the result-reading type, an optional
      *  translated constraint (a {@code null} filter means unconstrained) and a provenance label. */
     public record AggSegmentColumn(AggFromTable table, SqlExpression node,
-            org.eclipse.daanse.jdbc.db.api.type.BestFitColumnType type, Predicate filter,
+            org.eclipse.daanse.sql.model.type.BestFitColumnType type, Predicate filter,
             String label) {
     }
 
@@ -557,9 +557,9 @@ public final class AggregateSqlMapper {
      *  with its result-reading column type (measure: {@code null}; NULL placeholder: STRING) and an
      *  optional provenance comment (rendered only when comments are on). */
     public record RawProjection(SqlExpression expr,
-            org.eclipse.daanse.jdbc.db.api.type.BestFitColumnType type, String alias, String comment) {
+            org.eclipse.daanse.sql.model.type.BestFitColumnType type, String alias, String comment) {
         public RawProjection(SqlExpression expr,
-                org.eclipse.daanse.jdbc.db.api.type.BestFitColumnType type, String alias) {
+                org.eclipse.daanse.sql.model.type.BestFitColumnType type, String alias) {
             this(expr, type, alias, null);
         }
     }
@@ -623,7 +623,7 @@ public final class AggregateSqlMapper {
         if (countOnly) {
             org.eclipse.daanse.rolap.common.RolapUtil.SQL_GEN_LOGGER.debug(
                     "drill-through: countOnly=true -> SELECT count(*)");
-            q.project(Expressions.countStar(), org.eclipse.daanse.jdbc.db.api.type.BestFitColumnType.INT);
+            q.project(Expressions.countStar(), org.eclipse.daanse.sql.model.type.BestFitColumnType.INT);
             return q.build();
         }
 

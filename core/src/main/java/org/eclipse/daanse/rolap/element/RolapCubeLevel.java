@@ -318,7 +318,7 @@ public class RolapCubeLevel extends RolapLevel implements CubeLevel {
     }
 
     @Override
-    public org.eclipse.daanse.jdbc.db.api.type.Datatype getKeyColumnPhysicalDatatype() {
+    public org.eclipse.daanse.sql.model.type.Datatype getKeyColumnPhysicalDatatype() {
         // The mapping level lives on the underlying shared level, not the cube copy.
         return rolapLevel != null ? rolapLevel.getKeyColumnPhysicalDatatype() : super.getKeyColumnPhysicalDatatype();
     }

@@ -15,7 +15,7 @@ package org.eclipse.daanse.rolap.common.sqlbuild;
 
 import java.util.function.Supplier;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
+import org.eclipse.daanse.sql.dialect.api.Dialect;
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.common.ConfigConstants;
 import org.eclipse.daanse.rolap.common.RolapUtil;

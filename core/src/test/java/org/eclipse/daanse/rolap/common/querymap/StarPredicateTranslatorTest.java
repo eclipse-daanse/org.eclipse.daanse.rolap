@@ -22,8 +22,8 @@ import static org.mockito.Mockito.when;
 import java.util.Collection;
 import java.util.List;
 
-import org.eclipse.daanse.jdbc.db.api.type.Datatype;
-import org.eclipse.daanse.jdbc.db.dialect.db.common.AnsiDialect;
+import org.eclipse.daanse.sql.model.type.Datatype;
+import org.eclipse.daanse.sql.dialect.db.common.AnsiDialect;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.rolap.common.agg.ListColumnPredicate;
 import org.eclipse.daanse.rolap.common.agg.MemberTuplePredicate;

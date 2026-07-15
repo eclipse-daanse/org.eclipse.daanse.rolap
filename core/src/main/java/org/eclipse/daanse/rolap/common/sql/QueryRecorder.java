@@ -44,7 +44,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.IntStream;
 
-import org.eclipse.daanse.jdbc.db.api.type.BestFitColumnType;
+import org.eclipse.daanse.sql.model.type.BestFitColumnType;
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.sql.SortingDirection;
 import org.eclipse.daanse.olap.common.ConfigConstants;
@@ -1015,7 +1015,7 @@ public class QueryRecorder {
      *  {@code nullParentValue} of the given {@code type}. */
     public void addOrderByExpr(org.eclipse.daanse.olap.api.sql.SqlExpression expression, String alias,
             SortingDirection sortingDirection, boolean prepend, String nullParentValue,
-            org.eclipse.daanse.jdbc.db.api.type.Datatype type, boolean collateNullsLast) {
+            org.eclipse.daanse.sql.model.type.Datatype type, boolean collateNullsLast) {
         SqlExpression node = nodeOf(expression, null);
         if (SortingDirection.NONE.equals(sortingDirection)) {
             return;

@@ -49,7 +49,7 @@ import org.eclipse.daanse.cwm.model.cwm.resource.relational.RowSet;
 import org.eclipse.daanse.cwm.util.resource.relational.ColumnSets;
 import org.eclipse.daanse.cwm.util.resource.relational.RowSets;
 import org.eclipse.daanse.cwm.util.resource.relational.Rows;
-import org.eclipse.daanse.jdbc.db.api.type.BestFitColumnType;
+import org.eclipse.daanse.sql.model.type.BestFitColumnType;
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.agg.Segment;
 import org.eclipse.daanse.olap.api.element.MatchType;

@@ -234,7 +234,7 @@ public class RolapNativeSql {
                     "Expected to get decimal, but got " + expr);
             }
             return org.eclipse.daanse.sql.statement.api.Expressions.literal(
-                literal.getValue(), org.eclipse.daanse.jdbc.db.api.type.Datatype.NUMERIC);
+                literal.getValue(), org.eclipse.daanse.sql.model.type.Datatype.NUMERIC);
         }
 
         @Override

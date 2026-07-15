@@ -19,8 +19,8 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 
-import org.eclipse.daanse.jdbc.db.api.type.BestFitColumnType;
-import org.eclipse.daanse.jdbc.db.dialect.db.common.AnsiDialect;
+import org.eclipse.daanse.sql.model.type.BestFitColumnType;
+import org.eclipse.daanse.sql.dialect.db.common.AnsiDialect;
 import org.eclipse.daanse.olap.api.SqlStatement;
 import org.eclipse.daanse.olap.api.sql.SqlExpression;
 import org.eclipse.daanse.rolap.element.RolapColumn;

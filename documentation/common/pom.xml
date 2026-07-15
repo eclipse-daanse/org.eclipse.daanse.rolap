@@ -33,18 +33,18 @@
       <version>${revision}</version>
       <scope>compile</scope>
     </dependency>
-    <!--dependenncy>
+    <dependency>
       <groupId>org.eclipse.daanse</groupId>
-      <artifactId>org.eclipse.daanse.jdbc.db.api</artifactId>
+      <artifactId>org.eclipse.daanse.sql.jdbc.api</artifactId>
+      <version>${revision}</version>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.eclipse.daanse</groupId>
-      <artifactId>org.eclipse.daanse.jdbc.db.record</artifactId>
+      <artifactId>org.eclipse.daanse.sql.model</artifactId>
+      <version>${revision}</version>
+      <scope>compile</scope>
     </dependency>
-    <dependency>
-      <groupId>org.eclipse.daanse</groupId>
-      <artifactId>org.eclipse.daanse.jdbc.db.impl</artifactId>
-    </dependency-->
     <dependency>
       <groupId>org.eclipse.daanse</groupId>
       <artifactId>org.eclipse.daanse.rolap.core</artifactId>

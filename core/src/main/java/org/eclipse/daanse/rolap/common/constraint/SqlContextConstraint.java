@@ -684,7 +684,7 @@ public class SqlContextConstraint
      */
     private static org.eclipse.daanse.sql.statement.api.expression.Predicate contextValuePredicate(
         org.eclipse.daanse.sql.statement.api.expression.SqlExpression col, Object value,
-        org.eclipse.daanse.jdbc.db.api.type.Datatype datatype)
+        org.eclipse.daanse.sql.model.type.Datatype datatype)
     {
         return (value == null || value == Util.sqlNullValue)
             ? org.eclipse.daanse.sql.statement.api.Predicates.isNull(col)

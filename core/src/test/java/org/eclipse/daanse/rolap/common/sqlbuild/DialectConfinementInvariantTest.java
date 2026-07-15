@@ -33,7 +33,7 @@ import org.junit.jupiter.api.Test;
  */
 class DialectConfinementInvariantTest {
 
-    private static final String DIALECT_IMPORT = "import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;";
+    private static final String DIALECT_IMPORT = "import org.eclipse.daanse.sql.dialect.api.Dialect;";
 
     /** Repo-relative to core/src/main/java/org/eclipse/daanse/rolap/. */
     private static final Set<String> ALLOWED = Set.of(

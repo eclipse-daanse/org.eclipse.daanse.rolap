@@ -18,7 +18,7 @@ import java.util.LinkedHashSet;
 import java.util.Optional;
 import java.util.Set;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
+import org.eclipse.daanse.sql.dialect.api.Dialect;
 import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.star.RolapStar.Condition.JoinColumn;

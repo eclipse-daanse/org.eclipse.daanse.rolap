@@ -23,7 +23,7 @@ import static org.mockito.Mockito.when;
 import java.lang.reflect.Field;
 import java.util.Map;
 
-import org.eclipse.daanse.jdbc.db.api.type.Datatype;
+import org.eclipse.daanse.sql.model.type.Datatype;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.rolap.common.RolapAggregationManager;
 import org.eclipse.daanse.rolap.common.agg.CellRequest;

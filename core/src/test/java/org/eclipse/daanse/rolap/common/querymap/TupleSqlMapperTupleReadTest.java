@@ -20,9 +20,9 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import java.util.Optional;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
-import org.eclipse.daanse.jdbc.db.api.type.BestFitColumnType;
-import org.eclipse.daanse.jdbc.db.dialect.db.common.AnsiDialect;
+import org.eclipse.daanse.sql.dialect.api.Dialect;
+import org.eclipse.daanse.sql.model.type.BestFitColumnType;
+import org.eclipse.daanse.sql.dialect.db.common.AnsiDialect;
 import org.eclipse.daanse.olap.api.sql.SqlExpression;
 import org.eclipse.daanse.rolap.common.sql.ConstraintContribution;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
@@ -951,7 +951,7 @@ class TupleSqlMapperTupleReadTest {
         SqlExpression computedParent = computed("RTRIM(supervisor_id)");
         when(pc.getParentExp()).thenReturn(computedParent);
         when(pc.getNullParentValue()).thenReturn("0");
-        when(pc.getDatatype()).thenReturn(org.eclipse.daanse.jdbc.db.api.type.Datatype.NUMERIC);
+        when(pc.getDatatype()).thenReturn(org.eclipse.daanse.sql.model.type.Datatype.NUMERIC);
 
         String sql = render(TupleSqlMapper.levelMembersSql(pc, true));
 

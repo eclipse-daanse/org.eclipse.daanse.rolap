@@ -28,11 +28,11 @@ import java.util.stream.Stream;
 
 import javax.sql.DataSource;
 
-import org.eclipse.daanse.jdbc.db.api.DatabaseService;
-import org.eclipse.daanse.jdbc.db.dialect.api.DialectFactory;
-import org.eclipse.daanse.jdbc.db.impl.DatabaseServiceImpl;
-import org.eclipse.daanse.jdbc.db.importer.csv.impl.CsvDataImporter;
-import org.eclipse.daanse.jdbc.db.importer.csv.impl.CsvDataImporterConfig;
+import org.eclipse.daanse.sql.jdbc.api.DatabaseService;
+import org.eclipse.daanse.sql.dialect.api.DialectFactory;
+import org.eclipse.daanse.sql.jdbc.impl.DatabaseServiceImpl;
+import org.eclipse.daanse.sql.jdbc.importer.csv.impl.CsvDataImporter;
+import org.eclipse.daanse.sql.jdbc.importer.csv.impl.CsvDataImporterConfig;
 
 /**
  * Loads classpath-packaged CSV resources into a {@link DataSource} by driving

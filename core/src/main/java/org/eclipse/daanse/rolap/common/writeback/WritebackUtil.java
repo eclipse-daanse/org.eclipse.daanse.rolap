@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 
 import javax.sql.DataSource;
 
-import org.eclipse.daanse.jdbc.db.api.type.Datatype;
+import org.eclipse.daanse.sql.model.type.Datatype;
 import org.eclipse.daanse.olap.api.DataTypeJdbc;
 import org.eclipse.daanse.olap.api.access.Role;
 import org.eclipse.daanse.olap.api.connection.Connection;
