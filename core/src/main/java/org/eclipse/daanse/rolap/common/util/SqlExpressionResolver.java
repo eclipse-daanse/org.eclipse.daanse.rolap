@@ -13,7 +13,7 @@
  */
 package org.eclipse.daanse.rolap.common.util;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
+import org.eclipse.daanse.sql.dialect.api.Dialect;
 import org.eclipse.daanse.olap.api.SqlStatement;
 import org.eclipse.daanse.olap.api.sql.SqlExpression;
 import org.eclipse.daanse.rolap.element.RolapColumn;

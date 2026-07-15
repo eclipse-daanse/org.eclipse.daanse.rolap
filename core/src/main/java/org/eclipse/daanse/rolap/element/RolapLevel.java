@@ -38,8 +38,8 @@ import java.sql.Types;
 
 import org.eclipse.daanse.cwm.model.cwm.resource.relational.SQLSimpleType;
 import org.eclipse.daanse.cwm.util.resource.relational.SqlSimpleTypes;
-import org.eclipse.daanse.jdbc.db.api.type.BestFitColumnType;
-import org.eclipse.daanse.jdbc.db.api.type.Datatype;
+import org.eclipse.daanse.sql.model.type.BestFitColumnType;
+import org.eclipse.daanse.sql.model.type.Datatype;
 import org.eclipse.daanse.olap.api.agg.Segment;
 import org.eclipse.daanse.olap.api.catalog.CatalogReader;
 import org.eclipse.daanse.olap.api.element.Dimension;

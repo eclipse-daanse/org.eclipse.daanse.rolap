@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 
-import org.eclipse.daanse.jdbc.db.dialect.db.common.AnsiDialect;
+import org.eclipse.daanse.sql.dialect.db.common.AnsiDialect;
 import org.junit.jupiter.api.Test;
 
 /**

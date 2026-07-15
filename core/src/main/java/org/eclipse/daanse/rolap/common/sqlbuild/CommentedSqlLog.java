@@ -20,7 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
+import org.eclipse.daanse.sql.dialect.api.Dialect;
 import org.eclipse.daanse.sql.statement.api.model.SelectStatement;
 import org.eclipse.daanse.sql.statement.api.render.RenderOptions;
 import org.eclipse.daanse.sql.statement.render.DialectSqlRenderer;

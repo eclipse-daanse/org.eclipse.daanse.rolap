@@ -31,7 +31,7 @@ import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
+import org.eclipse.daanse.sql.dialect.api.Dialect;
 import org.eclipse.daanse.olap.api.query.component.Expression;
 import org.eclipse.daanse.olap.api.type.NullType;
 import org.eclipse.daanse.olap.fun.DaanseEvaluationException;

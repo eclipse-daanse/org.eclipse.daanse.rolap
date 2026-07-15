@@ -29,7 +29,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Optional;
 
-import org.eclipse.daanse.jdbc.db.api.type.BestFitColumnType;
+import org.eclipse.daanse.sql.model.type.BestFitColumnType;
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.execution.Execution.Purpose;
 import org.eclipse.daanse.olap.api.execution.ExecutionContext;

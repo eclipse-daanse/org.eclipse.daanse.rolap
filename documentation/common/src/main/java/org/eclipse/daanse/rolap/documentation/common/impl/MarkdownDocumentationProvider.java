@@ -33,15 +33,15 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.eclipse.daanse.jdbc.db.api.DatabaseService;
-import org.eclipse.daanse.jdbc.db.api.meta.IndexInfo;
-import org.eclipse.daanse.jdbc.db.api.meta.IndexInfoItem;
-import org.eclipse.daanse.jdbc.db.api.meta.MetaInfo;
-import org.eclipse.daanse.jdbc.db.api.schema.ColumnDefinition;
-import org.eclipse.daanse.jdbc.db.api.schema.ColumnMetaData;
-import org.eclipse.daanse.jdbc.db.api.schema.SchemaReference;
-import org.eclipse.daanse.jdbc.db.api.schema.TableDefinition;
-import org.eclipse.daanse.jdbc.db.api.schema.TableReference;
+import org.eclipse.daanse.sql.jdbc.api.DatabaseService;
+import org.eclipse.daanse.sql.jdbc.api.meta.IndexInfo;
+import org.eclipse.daanse.sql.jdbc.api.meta.IndexInfoItem;
+import org.eclipse.daanse.sql.jdbc.api.meta.MetaInfo;
+import org.eclipse.daanse.sql.model.schema.ColumnDefinition;
+import org.eclipse.daanse.sql.model.schema.ColumnMetaData;
+import org.eclipse.daanse.sql.model.schema.SchemaReference;
+import org.eclipse.daanse.sql.jdbc.api.schema.TableDefinition;
+import org.eclipse.daanse.sql.model.schema.TableReference;
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.SqlStatement;
 import org.eclipse.daanse.olap.api.catalog.CatalogReader;
@@ -823,7 +823,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
                 List<? extends DatabaseSchema> dbschemas = catalogReader.getDatabaseSchemas();
                 SchemaReference schemaReference = new SchemaReference(connection.getSchema());
                 List<TableDefinition> tables = databaseService.getTableDefinitions(connection,
-                        org.eclipse.daanse.jdbc.db.api.MetadataProvider.EMPTY, schemaReference);
+                        org.eclipse.daanse.sql.jdbc.api.MetadataProvider.EMPTY, schemaReference);
 
                 writeTables(writer, context, tables, databaseMetaData, dbschemas);
 
@@ -1223,7 +1223,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
             List<? extends DatabaseSchema> dbschemas = catalogReader.getDatabaseSchemas();
             SchemaReference schemaReference = new SchemaReference(connection.getSchema());
             List<TableDefinition> tables = databaseService.getTableDefinitions(connection,
-                    org.eclipse.daanse.jdbc.db.api.MetadataProvider.EMPTY, schemaReference);
+                    org.eclipse.daanse.sql.jdbc.api.MetadataProvider.EMPTY, schemaReference);
             writeTables(writer, context, tables, databaseMetaData, dbschemas);
         } catch (SQLException e) {
             LOGGER.error("Error writing database info", e);
@@ -1348,7 +1348,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
         try {
             List<ColumnDefinition> columnList = tableReference.isPresent()
                     ? databaseService.getColumnDefinitions(databaseMetaData.getConnection(),
-                            org.eclipse.daanse.jdbc.db.api.MetadataProvider.EMPTY, tableReference.get())
+                            org.eclipse.daanse.sql.jdbc.api.MetadataProvider.EMPTY, tableReference.get())
                     : List.of();
             String name = table.getName();
             List<DatabaseColumn> missedColumns = getMissedColumnsFromDbStructureFromSchema(databaseSchemaList, name,
@@ -1407,7 +1407,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
             List<? extends DatabaseSchema> databaseSchemaList, List<String> missedTableNames) {
         try {
             List<ColumnDefinition> columnList = databaseService.getColumnDefinitions(databaseMetaData.getConnection(),
-                    org.eclipse.daanse.jdbc.db.api.MetadataProvider.EMPTY, tableReference);
+                    org.eclipse.daanse.sql.jdbc.api.MetadataProvider.EMPTY, tableReference);
             String name = tableReference.name();
             List<DatabaseColumn> missedColumns = getMissedColumnsFromDbStructureFromSchema(databaseSchemaList, name,
                     columnList);

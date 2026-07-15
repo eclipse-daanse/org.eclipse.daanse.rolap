@@ -27,7 +27,7 @@ import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.Optional;
 
-import org.eclipse.daanse.jdbc.db.api.type.Datatype;
+import org.eclipse.daanse.sql.model.type.Datatype;
 import org.eclipse.daanse.olap.api.calc.tuple.TupleList;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.key.BitKey;

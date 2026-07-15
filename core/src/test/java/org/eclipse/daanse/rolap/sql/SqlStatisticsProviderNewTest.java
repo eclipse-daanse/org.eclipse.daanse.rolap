@@ -15,8 +15,8 @@ package org.eclipse.daanse.rolap.sql;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
-import org.eclipse.daanse.jdbc.db.dialect.db.common.AnsiDialect;
+import org.eclipse.daanse.sql.dialect.api.Dialect;
+import org.eclipse.daanse.sql.dialect.db.common.AnsiDialect;
 import org.eclipse.daanse.rolap.common.SqlRender;
 import org.junit.jupiter.api.Test;
 

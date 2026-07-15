@@ -14,7 +14,7 @@ package org.eclipse.daanse.rolap.aggregator;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.eclipse.daanse.jdbc.db.dialect.db.common.AnsiDialect;
+import org.eclipse.daanse.sql.dialect.db.common.AnsiDialect;
 import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.rolap.aggregator.extra.IppAggregator;
 import org.eclipse.daanse.rolap.aggregator.extra.NoneAggregator;

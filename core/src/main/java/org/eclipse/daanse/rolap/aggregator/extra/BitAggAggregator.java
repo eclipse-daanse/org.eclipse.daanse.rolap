@@ -15,7 +15,7 @@ package org.eclipse.daanse.rolap.aggregator.extra;
 import java.util.List;
 import java.util.Optional;
 
-import org.eclipse.daanse.jdbc.db.api.sql.BitOperation;
+import org.eclipse.daanse.sql.model.sql.BitOperation;
 import org.eclipse.daanse.olap.api.DataTypeJdbc;
 import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.olap.api.calc.Calc;

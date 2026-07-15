@@ -22,9 +22,9 @@ import java.util.stream.Stream;
 
 import javax.sql.DataSource;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
-import org.eclipse.daanse.jdbc.db.dialect.api.DialectFactory;
-import org.eclipse.daanse.jdbc.db.dialect.api.DialectInitData;
+import org.eclipse.daanse.sql.dialect.api.Dialect;
+import org.eclipse.daanse.sql.dialect.api.DialectFactory;
+import org.eclipse.daanse.sql.dialect.api.DialectInitData;
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.check.model.check.CatalogCheckResult;
 import org.eclipse.daanse.olap.check.model.check.CheckExecutionResult;

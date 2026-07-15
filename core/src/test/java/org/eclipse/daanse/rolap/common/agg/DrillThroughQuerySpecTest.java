@@ -38,8 +38,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
-import org.eclipse.daanse.jdbc.db.api.type.BestFitColumnType;
+import org.eclipse.daanse.sql.dialect.api.Dialect;
+import org.eclipse.daanse.sql.model.type.BestFitColumnType;
 import org.eclipse.daanse.olap.api.element.OlapElement;
 import org.eclipse.daanse.rolap.common.sql.QueryRecorder;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
@@ -156,7 +156,7 @@ class DrillThroughQuerySpecTest {
     when(col.getExpression())
       .thenReturn(new org.eclipse.daanse.rolap.element.RolapColumn("schul_jahr", "id"));
     when(col.getDatatype())
-      .thenReturn(org.eclipse.daanse.jdbc.db.api.type.Datatype.INTEGER);
+      .thenReturn(org.eclipse.daanse.sql.model.type.Datatype.INTEGER);
     ValueColumnPredicate value = mock(ValueColumnPredicate.class);
     when(value.getConstrainedColumn()).thenReturn(col);
     when(value.getValue()).thenReturn(4);

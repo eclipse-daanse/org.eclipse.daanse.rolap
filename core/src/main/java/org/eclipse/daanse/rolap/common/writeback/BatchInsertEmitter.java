@@ -22,8 +22,8 @@ import java.util.UUID;
 
 import javax.sql.DataSource;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
-import org.eclipse.daanse.jdbc.db.api.type.Datatype;
+import org.eclipse.daanse.sql.dialect.api.Dialect;
+import org.eclipse.daanse.sql.model.type.Datatype;
 import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.sql.statement.api.Expressions;
 import org.eclipse.daanse.sql.statement.api.InsertStatementBuilder;

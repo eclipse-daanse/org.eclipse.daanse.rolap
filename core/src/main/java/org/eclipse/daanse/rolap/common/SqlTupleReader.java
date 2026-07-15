@@ -46,8 +46,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
-import org.eclipse.daanse.jdbc.db.api.type.BestFitColumnType;
+import org.eclipse.daanse.sql.dialect.api.Dialect;
+import org.eclipse.daanse.sql.model.type.BestFitColumnType;
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.calc.tuple.TupleList;
 import org.eclipse.daanse.olap.api.element.Level;
@@ -1249,7 +1249,7 @@ public TupleList readTuples(
     final Collection<RolapCube> baseCubes ) {
     // "select 0 from <fact> where 1 = 0" — a never-matching query used when no base cube fully joins.
     var b = org.eclipse.daanse.sql.statement.api.SelectStatementBuilder.create();
-    b.project( org.eclipse.daanse.sql.statement.api.Expressions.literal( 0, org.eclipse.daanse.jdbc.db.api.type.Datatype.INTEGER ), null );
+    b.project( org.eclipse.daanse.sql.statement.api.Expressions.literal( 0, org.eclipse.daanse.sql.model.type.Datatype.INTEGER ), null );
     b.from( org.eclipse.daanse.rolap.common.sqlbuild.RelationFromMapper.from(baseCubes.iterator().next().getFact() ) );
     b.where( org.eclipse.daanse.sql.statement.api.Predicates.alwaysFalse() );
     org.eclipse.daanse.sql.statement.api.model.SelectStatement statement = b.build();

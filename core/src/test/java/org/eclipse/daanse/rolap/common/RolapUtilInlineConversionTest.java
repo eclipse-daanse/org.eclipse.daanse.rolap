@@ -22,8 +22,8 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
-import org.eclipse.daanse.jdbc.db.dialect.api.generator.SqlGenerator;
+import org.eclipse.daanse.sql.dialect.api.Dialect;
+import org.eclipse.daanse.sql.dialect.api.generator.SqlGenerator;
 import org.eclipse.daanse.rolap.mapping.model.database.relational.InlineTable;
 import org.eclipse.daanse.rolap.mapping.model.database.relational.RelationalFactory;
 import org.eclipse.daanse.rolap.mapping.model.database.source.InlineTableSource;

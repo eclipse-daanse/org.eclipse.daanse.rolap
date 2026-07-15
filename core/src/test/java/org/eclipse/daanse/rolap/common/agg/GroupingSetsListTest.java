@@ -149,7 +149,7 @@ class GroupingSetsListTest {
     when(tableMock.getAlias()).thenReturn("Table Mock");
     // SegmentBuilder.toHeader now renders compound predicates via DialectSqlRenderer(star.getDialect()),
     // so the star mock must supply a dialect (else the renderer ctor NPEs on null).
-    when(mock.getDialect()).thenReturn(mock(org.eclipse.daanse.jdbc.db.dialect.api.Dialect.class));
+    when(mock.getDialect()).thenReturn(mock(org.eclipse.daanse.sql.dialect.api.Dialect.class));
     return mock;
   }
 

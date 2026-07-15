@@ -13,7 +13,7 @@
  */
 package org.eclipse.daanse.rolap.common;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
+import org.eclipse.daanse.sql.dialect.api.Dialect;
 import org.eclipse.daanse.sql.statement.api.expression.Predicate;
 import org.eclipse.daanse.sql.statement.api.model.SelectStatement;
 import org.eclipse.daanse.sql.statement.api.render.RenderOptions;

@@ -18,8 +18,8 @@ import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.regex.Pattern;
 
-import org.eclipse.daanse.jdbc.db.api.sql.OrderedColumn;
-import org.eclipse.daanse.jdbc.db.api.sql.SortDirection;
+import org.eclipse.daanse.sql.model.sql.OrderedColumn;
+import org.eclipse.daanse.sql.model.sql.SortDirection;
 import org.eclipse.daanse.olap.api.DataTypeJdbc;
 import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.olap.api.calc.Calc;

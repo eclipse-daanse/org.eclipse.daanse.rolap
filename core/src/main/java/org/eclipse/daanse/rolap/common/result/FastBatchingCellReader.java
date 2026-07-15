@@ -37,7 +37,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Future;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
+import org.eclipse.daanse.sql.dialect.api.Dialect;
 import org.eclipse.daanse.olap.api.result.CellValue;
 import org.eclipse.daanse.olap.api.result.NotLoaded;
 import org.eclipse.daanse.olap.api.result.NullValue;

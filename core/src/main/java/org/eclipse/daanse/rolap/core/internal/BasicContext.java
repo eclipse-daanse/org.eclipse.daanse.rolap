@@ -40,8 +40,8 @@ import java.util.concurrent.TimeUnit;
 
 import javax.sql.DataSource;
 
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
-import org.eclipse.daanse.jdbc.db.dialect.api.DialectFactory;
+import org.eclipse.daanse.sql.dialect.api.Dialect;
+import org.eclipse.daanse.sql.dialect.api.DialectFactory;
 import org.eclipse.daanse.mdx.parser.api.MdxParserProvider;
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.agg.AggregationFactory;

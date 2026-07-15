@@ -43,7 +43,7 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import org.eclipse.daanse.jdbc.db.api.type.Datatype;
+import org.eclipse.daanse.sql.model.type.Datatype;
 import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
 import org.eclipse.daanse.olap.api.sql.SqlExpression;

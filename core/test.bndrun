@@ -68,9 +68,6 @@
 	org.apache.felix.scr;version='[2.2.10,2.2.11)',\
 	org.eclipse.daanse.cwm.model.cwm;version='[0.0.1,0.0.2)',\
 	org.eclipse.daanse.cwm.util;version='[0.0.1,0.0.2)',\
-	org.eclipse.daanse.jdbc.db.api;version='[0.0.1,0.0.2)',\
-	org.eclipse.daanse.jdbc.db.dialect.api;version='[0.0.1,0.0.2)',\
-	org.eclipse.daanse.jdbc.db.dialect.db.common;version='[0.0.1,0.0.2)',\
 	org.eclipse.daanse.mdx.model.api;version='[0.0.1,0.0.2)',\
 	org.eclipse.daanse.mdx.parser.api;version='[0.0.1,0.0.2)',\
 	org.eclipse.daanse.olap.api;version='[0.0.1,0.0.2)',\
@@ -81,7 +78,10 @@
 	org.eclipse.daanse.rolap.core;version='[0.0.1,0.0.2)',\
 	org.eclipse.daanse.rolap.core-tests;version='[0.0.1,0.0.2)',\
 	org.eclipse.daanse.rolap.mapping.model;version='[0.0.1,0.0.2)',\
+	org.eclipse.daanse.sql.dialect.api;version='[0.0.1,0.0.2)',\
+	org.eclipse.daanse.sql.dialect.db.common;version='[0.0.1,0.0.2)',\
 	org.eclipse.daanse.sql.guard.api;version='[0.0.1,0.0.2)',\
+	org.eclipse.daanse.sql.model;version='[0.0.1,0.0.2)',\
 	org.eclipse.daanse.sql.statement.api;version='[0.0.1,0.0.2)',\
 	org.eclipse.daanse.sql.statement.impl;version='[0.0.1,0.0.2)',\
 	org.eclipse.emf.common;version='[2.44.0,2.44.1)',\

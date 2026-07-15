@@ -19,8 +19,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.eclipse.daanse.jdbc.db.api.type.BestFitColumnType;
-import org.eclipse.daanse.jdbc.db.api.type.Datatype;
+import org.eclipse.daanse.sql.model.type.BestFitColumnType;
+import org.eclipse.daanse.sql.model.type.Datatype;
 import org.eclipse.daanse.olap.api.DataTypeJdbc;
 
 public class EnumConvertor {

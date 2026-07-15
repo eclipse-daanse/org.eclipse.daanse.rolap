@@ -19,7 +19,7 @@ import org.eclipse.daanse.cwm.testkit.data.DataLayer;
 import org.eclipse.daanse.cwm.testkit.database.DatabaseLayer;
 import org.eclipse.daanse.jdbc.datasource.testkit.api.ActiveDatabase;
 import org.eclipse.daanse.jdbc.datasource.testkit.api.DatabaseProvider;
-import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
+import org.eclipse.daanse.sql.dialect.api.Dialect;
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.connection.Connection;
 import org.eclipse.daanse.olap.api.query.component.Query;
@@ -52,9 +52,9 @@ class MdxQuerySmokeTest {
     }
 
     private record FixedDialectFactory(Dialect dialect)
-            implements org.eclipse.daanse.jdbc.db.dialect.api.DialectFactory {
+            implements org.eclipse.daanse.sql.dialect.api.DialectFactory {
         @Override
-        public Dialect createDialect(org.eclipse.daanse.jdbc.db.dialect.api.DialectInitData init) {
+        public Dialect createDialect(org.eclipse.daanse.sql.dialect.api.DialectInitData init) {
             return dialect;
         }
     }
