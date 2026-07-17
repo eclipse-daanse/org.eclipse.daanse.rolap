@@ -41,6 +41,7 @@ import org.eclipse.daanse.olap.api.access.Role;
 import org.eclipse.daanse.olap.api.calc.ResultStyle;
 import org.eclipse.daanse.olap.api.calc.tuple.TupleList;
 import org.eclipse.daanse.olap.api.catalog.CatalogReader;
+import org.eclipse.daanse.olap.api.element.HideMemberCondition;
 import org.eclipse.daanse.olap.api.element.Hierarchy;
 import org.eclipse.daanse.olap.api.element.Level;
 import org.eclipse.daanse.olap.api.element.Member;
@@ -644,7 +645,7 @@ public abstract class RolapNativeSet extends RolapNative {
     private boolean isRaggedLevel( Level level ) {
       if ( level instanceof RolapLevel rolapLevel) {
         return rolapLevel.getHideMemberCondition()
-          != RolapLevel.HideMemberCondition.Never;
+          != HideMemberCondition.NEVER;
       }
       // don't know if it's ragged, so assume it is.
       // should not reach here

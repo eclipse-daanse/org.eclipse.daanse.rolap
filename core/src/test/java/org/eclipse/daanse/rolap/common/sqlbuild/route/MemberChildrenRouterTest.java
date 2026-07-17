@@ -21,8 +21,8 @@ import static org.mockito.Mockito.when;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.daanse.sql.dialect.db.common.AnsiDialect;
 import org.eclipse.daanse.olap.api.element.Dimension;
+import org.eclipse.daanse.olap.api.element.HideMemberCondition;
 import org.eclipse.daanse.olap.api.element.LevelType;
 import org.eclipse.daanse.olap.api.sql.SqlExpression;
 import org.eclipse.daanse.olap.element.OlapMetaDataBase;
@@ -34,6 +34,7 @@ import org.eclipse.daanse.rolap.element.RolapColumn;
 import org.eclipse.daanse.rolap.element.RolapHierarchy;
 import org.eclipse.daanse.rolap.element.RolapLevel;
 import org.eclipse.daanse.rolap.element.RolapProperty;
+import org.eclipse.daanse.sql.dialect.db.common.AnsiDialect;
 import org.eclipse.daanse.sql.statement.render.DialectSqlRenderer;
 import org.junit.jupiter.api.Test;
 
@@ -77,7 +78,7 @@ class MemberChildrenRouterTest {
         return new RolapLevel(hierarchy, name, null, true, null, depth, keyExp, null, null,
             null, null, null, null, RolapProperty.emptyArray, flags,
             org.eclipse.daanse.sql.model.type.Datatype.VARCHAR, null,
-            RolapLevel.HideMemberCondition.Never, LevelType.REGULAR, "",
+            HideMemberCondition.NEVER, LevelType.REGULAR, "",
             OlapMetaDataBase.empty());
     }
 

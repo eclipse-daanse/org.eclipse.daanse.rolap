@@ -648,10 +648,10 @@ public class RolapMemberBase
 	public boolean isHidden() {
         final RolapLevel rolapLevel = getLevel();
         switch (rolapLevel.getHideMemberCondition()) {
-        case Never:
+        case NEVER:
             return false;
 
-        case IfBlankName:
+        case IF_BLANK_NAME:
         {
             // If the key value in the database is null, then we use
             // a special key value whose toString() is "null".
@@ -661,7 +661,7 @@ public class RolapMemberBase
         }
 
         //TODO:: IfParentsProperty and additional attribute that is by default the name, or a property that is switch
-        case IfParentsName:
+        case IF_PARENTS_NAME:
         {
             final Member parentMember = getParentMember();
             if (parentMember == null) {

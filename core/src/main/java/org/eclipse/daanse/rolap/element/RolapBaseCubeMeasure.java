@@ -25,8 +25,10 @@
 
 package org.eclipse.daanse.rolap.element;
 
-import org.eclipse.daanse.sql.model.type.Datatype;
+import java.util.Optional;
+
 import org.eclipse.daanse.olap.api.Context;
+import org.eclipse.daanse.olap.api.DataTypeJdbc;
 import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.olap.api.element.MetaData;
 import org.eclipse.daanse.olap.api.element.PhysicalCubeMeasure;
@@ -41,6 +43,7 @@ import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.result.RolapResult;
 import org.eclipse.daanse.rolap.common.star.RolapSqlExpression;
 import org.eclipse.daanse.rolap.mapping.model.database.relational.ColumnInternalDataType;
+import org.eclipse.daanse.sql.model.type.Datatype;
 
 /**
  * Measure which is computed from a SQL column (or expression) and which is
@@ -203,6 +206,14 @@ public class RolapBaseCubeMeasure
 
     public Datatype getDatatype() {
         return toDialectDatatype(getPropertyValue(StandardProperty.DATATYPE.getName()));
+    }
+
+    @Override
+    public Optional<DataTypeJdbc> getDataType() {
+        if (!(getPropertyValue(StandardProperty.DATATYPE.getName()) instanceof String literal)) {
+            return Optional.empty();
+        }
+        return Optional.of(DataTypeJdbc.fromValue(literal));
     }
 
     /**
