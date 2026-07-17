@@ -21,11 +21,13 @@ import static org.mockito.Mockito.when;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.daanse.sql.dialect.db.common.AnsiDialect;
 import org.eclipse.daanse.olap.api.element.Dimension;
+import org.eclipse.daanse.olap.api.element.HideMemberCondition;
 import org.eclipse.daanse.olap.api.element.LevelType;
 import org.eclipse.daanse.olap.api.sql.SqlExpression;
 import org.eclipse.daanse.olap.element.OlapMetaDataBase;
+import org.eclipse.daanse.rolap.common.sqlbuild.CountQueries;
+import org.eclipse.daanse.rolap.common.sqlbuild.TupleSqlMapper;
 import org.eclipse.daanse.rolap.element.RolapColumn;
 import org.eclipse.daanse.rolap.element.RolapHierarchy;
 import org.eclipse.daanse.rolap.element.RolapLevel;
@@ -34,6 +36,7 @@ import org.eclipse.daanse.rolap.mapping.model.database.relational.DialectSqlView
 import org.eclipse.daanse.rolap.mapping.model.database.source.SqlSelectSource;
 import org.eclipse.daanse.rolap.mapping.model.database.source.SqlStatement;
 import org.eclipse.daanse.rolap.mapping.model.database.source.TableSource;
+import org.eclipse.daanse.sql.dialect.db.common.AnsiDialect;
 import org.eclipse.daanse.sql.statement.render.DialectSqlRenderer;
 import org.eclipse.emf.common.util.BasicEList;
 import org.junit.jupiter.api.Test;
@@ -91,7 +94,7 @@ class LevelMemberCountSqlTest {
             SqlExpression keyExp, SqlExpression parentExp, int flags) {
         return new RolapLevel(hierarchy, name, null, true, null, depth, keyExp, null, null,
                 null, parentExp, null, null, RolapProperty.emptyArray, flags, null, null,
-                RolapLevel.HideMemberCondition.Never, LevelType.REGULAR, "",
+                HideMemberCondition.NEVER, LevelType.REGULAR, "",
                 OlapMetaDataBase.empty());
     }
 

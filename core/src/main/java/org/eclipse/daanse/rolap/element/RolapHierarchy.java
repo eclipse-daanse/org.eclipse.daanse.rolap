@@ -59,6 +59,7 @@ import org.eclipse.daanse.olap.api.calc.tuple.TupleListCalc;
 import org.eclipse.daanse.olap.api.catalog.CatalogReader;
 import org.eclipse.daanse.olap.api.element.Dimension;
 import org.eclipse.daanse.olap.api.element.DimensionType;
+import org.eclipse.daanse.olap.api.element.HideMemberCondition;
 import org.eclipse.daanse.olap.api.element.Hierarchy;
 import org.eclipse.daanse.olap.api.element.Level;
 import org.eclipse.daanse.olap.api.element.LevelType;
@@ -231,7 +232,7 @@ public class RolapHierarchy extends HierarchyBase {
                     RolapLevel.FLAG_ALL | RolapLevel.FLAG_UNIQUE,
                     null,
                     null,
-                    RolapLevel.HideMemberCondition.Never,
+                    HideMemberCondition.NEVER,
                     LevelType.REGULAR,
                     "",
                     OlapMetaDataBase.empty()));
@@ -260,7 +261,7 @@ public class RolapHierarchy extends HierarchyBase {
                 RolapLevel.FLAG_ALL | RolapLevel.FLAG_UNIQUE,
                 null,
                 null,
-                RolapLevel.HideMemberCondition.Never,
+                HideMemberCondition.NEVER,
                 LevelType.NULL,
                 "",
                 OlapMetaDataBase.empty());
@@ -348,7 +349,7 @@ public class RolapHierarchy extends HierarchyBase {
                 RolapLevel.FLAG_ALL | RolapLevel.FLAG_UNIQUE,
                 null,
                 null,
-                RolapLevel.HideMemberCondition.Never,
+                HideMemberCondition.NEVER,
                 LevelType.REGULAR, ALL_LEVEL_CARDINALITY,
                 OlapMetaDataBase.empty());
         allLevel.init(cubeDimensionMapping);
@@ -646,7 +647,7 @@ public class RolapHierarchy extends HierarchyBase {
                 0,
                 null,
                 null,
-                RolapLevel.HideMemberCondition.Never,
+                HideMemberCondition.NEVER,
                 LevelType.REGULAR,
                 "",
                 OlapMetaDataBase.empty());
@@ -1241,7 +1242,7 @@ public class RolapHierarchy extends HierarchyBase {
 	public boolean isRagged() {
         for (Level level : levels) {
             if (((RolapLevel) level).getHideMemberCondition()
-                != RolapLevel.HideMemberCondition.Never)
+                != HideMemberCondition.NEVER)
             {
                 return true;
             }

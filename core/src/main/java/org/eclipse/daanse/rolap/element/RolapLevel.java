@@ -32,6 +32,7 @@ import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import java.sql.Types;
@@ -44,13 +45,16 @@ import org.eclipse.daanse.olap.api.agg.Segment;
 import org.eclipse.daanse.olap.api.catalog.CatalogReader;
 import org.eclipse.daanse.olap.api.element.Dimension;
 import org.eclipse.daanse.olap.api.element.DimensionType;
+import org.eclipse.daanse.olap.api.element.HideMemberCondition;
 import org.eclipse.daanse.olap.api.element.Level;
 import org.eclipse.daanse.olap.api.element.LevelType;
 import org.eclipse.daanse.olap.api.element.MatchType;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.element.MetaData;
 import org.eclipse.daanse.olap.api.element.OlapElement;
+import org.eclipse.daanse.olap.api.element.OrderByProperty;
 import org.eclipse.daanse.olap.api.element.Property;
+import org.eclipse.daanse.olap.api.element.SortDirection;
 import org.eclipse.daanse.olap.api.formatter.MemberPropertyFormatter;
 import org.eclipse.daanse.olap.api.query.NameSegment;
 import org.eclipse.daanse.olap.api.sql.SqlExpression;
@@ -65,6 +69,7 @@ import org.eclipse.daanse.olap.format.FormatterFactory;
 import org.eclipse.daanse.olap.query.component.IdImpl;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.RolapUtil;
+import org.eclipse.daanse.rolap.common.sql.QueryTape.OrderBy;
 import org.eclipse.daanse.rolap.common.star.RolapSqlExpression;
 import org.eclipse.daanse.rolap.common.util.SqlExpressionResolver;
 import org.eclipse.daanse.rolap.common.util.LevelUtil;
@@ -401,6 +406,7 @@ public class RolapLevel extends LevelBase {
         return flags;
     }
 
+    @Override
     public HideMemberCondition getHideMemberCondition() {
         return hideMemberCondition;
     }
@@ -766,32 +772,6 @@ public class RolapLevel extends LevelBase {
         return internalType;
     }
 
-    /**
-     * Conditions under which a level's members may be hidden (thereby creating
-     * a <dfn>ragged hierarchy</dfn>).
-     */
-    public enum HideMemberCondition {
-        /** A member always appears. */
-        Never,
-
-        /** A member doesn't appear if its name is null or empty. */
-        IfBlankName,
-
-        /** A member appears unless its name matches its parent's. */
-        IfParentsName;
-
-        public static HideMemberCondition fromValue(String v) {
-            return Stream.of(HideMemberCondition.values())
-                .filter(e -> (e.toString().equalsIgnoreCase(v)))
-                .findFirst().orElse(Never);
-            // TODO:  care about fallback
-//                .orElseThrow(() -> new IllegalArgumentException(
-//                    new StringBuilder("HideMemberCondition enum Illegal argument ").append(v)
-//                        .toString())
-//                );
-        }
-    }
-
     public OlapElement lookupChild(CatalogReader schemaReader, Segment name) {
         return lookupChild(schemaReader, name, MatchType.EXACT);
     }
@@ -911,7 +891,7 @@ public class RolapLevel extends LevelBase {
         // is able to handle?
         if (getDepth() == getHierarchy().getLevels().size() - 1) {
             return switch (getHideMemberCondition()) {
-            case Never, IfBlankName -> false;
+            case NEVER, IF_BLANK_NAME -> false;
             default -> true;
             };
         }
@@ -944,4 +924,41 @@ public class RolapLevel extends LevelBase {
         return null;
     }
 
+    @Override
+    public Optional<OrderByProperty> getOrderByProperty() {
+        return resolveOrderBy(levelMapping, getProperties());
+    }
+
+    private static Optional<OrderByProperty> resolveOrderBy(
+            org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.Level mappingLevel,
+            Property[] properties) {
+        var ordinalColumns = mappingLevel.getOrdinalColumns();
+        if (ordinalColumns == null || ordinalColumns.isEmpty()) {
+            return null;
+        }
+        if (ordinalColumns.size() > 1) {
+            LOGGER.warn("Level {}: {} ordinalColumns, only the first one will be considered "
+                    + "OrderBy depicted", mappingLevel.getName(), ordinalColumns.size());
+        }
+        var oc = ordinalColumns.get(0);
+        if (oc.getColumn() == null) {
+            return null;
+        }
+        for (var mp : mappingLevel.getMemberProperties()) {
+            if (mp.getColumn() == oc.getColumn()) {
+                for (Property p : properties) {
+                    if (p.getName().equals(mp.getName())) {
+                        return  Optional.of(new OrderByProperty(p, toDirection(oc.getDirection())));
+                    }
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    private static SortDirection toDirection(
+            org.eclipse.daanse.rolap.mapping.model.database.relational.SortingDirection d) {
+        return d == org.eclipse.daanse.rolap.mapping.model.database.relational.SortingDirection.DESC ? SortDirection.DESC
+                                            : SortDirection.ASC;   // ASC/None → ASC
+    }
 }
