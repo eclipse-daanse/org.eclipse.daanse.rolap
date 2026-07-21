@@ -75,7 +75,7 @@ import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
-import org.eclipse.daanse.cwm.util.resource.relational.ColumnSets;
+import org.eclipse.daanse.cwm.model.cwm.resource.relational.util.ColumnSets;
 import org.osgi.service.metatype.annotations.Designate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

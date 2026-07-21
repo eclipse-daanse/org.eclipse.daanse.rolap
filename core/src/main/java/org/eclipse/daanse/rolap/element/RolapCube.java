@@ -141,9 +141,9 @@ import org.eclipse.daanse.cwm.model.cwm.objectmodel.instance.DataSlot;
 import org.eclipse.daanse.cwm.model.cwm.resource.relational.Column;
 import org.eclipse.daanse.cwm.model.cwm.resource.relational.Row;
 import org.eclipse.daanse.cwm.model.cwm.resource.relational.RowSet;
-import org.eclipse.daanse.cwm.util.resource.relational.ColumnSets;
-import org.eclipse.daanse.cwm.util.resource.relational.RowSets;
-import org.eclipse.daanse.cwm.util.resource.relational.Rows;
+import org.eclipse.daanse.cwm.model.cwm.resource.relational.util.ColumnSets;
+import org.eclipse.daanse.cwm.model.cwm.resource.relational.util.RowSets;
+import org.eclipse.daanse.cwm.model.cwm.resource.relational.util.Rows;
 /**
  * RolapCube implements {@link Cube} for a ROLAP database.
  *

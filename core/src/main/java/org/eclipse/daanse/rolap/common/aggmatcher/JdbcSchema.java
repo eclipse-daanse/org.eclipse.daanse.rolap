@@ -27,7 +27,7 @@ package org.eclipse.daanse.rolap.common.aggmatcher;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import org.eclipse.daanse.cwm.util.resource.relational.SqlSimpleTypes;
+import org.eclipse.daanse.cwm.model.cwm.resource.relational.util.SqlSimpleTypes;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.text.MessageFormat;

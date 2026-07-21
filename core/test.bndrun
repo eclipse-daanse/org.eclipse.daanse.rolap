@@ -66,8 +66,12 @@
 	org.apache.commons.commons-collections4;version='[4.5.0,4.5.1)',\
 	org.apache.felix.configadmin;version='[1.9.26,1.9.27)',\
 	org.apache.felix.scr;version='[2.2.10,2.2.11)',\
-	org.eclipse.daanse.cwm.model.cwm;version='[0.0.1,0.0.2)',\
-	org.eclipse.daanse.cwm.util;version='[0.0.1,0.0.2)',\
+	org.eclipse.daanse.cwm.model.cwm.foundation.datatypes;version='[0.0.1,0.0.2)',\
+	org.eclipse.daanse.cwm.model.cwm.foundation.keysindexes;version='[0.0.1,0.0.2)',\
+	org.eclipse.daanse.cwm.model.cwm.objectmodel.behavioral;version='[0.0.1,0.0.2)',\
+	org.eclipse.daanse.cwm.model.cwm.objectmodel.core;version='[0.0.1,0.0.2)',\
+	org.eclipse.daanse.cwm.model.cwm.objectmodel.instance;version='[0.0.1,0.0.2)',\
+	org.eclipse.daanse.cwm.model.cwm.resource.relational;version='[0.0.1,0.0.2)',\
 	org.eclipse.daanse.mdx.model.api;version='[0.0.1,0.0.2)',\
 	org.eclipse.daanse.mdx.parser.api;version='[0.0.1,0.0.2)',\
 	org.eclipse.daanse.olap.api;version='[0.0.1,0.0.2)',\
