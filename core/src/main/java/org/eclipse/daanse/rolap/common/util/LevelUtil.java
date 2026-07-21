@@ -18,7 +18,7 @@ import java.util.Objects;
 
 import org.eclipse.daanse.cwm.model.cwm.resource.relational.ColumnSet;
 import org.eclipse.daanse.cwm.model.cwm.resource.relational.NamedColumnSet;
-import org.eclipse.daanse.cwm.util.resource.relational.Columns;
+import org.eclipse.daanse.cwm.model.cwm.resource.relational.util.Columns;
 import org.eclipse.daanse.olap.api.sql.SortingDirection;
 import org.eclipse.daanse.olap.api.sql.SqlExpression;
 import org.eclipse.daanse.rolap.common.star.RolapSqlExpression;
