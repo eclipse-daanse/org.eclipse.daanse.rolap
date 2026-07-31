@@ -137,7 +137,7 @@ public final class StarPredicateTranslator {
                 return Predicates.isNull(col);
             }
             return Predicates.comparison(col, ComparisonOperator.EQ,
-                    Expressions.literal(v, literalType(value, fallbackType)));
+                    typedLiteral(v, literalType(value, fallbackType)));
         }
         if (predicate instanceof ListColumnPredicate list) {
             List<org.eclipse.daanse.rolap.common.star.StarColumnPredicate> children = list.getPredicates();
@@ -153,7 +153,7 @@ public final class StarPredicateTranslator {
                         hasNull = true;
                         continue;
                     }
-                    values.add(Expressions.literal(val, literalType(v, fallbackType)));
+                    values.add(typedLiteral(val, literalType(v, fallbackType)));
                 }
                 Predicate base;
                 if (values.isEmpty()) {
@@ -178,6 +178,38 @@ public final class StarPredicateTranslator {
         return value.getConstrainedColumn() != null ? value.getConstrainedColumn().getDatatype() : fallbackType;
     }
 
+    /**
+     * A literal whose value matches its column's type. Predicate values reach us as whatever
+     * java type the driver produced for the key column, which is not always the type the column
+     * is declared with: a boolean level backed by a 0/1 column yields Integers, a real BOOLEAN
+     * column yields Booleans. Rendering that verbatim gives {@code BOOLEAN = 1} or
+     * {@code SMALLINT = true} - accepted by lenient engines (mysql, duckdb), rejected outright
+     * by strict ones (h2, postgres). So convert here, where value and column type are both known.
+     */
+    private static SqlExpression typedLiteral(Object value, org.eclipse.daanse.sql.model.type.Datatype datatype) {
+        return Expressions.literal(coerceToDatatype(value, datatype), datatype);
+    }
+
+    private static Object coerceToDatatype(Object value, org.eclipse.daanse.sql.model.type.Datatype datatype) {
+        if (datatype == null || value == null) {
+            return value;
+        }
+        if (datatype == org.eclipse.daanse.sql.model.type.Datatype.BOOLEAN && !(value instanceof Boolean)) {
+            String text = value.toString().trim();
+            if ("1".equals(text) || "true".equalsIgnoreCase(text)) {
+                return Boolean.TRUE;
+            }
+            if ("0".equals(text) || "false".equalsIgnoreCase(text)) {
+                return Boolean.FALSE;
+            }
+            return value;
+        }
+        if (datatype.isNumeric() && value instanceof Boolean flag) {
+            return flag ? Integer.valueOf(1) : Integer.valueOf(0);
+        }
+        return value;
+    }
+
     /** {@code col = value}, or {@code col IS NULL} when the value is null. */
     private static Predicate valuePredicate(
             ValueColumnPredicate value, Function<RolapStar.Column, SqlExpression> columnResolver) {
@@ -190,7 +222,7 @@ public final class StarPredicateTranslator {
             return Predicates.isNull(col);
         }
         return Predicates.comparison(col, ComparisonOperator.EQ,
-                Expressions.literal(v, column.getDatatype()));
+                typedLiteral(v, column.getDatatype()));
     }
 
     /**
@@ -216,7 +248,7 @@ public final class StarPredicateTranslator {
                     hasNull = true;
                     continue;
                 }
-                values.add(Expressions.literal(val, v.getConstrainedColumn().getDatatype()));
+                values.add(typedLiteral(val, v.getConstrainedColumn().getDatatype()));
             }
             Predicate base;
             if (values.isEmpty()) {
@@ -311,7 +343,7 @@ public final class StarPredicateTranslator {
                 List<SqlExpression> vals = new ArrayList<>();
                 for (RolapStar.Column col : inListColumns) {
                     ValueColumnPredicate v = m.get(col.getBitPosition());
-                    vals.add(Expressions.literal(v.getValue(), col.getDatatype()));
+                    vals.add(typedLiteral(v.getValue(), col.getDatatype()));
                 }
                 valueRows.add(vals);
             }
@@ -408,7 +440,7 @@ public final class StarPredicateTranslator {
         if (v == null || v == Util.sqlNullValue) {
             throw new IllegalArgumentException("RangeColumnPredicate bound with null value");
         }
-        return Expressions.literal(v, column.getDatatype());
+        return typedLiteral(v, column.getDatatype());
     }
 
     /**
@@ -480,7 +512,7 @@ public final class StarPredicateTranslator {
             RolapStar.Column column, ComparisonOperator op, Object value,
             Function<RolapStar.Column, SqlExpression> columnResolver) {
         return Predicates.comparison(columnResolver.apply(column), op,
-                Expressions.literal(value, column.getDatatype()));
+                typedLiteral(value, column.getDatatype()));
     }
 
     /**
