@@ -26,20 +26,15 @@ import org.osgi.service.component.annotations.Component;
 
 @Component(service = FunctionResolver.class)
 public class VisualTotalsResolver extends AbstractFunctionDefinitionMultiResolver {
-    private static FunctionOperationAtom atom = new FunctionOperationAtom("VisualTotals");
-    private static String DESCRIPTION = "Dynamically totals child members specified in a set using a pattern for the total label in the result set.";
-    private static FunctionParameterR[] x = { new FunctionParameterR(DataType.SET) };
-    private static FunctionParameterR[] xS = { new FunctionParameterR(DataType.SET), new FunctionParameterR(DataType.STRING, "Pattern") };
-    // {"fxx", "fxxS"}
+    private static final FunctionOperationAtom atom = new FunctionOperationAtom("VisualTotals");
+    private static final String DESCRIPTION = "Dynamically totals child members specified in a set using a pattern for the total label in the result set.";
 
-    private static FunctionMetaData functionMetaData = new FunctionMetaDataR(atom, DESCRIPTION,
-            DataType.SET, x);
-    private static FunctionMetaData functionMetaData1 = new FunctionMetaDataR(atom, DESCRIPTION,
-            DataType.SET, xS);
+    private static final FunctionMetaData functionMetaData = FunctionMetaDataR.of(atom, DESCRIPTION, DataType.SET,
+            FunctionParameterR.param(DataType.SET), //
+            FunctionParameterR.param(DataType.STRING, "Pattern").asOptional()
+                    .describedAs("Label pattern for the visual total member; * is replaced by the parent name."));
 
     public VisualTotalsResolver() {
-        super(List.of(new VisualTotalsFunDef(functionMetaData), new VisualTotalsFunDef(functionMetaData1)));
+        super(List.of(new VisualTotalsFunDef(functionMetaData)));
     }
-
-
 }
