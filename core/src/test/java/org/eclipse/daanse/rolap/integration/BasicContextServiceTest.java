@@ -16,7 +16,7 @@ package org.eclipse.daanse.rolap.integration;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_PID;
 import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_REF_NAME_CATALOG_MAPPING_SUPPLIER;
-import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_REF_NAME_DATA_SOURCE;
+import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_REF_NAME_CONNECTION_POOL;
 import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_REF_NAME_DIALECT_FACTORY;
 import static org.mockito.Mockito.when;
 import static org.osgi.test.common.dictionary.Dictionaries.dictionaryOf;
@@ -27,6 +27,8 @@ import java.util.Dictionary;
 import java.util.Hashtable;
 
 import javax.sql.DataSource;
+
+import org.eclipse.daanse.jdbc.datasource.pools.api.ConnectionPool;
 
 import org.eclipse.daanse.sql.dialect.api.Dialect;
 import org.eclipse.daanse.sql.dialect.api.DialectFactory;
@@ -62,7 +64,7 @@ import org.eclipse.daanse.rolap.mapping.model.catalog.CatalogFactory;
 @ExtendWith(ConfigurationExtension.class)
 @ExtendWith(MockitoExtension.class)
 
-@ServiceProvider(value = javax.sql.DataSource.class)
+@ServiceProvider(value = ConnectionPool.class)
 @ServiceProvider(value = DialectFactory.class)
 @ServiceProvider(value = MdxParserProvider.class)
 @ServiceProvider(value = CatalogMappingSupplier.class)
@@ -80,6 +82,9 @@ class BasicContextServiceTest {
 
     @Mock
     DataSource dataSource;
+
+    @Mock
+    ConnectionPool connectionPool;
 
     @Mock
     Connection connection;
@@ -109,7 +114,8 @@ class BasicContextServiceTest {
         @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = BASIC_CONTEXT_PID, name = "name1")) Configuration c,
         @InjectService(cardinality = 0) ServiceAware<Context> saContext) throws Exception {
 
-        when(dataSource.getConnection()).thenReturn(connection);
+        when(connectionPool.getConnection()).thenReturn(connection);
+        when(connectionPool.dataSource()).thenReturn(dataSource);
         when(dialectFactory.createDialect(connection)).thenReturn(dialect);
         when(catalogMappingSupplier.get()).thenReturn(catalogMapping);
         catalogMapping.setName("schemaName");
@@ -118,7 +124,7 @@ class BasicContextServiceTest {
 
         ServiceReferenceAssert.assertThat(saContext.getServiceReference()).isNull();
 
-        bc.registerService(DataSource.class, dataSource, dictionaryOf("ds", "1"));
+        bc.registerService(ConnectionPool.class, connectionPool, dictionaryOf("ds", "1"));
         bc.registerService(DialectFactory.class, dialectFactory, dictionaryOf("df", "1"));
         bc.registerService(CatalogMappingSupplier.class, catalogMappingSupplier, dictionaryOf("cms", "1"));
 
@@ -129,7 +135,7 @@ class BasicContextServiceTest {
 
         Dictionary<String, Object> props = new Hashtable<>();
 
-        props.put(BASIC_CONTEXT_REF_NAME_DATA_SOURCE + TARGET_EXT, "(ds=1)");
+        props.put(BASIC_CONTEXT_REF_NAME_CONNECTION_POOL + TARGET_EXT, "(ds=1)");
         props.put(BASIC_CONTEXT_REF_NAME_DIALECT_FACTORY + TARGET_EXT, "(df=1)");
         props.put(BASIC_CONTEXT_REF_NAME_CATALOG_MAPPING_SUPPLIER + TARGET_EXT, "(cms=1)");
         props.put(Constants.BASIC_CONTEXT_REF_NAME_EXPRESSION_COMPILER_FACTORY + TARGET_EXT, "(ecf=1)");

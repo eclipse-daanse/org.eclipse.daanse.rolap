@@ -72,6 +72,7 @@
 	org.eclipse.daanse.cwm.model.cwm.objectmodel.core;version='[0.0.1,0.0.2)',\
 	org.eclipse.daanse.cwm.model.cwm.objectmodel.instance;version='[0.0.1,0.0.2)',\
 	org.eclipse.daanse.cwm.model.cwm.resource.relational;version='[0.0.1,0.0.2)',\
+	org.eclipse.daanse.jdbc.datasource.pools.api;version='[0.0.1,0.0.2)',\
 	org.eclipse.daanse.mdx.model.api;version='[0.0.1,0.0.2)',\
 	org.eclipse.daanse.mdx.parser.api;version='[0.0.1,0.0.2)',\
 	org.eclipse.daanse.olap.api;version='[0.0.1,0.0.2)',\

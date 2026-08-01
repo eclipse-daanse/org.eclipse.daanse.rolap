@@ -15,6 +15,7 @@ package org.eclipse.daanse.rolap.api;
 
 import java.util.Optional;
 
+import org.eclipse.daanse.jdbc.datasource.pools.api.ConnectionPool;
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.connection.Connection;
 import org.eclipse.daanse.rolap.api.aggmatch.AggregationMatchRulesSupplier;
@@ -25,4 +26,16 @@ public interface RolapContext extends Context<Connection> {
 	Catalog getCatalogMapping();
 
 	Optional<AggregationMatchRulesSupplier> getAggMatchRulesSupplier();
+
+	/**
+	 * The pool the context draws its JDBC connections from.
+	 * <p>
+	 * Declared here and deliberately not on {@link Context}: the olap api is the
+	 * logical OLAP view and stays free of JDBC types, while
+	 * {@link ConnectionPool} hands out {@link java.sql.Connection}. Callers that
+	 * only need to open a connection keep using {@link Context#getDataSource()},
+	 * which already returns the pool's own DataSource. This getter is for the ones
+	 * that have to bound their wait.
+	 */
+	ConnectionPool getConnectionPool();
 }
