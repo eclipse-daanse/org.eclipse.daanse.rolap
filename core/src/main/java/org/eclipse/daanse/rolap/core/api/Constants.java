@@ -20,7 +20,7 @@ public class Constants {
     public static final String BASIC_CONTEXT_PID = "daanse.rolap.core.BasicContext";
 
     public static final String BASIC_CONTEXT_REF_NAME_DIALECT_FACTORY = "dialectFactory";
-    public static final String BASIC_CONTEXT_REF_NAME_DATA_SOURCE = "dataSource";
+    public static final String BASIC_CONTEXT_REF_NAME_CONNECTION_POOL = "connectionPool";
     public static final String BASIC_CONTEXT_REF_NAME_CATALOG_MAPPING_SUPPLIER = "catalogMappingSuppier";
     public static final String BASIC_CONTEXT_REF_NAME_ROLAP_CONTEXT_MAPPING_SUPPLIER = "rolapContextMappingSuppliers";
     public static final String BASIC_CONTEXT_REF_NAME_MDX_PARSER_PROVIDER = "mdxParserProvider";
@@ -34,7 +34,7 @@ public class Constants {
     public static final String OCD_LOCALIZATION_PATH = "OSGI-INF/l10n/org.eclipse.daanse.rolap.core.ocd";
 
     // Target filter property names for OCD
-    public static final String BASIC_CONTEXT_TARGET_DATA_SOURCE = BASIC_CONTEXT_REF_NAME_DATA_SOURCE + "_target";
+    public static final String BASIC_CONTEXT_TARGET_CONNECTION_POOL = BASIC_CONTEXT_REF_NAME_CONNECTION_POOL + "_target";
     public static final String BASIC_CONTEXT_TARGET_DIALECT_FACTORY = BASIC_CONTEXT_REF_NAME_DIALECT_FACTORY
             + "_target";
     public static final String BASIC_CONTEXT_TARGET_CATALOG_MAPPING_SUPPLIER = BASIC_CONTEXT_REF_NAME_CATALOG_MAPPING_SUPPLIER

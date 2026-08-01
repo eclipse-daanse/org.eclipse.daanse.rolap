@@ -17,7 +17,7 @@ import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_PID;
 import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_REF_NAME_AGG_MATCH_RULES_SUPPLIER;
 import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_REF_NAME_CATALOG_MAPPING_SUPPLIER;
 import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_REF_NAME_CUSTOM_AGGREGATOR;
-import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_REF_NAME_DATA_SOURCE;
+import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_REF_NAME_CONNECTION_POOL;
 import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_REF_NAME_DIALECT_FACTORY;
 import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_REF_NAME_EXPRESSION_COMPILER_FACTORY;
 import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_REF_NAME_FUNCTION_SERVICE;
@@ -39,6 +39,8 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 import javax.sql.DataSource;
+
+import org.eclipse.daanse.jdbc.datasource.pools.api.ConnectionPool;
 
 import org.eclipse.daanse.sql.dialect.api.Dialect;
 import org.eclipse.daanse.sql.dialect.api.DialectFactory;
@@ -89,7 +91,7 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BasicContext.class);
 
-    private DataSource dataSource;
+    private ConnectionPool connectionPool;
 
     private DialectFactory dialectFactory;
 
@@ -124,14 +126,21 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
         activate1();
     }
 
-    @Reference(name = BASIC_CONTEXT_REF_NAME_DATA_SOURCE, target = UNRESOLVABLE_FILTER)
-    protected void setDataSource(DataSource dataSource) {
-        this.dataSource = dataSource;
+    /**
+     * The context binds a pool, not a raw DataSource. Binding the pool type is what
+     * makes it impossible to end up on an unpooled connection by configuration
+     * mistake - rolap opens one physical connection per statement, so an unpooled
+     * context exhausts ports, server processes or table locks depending on the
+     * database.
+     */
+    @Reference(name = BASIC_CONTEXT_REF_NAME_CONNECTION_POOL, target = UNRESOLVABLE_FILTER)
+    protected void setConnectionPool(ConnectionPool connectionPool) {
+        this.connectionPool = connectionPool;
     }
 
-    protected void unsetDataSource(DataSource dataSource) {
-        if (this.dataSource == dataSource) {
-            this.dataSource = null;
+    protected void unsetConnectionPool(ConnectionPool connectionPool) {
+        if (this.connectionPool == connectionPool) {
+            this.connectionPool = null;
         }
     }
 
@@ -231,7 +240,7 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
         queryLimitSemaphore = new Semaphore(
                 getConfigValue(ConfigConstants.QUERY_LIMIT, ConfigConstants.QUERY_LIMIT_DEFAULT_VALUE, Integer.class));
 
-        try (Connection connection = dataSource.getConnection()) {
+        try (Connection connection = connectionPool.getConnection()) {
             dialect = dialectFactory.createDialect(connection);
             aggregationFactory = new AggregationFactoryImpl(this.getCustomAggregators());
         } catch (SQLException e) {
@@ -259,9 +268,19 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
         updateConfiguration(null);
     }
 
+    /**
+     * The pool's own DataSource, so every caller that goes through this getter -
+     * SqlStatement, RolapStar, the writeback emitter, the documentation provider -
+     * draws from the pool without knowing about it.
+     */
     @Override
     public DataSource getDataSource() {
-        return dataSource;
+        return connectionPool.dataSource();
+    }
+
+    @Override
+    public ConnectionPool getConnectionPool() {
+        return connectionPool;
     }
 
     @Override

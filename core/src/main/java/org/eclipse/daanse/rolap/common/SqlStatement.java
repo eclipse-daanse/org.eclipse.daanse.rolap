@@ -160,9 +160,12 @@ public class SqlStatement implements SqlStatementI {
       // Check execution state
       executionContext.getExecution().checkCancelOrTimeout();
 
-      this.jdbcConnection = context.getDataSource().getConnection();
+      // Slot first, connection second. The other way round a thread blocked on the
+      // semaphore is already holding a physical connection, so queryLimit throttles
+      // execution while the connections it was meant to bound pile up regardless.
       context.getQueryLimitSemaphore().acquire();
       haveSemaphore = true;
+      this.jdbcConnection = context.getDataSource().getConnection();
       // Trace start of execution.
       if ( RolapUtil.SQL_LOGGER.isDebugEnabled() ) {
         StringBuilder sqllog = new StringBuilder();
