@@ -27,6 +27,7 @@
 
 package org.eclipse.daanse.rolap.common.sql;
 
+import org.eclipse.daanse.olap.common.ExecutionConfig;
 import static org.eclipse.daanse.rolap.common.util.SqlExpressionResolver.getTableAlias;
 import static org.eclipse.daanse.rolap.common.util.JoinUtil.getLeftAlias;
 import static org.eclipse.daanse.rolap.common.util.JoinUtil.getRightAlias;
@@ -47,8 +48,6 @@ import java.util.stream.IntStream;
 import org.eclipse.daanse.sql.model.type.BestFitColumnType;
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.sql.SortingDirection;
-import org.eclipse.daanse.olap.common.ConfigConstants;
-import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.sql.statement.api.Expressions;
 import org.eclipse.daanse.sql.statement.api.From;
@@ -209,7 +208,7 @@ public class QueryRecorder {
 
     public static QueryRecorder newQuery(Context<?> context, String err) {
         return new QueryRecorder(
-            context.getConfigValue(ConfigConstants.GENERATE_FORMATTED_SQL, ConfigConstants.GENERATE_FORMATTED_SQL_DEFAULT_VALUE, Boolean.class));
+            context.getConfig().generateFormattedSql());
     }
 
     /**
@@ -475,8 +474,7 @@ public class QueryRecorder {
 
         if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation1) {
             if (relations.add(relation1)
-                && !SystemWideProperties.instance()
-                .FilterChildlessSnowflakeMembers)
+                && !ExecutionConfig.current().filterChildlessSnowflakeMembers())
             {
                 // This relation is new to this query. Add a join to any other
                 // relation in the same dimension.

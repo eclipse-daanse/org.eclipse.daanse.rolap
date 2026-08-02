@@ -36,7 +36,6 @@ import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.element.NamedSet;
 import org.eclipse.daanse.olap.api.evaluator.Evaluator;
 import org.eclipse.daanse.olap.calc.base.type.tuplebase.TupleCollections;
-import org.eclipse.daanse.olap.common.ConfigConstants;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.rolap.common.result.RolapResult;
 
@@ -93,7 +92,7 @@ public TupleIterable evaluateTupleIterable( Evaluator evaluator ) {
       if ( list == DUMMY_LIST ) {
         recursionCount++;
         Integer iterationLimit = evaluator.getQuery().getConnection().getContext()
-                .getConfigValue(ConfigConstants.ITERATION_LIMIT, ConfigConstants.ITERATION_LIMIT_DEFAULT_VALUE, Integer.class);
+                .getConfig().iterationLimit();
         if ( iterationLimit > 0 && recursionCount > iterationLimit ) {
           throw rrer.result.slicerEvaluator.newEvalException( null,
               new StringBuilder("Illegal attempt to reference value of named set '")

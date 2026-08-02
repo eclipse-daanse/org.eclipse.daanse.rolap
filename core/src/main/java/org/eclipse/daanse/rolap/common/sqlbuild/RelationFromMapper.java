@@ -16,7 +16,7 @@ package org.eclipse.daanse.rolap.common.sqlbuild;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import org.eclipse.daanse.olap.common.SystemWideProperties;
+import org.eclipse.daanse.olap.common.ExecutionConfig;
 import org.eclipse.daanse.rolap.common.RolapUtil;
 import org.eclipse.daanse.rolap.common.util.JoinUtil;
 import org.eclipse.daanse.rolap.common.util.RelationUtil;
@@ -214,7 +214,8 @@ public final class RelationFromMapper {
             if (right == null) {
                 return relationSubset(join.getLeft().getSource(), alias);
             }
-            return SystemWideProperties.instance().FilterChildlessSnowflakeMembers ? join : right;
+            boolean filterChildless = ExecutionConfig.current().filterChildlessSnowflakeMembers();
+            return filterChildless ? join : right;
         }
         if (relation == null) {
             throw org.eclipse.daanse.olap.common.Util.newInternal("bad relation type " + relation);

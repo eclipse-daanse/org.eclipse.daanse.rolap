@@ -42,6 +42,7 @@ import org.eclipse.daanse.olap.api.cache.CacheCommand;
 import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
 import org.eclipse.daanse.olap.api.execution.ExecutionContext;
 import org.eclipse.daanse.olap.common.ConfigConstants;
+import org.eclipse.daanse.olap.common.ExecutionConfig;
 import org.eclipse.daanse.olap.execution.ExecutionImpl;
 import org.eclipse.daanse.rolap.api.RolapContext;
 import org.junit.jupiter.api.BeforeEach;
@@ -57,13 +58,9 @@ class SegmentCacheManagerTest {
 
     @BeforeEach void beforeEach() throws Exception {
     MockitoAnnotations.openMocks( this );
-    //when(context.getConfig()).thenReturn(new TestConfig());
-    when(context.
-    getConfigValue(ConfigConstants.SEGMENT_CACHE_MANAGER_NUMBER_SQL_THREADS,
-            ConfigConstants.SEGMENT_CACHE_MANAGER_NUMBER_SQL_THREADS_DEFAULT_VALUE, Integer.class)).thenReturn(100);
-    when(context.getConfigValue(ConfigConstants.DISABLE_LOCAL_SEGMENT_CACHE, ConfigConstants.DISABLE_LOCAL_SEGMENT_CACHE_DEFAULT_VALUE, Boolean.class)).thenReturn(false);
-    when(context.getConfigValue(ConfigConstants.SEGMENT_CACHE_MANAGER_NUMBER_CACHE_THREADS, ConfigConstants.SEGMENT_CACHE_MANAGER_NUMBER_CACHE_THREADS_DEFAULT_VALUE, Integer.class)).thenReturn(100);
-    when(context.getConfigValue(ConfigConstants.DISABLE_CACHING, ConfigConstants.DISABLE_CACHING_DEFAULT_VALUE, Boolean.class)).thenReturn(false);
+    // Thread counts and the two cache switches are read through getConfig();
+    // the four values this test wants are exactly the defaults.
+    when(context.getConfig()).thenReturn(ExecutionConfig.DEFAULTS);
   }
 
   @Test

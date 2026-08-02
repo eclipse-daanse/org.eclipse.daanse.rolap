@@ -43,6 +43,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
+import java.util.Map;
 import org.eclipse.daanse.olap.access.RoleImpl;
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.DataType;
@@ -55,7 +56,7 @@ import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.element.OlapElement;
 import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
 import org.eclipse.daanse.olap.common.ConfigConstants;
-import org.eclipse.daanse.olap.common.SystemWideProperties;
+import org.eclipse.daanse.olap.common.MapContextConfig;
 import org.eclipse.daanse.olap.exceptions.RoleUnionGrantsException;
 import org.eclipse.daanse.olap.exceptions.UnknownRoleException;
 import org.eclipse.daanse.rolap.common.agg.AggregationManager;
@@ -79,7 +80,6 @@ import org.eclipse.daanse.rolap.mapping.model.access.olap.HierarchyAccess;
 import org.eclipse.daanse.rolap.mapping.model.access.olap.MemberAccess;
 import org.eclipse.daanse.rolap.mapping.model.olap.cube.PhysicalCube;
 import org.eclipse.daanse.cwm.model.cwm.resource.relational.Table;
-import org.eclipse.daanse.rolap.mapping.model.RolapMappingFactory;
 import org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.RollupPolicy;
 import org.eclipse.daanse.rolap.mapping.model.olap.dimension.StandardDimension;
 import org.junit.jupiter.api.AfterEach;
@@ -109,7 +109,6 @@ class RolapCatalogTest {
     }
 
     @AfterEach void afterEach() {
-        SystemWideProperties.instance().populateInitial();
     }
 
     private RolapCatalog createSchema() {
@@ -125,10 +124,12 @@ class RolapCatalogTest {
         Context context = contextMock;
         when(rolapConnectionMock.getContext()).thenReturn(context);
         when(contextMock.getAggregationManager()).thenReturn(aggManagerMock);
-        //when(contextMock.getConfig()).thenReturn(new TestConfig());
-        when(contextMock.getConfigValue(ConfigConstants.ENABLE_NATIVE_CROSS_JOIN, ConfigConstants.ENABLE_NATIVE_CROSS_JOIN_DEFAULT_VALUE, Boolean.class)).thenReturn(true);
-        when(contextMock.getConfigValue(ConfigConstants.ENABLE_NATIVE_TOP_COUNT, ConfigConstants.ENABLE_NATIVE_TOP_COUNT_DEFAULT_VALUE, Boolean.class)).thenReturn(true);
-        when(contextMock.getConfigValue(ConfigConstants.ENABLE_NATIVE_FILTER, ConfigConstants.ENABLE_NATIVE_FILTER_DEFAULT_VALUE, Boolean.class)).thenReturn(true);
+        // RolapCatalog reads the three native switches through Context.getConfig();
+        // a bare mock answers null there. All three are on by default anyway.
+        when(contextMock.getConfig()).thenReturn(new MapContextConfig(() -> Map.of(
+                ConfigConstants.ENABLE_NATIVE_CROSS_JOIN, Boolean.TRUE,
+                ConfigConstants.ENABLE_NATIVE_TOP_COUNT, Boolean.TRUE,
+                ConfigConstants.ENABLE_NATIVE_FILTER, Boolean.TRUE)));
         when(aggManagerMock.getCacheMgr(rolapConnectionMock)).thenReturn(scManagerMock);
         return new RolapCatalog(key,  rolapConnectionMock, contextMock);
     }
@@ -472,8 +473,8 @@ class RolapCatalogTest {
         Context context = mock(Context.class);
         //TestConfig config = new TestConfig();
         //config.setIgnoreInvalidMembers(true);
-        when(context.getConfigValue(ConfigConstants.IGNORE_INVALID_MEMBERS, ConfigConstants.IGNORE_INVALID_MEMBERS_DEFAULT_VALUE, Boolean.class)).thenReturn(true);
-        //when(context.getConfig()).thenReturn(config);
+        when(context.getConfig()).thenReturn(new MapContextConfig(
+                () -> Map.of(ConfigConstants.IGNORE_INVALID_MEMBERS, Boolean.TRUE)));
         when(reader.getContext()).thenReturn(context);
 
 

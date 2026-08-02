@@ -41,7 +41,6 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 import org.eclipse.daanse.sql.model.type.Datatype;
-import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.olap.key.BitKey;
 import org.eclipse.daanse.olap.spi.SegmentBody;
 import org.eclipse.daanse.olap.spi.SegmentColumn;
@@ -49,7 +48,6 @@ import org.eclipse.daanse.olap.spi.SegmentHeader;
 import org.eclipse.daanse.olap.util.ByteString;
 import org.eclipse.daanse.olap.util.Pair;
 import org.eclipse.daanse.rolap.aggregator.SumAggregator;
-import org.eclipse.daanse.rolap.common.RolapUtil;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -63,8 +61,7 @@ class SegmentBuilderTest {
     public static final double MOCK_CELL_VALUE = 123.123;
 
     @AfterEach void afterEach() {
-        SystemWideProperties.instance().populateInitial();
-        RolapUtil.setHook(null);
+        // No hook to clear: hooks are installed per Context now and die with it.
     }
 
     @Test

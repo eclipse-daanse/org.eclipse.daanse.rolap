@@ -69,10 +69,6 @@ public class MemberConstraintWriter {
     private static final String ADD_MEMBER_CONSTRAINT_CANNOT_RESTRICT_SQL_TO_CALCULATED_MEMBER = "addMemberConstraint: cannot restrict SQL to calculated member :";
     private static final String AND = " and ";
     private static final Logger LOG = LoggerFactory.getLogger( MemberConstraintWriter.class );
-    private final static String nativeSqlInClauseTooLarge = """
-    Cannot use native aggregation constraints for level ''{0}'' because the number of members is larger than the value of ''daanse.rolap.maxConstraints'' ({1})
-    """;
-
     /** Utility class */
   private MemberConstraintWriter() {
   }
@@ -199,7 +195,7 @@ public class MemberConstraintWriter {
    * non-null {@code aggStar} every level's column node is its AGGREGATE substitution
    * ({@link #dialectFreeColumnNode} is agg-aware — {@code aggStar.lookupColumn(bitPos).toSqlExpression()}),
    * so the parts render against the agg table exactly like the recorder's
-   * {@code generateSingleValueInExpr} agg branch. Returns empty additionally for an agg-unresolvable
+   * the aggregate branch. Returns empty additionally for an agg-unresolvable
    * column or a shared / non-cube level (no star key to substitute — the recorder's agg leg asserts
    * that shape away). A {@code null} aggStar is identical to the base form.
    */
@@ -356,7 +352,7 @@ public class MemberConstraintWriter {
    * {@code (city in (..) and state in (..))} for a multi-member multi-level set even when the members do
    * NOT form a rectangle — exactly what the recorder's {@code addMemberConstraint} emits on the
    * NON-cross-join path ({@code crossJoin=false}, the descendants / member-children member restriction:
-   * {@code generateSingleValueInExpr}'s per-level IN over {@code members} → {@code getUniqueParentMembers}
+   * the per-level IN over {@code members} → {@code getUniqueParentMembers}
    * in first-encounter order, stopping at the first unique / {@code fromLevel} level). The factored AND of
    * per-level INs is the recorder's deliberate bounding-box over-approximation for that path; the exact
    * tuple IN the default producer emits is the CROSS-JOIN path's form and diverges byte-wise (h2 renders

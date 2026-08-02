@@ -30,12 +30,9 @@ package org.eclipse.daanse.rolap.common.sql;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
-import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;
 import org.eclipse.daanse.rolap.common.constraint.MemberConstraintWriter;
 import org.eclipse.daanse.rolap.common.evaluator.RolapEvaluator;
-import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.element.RolapLevel;
 
 /**
@@ -82,7 +79,8 @@ public class MemberListCrossJoinArg implements CrossJoinArg {
 
         // First check that the member list will not result in a predicate
         // longer than the underlying DB could support.
-        if (argSize > SystemWideProperties.instance().MaxConstraints) {
+        int maxConstraints = evaluator.getQuery().getConnection().getContext().getConfig().maxConstraints();
+        if (argSize > maxConstraints) {
             argSizeNotSupported = true;
         }
 

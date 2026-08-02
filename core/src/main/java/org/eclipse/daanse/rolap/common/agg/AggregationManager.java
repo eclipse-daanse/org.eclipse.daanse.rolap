@@ -37,14 +37,12 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
-import org.eclipse.daanse.sql.model.type.BestFitColumnType;
 import org.eclipse.daanse.olap.api.agg.OlapAggregationManager;
 import org.eclipse.daanse.olap.api.cache.CacheControl;
 import org.eclipse.daanse.olap.api.cache.OlapSegmentCacheManager;
 import org.eclipse.daanse.olap.api.connection.Connection;
 import org.eclipse.daanse.olap.api.element.OlapElement;
 import org.eclipse.daanse.olap.api.execution.ExecutionContext;
-import org.eclipse.daanse.olap.common.ConfigConstants;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.key.BitKey;
 import org.eclipse.daanse.sql.statement.api.render.RenderedSql;
@@ -558,7 +556,7 @@ public class AggregationManager extends RolapAggregationManager implements OlapA
 	@Override
 	public OlapSegmentCacheManager getCacheMgr(Connection connection) {
 		if (connection == null || !connection.getContext()
-		        .getConfigValue(ConfigConstants.ENABLE_SESSION_CACHING, ConfigConstants.ENABLE_SESSION_CACHING_DEFAULT_VALUE, Boolean.class)) {
+		        .getConfig().enableSessionCaching()) {
 			return cacheMgr;
 		} else {
 			if (!segCachStore.containsKey(connection)) {

@@ -63,9 +63,7 @@ import org.eclipse.daanse.olap.api.result.NotLoaded;
 import org.eclipse.daanse.olap.api.result.NullValue;
 import org.eclipse.daanse.olap.api.result.ObjectValue;
 import org.eclipse.daanse.olap.calc.base.type.tuplebase.DelegatingTupleList;
-import org.eclipse.daanse.olap.common.ConfigConstants;
 import org.eclipse.daanse.olap.common.StandardProperty;
-import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.fun.FunUtil;
 import org.eclipse.daanse.olap.util.format.Format;
@@ -268,7 +266,8 @@ public class RolapEvaluator implements Evaluator {
     ancestorCommandCount = 0;
     nonEmpty = false;
     nativeEnabled =
-        SystemWideProperties.instance().EnableNativeNonEmpty || root.connection.getContext().getConfigValue(ConfigConstants.ENABLE_NATIVE_CROSS_JOIN, ConfigConstants.ENABLE_NATIVE_CROSS_JOIN_DEFAULT_VALUE, Boolean.class);
+        root.connection.getContext().getConfig().enableNativeNonEmpty()
+        || root.connection.getContext().getConfig().enableNativeCrossJoin();
     evalAxes = false;
     cellReader = null;
     currentMembers = root.defaultMembers.clone();
@@ -311,7 +310,7 @@ public RolapCube getMeasureCube() {
   @Override
 public boolean mightReturnNullForUnrelatedDimension() {
     if ( !this.getCube().getCatalog().getInternalConnection().getContext()
-            .getConfigValue(ConfigConstants.IGNORE_MEASURE_FOR_NON_JOINING_DIMENSION, ConfigConstants.IGNORE_MEASURE_FOR_NON_JOINING_DIMENSION_DEFAULT_VALUE, Boolean.class) ) {
+            .getConfig().ignoreMeasureForNonJoiningDimension() ) {
       return false;
     }
     RolapCube virtualCube = getCube();

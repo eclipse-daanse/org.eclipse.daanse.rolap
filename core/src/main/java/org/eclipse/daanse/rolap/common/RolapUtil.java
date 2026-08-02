@@ -29,6 +29,7 @@
 
 package org.eclipse.daanse.rolap.common;
 
+import org.eclipse.daanse.olap.common.ExecutionConfig;
 import static org.eclipse.daanse.rolap.common.util.RelationUtil.getAlias;
 
 import java.sql.SQLException;
@@ -38,8 +39,10 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.WeakHashMap;
 import java.util.function.Consumer;
 
 import org.eclipse.daanse.cwm.model.cwm.objectmodel.instance.DataSlot;
@@ -59,7 +62,6 @@ import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
 import org.eclipse.daanse.olap.api.execution.ExecutionContext;
 import org.eclipse.daanse.olap.api.query.NameSegment;
 import org.eclipse.daanse.olap.api.query.Quoting;
-import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.exceptions.MdxCantFindMemberException;
 import org.eclipse.daanse.olap.exceptions.NativeEvaluationUnsupportedException;
@@ -76,12 +78,10 @@ import org.eclipse.daanse.rolap.element.RolapHierarchy;
 import org.eclipse.daanse.rolap.element.RolapHierarchy.LimitedRollupMember;
 import org.eclipse.daanse.rolap.element.RolapLevel;
 import org.eclipse.daanse.rolap.element.RolapProperty;
-import org.eclipse.daanse.rolap.mapping.model.RolapMappingFactory;
 import org.eclipse.daanse.rolap.util.ClassResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.eclipse.daanse.rolap.mapping.model.database.source.SourceFactory;
 /**
  * Utility methods for classes in the mondrian.rolap package.
  *
@@ -114,28 +114,49 @@ public class RolapUtil {
     static final Logger LOGGER = LoggerFactory.getLogger(RolapUtil.class);
 
     /**
-     * Hook to run when a query is executed. This should not be
-     * used at runtime but only for testing.
+     * Hooks to run when a query is executed, one per Context. Not for runtime use,
+     * only for testing.
+     *
+     * <p>
+     * This was a single static field, so a hook installed by one test fired for
+     * every query in the JVM. Sequentially that went unnoticed; in parallel it
+     * meant one test's assertion failing inside another test's query. The keys are
+     * weak so a finished test's context can still be collected.
+     * </p>
      */
-    private static ExecuteQueryHook queryHook = null;
+    private static final Map<Context<?>, ExecuteQueryHook> QUERY_HOOKS =
+        Collections.synchronizedMap(new WeakHashMap<>());
 
     public static Consumer<java.sql.Statement> getDefaultCallback(final ExecutionContext executionContext) {
         return stmt -> executionContext.registerStatement(stmt);
     }
 
     /**
-     * Sets the query-execution hook used by tests. This method and
-     * {@link #setHook(org.eclipse.daanse.rolap.common.RolapUtil.ExecuteQueryHook)} are
-     * synchronized to ensure a memory barrier.
+     * Returns the query-execution hook installed for this context, or null.
      *
-     * @return Query execution hook
+     * @param context the context the query runs in
+     * @return query execution hook, or null if none is installed
      */
-    public static synchronized ExecuteQueryHook getHook() {
-        return queryHook;
+    public static ExecuteQueryHook getHook(Context<?> context) {
+        return context == null ? null : QUERY_HOOKS.get(context);
     }
 
-    public static synchronized void setHook(ExecuteQueryHook hook) {
-        queryHook = hook;
+    /**
+     * Installs a query-execution hook for one context, or removes it when
+     * {@code hook} is null.
+     *
+     * @param context the context the hook applies to
+     * @param hook the hook, or null to remove
+     */
+    public static void setHook(Context<?> context, ExecuteQueryHook hook) {
+        if (context == null) {
+            return;
+        }
+        if (hook == null) {
+            QUERY_HOOKS.remove(context);
+        } else {
+            QUERY_HOOKS.put(context, hook);
+        }
     }
 
     /**
@@ -186,15 +207,20 @@ public class RolapUtil {
         }
     }
 
-    /**
-     * Runtime NullMemberRepresentation property change not taken into
-     * consideration
-     */
-    private static String mdxNullLiteral = null;
     public static final String SQL_NULL_LITERAL = "null";
 
+    /**
+     * How a null member renders in MDX.
+     *
+     * <p>
+     * Callers are static helpers deep in member and constraint building, with no
+     * context of their own, so the value comes from the execution bound to this
+     * thread. Outside any execution - during catalog build, for instance - the
+     * default applies.
+     * </p>
+     */
     public static String mdxNullLiteral() {
-        return SystemWideProperties.instance().NullMemberRepresentation;
+        return ExecutionConfig.current().nullMemberRepresentation();
     }
     /**
      * Names of classes of drivers we've loaded (or have tried to load).

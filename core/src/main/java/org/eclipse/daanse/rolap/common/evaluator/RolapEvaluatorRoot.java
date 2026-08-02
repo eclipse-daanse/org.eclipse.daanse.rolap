@@ -43,7 +43,6 @@ import org.eclipse.daanse.olap.api.execution.Execution;
 import org.eclipse.daanse.olap.api.execution.Statement;
 import org.eclipse.daanse.olap.api.query.component.Expression;
 import org.eclipse.daanse.olap.api.query.component.Query;
-import org.eclipse.daanse.olap.common.ConfigConstants;
 import org.eclipse.daanse.olap.common.SolveOrderMode;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
@@ -117,7 +116,7 @@ public RolapEvaluatorRoot( Statement statement ) {
     this.connection = statement.getDaanseConnection();
     this.solveOrderMode =
         Util.lookup( SolveOrderMode.class, connection.getContext()
-                .getConfigValue(ConfigConstants.SOLVE_ORDER_MODE, ConfigConstants.SOLVE_ORDER_MODE_DEFAULT_VALUE, String.class)
+                .getConfig().solveOrderMode()
                 .toUpperCase(),
             SolveOrderMode.ABSOLUTE );
     this.schemaReader = query.getCatalogReader( true );

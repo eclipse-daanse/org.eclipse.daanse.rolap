@@ -16,8 +16,17 @@ package org.eclipse.daanse.rolap.core.api;
 import org.osgi.service.metatype.annotations.AttributeDefinition;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 
+/**
+ * The metatype of the ROLAP context component.
+ *
+ * <p>
+ * Declares which services a context binds to, and - by extending
+ * {@link ContextConfigOCD} - the sixty-one tuning and behaviour settings a
+ * context accepts. Both halves are described from the same localization file.
+ * </p>
+ */
 @ObjectClassDefinition(name = BasicContextOCD.L10N_OCD_NAME, description = BasicContextOCD.L10N_OCD_DESCRIPTION, localization = BasicContextOCD.OCD_LOCALIZATION)
-public interface BasicContextOCD {
+public interface BasicContextOCD extends ContextConfigOCD {
 
     public static final String TARGET_FILTER_DAANSE_IDENT = "(daanse.ident=*)";
     public static final String TARGET_FILTER_COMPONET_ANY = "(service.name=*)";

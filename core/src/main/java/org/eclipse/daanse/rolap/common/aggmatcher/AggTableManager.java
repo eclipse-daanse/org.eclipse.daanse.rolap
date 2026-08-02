@@ -35,7 +35,6 @@ import java.util.Optional;
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.connection.ConnectionProps;
 import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
-import org.eclipse.daanse.olap.common.ConfigConstants;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.rolap.api.RolapContext;
 import org.eclipse.daanse.rolap.api.aggmatch.AggregationMatchRulesSupplier;
@@ -43,7 +42,6 @@ import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.util.PojoUtil;
 import org.eclipse.daanse.rolap.element.RolapCatalog;
 import org.eclipse.daanse.rolap.element.RolapCube;
-import org.eclipse.daanse.rolap.mapping.model.RolapMappingFactory;
 import org.eclipse.daanse.rolap.recorder.ListRecorder;
 import org.eclipse.daanse.rolap.recorder.MessageRecorder;
 import org.eclipse.daanse.rolap.recorder.RecorderException;
@@ -264,7 +262,7 @@ public class AggTableManager {
                         // Is it handled by the PatternbasedRules
                         if (! makeAggStar
                             && rules != null
-                            && context.getConfigValue(ConfigConstants.READ_AGGREGATES, ConfigConstants.READ_AGGREGATES_DEFAULT_VALUE ,Boolean.class)
+                            && context.getConfig().readAggregates()
                             && rules.matchesTableName(factTableName, name)) {
                             makeAggStar = rules.columnsOK(
                                 star,
@@ -283,7 +281,7 @@ public class AggTableManager {
                                 star,
                                 dbTable,
                                 approxRowCount);
-                            if (aggStar.getSize(context.getConfigValue(ConfigConstants.CHOOSE_AGGREGATE_BY_VOLUME, ConfigConstants.CHOOSE_AGGREGATE_BY_VOLUME_DEFAULT_VALUE ,Boolean.class)) > 0) {
+                            if (aggStar.getSize(context.getConfig().chooseAggregateByVolume()) > 0) {
                                 star.addAggStar(aggStar);
                             } else {
                                 String msg = MessageFormat.format(aggTableZeroSize,

@@ -83,11 +83,11 @@ class MemberSqlCaptureTest {
                 + targetCube.getName() + "]";
 
         List<String> captured = new CopyOnWriteArrayList<>();
-        RolapUtil.setHook(captured::add);
+        RolapUtil.setHook(conn.getContext(), captured::add);
         try {
             assertNotNull(conn.execute(conn.parseQuery(mdx)));
         } finally {
-            RolapUtil.setHook(null);
+            RolapUtil.setHook(conn.getContext(), null);
         }
 
         assertFalse(captured.isEmpty(),

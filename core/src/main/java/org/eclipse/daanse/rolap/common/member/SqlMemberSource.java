@@ -56,8 +56,6 @@ import org.eclipse.daanse.olap.api.execution.ExecutionContext;
 import org.eclipse.daanse.olap.api.execution.ExecutionMetadata;
 import org.eclipse.daanse.olap.api.sql.SortingDirection;
 import org.eclipse.daanse.olap.api.sql.SqlExpression;
-import org.eclipse.daanse.olap.common.ConfigConstants;
-import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.exceptions.ResourceLimitExceededException;
 import org.eclipse.daanse.olap.key.BitKey;
@@ -77,15 +75,12 @@ import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;
 import org.eclipse.daanse.rolap.common.sql.SqlConstraintFactory;
 import org.eclipse.daanse.rolap.common.constraint.CalculatedMemberExpander;
 import org.eclipse.daanse.rolap.common.constraint.SqlContextConstraint;
-import org.eclipse.daanse.rolap.common.constraint.ChildByNameConstraint;
-import org.eclipse.daanse.rolap.common.constraint.DefaultMemberChildrenConstraint;
 import org.eclipse.daanse.rolap.common.sql.MemberChildrenConstraint;
 import org.eclipse.daanse.rolap.common.sql.MemberKeyConstraint;
 import org.eclipse.daanse.rolap.common.sql.QueryRecorder;
 
 import org.eclipse.daanse.rolap.common.sql.BuiltSql;
 import org.eclipse.daanse.rolap.common.sqlbuild.JoinPlanner;
-import org.eclipse.daanse.rolap.common.sqlbuild.MemberSqlMapper;
 import org.eclipse.daanse.rolap.common.sql.TupleConstraint;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.element.RolapBaseCubeMeasure;
@@ -126,8 +121,7 @@ public class SqlMemberSource
         this.hierarchy = hierarchy;
         this.context =
             hierarchy.getRolapCatalog().getCatalogReaderWithDefaultRole().getContext();
-        assignOrderKeys =
-            SystemWideProperties.instance().CompareSiblingsByOrderKey;
+        assignOrderKeys = ((Context<?>) context).getConfig().compareSiblingsByOrderKey();
         oValuePool = context.getSqlMemberSourceValuePool();
     }
 
@@ -448,7 +442,9 @@ public class SqlMemberSource
                 list.add(root);
             }
 
-            int limit = SystemWideProperties.instance().ResultLimit;
+            // Cast because Context is declared raw here, which would erase
+            // getConfig()'s return type along with its own.
+            int limit = ((Context<?>) context).getConfig().resultLimit();
             ResultSet resultSet = stmt.getResultSet();
             Execution execution = ExecutionContext.current().getExecution();
             while (resultSet.next()) {
@@ -653,7 +649,7 @@ RME is this right
         // If this is a non-empty constraint, it is more efficient to join to
         // an aggregate table than to the fact table. See whether a suitable
         // aggregate table exists.
-        AggStar aggStar = chooseAggStar(constraint, member, context.getConfigValue(ConfigConstants.USE_AGGREGATES, ConfigConstants.USE_AGGREGATES_DEFAULT_VALUE ,Boolean.class));
+        AggStar aggStar = chooseAggStar(constraint, member, context.getConfig().useAggregates());
 
         // The routing ladder lives in MemberChildrenRouter (routing is data — see its javadoc);
         // this method only EXECUTES the decision.
@@ -956,7 +952,9 @@ RME is this right
                 execContext,
                 -1, -1, null);
         try {
-            int limit = SystemWideProperties.instance().ResultLimit;
+            // Cast because Context is declared raw here, which would erase
+            // getConfig()'s return type along with its own.
+            int limit = ((Context<?>) context).getConfig().resultLimit();
             boolean checkCacheStatus = true;
 
             final List<SqlStatement.Accessor> accessors = stmt.getAccessors();

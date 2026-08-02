@@ -73,8 +73,6 @@ import org.eclipse.daanse.olap.calc.base.nested.AbstractProfilingNestedUnknownCa
 import org.eclipse.daanse.olap.common.ConfigConstants;
 import org.eclipse.daanse.olap.common.NameResolverImpl;
 import org.eclipse.daanse.olap.common.ParameterImpl;
-import org.eclipse.daanse.olap.common.SystemProperty;
-import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.query.component.NullLiteralImpl;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
@@ -579,7 +577,7 @@ public class RolapCatalogReader
             {
                 constraint = sqlConstraintFactory.getChildByNameConstraint(
                     (RolapMember) parent, (NameSegment) childName,
-                    context.getConfigValue(ConfigConstants.LEVEL_PRE_CACHE_THRESHOLD, ConfigConstants.LEVEL_PRE_CACHE_THRESHOLD_DEFAULT_VALUE, Integer.class));
+                    context.getConfig().levelPreCacheThreshold());
             } else {
                 constraint =
                     sqlConstraintFactory.getMemberChildrenConstraint(null);
@@ -620,7 +618,7 @@ public class RolapCatalogReader
             .getChildrenByNamesConstraint(
                 (RolapMember) parent, childNames,
                 context
-                .getConfigValue(ConfigConstants.LEVEL_PRE_CACHE_THRESHOLD, ConfigConstants.LEVEL_PRE_CACHE_THRESHOLD_DEFAULT_VALUE, Integer.class));
+                .getConfig().levelPreCacheThreshold());
         List<RolapMember> children =
             internalGetMemberChildren(parent, constraint);
         List<Member> childMembers = new ArrayList<>();
@@ -832,7 +830,7 @@ public class RolapCatalogReader
                 EvaluatorSimplifier.simplifyEvaluator(calc, evaluator);
         if (evaluator.nativeEnabled()) {
             return catalog.getNativeRegistry().createEvaluator(
-                revaluator, fun, args, context.getConfigValue(ConfigConstants.ENABLE_NATIVE_FILTER, ConfigConstants.ENABLE_NATIVE_FILTER_DEFAULT_VALUE, Boolean.class));
+                revaluator, fun, args, context.getConfig().enableNativeFilter());
         }
         return null;
     }
@@ -846,13 +844,11 @@ public class RolapCatalogReader
             }
         }
 
-        // Scan through mondrian properties.
-        List<SystemProperty> propertyList =
-            SystemWideProperties.instance().getPropertyList();
-        for (SystemProperty property : propertyList) {
-            if (property.getPath().equals(name)) {
-                return new SystemPropertyParameter(name, false);
-            }
+        // Scan through this context's configuration. It used to be the JVM-wide
+        // property registry, which meant every catalog in the server exposed one
+        // shared set of values; the context knows its own.
+        if (context.getConfigValue(name, null, Object.class) != null) {
+            return new SystemPropertyParameter(context, name, false);
         }
 
         return null;
@@ -894,36 +890,33 @@ public class RolapCatalogReader
     }
 
     /**
-     * Implementation of {@link Parameter} which is sourced from mondrian
-     * properties (see {@link SystemWideProperties}.
+     * Implementation of {@link Parameter} sourced from the context's
+     * configuration (see {@link ConfigConstants}), or from a Java system property.
      *
-     * The name of the property is the same as the key into the
-     * {@link java.util.Properties} object; for example "mondrian.trace.level".
+     * The name of the parameter is the configuration key; for example
+     * "caseSensitive".
      */
     private static class SystemPropertyParameter
         extends ParameterImpl
     {
         /**
-         * true if source is a system property;
-         * false if source is a mondrian property.
+         * true if source is a Java system property;
+         * false if source is the context configuration.
          */
         private final boolean system;
         /**
-         * Definition of mondrian property, or null if system property.
+         * The context to read the value from, or null for a system property.
          */
-        private final SystemProperty propertyDefinition;
+        private final Context<?> context;
 
-        public SystemPropertyParameter(String name, boolean system) {
+        public SystemPropertyParameter(Context<?> context, String name, boolean system) {
             super(
                 name,
                 NullLiteralImpl.nullValue,
                 new StringBuilder("System property '").append(name).append("'").toString(),
                 StringType.INSTANCE);
             this.system = system;
-            this.propertyDefinition =
-                system
-                ? null
-                : SystemWideProperties.instance().getPropertyDefinition(name);
+            this.context = system ? null : context;
         }
 
         @Override
@@ -947,13 +940,12 @@ public class RolapCatalogReader
 
                 @Override
 				public Object evaluateInternal(Evaluator evaluator) {
+                    final String name = SystemPropertyParameter.this.getName();
                     if (system) {
-                        final String name =
-                            SystemPropertyParameter.this.getName();
                         return System.getProperty(name);
-                    } else {
-                        return propertyDefinition.stringValue();
                     }
+                    Object value = context.getConfigValue(name, null, Object.class);
+                    return value == null ? null : String.valueOf(value);
                 }
             };
         }

@@ -34,7 +34,6 @@ import org.eclipse.daanse.olap.api.element.Level;
 import org.eclipse.daanse.olap.api.evaluator.Evaluator;
 import org.eclipse.daanse.olap.api.query.NameSegment;
 import org.eclipse.daanse.olap.common.ConfigConstants;
-import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.evaluator.RolapEvaluator;
 import org.eclipse.daanse.rolap.common.nativize.RolapNativeCrossJoin;
@@ -59,8 +58,6 @@ import org.eclipse.daanse.rolap.element.RolapLevel;
  */
 public class SqlConstraintFactory {
 
-    static boolean enabled;
-
     private static final SqlConstraintFactory instance =
         new SqlConstraintFactory();
 
@@ -70,20 +67,26 @@ public class SqlConstraintFactory {
     private SqlConstraintFactory() {
     }
 
+    /**
+     * Whether native evaluation is on for this evaluator's context.
+     *
+     * <p>
+     * This used to be a static field, refreshed from the JVM-wide singleton on
+     * every {@link #instance()} call - one value for every catalog in the server
+     * at once. The evaluator knows its own context, so it can be asked directly.
+     * Without an evaluator there is nothing to ask, and the default applies.
+     * </p>
+     */
     private boolean enabled(final Evaluator context) {
-        if (context != null) {
-            return enabled && context.nativeEnabled();
+        if (context == null) {
+            return ConfigConstants.ENABLE_NATIVE_NON_EMPTY_DEFAULT_VALUE;
         }
-        return enabled;
+        boolean nativeNonEmpty = context.getQuery().getConnection().getContext().getConfig().enableNativeNonEmpty();
+        return nativeNonEmpty && context.nativeEnabled();
     }
 
     public static SqlConstraintFactory instance() {
-        setNativeNonEmptyValue();
         return instance;
-    }
-
-    public static void setNativeNonEmptyValue() {
-        enabled = SystemWideProperties.instance().EnableNativeNonEmpty;
     }
 
     public MemberChildrenConstraint getMemberChildrenConstraint(
@@ -123,7 +126,7 @@ public class SqlConstraintFactory {
         if (context.isNonEmpty()) {
             Set<CrossJoinArg> joinArgs =
                 new CrossJoinArgFactory(false).buildConstraintFromAllAxes(
-                    (RolapEvaluator) context, context.getQuery().getConnection().getContext().getConfigValue(ConfigConstants.ENABLE_NATIVE_FILTER, ConfigConstants.ENABLE_NATIVE_FILTER_DEFAULT_VALUE, Boolean.class));
+                    (RolapEvaluator) context, context.getQuery().getConnection().getContext().getConfig().enableNativeFilter());
             if (!joinArgs.isEmpty()) {
                 return new RolapNativeCrossJoin.NonEmptyCrossJoinConstraint(
                     joinArgs.toArray(CrossJoinArg[]::new),
@@ -148,7 +151,7 @@ public class SqlConstraintFactory {
             return true;
         }
         final int threshold = context.getQuery().getConnection().getContext()
-                .getConfigValue(ConfigConstants.LEVEL_PRE_CACHE_THRESHOLD, ConfigConstants.LEVEL_PRE_CACHE_THRESHOLD_DEFAULT_VALUE, Integer.class);
+                .getConfig().levelPreCacheThreshold();
         if (threshold <= 0) {
             return false;
         }
@@ -188,7 +191,9 @@ public class SqlConstraintFactory {
     }
 
     private boolean useDefaultMemberChildrenConstraint(RolapMember parent, int levelPreCacheThreshold) {
-        return !enabled
+        boolean nativeNonEmpty = parent.getHierarchy().getRolapCatalog().getInternalConnection()
+            .getContext().getConfig().enableNativeNonEmpty();
+        return !nativeNonEmpty
             || parent.getHierarchy().isRagged()
             || (!isDegenerate(parent.getLevel())
             && levelPreCacheThreshold > 0

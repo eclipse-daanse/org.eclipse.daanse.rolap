@@ -17,7 +17,6 @@ import java.util.function.Supplier;
 
 import org.eclipse.daanse.sql.dialect.api.Dialect;
 import org.eclipse.daanse.olap.api.Context;
-import org.eclipse.daanse.olap.common.ConfigConstants;
 import org.eclipse.daanse.rolap.common.RolapUtil;
 import org.eclipse.daanse.rolap.common.SqlRender;
 import org.eclipse.daanse.rolap.common.sql.BuiltSql;
@@ -45,8 +44,7 @@ public record QueryBuildContext(Dialect dialect, boolean formattedSql) {
 
     public static QueryBuildContext of(Context<?> context) {
         return new QueryBuildContext(context.getDialect(),
-            Boolean.TRUE.equals(context.getConfigValue(ConfigConstants.GENERATE_FORMATTED_SQL,
-                ConfigConstants.GENERATE_FORMATTED_SQL_DEFAULT_VALUE, Boolean.class)));
+            Boolean.TRUE.equals(context.getConfig().generateFormattedSql()));
     }
 
     /**
@@ -56,8 +54,7 @@ public record QueryBuildContext(Dialect dialect, boolean formattedSql) {
      */
     public static QueryBuildContext of(Dialect dialect, Context<?> context) {
         return new QueryBuildContext(dialect,
-            Boolean.TRUE.equals(context.getConfigValue(ConfigConstants.GENERATE_FORMATTED_SQL,
-                ConfigConstants.GENERATE_FORMATTED_SQL_DEFAULT_VALUE, Boolean.class)));
+            Boolean.TRUE.equals(context.getConfig().generateFormattedSql()));
     }
 
     /** As {@link #of(Context)} with the formatted flag forced off (compact render). */
