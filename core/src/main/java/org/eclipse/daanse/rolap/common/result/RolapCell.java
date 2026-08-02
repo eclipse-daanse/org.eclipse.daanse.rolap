@@ -35,9 +35,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
+import org.eclipse.daanse.olap.common.ExecutionConfig;
 import org.eclipse.daanse.sql.dialect.api.Dialect;
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.access.Role;
@@ -76,10 +76,8 @@ import org.eclipse.daanse.olap.api.result.NullValue;
 import org.eclipse.daanse.olap.api.result.ObjectValue;
 import org.eclipse.daanse.olap.api.result.Position;
 import org.eclipse.daanse.olap.api.sql.SqlStatementI;
-import org.eclipse.daanse.olap.common.ConfigConstants;
 import org.eclipse.daanse.olap.common.ExecuteDurationUtil;
 import org.eclipse.daanse.olap.common.StandardProperty;
-import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.core.AbstractBasicContext;
 import org.eclipse.daanse.olap.execution.ExecutionImpl;
@@ -212,7 +210,7 @@ public class RolapCell implements Cell {
         int maxRowCount)
     {
         if (!result.getExecution().getDaanseStatement().getDaanseConnection().getContext()
-                .getConfigValue(ConfigConstants.ENABLE_DRILL_THROUGH, ConfigConstants.ENABLE_DRILL_THROUGH_DEFAULT_VALUE, Boolean.class))
+                .getConfig().enableDrillThrough())
         {
             throw new OlapRuntimeException(MessageFormat.format(
                 drillthroughDisabled,
@@ -450,7 +448,7 @@ public class RolapCell implements Cell {
     @Override
 	public boolean canDrillThrough() {
         if (!((Context<?>)(result.getExecution().getDaanseStatement().getDaanseConnection().getContext()))
-                .getConfigValue(ConfigConstants.ENABLE_DRILL_THROUGH, ConfigConstants.ENABLE_DRILL_THROUGH_DEFAULT_VALUE, Boolean.class))
+                .getConfig().enableDrillThrough())
         {
             return false;
         }
@@ -640,8 +638,7 @@ public class RolapCell implements Cell {
 
     @Override
 	public Object getPropertyValue(String propertyName) {
-        final boolean matchCase =
-            SystemWideProperties.instance().CaseSensitive;
+        final boolean matchCase = ExecutionConfig.current().caseSensitive();
         StandardProperty property = StandardProperty.lookup(propertyName, matchCase);
         Object defaultValue = null;
         String formatString = null;

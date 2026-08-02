@@ -97,7 +97,7 @@ public class DescendantsConstraint implements TupleConstraint {
      */
     /**
      * True when {@link #toContribution}'s WHERE reproduces the recorder's factored per-level IN
-     * ({@code generateSingleValueInExpr}), so a level-members consumer may build it
+     * by the member constraint writer, so a level-members consumer may build it
      * authoritatively. A single (or no) parent delegates to the wrapped member-children constraint's
      * single-member contribution — always reproduced. Multiple parents reproduce the recorder ONLY when
      * they form a RECTANGLE (the distinct per-level key values cross EXACTLY to the parent set, e.g. all

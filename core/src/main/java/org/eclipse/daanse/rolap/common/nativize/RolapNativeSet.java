@@ -47,7 +47,6 @@ import org.eclipse.daanse.olap.api.element.Level;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.evaluator.NativeEvaluator;
 import org.eclipse.daanse.olap.calc.base.type.tuplebase.DelegatingTupleList;
-import org.eclipse.daanse.olap.common.ConfigConstants;
 import org.eclipse.daanse.olap.common.DelegatingCatalogReader;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.exceptions.ResultStyleException;
@@ -602,7 +601,7 @@ public abstract class RolapNativeSet extends RolapNative {
             context, null, new ArrayList<>() ) );
       }
 
-      if ( !schemaReader.getContext().getConfigValue(ConfigConstants.DISABLE_CACHING, ConfigConstants.DISABLE_CACHING_DEFAULT_VALUE, Boolean.class) ) {
+      if ( !schemaReader.getContext().getConfig().disableCaching() ) {
         if ( hasEnumTargets ) {
           if ( newPartialResult != null ) {
             cache.put(

@@ -60,7 +60,6 @@ import org.eclipse.daanse.rolap.aggregator.countbased.SumFromAvgAggregator;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.element.RolapLevel;
-import org.eclipse.daanse.rolap.mapping.model.RolapMappingFactory;
 import org.eclipse.daanse.rolap.recorder.MessageRecorder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -782,10 +781,11 @@ public class ExplicitRules {
 
                     List<Segment> names = Util.parseIdentifier(nameInner);
                     // must be [hierarchy usage name].[level name]
-                    if (!(names.size() == 2
-                        //|| SystemWideProperties.instance().SsasCompatibleNaming
-                          || true
-                        && names.size() == 3))
+                    // SsasCompatibleNaming was the second alternative here; it has
+                    // been commented out with an unconditional true in its place, so
+                    // the property is dead. Kept literal so the condition reads as
+                    // what it does: two or three segments.
+                    if (!(names.size() == 2 || names.size() == 3))
                     {
                         msgRecorder.reportError(
                             MessageFormat.format(badLevelNameFormat,

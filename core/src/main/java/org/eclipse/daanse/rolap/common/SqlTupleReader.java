@@ -65,13 +65,11 @@ import org.eclipse.daanse.olap.calc.base.type.tuplebase.ArrayTupleList;
 import org.eclipse.daanse.olap.calc.base.type.tuplebase.ListTupleList;
 import org.eclipse.daanse.olap.calc.base.type.tuplebase.TupleCollections;
 import org.eclipse.daanse.olap.calc.base.type.tuplebase.UnaryTupleList;
-import org.eclipse.daanse.olap.common.ConfigConstants;
 import org.eclipse.daanse.rolap.common.sql.BuiltSql;
 import org.eclipse.daanse.rolap.common.sqlbuild.QueryBuildContext;
 import org.eclipse.daanse.rolap.common.sqlbuild.AggTupleQueries;
 import org.eclipse.daanse.rolap.common.sqlbuild.TupleSqlMapper;
 import org.eclipse.daanse.olap.common.ExecuteDurationUtil;
-import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.exceptions.ResourceLimitExceededException;
 import org.eclipse.daanse.olap.execution.ExecutionImpl;
@@ -101,7 +99,6 @@ import org.eclipse.daanse.rolap.common.sql.QueryRecorder;
 
 import org.eclipse.daanse.rolap.common.sql.TupleConstraint;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
-import org.eclipse.daanse.rolap.common.util.SqlExpressionResolver;
 import org.eclipse.daanse.rolap.element.RolapBaseCubeMeasure;
 import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.element.RolapCubeHierarchy;
@@ -547,7 +544,9 @@ public Object getCacheKey() {
         target.open();
       }
 
-      int limit = SystemWideProperties.instance().ResultLimit;
+      // Cast because Context is declared raw here, which would erase
+      // getConfig()'s return type along with its own.
+      int limit = ( (Context<?>) context ).getConfig().resultLimit();
       int fetchCount = 0;
 
       // determine how many enum targets we have
@@ -1273,7 +1272,7 @@ public TupleList readTuples(
       "while generating query to retrieve members of level(s) " + targets;
 
     Evaluator evaluator = getEvaluator( constraint );
-    AggStar aggStar = chooseAggStar( constraint, evaluator, baseCube, context.getConfigValue(ConfigConstants.USE_AGGREGATES, ConfigConstants.USE_AGGREGATES_DEFAULT_VALUE ,Boolean.class) );
+    AggStar aggStar = chooseAggStar( constraint, evaluator, baseCube, context.getConfig().useAggregates() );
 
     // The route is decided up front, before any QueryRecorder work: the generic mapper is
     // authoritative for (a) a standalone single-target SELECT (no aggregate table, no enumerated

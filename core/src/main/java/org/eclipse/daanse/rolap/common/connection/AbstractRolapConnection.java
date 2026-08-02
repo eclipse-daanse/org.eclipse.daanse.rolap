@@ -65,7 +65,6 @@ import org.eclipse.daanse.olap.api.result.Position;
 import org.eclipse.daanse.olap.api.result.Result;
 import org.eclipse.daanse.olap.api.result.Scenario;
 import org.eclipse.daanse.olap.calc.base.type.tuplebase.TupleCollections;
-import org.eclipse.daanse.olap.common.ConfigConstants;
 import org.eclipse.daanse.olap.common.ExecuteDurationUtil;
 import org.eclipse.daanse.olap.common.ResultBase;
 import org.eclipse.daanse.olap.common.Util;
@@ -230,8 +229,11 @@ public CacheControl getCacheControl( PrintWriter pw ) {
 @Override
 public Result execute( Query query ) {
     final Statement statement = query.getStatement();
-    ExecutionImpl execution =
-      new ExecutionImpl( statement, Optional.of(Duration.ofMillis(statement.getQueryTimeoutMillis())) );
+    // A queryTimeout of 0 means "no limit", so it must not become a present
+    // Duration of length zero - that would expire the query immediately.
+    final long timeoutMillis = statement.getQueryTimeoutMillis();
+    ExecutionImpl execution = new ExecutionImpl( statement,
+      timeoutMillis <= 0 ? Optional.empty() : Optional.of(Duration.ofMillis(timeoutMillis)) );
     return execute( execution );
   }
 
@@ -288,11 +290,11 @@ public Result execute( Query query ) {
       }
     };
 
-	MemoryMonitor mm = context.getConfigValue(ConfigConstants.MEMORY_MONITOR, ConfigConstants.MEMORY_MONITOR_DEFAULT_VALUE, Boolean.class) ? new NotificationMemoryMonitor() : new FauxMemoryMonitor();
+	MemoryMonitor mm = context.getConfig().memoryMonitor() ? new NotificationMemoryMonitor() : new FauxMemoryMonitor();
 
     final long currId = execution.getId();
     try {
-      mm.addListener( listener, context.getConfigValue(ConfigConstants.MEMORY_MONITOR_THRESHOLD, ConfigConstants.MEMORY_MONITOR_THRESHOLD_DEFAULT_VALUE, Integer.class) );
+      mm.addListener( listener, context.getConfig().memoryMonitorThreshold() );
       // Check to see if we must punt
       execution.checkCancelOrTimeout();
 

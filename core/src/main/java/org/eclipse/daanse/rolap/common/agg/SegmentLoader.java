@@ -25,6 +25,7 @@
  */
 
 package org.eclipse.daanse.rolap.common.agg;
+import org.eclipse.daanse.olap.common.ExecutionConfig;
 import static org.eclipse.daanse.rolap.common.SqlStatement.javaDoubleOverflow;
 
 import java.io.Serializable;
@@ -59,8 +60,6 @@ import org.eclipse.daanse.olap.api.execution.Execution.Purpose;
 import org.eclipse.daanse.olap.api.execution.ExecutionContext;
 import org.eclipse.daanse.olap.api.execution.ExecutionMetadata;
 import org.eclipse.daanse.olap.api.result.NullValue;
-import org.eclipse.daanse.olap.common.ConfigConstants;
-import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.exceptions.ResourceLimitExceededException;
 import org.eclipse.daanse.olap.key.BitKey;
@@ -150,7 +149,7 @@ public class SegmentLoader {
    */
   public void load( int cellRequestCount, List<GroupingSet> groupingSets, List<StarPredicate> compoundPredicateList,
       List<Future<Map<Segment, SegmentWithData>>> segmentFutures ) {
-    if ( !cacheMgr.getContext().getConfigValue(ConfigConstants.DISABLE_CACHING, ConfigConstants.DISABLE_CACHING_DEFAULT_VALUE, Boolean.class) ) {
+    if ( !cacheMgr.getContext().getConfig().disableCaching() ) {
       for ( GroupingSet groupingSet : groupingSets ) {
         for ( Segment segment : groupingSet.getSegments() ) {
           final SegmentCacheIndex index = ((SegmentCacheIndexRegistry)cacheMgr.getIndexRegistry()).getIndex( segment.star );
@@ -189,10 +188,10 @@ public class SegmentLoader {
     @Override
 	public Map<Segment, SegmentWithData> call() throws Exception {
       return ExecutionContext.where(executionContext, () -> {
-          boolean useAggregates = executionContext.getExecution().getDaanseStatement().getDaanseConnection().getContext().getConfigValue(ConfigConstants.USE_AGGREGATES, ConfigConstants.USE_AGGREGATES_DEFAULT_VALUE ,Boolean.class);
+          boolean useAggregates = executionContext.getExecution().getDaanseStatement().getDaanseConnection().getContext().getConfig().useAggregates();
         return segmentLoader.loadImpl( cellRequestCount, groupingSets, compoundPredicateList, useAggregates,
-            executionContext.getExecution().getDaanseStatement().getDaanseConnection().getContext().getConfigValue(ConfigConstants.SPARSE_SEGMENT_COUNT_THRESHOLD, ConfigConstants.SPARSE_SEGMENT_COUNT_THRESHOLD_DEFAULT_VALUE ,Integer.class),
-            executionContext.getExecution().getDaanseStatement().getDaanseConnection().getContext().getConfigValue(ConfigConstants.SPARSE_SEGMENT_DENSITY_THRESHOLD, ConfigConstants.SPARSE_SEGMENT_DENSITY_THRESHOLD_DEFAULT_VALUE ,Double.class));
+            executionContext.getExecution().getDaanseStatement().getDaanseConnection().getContext().getConfig().sparseSegmentCountThreshold(),
+            executionContext.getExecution().getDaanseStatement().getDaanseConnection().getContext().getConfig().sparseSegmentDensityThreshold());
       });
     }
   }
@@ -265,7 +264,7 @@ public class SegmentLoader {
     // Also note that we push the segments to external cache after we have
     // called cacheMgr.loadSucceeded. That call will allow the current
     // query to proceed.
-    if ( !cacheMgr.getContext().getConfigValue(ConfigConstants.DISABLE_CACHING, ConfigConstants.DISABLE_CACHING_DEFAULT_VALUE, Boolean.class) ) {
+    if ( !cacheMgr.getContext().getConfig().disableCaching() ) {
       cacheMgr.compositeCache.put( header, body );
       cacheMgr.loadSucceeded( star, header, body );
     }
@@ -548,7 +547,7 @@ public class SegmentLoader {
       return RolapUtil.executeQuery( star.getContext(), pair.sql(), pair.columnTypes(), 0, 0, executionContext, -1, -1,
           // Only one of the two callbacks are required, depending if we
           // cache the segments or not.
-          cacheMgr.getContext().getConfigValue(ConfigConstants.DISABLE_CACHING, ConfigConstants.DISABLE_CACHING_DEFAULT_VALUE, Boolean.class) ? callbackNoCaching : callbackWithCaching );
+          cacheMgr.getContext().getConfig().disableCaching() ? callbackNoCaching : callbackWithCaching );
     } catch ( Throwable t ) {
       if ( Util.getMatchingCause( t, AbortException.class ) != null ) {
         return null;
@@ -766,7 +765,7 @@ public class SegmentLoader {
   }
 
   private void checkResultLimit( int currentCount ) {
-    final int limit = SystemWideProperties.instance().ResultLimit;
+    final int limit = ExecutionConfig.current().resultLimit();
     if ( limit > 0 && currentCount > limit ) {
       throw new ResourceLimitExceededException(MessageFormat.format(segmentFetchLimitExceeded, limit ));
     }

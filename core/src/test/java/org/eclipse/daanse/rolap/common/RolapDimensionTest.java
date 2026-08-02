@@ -27,14 +27,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 
-import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.rolap.element.RolapCatalog;
 import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.element.RolapDimension;
 import org.eclipse.daanse.rolap.mapping.model.database.relational.ColumnInternalDataType;
 import org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.HideMemberIf;
 import org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.LevelDefinition;
-import org.eclipse.daanse.rolap.mapping.model.RolapMappingFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -88,7 +86,6 @@ class RolapDimensionTest {
   }
 
     @AfterEach void afterEach() {
-    SystemWideProperties.instance().populateInitial();
   }
 
   @Disabled("disabled for CI build") //disabled for CI build

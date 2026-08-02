@@ -40,7 +40,6 @@ import org.eclipse.daanse.olap.api.evaluator.NativeEvaluator;
 import org.eclipse.daanse.olap.api.function.FunctionDefinition;
 import org.eclipse.daanse.olap.api.query.component.Expression;
 import org.eclipse.daanse.olap.api.query.component.MemberExpression;
-import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.query.component.MdxVisitorImpl;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
@@ -227,37 +226,22 @@ public class RolapNativeFilter extends RolapNativeSet {
     }
 
     /**
-     * Whether this filter can be evaluated natively: it can, unless a member/context IN-list would
-     * exceed the dialect's value-list limit.
+     * Whether this filter can be evaluated natively: it can, unless a member or
+     * context IN list would exceed what the dialect accepts.
      *
-     * CONTRACT — the complete {@code setSupported(false)} inventory (the whole main tree has
-     * exactly ONE producer):
-     * <ul>
-     *   <li>{@code MemberConstraintWriter.generateSingleValueInExpr} (the IN-list-limit gate):
-     *       disables native evaluation iff {@code !dialect.supportsUnlimitedValueList()} and a
-     *       per-level member group is a {@code ListColumnPredicate} with more than
-     *       {@code SystemWideProperties.MaxConstraints} values (one predicate per member, so group
-     *       size == member-list size; parent groups shrink walking up, so the INITIAL lists bound
-     *       every group).</li>
-     * </ul>
-     * {@code RolapNativeSql.generateFilterPredicate} never touches this (a null predicate merely
-     * skips the HAVING; condition compilability is pre-checked on a scratch context in
-     * {@code createEvaluator}). The limit gate is reachable (under the same nonEmpty-or-join gate
-     * as below) via exactly three member-list sources:
-     * <ol>
-     *   <li>each applicable cross-join arg's member list
-     *       ({@code MemberListCrossJoinArg}/{@code DescendantsCrossJoinArg} →
-     *       {@code addMemberConstraint}; the multi-level compound partitions sublists, so the arg
-     *       list size bounds them),</li>
-     *   <li>the per-column slicer member sets ({@code SlicerAnalyzer.getSlicerMemberMap} — the
-     *       exact sets {@code ContextConstraintWriter.addContextConstraint} constrains),</li>
-     *   <li>the role-access member lists ({@code ContextConstraintWriter.getRoleConstraintMembers}).</li>
-     * </ol>
-     * Hence: on unlimited-value-list dialects, and whenever every such list is within
-     * {@code MaxConstraints}, this returns true. On a limited dialect with an oversized list it is
-     * conservatively false even where the list could occasionally still be expressed (tuple-IN
-     * branch, all/calculated skip groups, the disjoint-slicer tuple path that bypasses the
-     * per-column loop) — those fall back to non-native evaluation: always correct, at most slower.
+     * <p>
+     * The limit is skipped entirely on a dialect that reports unlimited value
+     * lists. Otherwise three member-list sources are measured against
+     * {@code maxConstraints}: each applicable cross-join argument, the per-column
+     * slicer member sets, and the role-access member lists. Any of them over the
+     * limit makes this false.
+     * </p>
+     *
+     * <p>
+     * The judgement is deliberately conservative: an oversized list falls back to
+     * non-native evaluation even in the cases where it could still have been
+     * expressed. That is always correct and at most slower.
+     * </p>
      */
     public boolean isSupported( Context<?> context ) {
       if ( org.eclipse.daanse.rolap.common.sql.SqlQueryCapabilities.of( context.getDialect() ).unlimitedValueList() ) {
@@ -268,7 +252,7 @@ public class RolapNativeFilter extends RolapNativeSet {
         // Only the HAVING condition applies here — no member/context IN lists.
         return true;
       }
-      final int maxConstraints = SystemWideProperties.instance().MaxConstraints;
+      final int maxConstraints = getEvaluator().getQuery().getConnection().getContext().getConfig().maxConstraints();
       for ( CrossJoinArg arg : args ) {
         if ( canApplyCrossJoinArgConstraint( arg ) ) {
           List<RolapMember> argMembers = arg.getMembers();

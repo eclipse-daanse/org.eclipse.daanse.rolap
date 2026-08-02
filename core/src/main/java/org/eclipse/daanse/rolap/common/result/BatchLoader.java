@@ -33,7 +33,6 @@ import org.eclipse.daanse.rolap.common.sql.SqlQueryCapabilities;
 import org.eclipse.daanse.olap.api.cache.CacheCommand;
 import org.eclipse.daanse.olap.api.cache.OlapSegmentCacheManager;
 import org.eclipse.daanse.olap.api.execution.ExecutionContext;
-import org.eclipse.daanse.olap.common.ConfigConstants;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.key.BitKey;
 import org.eclipse.daanse.olap.spi.SegmentBody;
@@ -109,7 +108,7 @@ public class BatchLoader {
 
     public final boolean shouldUseGroupingFunction() {
         return cube.getCatalog().getInternalConnection().getContext()
-                .getConfigValue(ConfigConstants.ENABLE_GROUPING_SETS, ConfigConstants.ENABLE_GROUPING_SETS_DEFAULT_VALUE, Boolean.class)
+                .getConfig().enableGroupingSets()
             && capabilities.groupingSets();
     }
 
@@ -143,7 +142,7 @@ public class BatchLoader {
         final AggregationKey key,
         final SegmentBuilder.SegmentConverterImpl converter)
     {
-        if (cacheMgr.getContext().getConfigValue(ConfigConstants.DISABLE_CACHING, ConfigConstants.DISABLE_CACHING_DEFAULT_VALUE, Boolean.class)) {
+        if (cacheMgr.getContext().getConfig().disableCaching()) {
             // Caching is disabled. Return always false.
             return false;
         }
@@ -230,7 +229,7 @@ public class BatchLoader {
         // aggregator must support raw data aggregation. We call
         // Aggregator.supportsFastAggregates() to verify.
         Boolean enableInMemoryRollup = cube.getCatalog().getInternalConnection().getContext()
-                .getConfigValue(ConfigConstants.ENABLE_IN_MEMORY_ROLLUP, ConfigConstants.ENABLE_IN_MEMORY_ROLLUP_DEFAULT_VALUE ,Boolean.class);
+                .getConfig().enableInMemoryRollup();
         if (enableInMemoryRollup
             && measure.getAggregator().supportsFastAggregates(
                     EnumConvertor.toDataTypeJdbc(measure.getDatatype()))
@@ -772,11 +771,11 @@ public class BatchLoader {
             GroupingSetsCollector groupingSetsCollector,
             List<Future<Map<Segment, SegmentWithData>>> segmentFutures)
         {
-            if (cube.getCatalog().getInternalConnection().getContext().getConfigValue(ConfigConstants.GENERATE_AGGREGATE_SQL, ConfigConstants.GENERATE_AGGREGATE_SQL_DEFAULT_VALUE, Boolean.class)) {
+            if (cube.getCatalog().getInternalConnection().getContext().getConfig().generateAggregateSql()) {
                 generateAggregateSql();
             }
             boolean optimizePredicates =
-                cube.getCatalog().getInternalConnection().getContext().getConfigValue(ConfigConstants.OPTIMIZE_PREDICATES, ConfigConstants.OPTIMIZE_PREDICATES_DEFAULT_VALUE, Boolean.class);
+                cube.getCatalog().getInternalConnection().getContext().getConfig().optimizePredicates();
             final StarColumnPredicate[] predicates = initPredicates();
             final long t1 = System.currentTimeMillis();
 

@@ -31,7 +31,6 @@ package org.eclipse.daanse.rolap.common.agg;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.daanse.sql.model.type.BestFitColumnType;
 import org.eclipse.daanse.sql.statement.api.render.RenderedSql;
 import org.eclipse.daanse.rolap.common.aggmatcher.AggStar;
 import org.eclipse.daanse.rolap.common.sql.QueryRecorder;
@@ -177,8 +176,7 @@ class AggQuerySpec {
         if (groupingSetsList.useGroupingSets()) {
             return null;
         }
-        if (!org.eclipse.daanse.olap.common.SystemWideProperties.instance()
-                .FilterChildlessSnowflakeMembers) {
+        if (!aggStar.getStar().getContext().getConfig().filterChildlessSnowflakeMembers()) {
             return null;
         }
         java.util.Map<AggStar.Table, AggregateSqlMapper.AggFromTable> tables =
@@ -258,8 +256,7 @@ class AggQuerySpec {
                 "agg segment: path=recorder reason=non-rollup");
             return null;
         }
-        if (!org.eclipse.daanse.olap.common.SystemWideProperties.instance()
-                .FilterChildlessSnowflakeMembers) {
+        if (!aggStar.getStar().getContext().getConfig().filterChildlessSnowflakeMembers()) {
             org.eclipse.daanse.rolap.common.RolapUtil.SQL_GEN_LOGGER.debug(
                 "agg segment: path=recorder reason=filter-childless-snowflake-members-off");
             return null;

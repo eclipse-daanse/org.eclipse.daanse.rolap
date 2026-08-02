@@ -38,7 +38,6 @@ import org.eclipse.daanse.olap.api.query.component.Expression;
 import org.eclipse.daanse.olap.api.query.component.MemberExpression;
 import org.eclipse.daanse.olap.api.query.component.NumericLiteral;
 import org.eclipse.daanse.olap.api.sql.SortingDirection;
-import org.eclipse.daanse.olap.common.ConfigConstants;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.rolap.aggregator.DistinctCountAggregator;
 import org.eclipse.daanse.rolap.common.RolapUtil;
@@ -413,7 +412,7 @@ public class RolapNativeTopCount extends RolapNativeSet {
         if (allArgs == null || allArgs.isEmpty() || allArgs.getFirst() == null) {
             alertNonNativeTopCount(
                 "Set in 1st argument does not support native eval.",
-                evaluator.getCatalogReader().getContext().getConfigValue(ConfigConstants.ALERT_NATIVE_EVALUATION_UNSUPPORTED, ConfigConstants.ALERT_NATIVE_EVALUATION_UNSUPPORTED_DEFAULT_VALUE, String.class));
+                evaluator.getCatalogReader().getContext().getConfig().alertNativeEvaluationUnsupported());
             return null;
         }
 
@@ -421,7 +420,7 @@ public class RolapNativeTopCount extends RolapNativeSet {
         if (isPreferInterpreter(cjArgs, false)) {
             alertNonNativeTopCount(
                 "One or more args prefer non-native.",
-                evaluator.getCatalogReader().getContext().getConfigValue(ConfigConstants.ALERT_NATIVE_EVALUATION_UNSUPPORTED, ConfigConstants.ALERT_NATIVE_EVALUATION_UNSUPPORTED_DEFAULT_VALUE, String.class));
+                evaluator.getCatalogReader().getContext().getConfig().alertNativeEvaluationUnsupported());
             return null;
         }
 
@@ -431,7 +430,7 @@ public class RolapNativeTopCount extends RolapNativeSet {
 			count = numericLiteral.getIntValue();
 		} else {
 			alertNonNativeTopCount("TopCount value cannot be determined.",
-                evaluator.getCatalogReader().getContext().getConfigValue(ConfigConstants.ALERT_NATIVE_EVALUATION_UNSUPPORTED, ConfigConstants.ALERT_NATIVE_EVALUATION_UNSUPPORTED_DEFAULT_VALUE, String.class));
+                evaluator.getCatalogReader().getContext().getConfig().alertNativeEvaluationUnsupported());
 			return null;
 		}
 
@@ -456,7 +455,7 @@ public class RolapNativeTopCount extends RolapNativeSet {
             if (sql.generateTopCountOrderByNode(args[2]) == null) {
                 alertNonNativeTopCount(
                     "Cannot convert order by expression to SQL.",
-                    evaluator.getCatalogReader().getContext().getConfigValue(ConfigConstants.ALERT_NATIVE_EVALUATION_UNSUPPORTED, ConfigConstants.ALERT_NATIVE_EVALUATION_UNSUPPORTED_DEFAULT_VALUE, String.class));
+                    evaluator.getCatalogReader().getContext().getConfig().alertNativeEvaluationUnsupported());
                 return null;
             }
         }
@@ -485,7 +484,7 @@ public class RolapNativeTopCount extends RolapNativeSet {
             if (!constraint.isValid()) {
                 alertNonNativeTopCount(
                     "Constraint constructed cannot be used for native eval.",
-                    evaluator.getCatalogReader().getContext().getConfigValue(ConfigConstants.ALERT_NATIVE_EVALUATION_UNSUPPORTED, ConfigConstants.ALERT_NATIVE_EVALUATION_UNSUPPORTED_DEFAULT_VALUE, String.class));
+                    evaluator.getCatalogReader().getContext().getConfig().alertNativeEvaluationUnsupported());
                 return null;
             }
             LOGGER.debug("using native topcount");

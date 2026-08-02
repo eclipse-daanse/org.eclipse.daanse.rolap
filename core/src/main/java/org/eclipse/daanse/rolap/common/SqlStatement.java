@@ -184,7 +184,7 @@ public class SqlStatement implements SqlStatementI {
       }
 
       // Execute hook.
-      RolapUtil.ExecuteQueryHook hook = RolapUtil.getHook();
+      RolapUtil.ExecuteQueryHook hook = RolapUtil.getHook( context );
       if ( hook != null ) {
         hook.onExecuteQuery( sql );
       }

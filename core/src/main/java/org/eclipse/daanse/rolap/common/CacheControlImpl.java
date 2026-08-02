@@ -56,7 +56,6 @@ import org.eclipse.daanse.olap.api.execution.Execution;
 import org.eclipse.daanse.olap.api.execution.ExecutionContext;
 import org.eclipse.daanse.olap.api.execution.NoExecutionContextException;
 import org.eclipse.daanse.olap.common.ExecuteDurationUtil;
-import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.core.AbstractBasicContext;
 import org.eclipse.daanse.olap.execution.ExecutionImpl;
@@ -850,8 +849,7 @@ public class CacheControlImpl implements CacheControl {
 
     @Override
 	public void execute(MemberEditCommand cmd) {
-        final Boolean prop =
-            SystemWideProperties.instance().EnableRolapCubeMemberCache;
+        final Boolean prop = connection.getContext().getConfig().enableRolapCubeMemberCache();
         if (prop) {
             throw new IllegalArgumentException(
                 new StringBuilder("Member cache control operations are not allowed unless ")

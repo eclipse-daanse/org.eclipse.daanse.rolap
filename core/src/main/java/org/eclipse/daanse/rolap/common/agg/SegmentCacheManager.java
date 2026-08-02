@@ -62,7 +62,6 @@ import org.eclipse.daanse.olap.api.monitor.event.EventCommon;
 import org.eclipse.daanse.olap.api.monitor.event.ExecutionEventCommon;
 import org.eclipse.daanse.olap.api.monitor.event.MdxStatementEventCommon;
 import org.eclipse.daanse.olap.api.monitor.event.ServertEventCommon;
-import org.eclipse.daanse.olap.common.ConfigConstants;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.spi.SegmentBody;
 import org.eclipse.daanse.olap.spi.SegmentCache;
@@ -315,8 +314,8 @@ public class SegmentCacheManager implements OlapSegmentCacheManager {
     this.indexRegistry = new SegmentCacheIndexRegistry();
 
     // Add a local cache, if needed.
-    if ( !context.getConfigValue(ConfigConstants.DISABLE_LOCAL_SEGMENT_CACHE, ConfigConstants.DISABLE_LOCAL_SEGMENT_CACHE_DEFAULT_VALUE, Boolean.class)
-      && !context.getConfigValue(ConfigConstants.DISABLE_CACHING, ConfigConstants.DISABLE_CACHING_DEFAULT_VALUE, Boolean.class) ) {
+    if ( !context.getConfig().disableLocalSegmentCache()
+      && !context.getConfig().disableCaching() ) {
       final MemorySegmentCache cache = new MemorySegmentCache();
       segmentCacheWorkers.add(
         new SegmentCacheWorker( cache, thread ) );
@@ -324,7 +323,7 @@ public class SegmentCacheManager implements OlapSegmentCacheManager {
 
     // Add an external cache, if configured.
     final List<SegmentCache> externalCache = SegmentCacheWorker.initCache(context
-            .getConfigValue(ConfigConstants.SEGMENT_CACHE, ConfigConstants.SEGMENT_CACHE_DEFAULT_VALUE ,String.class));
+            .getConfig().segmentCache());
     for ( SegmentCache cache : externalCache ) {
       // Create a worker for this external cache
       segmentCacheWorkers.add(
@@ -335,7 +334,7 @@ public class SegmentCacheManager implements OlapSegmentCacheManager {
         new AsyncCacheListener( this, context ) );
     }
 
-    compositeCache = new CompositeSegmentCache( segmentCacheWorkers, context.getConfigValue(ConfigConstants.DISABLE_CACHING, ConfigConstants.DISABLE_CACHING_DEFAULT_VALUE, Boolean.class) );
+    compositeCache = new CompositeSegmentCache( segmentCacheWorkers, context.getConfig().disableCaching() );
     // sync elements already in external cache:
     // we're not able to have indexes at this point,
     // have to wait until the schema has been loaded
@@ -351,8 +350,8 @@ public class SegmentCacheManager implements OlapSegmentCacheManager {
             // We use the same value for coreSize and maxSize
             // because that's the behavior we want. All extra
             // tasks will be put on an unbounded queue.
-            context.getConfigValue(ConfigConstants.SEGMENT_CACHE_MANAGER_NUMBER_CACHE_THREADS, ConfigConstants.SEGMENT_CACHE_MANAGER_NUMBER_CACHE_THREADS_DEFAULT_VALUE, Integer.class),
-            context.getConfigValue(ConfigConstants.SEGMENT_CACHE_MANAGER_NUMBER_CACHE_THREADS, ConfigConstants.SEGMENT_CACHE_MANAGER_NUMBER_CACHE_THREADS_DEFAULT_VALUE, Integer.class),
+            context.getConfig().segmentCacheManagerNumberCacheThreads(),
+            context.getConfig().segmentCacheManagerNumberCacheThreads(),
             1,
             "daanse.rolap.agg.SegmentCacheManager$cacheExecutor",
             ( r, executor ) -> {
@@ -365,12 +364,8 @@ public class SegmentCacheManager implements OlapSegmentCacheManager {
             // We use the same value for coreSize and maxSize
             // because that's the behavior we want. All extra
             // tasks will be put on an unbounded queue.
-            context.
-            getConfigValue(ConfigConstants.SEGMENT_CACHE_MANAGER_NUMBER_SQL_THREADS,
-                    ConfigConstants.SEGMENT_CACHE_MANAGER_NUMBER_SQL_THREADS_DEFAULT_VALUE, Integer.class),
-            context.
-            getConfigValue(ConfigConstants.SEGMENT_CACHE_MANAGER_NUMBER_SQL_THREADS,
-                    ConfigConstants.SEGMENT_CACHE_MANAGER_NUMBER_SQL_THREADS_DEFAULT_VALUE, Integer.class),
+            context.getConfig().segmentCacheManagerNumberSqlThreads(),
+            context.getConfig().segmentCacheManagerNumberSqlThreads(),
             1,
             "daanse.rolap.agg.SegmentCacheManager$sqlExecutor",
             ( r, executor ) -> {
@@ -520,7 +515,7 @@ public class SegmentCacheManager implements OlapSegmentCacheManager {
   public void externalSegmentCreated(
     SegmentHeader header,
     Context<?> context ) {
-    if ( context.getConfigValue(ConfigConstants.DISABLE_CACHING, ConfigConstants.DISABLE_CACHING_DEFAULT_VALUE, Boolean.class) ) {
+    if ( context.getConfig().disableCaching() ) {
       // Ignore cache requests.
       return;
     }
@@ -543,7 +538,7 @@ public class SegmentCacheManager implements OlapSegmentCacheManager {
   public void externalSegmentDeleted(
     SegmentHeader header,
     Context<?> context ) {
-    if ( context.getConfigValue(ConfigConstants.DISABLE_CACHING, ConfigConstants.DISABLE_CACHING_DEFAULT_VALUE, Boolean.class) ) {
+    if ( context.getConfig().disableCaching() ) {
       // Ignore cache requests.
       return;
     }

@@ -36,7 +36,6 @@ import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -45,7 +44,6 @@ import org.eclipse.daanse.olap.api.access.AccessMember;
 import org.eclipse.daanse.olap.api.element.Level;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.query.component.Formula;
-import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.SqlStatement;
@@ -71,8 +69,10 @@ import org.eclipse.daanse.rolap.common.util.RelationUtil;
  */
 public class RolapCubeHierarchy extends RolapHierarchy {
 
-    private final boolean cachingEnabled =
-        SystemWideProperties.instance().EnableRolapCubeMemberCache;
+    // Assigned in the constructor rather than here: the catalog - and through it
+    // the Context that carries the setting - is only reachable once the super
+    // constructor has run.
+    private final boolean cachingEnabled;
     private final RolapCubeDimension cubeDimension;
     private final RolapHierarchy rolapHierarchy;
     private final RolapCubeLevel currentNullLevel;
@@ -162,6 +162,7 @@ public class RolapCubeHierarchy extends RolapHierarchy {
 
         this.rolapHierarchy = rolapHierarchy;
         this.cubeDimension = cubeDimension;
+        this.cachingEnabled = getRolapCatalog().getInternalConnection().getContext().getConfig().enableRolapCubeMemberCache();
         this.hierarchyMapping = rolapHierarchy.getHierarchyMapping();
         // this relation should equal the name of the new dimension table
         // The null member belongs to a level with very similar properties to
@@ -633,8 +634,7 @@ public class RolapCubeHierarchy extends RolapHierarchy {
          * involves the Cube's fact table.
          */
         public MemberCacheHelper rolapCubeCacheHelper;
-        private final boolean enableCache =
-            SystemWideProperties.instance().EnableRolapCubeMemberCache;
+        private final boolean enableCache = cachingEnabled;
 
         public CacheRolapCubeHierarchyMemberReader() {
             super(new SqlMemberSource(RolapCubeHierarchy.this));

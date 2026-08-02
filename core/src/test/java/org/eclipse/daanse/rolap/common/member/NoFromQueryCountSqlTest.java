@@ -27,6 +27,7 @@ import org.eclipse.daanse.olap.api.element.Dimension;
 import org.eclipse.daanse.olap.api.element.HideMemberCondition;
 import org.eclipse.daanse.olap.api.element.LevelType;
 import org.eclipse.daanse.olap.api.sql.SqlExpression;
+import org.eclipse.daanse.olap.common.ExecutionConfig;
 import org.eclipse.daanse.olap.element.OlapMetaDataBase;
 import org.eclipse.daanse.rolap.common.sql.QueryRecorder;
 import org.eclipse.daanse.rolap.element.RolapColumn;
@@ -103,8 +104,8 @@ class NoFromQueryCountSqlTest {
         RolapHierarchy hierarchy = levels.get(0).getHierarchy();
         Context<?> context = mock(Context.class);
         doReturn(new NoFromQueryDialect(compound)).when(context).getDialect();
-        doReturn(Boolean.FALSE).when(context).getConfigValue(
-                Mockito.anyString(), Mockito.any(), Mockito.eq(Boolean.class));
+        // generateFormattedSql is read through getConfig(); false is the default.
+        doReturn(ExecutionConfig.DEFAULTS).when(context).getConfig();
 
         SqlMemberSource source = Mockito.mock(SqlMemberSource.class,
                 Mockito.withSettings().useConstructor(hierarchy).defaultAnswer(Mockito.CALLS_REAL_METHODS));

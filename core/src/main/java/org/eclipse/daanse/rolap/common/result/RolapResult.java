@@ -91,11 +91,9 @@ import org.eclipse.daanse.olap.calc.base.type.tuplebase.DelegatingTupleList;
 import org.eclipse.daanse.olap.calc.base.type.tuplebase.ListTupleList;
 import org.eclipse.daanse.olap.calc.base.type.tuplebase.TupleCollections;
 import org.eclipse.daanse.olap.calc.base.value.CurrentValueUnknownCalc;
-import org.eclipse.daanse.olap.common.ConfigConstants;
 import org.eclipse.daanse.olap.common.ExpCacheDescriptorImpl;
 import org.eclipse.daanse.olap.common.ResultBase;
 import org.eclipse.daanse.olap.common.StandardProperty;
-import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.core.AbstractBasicContext;
 import org.eclipse.daanse.olap.exceptions.ResourceLimitExceededException;
@@ -167,15 +165,15 @@ public class RolapResult extends ResultBase {
  */
   public RolapResult( final Execution execution, boolean execute ) {
     super( execution, null );
-    this.maxEvalDepth = query.getConnection().getContext().getConfigValue(ConfigConstants.MAX_EVAL_DEPTH, ConfigConstants.MAX_EVAL_DEPTH_DEFAULT_VALUE, Integer.class);
+    this.maxEvalDepth = query.getConnection().getContext().getConfig().maxEvalDepth();
     int solveOrder = execution
         .getDaanseStatement().getDaanseConnection()
-        .getContext().getConfigValue(ConfigConstants.COMPOUND_SLICER_MEMBER_SOLVE_ORDER, ConfigConstants.COMPOUND_SLICER_MEMBER_SOLVE_ORDER_DEFAULT_VALUE, Integer.class);
+        .getContext().getConfig().compoundSlicerMemberSolveOrder();
     this.point = CellKey.Generator.newCellKey( axes.length );
     AbstractBasicContext abc = (AbstractBasicContext) execution.getDaanseStatement().getDaanseConnection().getContext();
     final OlapAggregationManager aggMgr = abc.getAggregationManager();
     this.aggregatingReader = ((AggregationManager)aggMgr).getCacheCellReader();
-    final int expDeps = execution.getDaanseStatement().getDaanseConnection().getContext().getConfigValue(ConfigConstants.TEST_EXP_DEPENDENCIES, ConfigConstants.TEST_EXP_DEPENDENCIES_DEFAULT_VALUE, Integer.class);
+    final int expDeps = execution.getDaanseStatement().getDaanseConnection().getContext().getConfig().testExpDependencies();
     if ( expDeps > 0 ) {
       this.evaluator = new RolapDependencyTestingEvaluator( this, expDeps );
     } else {
@@ -297,7 +295,8 @@ public class RolapResult extends ResultBase {
 
       // The AxisMember object is used to hold Members that are found
       // during Step 1 when the Axes are determined.
-      final AxisMemberList axisMembers = new AxisMemberList();
+      final AxisMemberList axisMembers = new AxisMemberList(
+          query.getConnection().getContext().getConfig().resultLimit());
 
       // list of ALL Members that are not default Members
       final List<Member> nonDefaultAllMembers = new ArrayList<>();
@@ -1544,7 +1543,10 @@ public Cell getCell( int[] pos ) {
     private boolean countOnly;
     private final static String totalMembersLimitExceeded = "Total number of Members in result ({0,number}) exceeded limit ({1,number})";
 
-      AxisMemberList() {
+      // The limit is handed in rather than looked up: this is a static nested
+      // class, while its only caller sits in the RolapResult constructor where
+      // the Context is unambiguous.
+      AxisMemberList( int limit ) {
       this.countOnly = false;
       this.members = new ArrayList<>();
       this.membersByHierarchy = new HashMap<>();
@@ -1552,7 +1554,7 @@ public Cell getCell( int[] pos ) {
       this.axisCount = 0;
       // Now that the axes are evaluated, make sure that the number of
       // cells does not exceed the result limit.
-      this.limit = SystemWideProperties.instance().ResultLimit;
+      this.limit = limit;
     }
 
     @Override

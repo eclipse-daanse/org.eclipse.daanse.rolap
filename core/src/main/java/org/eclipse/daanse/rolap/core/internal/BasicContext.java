@@ -36,7 +36,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
 
 import javax.sql.DataSource;
 
@@ -54,7 +53,6 @@ import org.eclipse.daanse.olap.api.connection.ConnectionProps;
 import org.eclipse.daanse.olap.api.evaluator.Evaluator;
 import org.eclipse.daanse.olap.api.execution.Statement;
 import org.eclipse.daanse.olap.api.function.FunctionService;
-import org.eclipse.daanse.olap.common.ConfigConstants;
 import org.eclipse.daanse.olap.common.ExecuteDurationUtil;
 import org.eclipse.daanse.olap.core.LoggingEventBus;
 import org.eclipse.daanse.olap.execution.ExecutionImpl;
@@ -238,7 +236,7 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
 
         schemaCache = new RolapCatalogCache(this);
         queryLimitSemaphore = new Semaphore(
-                getConfigValue(ConfigConstants.QUERY_LIMIT, ConfigConstants.QUERY_LIMIT_DEFAULT_VALUE, Integer.class));
+                getConfig().queryLimit());
 
         try (Connection connection = connectionPool.getConnection()) {
             dialect = dialectFactory.createDialect(connection);
@@ -248,13 +246,9 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
         }
 
         shepherd = new RolapResultShepherd(
-                getConfigValue(ConfigConstants.ROLAP_CONNECTION_SHEPHERD_THREAD_POLLING_INTERVAL,
-                        ConfigConstants.ROLAP_CONNECTION_SHEPHERD_THREAD_POLLING_INTERVAL_DEFAULT_VALUE, Long.class),
-                getConfigValue(ConfigConstants.ROLAP_CONNECTION_SHEPHERD_THREAD_POLLING_INTERVAL_UNIT,
-                        ConfigConstants.ROLAP_CONNECTION_SHEPHERD_THREAD_POLLING_INTERVAL_UNIT_DEFAULT_VALUE,
-                        TimeUnit.class),
-                getConfigValue(ConfigConstants.ROLAP_CONNECTION_SHEPHERD_NB_THREADS,
-                        ConfigConstants.ROLAP_CONNECTION_SHEPHERD_NB_THREADS_DEFAULT_VALUE, Integer.class));
+                getConfig().rolapConnectionShepherdThreadPollingInterval(),
+                getConfig().rolapConnectionShepherdThreadPollingIntervalUnit(),
+                getConfig().rolapConnectionShepherdNbThreads());
         aggMgr = new AggregationManager(this);
 
         if (LOGGER.isDebugEnabled()) {

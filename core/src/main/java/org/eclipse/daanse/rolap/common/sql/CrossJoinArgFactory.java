@@ -58,8 +58,6 @@ import org.eclipse.daanse.olap.api.query.component.NumericLiteral;
 import org.eclipse.daanse.olap.api.query.component.QueryAxis;
 import org.eclipse.daanse.olap.api.type.HierarchyType;
 import org.eclipse.daanse.olap.api.type.Type;
-import org.eclipse.daanse.olap.common.ConfigConstants;
-import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.function.def.parentheses.ParenthesesFunDef;
 import org.eclipse.daanse.olap.function.def.set.SetFunDef;
@@ -414,7 +412,7 @@ public class CrossJoinArgFactory {
             new CrossJoinArg[2][];
 
         for (int i = 0; i < 2; i++) {
-            allArgsOneInput = checkCrossJoinArg(evaluator, args[i], returnAny, evaluator.getQuery().getConnection().getContext().getConfigValue(ConfigConstants.ENABLE_NATIVE_FILTER, ConfigConstants.ENABLE_NATIVE_FILTER_DEFAULT_VALUE, Boolean.class));
+            allArgsOneInput = checkCrossJoinArg(evaluator, args[i], returnAny, evaluator.getQuery().getConnection().getContext().getConfig().enableNativeFilter());
 
             if (allArgsOneInput == null
                 || allArgsOneInput.isEmpty()
@@ -487,7 +485,8 @@ public class CrossJoinArgFactory {
             }
         } else {
             if (!"{}".equalsIgnoreCase(fun.getFunctionMetaData().operationAtom().name())
-                || !isArgSizeSupported(args.length, SystemWideProperties.instance().MaxConstraints))
+                || !isArgSizeSupported(args.length, evaluator.getQuery().getConnection().getContext()
+                    .getConfig().maxConstraints()))
             {
                 return null;
             }
@@ -972,7 +971,7 @@ public class CrossJoinArgFactory {
         ExpressionCompiler compiler = evaluator.getQuery().createCompiler();
         CrossJoinArg[] arg0 = null;
         if (shouldExpandNonEmpty(exp,
-            evaluator.getCube().getCatalog().getInternalConnection().getContext().getConfigValue(ConfigConstants.EXPAND_NON_NATIVE, ConfigConstants.EXPAND_NON_NATIVE_DEFAULT_VALUE, Boolean.class))
+            evaluator.getCube().getCatalog().getInternalConnection().getContext().getConfig().expandNonNative())
             && evaluator.getActiveNativeExpansions().add(exp))
         {
             TupleListCalc listCalc0 = compiler.compileList(exp);

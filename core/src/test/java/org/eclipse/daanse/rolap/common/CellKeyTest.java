@@ -28,7 +28,6 @@ package org.eclipse.daanse.rolap.common;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.olap.key.CellKey;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,7 +44,6 @@ class CellKeyTest  {
     }
 
     @AfterEach void afterEach() {
-        SystemWideProperties.instance().populateInitial();
     }
 
     @Test

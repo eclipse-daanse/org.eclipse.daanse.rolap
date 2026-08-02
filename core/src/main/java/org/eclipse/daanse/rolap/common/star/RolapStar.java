@@ -39,9 +39,7 @@ import java.io.StringWriter;
 import java.lang.ref.SoftReference;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -58,7 +56,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import javax.sql.DataSource;
 
 import org.eclipse.daanse.sql.dialect.api.Dialect;
-import org.eclipse.daanse.rolap.common.util.ViewCodeSet;
 import org.eclipse.daanse.sql.model.type.BestFitColumnType;
 import org.eclipse.daanse.sql.model.type.Datatype;
 import org.eclipse.daanse.olap.api.Context;
@@ -68,13 +65,10 @@ import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
 import org.eclipse.daanse.olap.api.execution.ExecutionContext;
 import org.eclipse.daanse.olap.api.sql.SqlExpression;
-import org.eclipse.daanse.olap.common.ConfigConstants;
-import org.eclipse.daanse.olap.common.SystemWideProperties;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.core.AbstractBasicContext;
 import org.eclipse.daanse.olap.element.PropertyBase;
 import org.eclipse.daanse.olap.key.BitKey;
-import org.eclipse.daanse.olap.util.Bug;
 import org.eclipse.daanse.rolap.common.RolapAggregationManager;
 import org.eclipse.daanse.rolap.common.RolapStatisticsCache;
 import org.eclipse.daanse.rolap.common.Utils;
@@ -97,7 +91,6 @@ import org.eclipse.daanse.rolap.element.RolapProperty;
 import org.eclipse.daanse.rolap.element.RolapStoredMeasure;
 import org.eclipse.daanse.rolap.mapping.model.database.source.JoinSource;
 import org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource;
-import org.eclipse.daanse.rolap.mapping.model.RolapMappingFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -552,7 +545,7 @@ public class RolapStar {
  */
     public void addAggStar(AggStar aggStar) {
         // Add it before the first AggStar which is larger, if there is one.
-        boolean chooseAggregateByVolume = catalog.getInternalConnection().getContext().getConfigValue(ConfigConstants.CHOOSE_AGGREGATE_BY_VOLUME, ConfigConstants.CHOOSE_AGGREGATE_BY_VOLUME_DEFAULT_VALUE ,Boolean.class);
+        boolean chooseAggregateByVolume = catalog.getInternalConnection().getContext().getConfig().chooseAggregateByVolume();
         long size = aggStar.getSize(chooseAggregateByVolume);
         ListIterator<AggStar> lit = aggStars.listIterator();
         while (lit.hasNext()) {
@@ -610,7 +603,7 @@ public class RolapStar {
  */
     public QueryRecorder newQueryRecorder() {
         return new QueryRecorder(
-            context.getConfigValue(ConfigConstants.GENERATE_FORMATTED_SQL, ConfigConstants.GENERATE_FORMATTED_SQL_DEFAULT_VALUE, Boolean.class));
+            context.getConfig().generateFormattedSql());
     }
 
     /**
@@ -647,7 +640,7 @@ public class RolapStar {
     }
 
     boolean isCacheDisabled() {
-        return context.getConfigValue(ConfigConstants.DISABLE_CACHING, ConfigConstants.DISABLE_CACHING_DEFAULT_VALUE, Boolean.class);
+        return context.getConfig().disableCaching();
     }
 
     /**
@@ -692,7 +685,7 @@ public class RolapStar {
 
         aggregation =
             new Aggregation(
-                aggregationKey, SystemWideProperties.instance().MaxConstraints);
+                aggregationKey, context.getConfig().maxConstraints());
 
         localBars.get().aggregations.put(
             aggregationKey, aggregation);

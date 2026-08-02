@@ -46,7 +46,6 @@ import org.eclipse.daanse.olap.api.cache.CacheCommand;
 import org.eclipse.daanse.olap.api.exception.CellRequestQuantumExceededException;
 import org.eclipse.daanse.olap.api.execution.Execution;
 import org.eclipse.daanse.olap.api.execution.ExecutionContext;
-import org.eclipse.daanse.olap.common.ConfigConstants;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.key.BitKey;
 import org.eclipse.daanse.olap.spi.SegmentBody;
@@ -142,9 +141,9 @@ public class FastBatchingCellReader implements CellReader {
         this.aggMgr = (AggregationManager)aggMgr;
         cacheMgr = (SegmentCacheManager)aggMgr.getCacheMgr(execution.getDaanseStatement().getDaanseConnection());
         pinnedSegments = this.aggMgr.createPinSet();
-        cacheEnabled = !cube.getCatalog().getInternalConnection().getContext().getConfigValue(ConfigConstants.DISABLE_CACHING, ConfigConstants.DISABLE_CACHING_DEFAULT_VALUE, Boolean.class);
+        cacheEnabled = !cube.getCatalog().getInternalConnection().getContext().getConfig().disableCaching();
         Integer cellBatchSize = cube.getCatalog().getInternalConnection().getContext()
-                .getConfigValue(ConfigConstants.CELL_BATCH_SIZE, ConfigConstants.CELL_BATCH_SIZE_DEFAULT_VALUE ,Integer.class);
+                .getConfig().cellBatchSize();
         cellRequestLimit =
             cellBatchSize <= 0
                 ? 100000 // TODO Make this logic into a pluggable algorithm.
@@ -355,8 +354,8 @@ public class FastBatchingCellReader implements CellReader {
                         rollup.constrainedColumnsBitKey,
                         rollup.measure.getAggregator().getRollup(),
                         rollup.measure.getDatatype(),
-                        cacheMgr.getContext().getConfigValue(ConfigConstants.SPARSE_SEGMENT_COUNT_THRESHOLD, ConfigConstants.SPARSE_SEGMENT_COUNT_THRESHOLD_DEFAULT_VALUE ,Integer.class),
-                        cacheMgr.getContext().getConfigValue(ConfigConstants.SPARSE_SEGMENT_DENSITY_THRESHOLD, ConfigConstants.SPARSE_SEGMENT_DENSITY_THRESHOLD_DEFAULT_VALUE ,Double.class));
+                        cacheMgr.getContext().getConfig().sparseSegmentCountThreshold(),
+                        cacheMgr.getContext().getConfig().sparseSegmentDensityThreshold());
 
                 final SegmentHeader header = rollupHeaderBody.left;
                 final SegmentBody body = rollupHeaderBody.right;
@@ -380,7 +379,7 @@ public class FastBatchingCellReader implements CellReader {
                 // Then we insert the segment body into the SlotFuture.
                 // This has to be done on the SegmentCacheManager's
                 // Actor thread to ensure thread safety.
-                if (!cacheMgr.getContext().getConfigValue(ConfigConstants.DISABLE_CACHING, ConfigConstants.DISABLE_CACHING_DEFAULT_VALUE, Boolean.class)) {
+                if (!cacheMgr.getContext().getConfig().disableCaching()) {
                     final ExecutionContext executionContext = ExecutionContext.current();
                     cacheMgr.execute(
                         new CacheCommand<Void>() {

@@ -21,6 +21,7 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import java.util.Optional;
 
+import org.eclipse.daanse.olap.common.ExecutionConfig;
 import org.eclipse.daanse.sql.dialect.api.Dialect;
 import org.eclipse.daanse.sql.model.type.BestFitColumnType;
 import org.eclipse.daanse.sql.dialect.db.common.AnsiDialect;
@@ -161,9 +162,7 @@ class AbstractQuerySpecShapeTest {
 
         Context<?> context = mock(Context.class);
         // generateFormattedSql=false -> compact render (the pins below are single-line).
-        doReturn(Boolean.FALSE).when(context).getConfigValue(
-                org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.any(),
-                org.mockito.ArgumentMatchers.eq(Boolean.class));
+        doReturn(ExecutionConfig.DEFAULTS).when(context).getConfig();
 
         RolapStar star = mock(RolapStar.class);
         when(star.getFactTable()).thenReturn(fact);
