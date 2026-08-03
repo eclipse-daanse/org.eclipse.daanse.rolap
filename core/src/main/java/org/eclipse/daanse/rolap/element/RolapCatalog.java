@@ -49,6 +49,9 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.eclipse.daanse.cwm.model.cwm.objectmodel.core.util.Namespaces;
+import org.eclipse.daanse.cwm.model.cwm.resource.relational.Schema;
+import org.eclipse.daanse.cwm.model.cwm.resource.relational.util.ColumnSets;
 import org.eclipse.daanse.olap.access.RoleImpl;
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.DataType;
@@ -111,8 +114,6 @@ import org.eclipse.daanse.rolap.common.member.SqlMemberSource;
 import org.eclipse.daanse.rolap.common.nativize.RolapNativeRegistry;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.star.RolapStarRegistry;
-import org.eclipse.daanse.cwm.model.cwm.objectmodel.core.util.Namespaces;
-import org.eclipse.daanse.cwm.model.cwm.resource.relational.util.ColumnSets;
 import org.eclipse.daanse.rolap.mapping.model.database.relational.ColumnInternalDataType;
 import org.eclipse.daanse.rolap.util.ClassResolver;
 import org.slf4j.Logger;
@@ -1065,6 +1066,11 @@ public class RolapCatalog implements Catalog {
 	@Override
 	public List<? extends DatabaseSchema> getDatabaseSchemas() {
 		return rolapDbSchemas;
+	}
+
+	@Override
+	public List<Schema> getRelationalSchemas() {
+		return mappingCatalog.getDbschemas();
 	}
 
 }
