@@ -161,7 +161,10 @@ public final class CatalogTestHarness {
             }
 
             if (instance.mappingSupplier() != null && instance.checkSuiteSupplier() != null) {
-                TestContext ctx = new TestContext(dataSource, dialect, instance.mappingSupplier());
+                // The ActiveDatabase's pool, not a second one over the same data
+                // source: one database per catalog, and their pools add up
+                // against the server's connection limit.
+                TestContext ctx = new TestContext(dbInfo.connectionPool(), dialect, instance.mappingSupplier());
                 OlapCheckSuite suite = instance.checkSuiteSupplier().get();
                 List<CheckExecutionResult> results = OlapCheckSuiteRunner.run(suite, (Context<?>) ctx);
                 collect(dbId, instance.name(), results, tests);
@@ -213,7 +216,8 @@ public final class CatalogTestHarness {
                 }
             }
 
-            TestContext ctx = new TestContext(dataSource, dialect, spec.mappingSupplier());
+            // The ActiveDatabase's pool; see the note above.
+            TestContext ctx = new TestContext(dbInfo.connectionPool(), dialect, spec.mappingSupplier());
             OlapCheckSuite suite = spec.checkSuiteSupplier().get();
             List<CheckExecutionResult> results = OlapCheckSuiteRunner.run(suite, (Context<?>) ctx);
             collect(dbId, spec.name(), results, tests);
