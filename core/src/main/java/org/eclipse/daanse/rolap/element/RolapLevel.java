@@ -38,7 +38,7 @@ import java.util.stream.Stream;
 import java.sql.Types;
 
 import org.eclipse.daanse.cwm.model.cwm.resource.relational.SQLSimpleType;
-import org.eclipse.daanse.cwm.model.cwm.resource.relational.util.SqlSimpleTypes;
+import org.eclipse.daanse.cwm.model.cwm.resource.relational.util.SQLSimpleTypes;
 import org.eclipse.daanse.sql.model.type.BestFitColumnType;
 import org.eclipse.daanse.sql.model.type.Datatype;
 import org.eclipse.daanse.olap.api.agg.Segment;
@@ -553,7 +553,7 @@ public class RolapLevel extends LevelBase {
         // is stable, so we map through java.sql.Types.
         if (mappingLevel.getColumn() != null
                 && mappingLevel.getColumn().getType() instanceof SQLSimpleType st) {
-            return jdbcTypeToDatatype(SqlSimpleTypes.jdbcType(st));
+            return jdbcTypeToDatatype(SQLSimpleTypes.jdbcType(st));
         }
         return Datatype.NUMERIC;
     }
@@ -738,7 +738,7 @@ public class RolapLevel extends LevelBase {
     public Datatype getKeyColumnPhysicalDatatype() {
         if (levelMapping != null && levelMapping.getColumn() != null
                 && levelMapping.getColumn().getType() instanceof SQLSimpleType st) {
-            return jdbcTypeToDatatype(SqlSimpleTypes.jdbcType(st));
+            return jdbcTypeToDatatype(SQLSimpleTypes.jdbcType(st));
         }
         return null;
     }

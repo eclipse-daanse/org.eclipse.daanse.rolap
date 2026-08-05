@@ -19,7 +19,7 @@ import org.eclipse.daanse.cwm.model.cwm.resource.relational.RelationalFactory;
 import org.eclipse.daanse.cwm.model.cwm.resource.relational.Schema;
 import org.eclipse.daanse.cwm.model.cwm.resource.relational.Table;
 import org.eclipse.daanse.cwm.model.cwm.resource.relational.enumerations.NullableType;
-import org.eclipse.daanse.cwm.model.cwm.resource.relational.util.SqlSimpleTypes;
+import org.eclipse.daanse.cwm.model.cwm.resource.relational.util.SQLSimpleTypes;
 import org.eclipse.daanse.rolap.mapping.model.catalog.Catalog;
 import org.eclipse.daanse.rolap.mapping.model.catalog.CatalogFactory;
 import org.eclipse.daanse.rolap.mapping.model.database.source.SourceFactory;
@@ -74,17 +74,17 @@ public class NullSemanticsCatalogSupplier implements CatalogMappingSupplier {
 
         Column keyColumn = rf.createColumn();
         keyColumn.setName("KEY");
-        keyColumn.setType(SqlSimpleTypes.varcharType(20));
+        keyColumn.setType(SQLSimpleTypes.varcharType(20));
 
         Column valColumn = rf.createColumn();
         valColumn.setName("VAL");
-        valColumn.setType(SqlSimpleTypes.Sql99.doublePrecisionType());
+        valColumn.setType(SQLSimpleTypes.Sql99.doublePrecisionType());
         // Explicitly nullable — SQL-NULL cells are the point of this catalog.
         valColumn.setIsNullable(NullableType.COLUMN_NULLABLE);
 
         Column decValColumn = rf.createColumn();
         decValColumn.setName("DEC_VAL");
-        decValColumn.setType(SqlSimpleTypes.decimalType(19, 4));
+        decValColumn.setType(SQLSimpleTypes.decimalType(19, 4));
 
         Table table = rf.createTable();
         table.setName("FACT");
