@@ -18,7 +18,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.eclipse.daanse.cwm.model.cwm.resource.relational.Column;
-import org.eclipse.daanse.cwm.model.cwm.resource.relational.util.SqlSimpleTypes;
+import org.eclipse.daanse.cwm.model.cwm.resource.relational.util.SQLSimpleTypes;
 import org.eclipse.daanse.sql.model.type.Datatype;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.junit.jupiter.api.Test;
@@ -29,7 +29,7 @@ class RolapWritebackMeasureTest {
     @Test void carriesNumericDatatype() {
         Column column = mock(Column.class);
         when(column.getName()).thenReturn("AMOUNT");
-        when(column.getType()).thenReturn(SqlSimpleTypes.Sql99.integerType());
+        when(column.getType()).thenReturn(SQLSimpleTypes.Sql99.integerType());
 
         Member measure = mock(Member.class);
 
@@ -43,7 +43,7 @@ class RolapWritebackMeasureTest {
     @Test void carriesVarcharDatatypeForTextMeasures() {
         Column column = mock(Column.class);
         when(column.getName()).thenReturn("COMMENT");
-        when(column.getType()).thenReturn(SqlSimpleTypes.Sql99.varcharType());
+        when(column.getType()).thenReturn(SQLSimpleTypes.Sql99.varcharType());
         Member measure = mock(Member.class);
 
         RolapWritebackMeasure m = new RolapWritebackMeasure(measure, column, Datatype.VARCHAR);

@@ -20,7 +20,7 @@ import java.lang.reflect.Method;
 
 import org.eclipse.daanse.cwm.model.cwm.resource.relational.Column;
 import org.eclipse.daanse.cwm.model.cwm.resource.relational.RelationalFactory;
-import org.eclipse.daanse.cwm.model.cwm.resource.relational.util.SqlSimpleTypes;
+import org.eclipse.daanse.cwm.model.cwm.resource.relational.util.SQLSimpleTypes;
 import org.eclipse.daanse.sql.model.type.Datatype;
 import org.eclipse.daanse.olap.api.DataTypeJdbc;
 import org.eclipse.daanse.olap.api.element.Member;
@@ -45,7 +45,7 @@ class WritebackUtilNullOtherMeasureTest {
     void textMeasureGetsTypedNullVarcharEntry() throws Exception {
         Column commentColumn = RelationalFactory.eINSTANCE.createColumn();
         commentColumn.setName("COMMENT");
-        commentColumn.setType(SqlSimpleTypes.Sql99.varcharType());
+        commentColumn.setType(SQLSimpleTypes.Sql99.varcharType());
 
         RolapWritebackMeasure textMeasure = new RolapWritebackMeasure(
                 mock(Member.class), commentColumn, Datatype.VARCHAR);
@@ -60,7 +60,7 @@ class WritebackUtilNullOtherMeasureTest {
     void numericMeasureGetsTypedNullNumericEntry() throws Exception {
         Column priceColumn = RelationalFactory.eINSTANCE.createColumn();
         priceColumn.setName("PRICE");
-        priceColumn.setType(SqlSimpleTypes.Sql99.integerType());
+        priceColumn.setType(SQLSimpleTypes.Sql99.integerType());
 
         RolapWritebackMeasure numericMeasure = new RolapWritebackMeasure(
                 mock(Member.class), priceColumn, Datatype.NUMERIC);
@@ -76,7 +76,7 @@ class WritebackUtilNullOtherMeasureTest {
         // INTEGER, DECIMAL, etc. all bind via the NUMERIC JDBC path.
         Column countColumn = RelationalFactory.eINSTANCE.createColumn();
         countColumn.setName("CNT");
-        countColumn.setType(SqlSimpleTypes.Sql99.integerType());
+        countColumn.setType(SQLSimpleTypes.Sql99.integerType());
 
         Member m = mock(Member.class);
         // Bypass the convenience ctor — set datatype to anything non-VARCHAR.

@@ -25,7 +25,7 @@ import org.eclipse.daanse.cwm.model.cwm.resource.relational.RelationalFactory;
 import org.eclipse.daanse.cwm.model.cwm.resource.relational.Schema;
 import org.eclipse.daanse.cwm.model.cwm.resource.relational.Table;
 import org.eclipse.daanse.cwm.testkit.database.DatabaseLayer;
-import org.eclipse.daanse.cwm.model.cwm.resource.relational.util.SqlSimpleTypes;
+import org.eclipse.daanse.cwm.model.cwm.resource.relational.util.SQLSimpleTypes;
 import org.eclipse.daanse.jdbc.datasource.testkit.api.ActiveDatabase;
 import org.eclipse.daanse.jdbc.datasource.testkit.api.DatabaseProvider;
 import org.eclipse.daanse.olap.api.Context;
@@ -150,15 +150,15 @@ class BooleanLevelMemberLookupTest {
 
             Column nameColumn = rf.createColumn();
             nameColumn.setName("NAME");
-            nameColumn.setType(SqlSimpleTypes.varcharType(20));
+            nameColumn.setType(SQLSimpleTypes.varcharType(20));
 
             Column coffeeColumn = rf.createColumn();
             coffeeColumn.setName("COFFEE");
-            coffeeColumn.setType(SqlSimpleTypes.Sql99.booleanType());
+            coffeeColumn.setType(SQLSimpleTypes.Sql99.booleanType());
 
             Column sqftColumn = rf.createColumn();
             sqftColumn.setName("SQFT");
-            sqftColumn.setType(SqlSimpleTypes.Sql99.doublePrecisionType());
+            sqftColumn.setType(SQLSimpleTypes.Sql99.doublePrecisionType());
 
             Table table = rf.createTable();
             table.setName("STOREB");

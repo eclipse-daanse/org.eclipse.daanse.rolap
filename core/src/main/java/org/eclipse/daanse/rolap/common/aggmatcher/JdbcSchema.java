@@ -27,7 +27,7 @@ package org.eclipse.daanse.rolap.common.aggmatcher;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import org.eclipse.daanse.cwm.model.cwm.resource.relational.util.SqlSimpleTypes;
+import org.eclipse.daanse.cwm.model.cwm.resource.relational.util.SQLSimpleTypes;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.text.MessageFormat;
@@ -744,7 +744,7 @@ public class JdbcSchema {
 				// Read the JDBC type code straight from the SQLSimpleType.typeNumber
 				// field; avoids JDBCType.valueOf(name) failing on SQL-99 spec names
 				// such as "CHARACTER VARYING" or "DOUBLE PRECISION".
-				int type = rdbType != null ? SqlSimpleTypes.jdbcType(rdbType) : 0;
+				int type = rdbType != null ? SQLSimpleTypes.jdbcType(rdbType) : 0;
 				Integer columnSize = rdbType == null ? 0 : (int) rdbType.getCharacterMaximumLength();
 				Integer decimalDigits = rdbType == null ? 0 : (int) rdbType.getNumericScale();
 				int numPrecRadix = rdbType == null ? 0 : (int) rdbType.getNumericPrecisionRadix();
