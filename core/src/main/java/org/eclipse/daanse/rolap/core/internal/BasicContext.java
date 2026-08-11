@@ -21,6 +21,7 @@ import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_REF_NAME
 import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_REF_NAME_DIALECT_FACTORY;
 import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_REF_NAME_EXPRESSION_COMPILER_FACTORY;
 import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_REF_NAME_FUNCTION_SERVICE;
+import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_REF_NAME_DMV_PARSER_PROVIDER;
 import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_REF_NAME_MDX_PARSER_PROVIDER;
 import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_REF_NAME_SQL_GUARD_FACTORY;
 import static org.osgi.namespace.unresolvable.UnresolvableNamespace.UNRESOLVABLE_FILTER;
@@ -43,6 +44,7 @@ import org.eclipse.daanse.jdbc.datasource.pools.api.ConnectionPool;
 
 import org.eclipse.daanse.sql.dialect.api.Dialect;
 import org.eclipse.daanse.sql.dialect.api.DialectFactory;
+import org.eclipse.daanse.dmv.parser.api.DmvParserProvider;
 import org.eclipse.daanse.mdx.parser.api.MdxParserProvider;
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.agg.AggregationFactory;
@@ -100,6 +102,8 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
     private ExpressionCompilerFactory expressionCompilerFactory;
 
     private MdxParserProvider mdxParserProvider;
+
+    private DmvParserProvider dmvParserProvider;
 
     private FunctionService functionService;
 
@@ -196,6 +200,17 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
     protected void unsetFunctionService(FunctionService functionService) {
         if (this.functionService == functionService) {
             this.functionService = null;
+        }
+    }
+
+    @Reference(name = BASIC_CONTEXT_REF_NAME_DMV_PARSER_PROVIDER, cardinality = OPTIONAL)
+    protected void setDmvParserProvider(DmvParserProvider dmvParserProvider) {
+        this.dmvParserProvider = dmvParserProvider;
+    }
+
+    protected void unsetDmvParserProvider(DmvParserProvider dmvParserProvider) {
+        if (this.dmvParserProvider == dmvParserProvider) {
+            this.dmvParserProvider = null;
         }
     }
 
@@ -339,6 +354,11 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
     @Override
     public MdxParserProvider getMdxParserProvider() {
         return mdxParserProvider;
+    }
+
+    @Override
+    public Optional<DmvParserProvider> getDmvParserProvider() {
+        return Optional.ofNullable(dmvParserProvider);
     }
 
     @Override
