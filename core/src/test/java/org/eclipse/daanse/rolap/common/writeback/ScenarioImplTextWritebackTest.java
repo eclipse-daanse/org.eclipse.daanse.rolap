@@ -107,7 +107,7 @@ class ScenarioImplTextWritebackTest {
                 new Object[0]);
 
         // ----- verify -----
-        List<Map<String, Map.Entry<DataTypeJdbc, Object>>> rows = scenario.getSessionValues();
+        List<Map<String, Map.Entry<DataTypeJdbc, Object>>> rows = scenario.pendingRows(cube);
         assertThat(rows).as("text path emits exactly one row").hasSize(1);
 
         Map<String, Map.Entry<DataTypeJdbc, Object>> row = rows.get(0);
@@ -136,7 +136,7 @@ class ScenarioImplTextWritebackTest {
      */
     @Test void textPathHandlesMultiLevelLeafMember() {
         ScenarioImpl scenario = pushTextRow("OrgUnit", "DEPT_A1", "deep");
-        assertThat(scenario.getSessionValues().get(0).get("CATEGORY").getValue())
+        assertThat(onlyRow(scenario).get("CATEGORY").getValue())
                 .as("multi-level cell: leaf key carries through")
                 .isEqualTo("DEPT_A1");
     }
@@ -147,7 +147,7 @@ class ScenarioImplTextWritebackTest {
      */
     @Test void textPathHandlesIntermediateMember() {
         ScenarioImpl scenario = pushTextRow("OrgUnit", "DIV_A", "mid-level note");
-        assertThat(scenario.getSessionValues().get(0).get("CATEGORY").getValue())
+        assertThat(onlyRow(scenario).get("CATEGORY").getValue())
                 .as("intermediate-level cell: own key carries through")
                 .isEqualTo("DIV_A");
     }
@@ -192,7 +192,7 @@ class ScenarioImplTextWritebackTest {
         scenario.setCellValue(null, List.of(measure, allCategory), "global note", null,
                 AllocationPolicy.EQUAL_ALLOCATION, new Object[0]);
 
-        Map.Entry<DataTypeJdbc, Object> cat = scenario.getSessionValues().get(0).get("CATEGORY");
+        Map.Entry<DataTypeJdbc, Object> cat = scenario.pendingRows(cube).get(0).get("CATEGORY");
         assertThat(cat.getValue()).as("all-member -> null key").isNull();
     }
 
@@ -231,7 +231,7 @@ class ScenarioImplTextWritebackTest {
         } catch (Throwable expected) {
             // numeric allocation path is half-mocked
         }
-        assertThat(scenario.getSessionValues())
+        assertThat(scenario.pendingRows(cube))
                 .as("text path must NOT be taken when no measure matches")
                 .isEmpty();
     }
@@ -274,5 +274,11 @@ class ScenarioImplTextWritebackTest {
         scenario.setCellValue(null, List.of(measure, dimMember), value, null,
                 AllocationPolicy.EQUAL_ALLOCATION, new Object[0]);
         return scenario;
+    }
+
+    /** The one pending row of a scenario that touched exactly one cube. */
+    private static Map<String, Map.Entry<DataTypeJdbc, Object>> onlyRow(ScenarioImpl scenario) {
+        assertThat(scenario.pendingCubes()).hasSize(1);
+        return scenario.pendingRows(scenario.pendingCubes().iterator().next()).get(0);
     }
 }
