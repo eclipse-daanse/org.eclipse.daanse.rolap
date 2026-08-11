@@ -19,12 +19,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.eclipse.daanse.sql.model.type.Datatype;
 import org.eclipse.daanse.olap.api.result.NotLoaded;
 import org.eclipse.daanse.olap.api.DataTypeJdbc;
 import org.eclipse.daanse.olap.api.calc.Calc;
 import org.eclipse.daanse.olap.api.connection.Connection;
+import org.eclipse.daanse.olap.api.element.Cube;
 import org.eclipse.daanse.olap.api.element.Hierarchy;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.evaluator.Evaluator;
@@ -66,7 +68,14 @@ public class ScenarioImpl implements Scenario {
 
     private static int nextId;
 
-    private List<Map<String, Map.Entry<DataTypeJdbc, Object>>> sessionValues = new ArrayList<>();
+    /**
+     * Pending rows, by the cube they were produced for.
+     *
+     * Kept apart because a row is only meaningful against its own cube: handing it
+     * to another rewrites that cube's facts with values never meant for it, and a
+     * commit would write it into the wrong writeback table.
+     */
+    private final Map<Cube, List<Map<String, Map.Entry<DataTypeJdbc, Object>>>> pending = new LinkedHashMap<>();
 
     /**
      * Creates a ScenarioImpl.
@@ -158,7 +167,7 @@ public class ScenarioImpl implements Scenario {
         if (targetWb != null && targetWb.getDatatype() == Datatype.VARCHAR) {
             LOGGER.info("Writeback[scenario.setCellValue] -> TEXT path for measure '{}' (column '{}')",
                     measure.getUniqueName(), targetWb.getColumn().getName());
-            writeTextRow(oWritebackTable.get(), targetWb, members, newValue);
+            writeTextRow(baseCube, oWritebackTable.get(), targetWb, members, newValue);
             return;
         }
 
@@ -264,6 +273,7 @@ public class ScenarioImpl implements Scenario {
      * the {@code TextAggMeasure}'s ListAgg aggregator.
  */
     private void writeTextRow(
+            Cube cube,
             RolapWritebackTable writebackTable,
             RolapWritebackMeasure target,
             List<Member> members,
@@ -301,9 +311,9 @@ public class ScenarioImpl implements Scenario {
                         other.getColumn().getName(), otherBind);
             }
         }
-        sessionValues.add(row);
-        LOGGER.debug("Writeback[text] row pushed to sessionValues (now {} pending rows)",
-                sessionValues.size());
+        pendingFor(cube).add(row);
+        LOGGER.debug("Writeback[text] row pending for cube '{}' (now {} rows)", cube.getName(),
+                pendingFor(cube).size());
     }
 
     /**
@@ -340,20 +350,51 @@ public class ScenarioImpl implements Scenario {
         return Integer.toString(id);
     }
 
+    /**
+     * The cells the numeric what-if path recorded.
+     * <p>
+     * In memory only: a commit writes {@link #pendingRows} and never looks at
+     * these. Their one reader is the {@code [Scenario]} member evaluator, which no
+     * catalog can reach - so today nothing reads them at all. That matches
+     * Mondrian's own design, where modified cells were deliberately kept in memory
+     * rather than written back.
+     */
     @Override
     public List<WritebackCell> getWritebackCells() {
         return writebackCells;
     }
 
     @Override
-    public List<Map<String, Map.Entry<DataTypeJdbc, Object>>> getSessionValues() {
-        return sessionValues;
+    public List<Map<String, Map.Entry<DataTypeJdbc, Object>>> pendingRows(Cube cube) {
+        List<Map<String, Map.Entry<DataTypeJdbc, Object>>> rows = pending.get(cube);
+        return rows == null ? List.of() : rows;
+    }
+
+    @Override
+    public void addPendingRows(Cube cube, List<Map<String, Map.Entry<DataTypeJdbc, Object>>> rows) {
+        if (rows != null && !rows.isEmpty()) {
+            pendingFor(cube).addAll(rows);
+        }
+    }
+
+    @Override
+    public Set<Cube> pendingCubes() {
+        return Set.copyOf(pending.keySet());
+    }
+
+    private List<Map<String, Map.Entry<DataTypeJdbc, Object>>> pendingFor(Cube cube) {
+        return pending.computeIfAbsent(cube, key -> new ArrayList<>());
     }
 
     /**
      * Returns the scenario inside a calculated member in the scenario
      * dimension. For example, applied to [Scenario].[1], returns the Scenario
      * object representing scenario #1.
+     * <p>
+     * Part of Mondrian's what-if mechanism, which is not wired up here: the
+     * mapping model has no scenario concept, so no catalog can declare the
+     * hierarchy this depends on. The allocation logic is kept for a future
+     * what-if feature; nothing reaches it today.
      *
      * @param member Wrapper member
      * @return Wrapped scenario
@@ -789,7 +830,7 @@ public class ScenarioImpl implements Scenario {
     @Override
     public void clear() {
         getWritebackCells().clear();
-        sessionValues.clear();
+        pending.clear();
     }
 
 }

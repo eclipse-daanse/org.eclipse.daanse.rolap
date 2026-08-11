@@ -459,13 +459,18 @@ public Context<?> getContext() {
   /**
    * Helper method to allow olap4j wrappers to implement
    * org.olap4j.OlapConnection#createScenario().
+   * <p>
+   * The scenario is not registered with the catalog. Registering adds a
+   * calculated member to the shared catalog's cubes with no way to remove it
+   * again, and this runs on nearly every request - a catalog that did declare a
+   * "Scenario" hierarchy would accumulate one member per request forever. A
+   * caller that wants the {@code [Scenario]} member mechanism registers
+   * deliberately; see {@link ScenarioImpl#register}.
    *
    * @return new Scenario
    */
   public Scenario createScenario() {
-    final ScenarioImpl scenarioInner = new ScenarioImpl();
-    scenarioInner.register( catalog );
-    return scenarioInner;
+    return new ScenarioImpl();
   }
 
   /**
