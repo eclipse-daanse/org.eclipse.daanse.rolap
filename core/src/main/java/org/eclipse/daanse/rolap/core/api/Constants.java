@@ -24,6 +24,8 @@ public class Constants {
     public static final String BASIC_CONTEXT_REF_NAME_CATALOG_MAPPING_SUPPLIER = "catalogMappingSuppier";
     public static final String BASIC_CONTEXT_REF_NAME_ROLAP_CONTEXT_MAPPING_SUPPLIER = "rolapContextMappingSuppliers";
     public static final String BASIC_CONTEXT_REF_NAME_MDX_PARSER_PROVIDER = "mdxParserProvider";
+
+    public static final String BASIC_CONTEXT_REF_NAME_DMV_PARSER_PROVIDER = "dmvParserProvider";
     public static final String BASIC_CONTEXT_REF_NAME_EXPRESSION_COMPILER_FACTORY = "expressionCompilerFactory";
     public static final String BASIC_CONTEXT_REF_NAME_FUNCTION_SERVICE = "functionService";
     public static final String BASIC_CONTEXT_REF_NAME_SQL_GUARD_FACTORY = "sqlGuardFactory";
@@ -46,6 +48,9 @@ public class Constants {
     public static final String BASIC_CONTEXT_TARGET_SQL_GUARD_FACTORY = BASIC_CONTEXT_REF_NAME_SQL_GUARD_FACTORY
             + "_target";
     public static final String BASIC_CONTEXT_TARGET_MDX_PARSER_PROVIDER = BASIC_CONTEXT_REF_NAME_MDX_PARSER_PROVIDER
+            + "_target";
+
+    public static final String BASIC_CONTEXT_TARGET_DMV_PARSER_PROVIDER = BASIC_CONTEXT_REF_NAME_DMV_PARSER_PROVIDER
             + "_target";
     public static final String BASIC_CONTEXT_TARGET_CUSTOM_AGGREGATOR = BASIC_CONTEXT_REF_NAME_CUSTOM_AGGREGATOR
             + "_target";
