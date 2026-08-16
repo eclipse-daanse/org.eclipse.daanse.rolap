@@ -204,8 +204,9 @@ class BooleanLevelMemberLookupTest {
 
             catalog = CatalogFactory.eINSTANCE.createCatalog();
             catalog.setName("BoolCatalog");
-            catalog.getDbschemas().add(databaseSchema);
-            catalog.getCubes().add(cube);
+            // A catalog is a CWM Package: what it holds is an owned element.
+            catalog.getOwnedElement().add(databaseSchema);
+            catalog.getOwnedElement().add(cube);
         }
 
         Schema schema() {

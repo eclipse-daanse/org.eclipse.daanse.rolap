@@ -21,7 +21,7 @@ public class CalculatedMemberUtil {
     }
 
     public static String getFormula(org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.CalculatedMember calculatedMember) {
-    	return calculatedMember.getFormula();
+    	return calculatedMember.getFormula() == null ? null : calculatedMember.getFormula().getBody();
     }
 
     /**

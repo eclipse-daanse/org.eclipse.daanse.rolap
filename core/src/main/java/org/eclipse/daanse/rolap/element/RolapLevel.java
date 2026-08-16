@@ -25,6 +25,7 @@
  */
 package org.eclipse.daanse.rolap.element;
 
+
 import static org.eclipse.daanse.rolap.common.util.SqlExpressionResolver.genericSql;
 import static org.eclipse.daanse.rolap.common.util.LevelUtil.getPropertyExp;
 
@@ -78,6 +79,8 @@ import org.eclipse.daanse.rolap.mapping.model.database.relational.ColumnInternal
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.eclipse.daanse.rolap.mapping.model.provider.util.CwmHelper;
+import org.eclipse.daanse.cwm.model.cwm.foundation.businessinformation.util.Descriptions;
 /**
  * RolapLevel implements {@link Level} for a ROLAP database.
  *
@@ -466,7 +469,7 @@ public class RolapLevel extends LevelBase {
             name,
             name,
             mappingLevel.isVisible(),
-            mappingLevel.getDescription(),
+            Descriptions.localizedBody(mappingLevel, CwmHelper.TYPE_DOCUMENTATION, null).orElse(null),
             depth,
             LevelUtil.getKeyExp(mappingLevel, hierarchy),
             LevelUtil.getNameExp(mappingLevel, hierarchy),
@@ -486,7 +489,7 @@ public class RolapLevel extends LevelBase {
                     ? "TimeHalfYears"
                     : mappingLevel.getType().getLiteral()),
             mappingLevel.getApproxRowCount(),
-            RolapMetaData.createMetaData(mappingLevel.getAnnotations()),
+            RolapMetaData.createMetaData(mappingLevel),
             parentAsLeafEnable, parentAsLeafNameFormat);
 
         setLevelInProperties();
@@ -622,7 +625,7 @@ public class RolapLevel extends LevelBase {
                     xmlProperty.getName(),
                     xmlLevel.getMemberProperties().get(i).isDependsOnLevelValue(),
                     false,
-                    xmlProperty.getDescription(), null));
+                    Descriptions.localizedBody(xmlProperty, CwmHelper.TYPE_DOCUMENTATION, null).orElse(null), null));
         }
         return list.toArray(RolapProperty[]::new);
     }
@@ -932,9 +935,16 @@ public class RolapLevel extends LevelBase {
     private static Optional<OrderByProperty> resolveOrderBy(
             org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.Level mappingLevel,
             Property[] properties) {
+        // A level need not have a mapping: the "All" level and the measures level are
+        // made by the engine rather than read from a schema. Callers reach this through
+        // the CSDL emitter, which asks every level whether it has an ordering, so both
+        // a dereference and a null return surface far from here.
+        if (mappingLevel == null) {
+            return Optional.empty();
+        }
         var ordinalColumns = mappingLevel.getOrdinalColumns();
         if (ordinalColumns == null || ordinalColumns.isEmpty()) {
-            return null;
+            return Optional.empty();
         }
         if (ordinalColumns.size() > 1) {
             LOGGER.warn("Level {}: {} ordinalColumns, only the first one will be considered "
@@ -942,7 +952,7 @@ public class RolapLevel extends LevelBase {
         }
         var oc = ordinalColumns.get(0);
         if (oc.getColumn() == null) {
-            return null;
+            return Optional.empty();
         }
         for (var mp : mappingLevel.getMemberProperties()) {
             if (mp.getColumn() == oc.getColumn()) {

@@ -29,6 +29,8 @@
 
 package org.eclipse.daanse.rolap.element;
 
+
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.DriverManager;
@@ -118,6 +120,11 @@ import org.eclipse.daanse.rolap.util.ClassResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.eclipse.daanse.rolap.mapping.model.access.common.AccessRole;
+import org.eclipse.daanse.rolap.mapping.model.provider.util.CwmHelper;
+import org.eclipse.daanse.cwm.model.cwm.foundation.businessinformation.util.Descriptions;
+import org.eclipse.daanse.cwm.model.cwm.objectmodel.core.util.Packages;
+import org.eclipse.daanse.cwm.model.cwm.resource.relational.Schema;
 /**
  * A RolapCatalog is a collection of {@link RolapCube}s and shared
  * {@link RolapDimension}s. It is shared betweeen {@link Connection}s. It
@@ -396,9 +403,9 @@ public class RolapCatalog implements Catalog {
 		if (name == null || name.equals("")) {
 			throw Util.newError("<Schema> name must be set");
 		}
-		description=mappingCatalog2.getDescription();
+		description=Descriptions.localizedBody(mappingCatalog2, CwmHelper.TYPE_DOCUMENTATION, null).orElse(null);
 
-		this.metadata = RolapMetaData.createMetaData(mappingCatalog2.getAnnotations());
+		this.metadata = RolapMetaData.createMetaData(mappingCatalog2);
 
 		// Validate public dimensions.
 		// me not relevant - should be validated before
@@ -426,7 +433,7 @@ public class RolapCatalog implements Catalog {
 			} else {
 				type = new MemberType(null, null, null, null);
 			}
-			final String description = mappingParameter.getDescription();
+			final String description = Descriptions.localizedBody(mappingParameter, CwmHelper.TYPE_DOCUMENTATION, null).orElse(null);
 			final boolean modifiable = mappingParameter.isModifiable();
 			String defaultValue = mappingParameter.getDefaultValue();
 			RolapCatalogParameter param = new RolapCatalogParameter(this, name, defaultValue, description, type,
@@ -434,8 +441,14 @@ public class RolapCatalog implements Catalog {
 //            discard(param);
 		}
 
-		// Create cubes.
-		for (org.eclipse.daanse.rolap.mapping.model.olap.cube.Cube cubeMapping : mappingCatalog2.getCubes()) {
+		// Create cubes. Physical cubes first: virtual cubes resolve their
+		// base cubes by name during construction, and the exposure
+		// (owned + imported) is a set without a reliable declaration order.
+		java.util.List<org.eclipse.daanse.rolap.mapping.model.olap.cube.Cube> cubeMappings =
+				new java.util.ArrayList<>(Packages.available(mappingCatalog2, org.eclipse.daanse.rolap.mapping.model.olap.cube.Cube.class));
+		cubeMappings.sort(java.util.Comparator.comparing(
+				c -> c instanceof org.eclipse.daanse.rolap.mapping.model.olap.cube.VirtualCube ? 1 : 0));
+		for (org.eclipse.daanse.rolap.mapping.model.olap.cube.Cube cubeMapping : cubeMappings) {
 //            if (cubeMapping.isEnabled()) {
 			RolapCube cube = null;
 			if (cubeMapping instanceof org.eclipse.daanse.rolap.mapping.model.olap.cube.PhysicalCube physicalCubeMapping) {
@@ -461,14 +474,14 @@ public class RolapCatalog implements Catalog {
 //        }
 
 		// Create named sets.
-		for (org.eclipse.daanse.rolap.mapping.model.olap.dimension.NamedSet namedSetsMapping : mappingCatalog2.getNamedSets()) {
+		for (org.eclipse.daanse.rolap.mapping.model.olap.dimension.NamedSet namedSetsMapping : Packages.available(mappingCatalog2, org.eclipse.daanse.rolap.mapping.model.olap.dimension.NamedSet.class)) {
 			mapNameToSet.put(namedSetsMapping.getName(), createNamedSet(namedSetsMapping));
 		}
 
-	    for (org.eclipse.daanse.cwm.model.cwm.resource.relational.Schema dbSchemaMapping : mappingCatalog2.getDbschemas()) {
+	    for (org.eclipse.daanse.cwm.model.cwm.resource.relational.Schema dbSchemaMapping : Packages.available(mappingCatalog2, Schema.class)) {
 	        RolapDatabaseSchema rolapDbSchema = new RolapDatabaseSchema();
 	        List<DatabaseTable> rolapDbTables = new ArrayList<>();
-	        rolapDbSchema.setName(rolapDbSchema.getName());
+	        rolapDbSchema.setName(dbSchemaMapping.getName());
 
 	        for (org.eclipse.daanse.cwm.model.cwm.resource.relational.NamedColumnSet table : (Iterable<org.eclipse.daanse.cwm.model.cwm.resource.relational.NamedColumnSet>) Namespaces
 	                .ownedElementStream(dbSchemaMapping, org.eclipse.daanse.cwm.model.cwm.resource.relational.NamedColumnSet.class)::iterator) {
@@ -497,7 +510,7 @@ public class RolapCatalog implements Catalog {
 	    }
 
 		// Create roles.
-		for (org.eclipse.daanse.rolap.mapping.model.access.common.AccessRole roleMapping : mappingCatalog2.getAccessRoles()) {
+		for (org.eclipse.daanse.rolap.mapping.model.access.common.AccessRole roleMapping : Packages.available(mappingCatalog2, AccessRole.class)) {
 			Role role = createRole(roleMapping);
 			mapNameToRole.put(roleMapping, role);
 		}
@@ -532,7 +545,7 @@ public class RolapCatalog implements Catalog {
 	 */
 
 	private NamedSet createNamedSet(org.eclipse.daanse.rolap.mapping.model.olap.dimension.NamedSet namedSetsMapping) {
-		final String formulaString = namedSetsMapping.getFormula();
+		final String formulaString = namedSetsMapping.getFormula().getBody();
 		final Expression exp;
 		try {
 			exp = getInternalConnection().parseExpression(formulaString);
@@ -727,7 +740,7 @@ public class RolapCatalog implements Catalog {
 			}
 
 			for (org.eclipse.daanse.rolap.mapping.model.access.olap.AccessMemberGrant memberGrant : hierarchyGrant.getMemberGrants()) {
-				Member member = reader.withLocus().getMemberByUniqueName(Util.parseIdentifier(memberGrant.getMember()),
+				Member member = reader.withLocus().getMemberByUniqueName(Util.parseIdentifier(memberGrant.getMember().getBody()),
 						!ignoreInvalidMembers);
 				if (member == null) {
 					// They asked to ignore members that don't exist
@@ -848,7 +861,7 @@ public class RolapCatalog implements Catalog {
 	 * exists.
 	 */
 	public org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.CalculatedMember lookupMappingCalculatedMember(final String calcMemberName, final String cubeName) {
-		for (final org.eclipse.daanse.rolap.mapping.model.olap.cube.Cube cube : mappingCatalog.getCubes()) {
+		for (final org.eclipse.daanse.rolap.mapping.model.olap.cube.Cube cube : Packages.available(mappingCatalog, org.eclipse.daanse.rolap.mapping.model.olap.cube.Cube.class)) {
 			if (!Util.equalName(cube.getName(), cubeName)) {
 				continue;
 			}

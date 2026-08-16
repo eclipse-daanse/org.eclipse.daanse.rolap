@@ -90,8 +90,8 @@ public class RelationUtil {
                     return false;
                 }
                 for (int i = 0; i < view.getSql().getDialectStatements().size(); i++) {
-                    if (view.getSql().getDialectStatements().get(i).getSql() == null || that.getSql().getDialectStatements().get(i).getSql() == null || 
-                    		!Objects.equals(view.getSql().getDialectStatements().get(i).getSql(), that.getSql().getDialectStatements().get(i).getSql()))
+                    if (view.getSql().getDialectStatements().get(i).getBody() == null || that.getSql().getDialectStatements().get(i).getBody() == null || 
+                    		!Objects.equals(view.getSql().getDialectStatements().get(i).getBody(), that.getSql().getDialectStatements().get(i).getBody()))
                     {
                         return false;
                     }

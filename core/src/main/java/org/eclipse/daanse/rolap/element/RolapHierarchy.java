@@ -26,6 +26,7 @@
  */
 package org.eclipse.daanse.rolap.element;
 
+
 import static org.eclipse.daanse.rolap.common.util.SqlExpressionResolver.getTableAlias;
 import static org.eclipse.daanse.rolap.common.util.JoinUtil.left;
 import static org.eclipse.daanse.rolap.common.util.JoinUtil.right;
@@ -120,6 +121,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.eclipse.daanse.rolap.mapping.model.database.source.SourceFactory;
+import org.eclipse.daanse.rolap.mapping.model.provider.util.CwmHelper;
+import org.eclipse.daanse.cwm.model.cwm.foundation.businessinformation.util.Descriptions;
 /**
  * RolapHierarchy implements {@link Hierarchy} for a ROLAP database.
  *
@@ -284,11 +287,11 @@ public class RolapHierarchy extends HierarchyBase {
             xmlHierarchy.getName(),
             xmlHierarchy.getName(),
             xmlHierarchy.isVisible(),
-            xmlHierarchy.getDescription(),
+            Descriptions.localizedBody(xmlHierarchy, CwmHelper.TYPE_DOCUMENTATION, null).orElse(null),
             xmlHierarchy.getDisplayFolder(),
             xmlHierarchy.isHasAll(),
             null,
-            RolapMetaData.createMetaData(xmlHierarchy.getAnnotations()));
+            RolapMetaData.createMetaData(xmlHierarchy));
 
         assert !(this instanceof RolapCubeHierarchy);
 

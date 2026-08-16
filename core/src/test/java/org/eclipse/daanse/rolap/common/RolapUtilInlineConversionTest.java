@@ -76,7 +76,7 @@ class RolapUtilInlineConversionTest {
         SqlSelectSource view = (SqlSelectSource) result;
         assertThat(view.getAlias()).isEqualTo("memfact_alias");
 
-        String generatedSql = view.getSql().getDialectStatements().get(0).getSql();
+        String generatedSql = view.getSql().getDialectStatements().get(0).getBody();
         assertThat(generatedSql).contains("\"PRODUCT\"").contains("\"AMOUNT\"");
 
         // Rolap did not re-quote the dialect output — bare names introduced by the
@@ -108,7 +108,7 @@ class RolapUtilInlineConversionTest {
 
         assertThat(result).isInstanceOf(SqlSelectSource.class);
         SqlSelectSource view = (SqlSelectSource) result;
-        String generatedSql = view.getSql().getDialectStatements().get(0).getSql();
+        String generatedSql = view.getSql().getDialectStatements().get(0).getBody();
         assertThat(generatedSql).contains("\"AMOUNT\"");
     }
 }

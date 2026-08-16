@@ -199,7 +199,7 @@ class LevelMemberCountSqlTest {
     private static List<RolapLevel> viewLevels(String bodySql) {
         SqlStatement stmt = mock(SqlStatement.class);
         when(stmt.getDialects()).thenReturn(new BasicEList<>(List.of("generic")));
-        when(stmt.getSql()).thenReturn(bodySql);
+        when(stmt.getBody()).thenReturn(bodySql);
         DialectSqlView dsv = mock(DialectSqlView.class);
         when(dsv.getDialectStatements()).thenReturn(new BasicEList<>(List.of(stmt)));
         SqlSelectSource view = mock(SqlSelectSource.class);

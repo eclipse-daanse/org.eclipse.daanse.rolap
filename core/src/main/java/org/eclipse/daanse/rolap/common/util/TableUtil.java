@@ -28,6 +28,6 @@ public class TableUtil {
 	}
 
     public static String getFilter(org.eclipse.daanse.rolap.mapping.model.database.source.TableSource table) {
-        return (table.getSqlWhereExpression() == null) ? null : table.getSqlWhereExpression().getSql();
+        return (table.getSqlWhereExpression() == null) ? null : table.getSqlWhereExpression().getBody();
     }
 }

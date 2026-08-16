@@ -638,7 +638,7 @@ public class RolapUtil {
       // Add SQL filter to the key
       if (fact instanceof org.eclipse.daanse.rolap.mapping.model.database.source.TableSource table) {
         org.eclipse.daanse.rolap.mapping.model.database.source.SqlStatement sqlWhere = table.getSqlWhereExpression();
-        String sql = sqlWhere != null ? sqlWhere.getSql() : null;
+        String sql = sqlWhere != null ? sqlWhere.getBody() : null;
         if (sql != null && !sql.isBlank()) {
           rlStarKey.addAll(sqlWhere.getDialects());
           rlStarKey.add(sql);

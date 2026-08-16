@@ -80,6 +80,7 @@ import org.osgi.service.metatype.annotations.Designate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.eclipse.daanse.cwm.model.cwm.objectmodel.core.util.Packages;
 @Designate(ocd = DocumentationProviderConfig.class, factory = true)
 @Component(service = ContextDocumentationProvider.class, immediate = true, configurationPid = Constants.DOC_PROVIDER_MARKDOWN_PID)
 public class MarkdownDocumentationProvider extends AbstractContextDocumentationProvider {
@@ -200,7 +201,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
                     quadrant-4 Wide
                     """);
             writer.write(ENTER);
-            for (org.eclipse.daanse.rolap.mapping.model.olap.cube.Cube cube : catalog.getCubes()) {
+            for (org.eclipse.daanse.rolap.mapping.model.olap.cube.Cube cube : org.eclipse.daanse.cwm.model.cwm.objectmodel.core.util.Packages.available(catalog, org.eclipse.daanse.rolap.mapping.model.olap.cube.Cube.class)) {
                 if (cube instanceof org.eclipse.daanse.rolap.mapping.model.olap.cube.PhysicalCube c) {
                     String cubeName = prepare(c.getName());
                     double x = getLevelsCount(catalog, c) / MAX_LEVEL;
@@ -334,7 +335,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
     private List<String> schemaTablesConnections(RolapContext context, List<String> missedTableNames) {
         List<String> result = new ArrayList<>();
         org.eclipse.daanse.rolap.mapping.model.catalog.Catalog catalog = context.getCatalogMapping();
-        result.addAll(catalog.getCubes().stream()
+        result.addAll(org.eclipse.daanse.cwm.model.cwm.objectmodel.core.util.Packages.available(catalog, org.eclipse.daanse.rolap.mapping.model.olap.cube.Cube.class).stream()
                 .flatMap(c -> cubeTablesConnections(catalog, c, missedTableNames).stream()).toList());
         return result;
     }
@@ -847,9 +848,9 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
                     writeTablesDiagram(writer, factTable);
                 }
                 for (org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationTable aggregationTable : aggregationTables) {
-                    if (aggregationTable instanceof org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationName aggregationName
-                            && aggregationName.getName() != null) {
-                    	org.eclipse.daanse.cwm.model.cwm.resource.relational.NamedColumnSet aggTable = aggregationName.getName();
+                    if (aggregationTable instanceof org.eclipse.daanse.rolap.mapping.model.database.aggregation.ExplicitAggregationTable aggregationName
+                            && aggregationName.getTable() != null) {
+                    	org.eclipse.daanse.cwm.model.cwm.resource.relational.NamedColumnSet aggTable = aggregationName.getTable();
                         oTableReference = tables.stream()
                                 .filter(t -> (t.table() != null && t.table().name().equals(factTable.getName())))
                                 .map(t -> t.table()).findAny();
@@ -892,7 +893,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
         }
     }
 
-    private Collection<? extends String> aggregationConnections(org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationName aggregationName,
+    private Collection<? extends String> aggregationConnections(org.eclipse.daanse.rolap.mapping.model.database.aggregation.ExplicitAggregationTable aggregationName,
             List<String> mt) {
         List<String> tablesConnections = new ArrayList<>();
         if (aggregationName.getAggregationForeignKeys() != null) {
@@ -1202,7 +1203,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
             if (mv.getSql() != null && mv.getSql().getDialectStatements() != null) {
                 mv.getSql().getDialectStatements().stream()
                         .filter(s -> s.getDialects().stream().anyMatch(d -> "generic".equals(d))).findFirst()
-                        .ifPresent(s -> sb.append(s.getSql()));
+                        .ifPresent(s -> sb.append(s.getBody()));
             }
             return sb.toString();
         }

@@ -41,6 +41,8 @@ import org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.Lev
 import org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.LevelFactory;
 import org.eclipse.daanse.rolap.mapping.model.provider.CatalogMappingSupplier;
 
+import org.eclipse.daanse.rolap.mapping.model.provider.util.CwmHelper;
+import org.eclipse.daanse.cwm.model.cwm.foundation.businessinformation.util.Descriptions;
 /**
  * Bespoke catalog for the NULL/decimal-semantics characterization
  * tests.
@@ -146,9 +148,12 @@ public class NullSemanticsCatalogSupplier implements CatalogMappingSupplier {
 
         catalog = CatalogFactory.eINSTANCE.createCatalog();
         catalog.setName(CATALOG_NAME);
-        catalog.setDescription("NULL/decimal semantics characterization catalog");
-        catalog.getDbschemas().add(databaseSchema);
-        catalog.getCubes().add(cube);
+        // A catalog is a CWM Package: what it holds is an owned element, and text
+        // about it is a Description rather than a field of its own.
+        Descriptions.describe(catalog, CwmHelper.TYPE_DOCUMENTATION, CwmHelper.LANGUAGE_NEUTRAL,
+                "NULL/decimal semantics characterization catalog");
+        catalog.getOwnedElement().add(databaseSchema);
+        catalog.getOwnedElement().add(cube);
     }
 
     /** The CWM database schema, for {@code DatabaseLayer.apply}. */

@@ -27,6 +27,7 @@
  */
 package org.eclipse.daanse.rolap.element;
 
+
 import static org.eclipse.daanse.rolap.common.util.RelationUtil.getAlias;
 
 import java.text.MessageFormat;
@@ -65,12 +66,13 @@ import org.eclipse.daanse.rolap.common.writeback.RolapWritebackAttribute;
 import org.eclipse.daanse.rolap.common.writeback.RolapWritebackColumn;
 import org.eclipse.daanse.rolap.common.writeback.RolapWritebackMeasure;
 import org.eclipse.daanse.rolap.common.writeback.RolapWritebackTable;
-import org.eclipse.daanse.rolap.mapping.model.Annotation;
 import org.eclipse.daanse.rolap.mapping.model.RolapMappingFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.eclipse.daanse.rolap.mapping.model.olap.cube.measure.MeasureFactory;
+import org.eclipse.daanse.rolap.mapping.model.provider.util.CwmHelper;
+import org.eclipse.daanse.cwm.model.cwm.foundation.businessinformation.util.Descriptions;
 public class RolapPhysicalCube extends RolapCube implements PhysicalCube {
 
     private final static String measureOrdinalsNotUnique = "Cube ''{0}'': Ordinal {1} is not unique: ''{2}'' and ''{3}''";
@@ -163,15 +165,16 @@ public class RolapPhysicalCube extends RolapCube implements PhysicalCube {
         // Ensure that cube has an atomic cell count
         // measure even if the schema does not contain one.
         if (factCountMeasure == null) {
-            Annotation internalUsage = RolapMappingFactory.eINSTANCE.createAnnotation();
-            internalUsage.setName("Internal Use");
+            org.eclipse.daanse.cwm.model.cwm.objectmodel.core.TaggedValue internalUsage =
+                    org.eclipse.daanse.cwm.model.cwm.objectmodel.core.CoreFactory.eINSTANCE.createTaggedValue();
+            internalUsage.setTag("Internal Use");
             internalUsage.setValue("For internal use");
-            List<Annotation> annotations = new ArrayList<>();
+            List<org.eclipse.daanse.cwm.model.cwm.objectmodel.core.TaggedValue> annotations = new ArrayList<>();
             annotations.add(internalUsage);
             final org.eclipse.daanse.rolap.mapping.model.olap.cube.measure.CountMeasure mappingMeasure = MeasureFactory.eINSTANCE.createCountMeasure();
             mappingMeasure.setName("Fact Count");
             mappingMeasure.setVisible(false);
-            mappingMeasure.getAnnotations().addAll(annotations);
+            mappingMeasure.getTaggedValue().addAll(annotations);
             factCountMeasure = createMeasure(cubeMapping, measuresLevel, -1, mappingMeasure);
             measureList.add(factCountMeasure);
         }
@@ -338,7 +341,7 @@ public class RolapPhysicalCube extends RolapCube implements PhysicalCube {
 
                 RolapDrillThroughAction rolapDrillThroughAction = new RolapDrillThroughAction(
                         mappingDrillThroughAction.getName(), mappingDrillThroughAction.getName(),
-                        mappingDrillThroughAction.getDescription(), mappingDrillThroughAction.isDefault(), columns);
+                        Descriptions.localizedBody(mappingDrillThroughAction, CwmHelper.TYPE_DOCUMENTATION, null).orElse(null), mappingDrillThroughAction.isDefault(), columns);
                 this.actionList.add(rolapDrillThroughAction);
             }
         }
@@ -381,9 +384,9 @@ public class RolapPhysicalCube extends RolapCube implements PhysicalCube {
         // with modern "distinct-count".
         Aggregator aggregator = this.getContext().getAggragationFactory().getAggregator(measureMapping);
         final RolapBaseCubeMeasure measure = new RolapBaseCubeMeasure(this, null, measuresLevel,
-                measureMapping.getName(), measureMapping.getName(), measureMapping.getDescription(),
+                measureMapping.getName(), measureMapping.getName(), Descriptions.localizedBody(measureMapping, CwmHelper.TYPE_DOCUMENTATION, null).orElse(null),
                 measureMapping.getFormatString(), measureExp, aggregator, measureMapping.getDataType(),
-                RolapMetaData.createMetaData(measureMapping.getAnnotations()));
+                RolapMetaData.createMetaData(measureMapping));
 
         FormatterCreateContext formatterContext = new FormatterCreateContext.Builder(measure.getUniqueName())
                 .formatterDef(measureMapping.getCellFormatter() != null ? measureMapping.getCellFormatter().getRef() : null ).formatterAttr(measureMapping.getFormatter()).build();

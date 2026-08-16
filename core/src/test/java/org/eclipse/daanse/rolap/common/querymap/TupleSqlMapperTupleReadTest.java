@@ -694,7 +694,7 @@ class TupleSqlMapperTupleReadTest {
         TableSource source = tableSource(name);
         org.eclipse.daanse.rolap.mapping.model.database.source.SqlStatement filter =
                 mock(org.eclipse.daanse.rolap.mapping.model.database.source.SqlStatement.class);
-        when(filter.getSql()).thenReturn(filterSql);
+        when(filter.getBody()).thenReturn(filterSql);
         when(source.getSqlWhereExpression()).thenReturn(filter);
         return source;
     }

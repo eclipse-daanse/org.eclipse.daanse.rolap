@@ -28,11 +28,11 @@ import org.eclipse.daanse.sql.statement.api.expression.SqlExpression;
 public class NthValueAggregator implements Aggregator, org.eclipse.daanse.rolap.aggregator.SqlNodeAggregator {
 
     private boolean ignoreNulls;
-    private Integer n;
+    private long n;
     private List<RolapColumn> rolapOrderedColumnList;
 
 
-    public NthValueAggregator(boolean ignoreNulls, Integer n,
+    public NthValueAggregator(boolean ignoreNulls, long n,
                               List<RolapColumn> rolapOrderedColumnList) {
         this.ignoreNulls = ignoreNulls;
         this.n = n;
@@ -50,7 +50,7 @@ public class NthValueAggregator implements Aggregator, org.eclipse.daanse.rolap.
                 .toList();
         }
         return new SqlExpression.ExtraAggregate(Optional.ofNullable(operand),
-                new SqlExpression.ExtraAggregate.Spec.NthValue(ignoreNulls, n, columnsList));
+                new SqlExpression.ExtraAggregate.Spec.NthValue(ignoreNulls, (int) n, columnsList));
     }
 
     @Override

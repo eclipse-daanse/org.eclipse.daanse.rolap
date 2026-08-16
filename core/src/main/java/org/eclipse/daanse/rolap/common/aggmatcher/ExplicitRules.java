@@ -549,11 +549,11 @@ public class ExplicitRules {
             final org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationTable aggTable,
             final ExplicitRules.Group group)
         {
-            return (aggTable instanceof org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationName aggName)
+            return (aggTable instanceof org.eclipse.daanse.rolap.mapping.model.database.aggregation.ExplicitAggregationTable aggName)
                 ? ExplicitRules.NameTableDef.make(aggName, group)
                 : (ExplicitRules.TableDef)
                 ExplicitRules.PatternTableDef.make(
-                    (org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationPattern) aggTable, group);
+                    (org.eclipse.daanse.rolap.mapping.model.database.aggregation.PatternAggregationTable) aggTable, group);
         }
 
         /**
@@ -567,11 +567,11 @@ public class ExplicitRules {
             final org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationTable aggTable)
         {
 
-            if (aggTable instanceof org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationName aggName) {
+            if (aggTable instanceof org.eclipse.daanse.rolap.mapping.model.database.aggregation.ExplicitAggregationTable aggName) {
                 tableDef.setFactCountColumn(
                     aggName.getAggregationFactCount().getColumn());
             }
-            if (aggTable instanceof org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationPattern aggPattern) {
+            if (aggTable instanceof org.eclipse.daanse.rolap.mapping.model.database.aggregation.PatternAggregationTable aggPattern) {
                 tableDef.setFactCountColumn(
                     aggPattern.getAggregationFactCount().getColumn());
             }
@@ -1481,12 +1481,12 @@ public class ExplicitRules {
          * Makes a NameTableDef from the catalog schema.
          */
         static ExplicitRules.NameTableDef make(
-            final org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationName aggName,
+            final org.eclipse.daanse.rolap.mapping.model.database.aggregation.ExplicitAggregationTable aggName,
             final ExplicitRules.Group group)
         {
             ExplicitRules.NameTableDef name =
                 new ExplicitRules.NameTableDef(
-                    aggName.getName(),
+                    aggName.getTable(),
                     aggName.getApproxRowCount(),
                     aggName.isIgnorecase(),
                     group);
@@ -1570,7 +1570,7 @@ public class ExplicitRules {
          * Make a PatternTableDef from the catalog schema.
          */
         static ExplicitRules.PatternTableDef make(
-            final org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationPattern aggPattern,
+            final org.eclipse.daanse.rolap.mapping.model.database.aggregation.PatternAggregationTable aggPattern,
             final ExplicitRules.Group group)
         {
             ExplicitRules.PatternTableDef pattern =
