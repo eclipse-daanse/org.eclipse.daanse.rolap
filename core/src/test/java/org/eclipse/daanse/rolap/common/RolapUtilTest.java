@@ -57,7 +57,7 @@ class RolapUtilTest {
           t.setName("getFactTable())");
           SqlStatement sqlStatement = SourceFactory.eINSTANCE.createSqlStatement();
           sqlStatement.getDialects().add("mysql");
-          sqlStatement.setSql("`TableAlias`.`promotion_id` = 112");
+          sqlStatement.setBody("`TableAlias`.`promotion_id` = 112");
           fact = SourceFactory.eINSTANCE.createTableSource();
           fact.setTable(t);
           fact.setAlias("TableAlias");
@@ -75,7 +75,7 @@ class RolapUtilTest {
       t.setName("getFactTable())");
       SqlStatement sqlStatement = SourceFactory.eINSTANCE.createSqlStatement();
       sqlStatement.getDialects().add("mysql");
-      sqlStatement.setSql("`TableAlias`.`promotion_id` = 112");
+      sqlStatement.setBody("`TableAlias`.`promotion_id` = 112");
       
       fact = SourceFactory.eINSTANCE.createTableSource();
       fact.setTable(t);
@@ -95,7 +95,7 @@ class RolapUtilTest {
       t.setName("getFactTable())");
       SqlStatement sqlStatement = SourceFactory.eINSTANCE.createSqlStatement();
       sqlStatement.getDialects().add("mysql");
-      sqlStatement.setSql("`TableAlias`.`promotion_id` = 112");
+      sqlStatement.setBody("`TableAlias`.`promotion_id` = 112");
       
       fact = SourceFactory.eINSTANCE.createTableSource();
       fact.setTable(t);

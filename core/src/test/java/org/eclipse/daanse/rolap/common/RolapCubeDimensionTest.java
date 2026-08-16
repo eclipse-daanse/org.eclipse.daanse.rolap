@@ -65,7 +65,6 @@ class RolapCubeDimensionTest {
     
     org.eclipse.daanse.rolap.mapping.model.olap.dimension.StandardDimension cubeDim = DimensionFactory.eINSTANCE.createStandardDimension();
     cubeDim.setName("StubCubeDimCaption");
-    cubeDim.setDescription("StubCubeDimDescription");
     cubeDim.setVisible(true);
 
     String name = "StubCubeName";

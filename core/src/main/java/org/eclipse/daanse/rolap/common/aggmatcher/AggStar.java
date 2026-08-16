@@ -741,7 +741,10 @@ public class AggStar {
                 pw.print(" (");
                 pw.print(getBitPosition());
                 pw.print("): ");
-                pw.print(generateExprString(getStar().getDialect()));
+                // computed expressions have no dialect string; a printer must never throw
+                pw.print(getExpression() instanceof RolapColumn
+                    ? generateExprString(getStar().getDialect())
+                    : SqlExpressionResolver.describe(getExpression(), getStar().getDialect()));
             }
 
             public BestFitColumnType getInternalType() {

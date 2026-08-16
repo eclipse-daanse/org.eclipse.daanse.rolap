@@ -47,6 +47,26 @@ public class SqlExpressionResolver {
     }
 
     /**
+     * Diagnostic twin of {@link #render(SqlExpression, Dialect)}: quotes a plain column exactly like
+     * render, but never throws for a computed expression — it prints the {@code dialect -> SQL}
+     * variant map instead. For printers and {@code toString()} paths only; a diagnostic must never
+     * take the throwing render path (executable SQL still goes through the node channel).
+     */
+    public static String describe(SqlExpression expression, Dialect dialect) {
+        if (expression instanceof RolapColumn c) {
+            return dialect.quoteIdentifier(c.getTable(), c.getName());
+        }
+        if (expression == null) {
+            return "null";
+        }
+        try {
+            return sqlVariants(expression).toString();
+        } catch (RuntimeException e) {
+            return String.valueOf(expression);
+        }
+    }
+
+    /**
      * Dialect-free counterpart of {@link #render(SqlExpression, Dialect)} for a computed (non-column)
      * expression: the whole {@code dialect-name -> SQL} map, for a renderer-resolved {@code RawVariant} node.
      * (Plain {@link RolapColumn}s have no map — callers build a dialect-free {@code Column} node instead.)

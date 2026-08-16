@@ -27,6 +27,7 @@
 
 package org.eclipse.daanse.rolap.element;
 
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,6 +36,8 @@ import org.eclipse.daanse.olap.api.element.DimensionType;
 import org.eclipse.daanse.olap.api.element.Hierarchy;
 import org.eclipse.daanse.olap.element.HierarchyBase;
 
+import org.eclipse.daanse.rolap.mapping.model.provider.util.CwmHelper;
+import org.eclipse.daanse.cwm.model.cwm.foundation.businessinformation.util.Descriptions;
 /**
  * RolapCubeDimension wraps a RolapDimension for a specific Cube.
  *
@@ -74,11 +77,11 @@ public class RolapCubeDimension extends RolapDimension {
                 : rolapDim.getCaption(),
             cubeDim.isVisible(),
             cubeDim.getDimension() != null
-                ? cubeDim.getDimension().getDescription()
+                ? Descriptions.localizedBody(cubeDim.getDimension(), CwmHelper.TYPE_DOCUMENTATION, null).orElse(null)
                 : rolapDim.getDescription(),
             null,
-            (cubeDim.getDimension() != null && !cubeDim.getDimension().getAnnotations().isEmpty())
-                ? RolapMetaData.createMetaData(cubeDim.getDimension().getAnnotations())
+            cubeDim.getDimension() != null && RolapMetaData.createMetaData(cubeDim.getDimension()).size() > 0
+                ? RolapMetaData.createMetaData(cubeDim.getDimension())
                 : rolapDim.getMetaData());
         this.xmlDimension = cubeDim;
         this.rolapDimension = rolapDim;

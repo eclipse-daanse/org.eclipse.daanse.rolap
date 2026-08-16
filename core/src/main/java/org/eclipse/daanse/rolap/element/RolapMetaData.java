@@ -15,11 +15,16 @@ package org.eclipse.daanse.rolap.element;
 
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
+import org.eclipse.daanse.cwm.model.cwm.foundation.businessinformation.Description;
+import org.eclipse.daanse.cwm.model.cwm.objectmodel.core.ModelElement;
 import org.eclipse.daanse.olap.api.element.MetaData;
 import org.eclipse.daanse.olap.element.OlapMetaDataBase;
 
+import org.eclipse.daanse.rolap.mapping.model.provider.util.CwmHelper;
+import org.eclipse.daanse.cwm.model.cwm.foundation.businessinformation.util.Descriptions;
 public class RolapMetaData extends OlapMetaDataBase {
 
 	public RolapMetaData() {
@@ -30,18 +35,53 @@ public class RolapMetaData extends OlapMetaDataBase {
 		super(map);
 	}
 
-	public static MetaData createMetaData(List<? extends org.eclipse.daanse.rolap.mapping.model.Annotation> annotationMappings) {
-		if (annotationMappings == null || annotationMappings.isEmpty()) {
+	public static MetaData createMetaData(List<? extends org.eclipse.daanse.cwm.model.cwm.objectmodel.core.TaggedValue> taggedValues) {
+		if (taggedValues == null || taggedValues.isEmpty()) {
 			return OlapMetaDataBase.empty();
 		}
+		return new RolapMetaData(fold(taggedValues, null));
+	}
 
+	/**
+	 * Metadata of a mapping element: its localized businessinformation
+	 * Descriptions folded to the annotation keys getLocalized expects
+	 * (caption.de_DE / description.de_DE), then its tagged values — explicit
+	 * annotations win over folded descriptions. Language-neutral texts (und)
+	 * are not folded; they are the mapping-level default served by the
+	 * Documentation helper, not a locale variant.
+	 */
+	public static MetaData createMetaData(ModelElement element) {
+		if (element == null) {
+			return OlapMetaDataBase.empty();
+		}
+		Map<String, Object> map = fold(element.getTaggedValue(), element);
+		return map.isEmpty() ? OlapMetaDataBase.empty() : new RolapMetaData(map);
+	}
+
+	private static Map<String, Object> fold(
+			List<? extends org.eclipse.daanse.cwm.model.cwm.objectmodel.core.TaggedValue> taggedValues,
+			ModelElement element) {
 		// Use linked hash map because it retains order.
 		final Map<String, Object> map = new LinkedHashMap<>();
-		for (org.eclipse.daanse.rolap.mapping.model.Annotation annotation : annotationMappings) {
-			final String name = annotation.getName();
-			final String value = annotation.getValue();
-			map.put(name, value);
+		if (element != null) {
+			for (Description description : Descriptions.all(element)) {
+				String language = description.getLanguage();
+				if (language == null || CwmHelper.LANGUAGE_NEUTRAL.equals(language)
+						|| description.getBody() == null) {
+					continue;
+				}
+				String prop = CwmHelper.TYPE_CAPTION.equals(description.getType()) ? "caption"
+						: CwmHelper.TYPE_DOCUMENTATION.equals(description.getType()) ? "description" : null;
+				if (prop != null) {
+					map.put(prop + "." + Locale.forLanguageTag(language), description.getBody());
+				}
+			}
 		}
-		return new RolapMetaData(map);
+		if (taggedValues != null) {
+			for (org.eclipse.daanse.cwm.model.cwm.objectmodel.core.TaggedValue taggedValue : taggedValues) {
+				map.put(taggedValue.getTag(), taggedValue.getValue());
+			}
+		}
+		return map;
 	}
 }

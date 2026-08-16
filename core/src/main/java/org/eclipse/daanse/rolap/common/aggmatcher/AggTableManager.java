@@ -180,8 +180,9 @@ public class AggTableManager {
 //            connectionProps.aggregateScanCatalog();
             Optional<String> oAaggregateScanSchema=    connectionProps.aggregateScanSchema();
 
-			List<? extends org.eclipse.daanse.cwm.model.cwm.resource.relational.Schema> schemas = ((RolapContext) context).getCatalogMapping()
-					.getDbschemas();
+			List<? extends org.eclipse.daanse.cwm.model.cwm.resource.relational.Schema> schemas = org.eclipse.daanse.cwm.model.cwm.objectmodel.core.util.Packages
+					.available(((RolapContext) context).getCatalogMapping(),
+							org.eclipse.daanse.cwm.model.cwm.resource.relational.Schema.class);
 
 			org.eclipse.daanse.cwm.model.cwm.resource.relational.Schema databaseSchema = schemas.getFirst();
 			if (oAaggregateScanSchema.isPresent()) {

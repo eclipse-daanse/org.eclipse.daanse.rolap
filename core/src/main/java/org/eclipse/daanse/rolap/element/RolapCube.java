@@ -27,6 +27,7 @@
 
 package org.eclipse.daanse.rolap.element;
 
+
 import static org.eclipse.daanse.rolap.common.util.CalculatedMemberUtil.getFormatString;
 import static org.eclipse.daanse.rolap.common.util.CalculatedMemberUtil.getFormula;
 import static org.eclipse.daanse.rolap.common.util.JoinUtil.changeLeftRight;
@@ -144,6 +145,8 @@ import org.eclipse.daanse.cwm.model.cwm.resource.relational.RowSet;
 import org.eclipse.daanse.cwm.model.cwm.resource.relational.util.ColumnSets;
 import org.eclipse.daanse.cwm.model.cwm.resource.relational.util.RowSets;
 import org.eclipse.daanse.cwm.model.cwm.resource.relational.util.Rows;
+import org.eclipse.daanse.rolap.mapping.model.provider.util.CwmHelper;
+import org.eclipse.daanse.cwm.model.cwm.foundation.businessinformation.util.Descriptions;
 /**
  * RolapCube implements {@link Cube} for a ROLAP database.
  *
@@ -151,6 +154,10 @@ import org.eclipse.daanse.cwm.model.cwm.resource.relational.util.Rows;
  * @since 10 August, 2001
  */
 public abstract class RolapCube extends CubeBase {
+
+    private static String body(org.eclipse.daanse.cwm.model.cwm.objectmodel.core.Expression expression) {
+        return expression == null ? null : expression.getBody();
+    }
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RolapCube.class);
     public static final String BAD_RELATION_TYPE = "bad relation type ";
@@ -248,11 +255,11 @@ public abstract class RolapCube extends CubeBase {
                 cubeMapping.getName(),
                 cubeMapping.isVisible(),
                 cubeMapping.getName(),
-                cubeMapping.getDescription(),
+                Descriptions.localizedBody(cubeMapping, CwmHelper.TYPE_DOCUMENTATION, null).orElse(null),
                 isCache,
                 fact,
                 cubeMapping.getDimensionConnectors(),
-                RolapMetaData.createMetaData(cubeMapping.getAnnotations()),
+                RolapMetaData.createMetaData(cubeMapping),
                 context);
         catalog.addCube(cubeMapping, this);
         fillKpiIfExist(cubeMapping);
@@ -273,11 +280,11 @@ public abstract class RolapCube extends CubeBase {
                 cubeMapping.getName(),
                 cubeMapping.isVisible(),
                 cubeMapping.getName(),
-                cubeMapping.getDescription(),
+                Descriptions.localizedBody(cubeMapping, CwmHelper.TYPE_DOCUMENTATION, null).orElse(null),
                 isCache,
                 fact,
                 cubeMapping.getDimensionConnectors(),
-                RolapMetaData.createMetaData(cubeMapping.getAnnotations()),
+                RolapMetaData.createMetaData(cubeMapping),
                 context);
         catalog.addCube(cubeMapping, this);
         fillKpiIfExist(cubeMapping);
@@ -438,15 +445,15 @@ public abstract class RolapCube extends CubeBase {
                 RolapKPI kpi = new RolapKPI();
                 kpi.setName(kpiMapping.getName());
                 kpi.setDisplayFolder(kpiMapping.getDisplayFolder());
-                kpi.setCurrentTimeMember(kpiMapping.getCurrentTimeMember());
-                kpi.setTrend(kpiMapping.getTrend());
+                kpi.setCurrentTimeMember(body(kpiMapping.getCurrentTimeMember()));
+                kpi.setTrend(body(kpiMapping.getTrend()));
                 kpi.setWeight(kpiMapping.getWeight());
                 kpi.setTrendGraphic(kpiMapping.getTrendGraphic());
                 kpi.setStatusGraphic(kpiMapping.getStatusGraphic());
-                kpi.setValue(kpiMapping.getValue());
-                kpi.setGoal(kpiMapping.getGoal());
-                kpi.setStatus(kpiMapping.getStatus());
-                kpi.setDescription(kpiMapping.getDescription());
+                kpi.setValue(body(kpiMapping.getValue()));
+                kpi.setGoal(body(kpiMapping.getGoal()));
+                kpi.setStatus(body(kpiMapping.getStatus()));
+                kpi.setDescription(Descriptions.localizedBody(kpiMapping, CwmHelper.TYPE_DOCUMENTATION, null).orElse(null));
                 kpis.add(kpi);
             });
             cube.getKpis().stream().forEach(kpiMapping -> {
@@ -651,10 +658,10 @@ public abstract class RolapCube extends CubeBase {
             namedSet.setCaption(mappingNamedSet.getName());
         }
 
-        if (mappingNamedSet.getDescription() != null
-            && mappingNamedSet.getDescription().length() > 0)
+        if (Descriptions.localizedBody(mappingNamedSet, CwmHelper.TYPE_DOCUMENTATION, null).orElse(null) != null
+            && Descriptions.localizedBody(mappingNamedSet, CwmHelper.TYPE_DOCUMENTATION, null).orElse(null).length() > 0)
         {
-            namedSet.setDescription(mappingNamedSet.getDescription());
+            namedSet.setDescription(Descriptions.localizedBody(mappingNamedSet, CwmHelper.TYPE_DOCUMENTATION, null).orElse(null));
         }
 
         if (mappingNamedSet.getDisplayFolder() != null
@@ -664,7 +671,7 @@ public abstract class RolapCube extends CubeBase {
         }
 
         namedSet.setMetadata(
-            RolapMetaData.createMetaData(mappingNamedSet.getAnnotations()));
+            RolapMetaData.createMetaData(mappingNamedSet));
 
         namedSetList.add(formula);
     }
@@ -683,7 +690,7 @@ public abstract class RolapCube extends CubeBase {
             .append(Util.makeFqName(mappingNamedSet.getName()))
             .append(Util.NL)
             .append(" AS ");
-        Util.singleQuoteString(mappingNamedSet.getFormula(), buf);
+        Util.singleQuoteString(mappingNamedSet.getFormula().getBody(), buf);
         buf.append(Util.NL);
     }
 
@@ -716,11 +723,11 @@ public abstract class RolapCube extends CubeBase {
                 StandardProperty.CAPTION.getName(), mappingCalcMember.getName());
         }
 
-        if (mappingCalcMember.getDescription() != null
-            && mappingCalcMember.getDescription().length() > 0)
+        if (Descriptions.localizedBody(mappingCalcMember, CwmHelper.TYPE_DOCUMENTATION, null).orElse(null) != null
+            && Descriptions.localizedBody(mappingCalcMember, CwmHelper.TYPE_DOCUMENTATION, null).orElse(null).length() > 0)
         {
             member.setProperty(
-                StandardProperty.DESCRIPTION_PROPERTY.getName(), mappingCalcMember.getDescription());
+                StandardProperty.DESCRIPTION_PROPERTY.getName(), Descriptions.localizedBody(mappingCalcMember, CwmHelper.TYPE_DOCUMENTATION, null).orElse(null));
         }
 
         if (getFormatString(mappingCalcMember) != null
@@ -732,7 +739,7 @@ public abstract class RolapCube extends CubeBase {
 
         final RolapMember member1 = RolapUtil.strip(member);
         ((RolapCalculatedMember) member1).setMetadata(
-            RolapMetaData.createMetaData(mappingCalcMember.getAnnotations()));
+            RolapMetaData.createMetaData(mappingCalcMember));
 
         memberList.add(member);
     }
@@ -964,7 +971,7 @@ public abstract class RolapCube extends CubeBase {
             }
             propNames.add(mappingProperty.getName());
             if (mappingProperty.getExpression() != null) {
-                propExprs.add(mappingProperty.getExpression());
+                propExprs.add(mappingProperty.getExpression().getBody());
             } else {
                 propExprs.add(Util.quoteForMdx(mappingProperty.getValue()));
             }
@@ -2556,7 +2563,7 @@ public abstract class RolapCube extends CubeBase {
 
         org.eclipse.daanse.rolap.mapping.model.database.source.SqlStatement sqlStatement = SourceFactory.eINSTANCE.createSqlStatement();
         sqlStatement.getDialects().add("generic");
-        sqlStatement.setSql(dialect.sqlGenerator().generateInline(columnNames, columnTypes, valueList).toString());
+        sqlStatement.setBody(dialect.sqlGenerator().generateInline(columnNames, columnTypes, valueList).toString());
 
         org.eclipse.daanse.rolap.mapping.model.database.relational.DialectSqlView sqlView = org.eclipse.daanse.rolap.mapping.model.database.relational.RelationalFactory.eINSTANCE.createDialectSqlView();
         sqlView.getDialectStatements().add(sqlStatement);
@@ -2606,7 +2613,7 @@ public abstract class RolapCube extends CubeBase {
 
             org.eclipse.daanse.rolap.mapping.model.database.source.SqlStatement sqlStatement = SourceFactory.eINSTANCE.createSqlStatement();
             sqlStatement.getDialects().add("generic");
-            sqlStatement.setSql(dialect.sqlGenerator().generateInline(columnNames, columnTypes, valueList).toString());
+            sqlStatement.setBody(dialect.sqlGenerator().generateInline(columnNames, columnTypes, valueList).toString());
 
             org.eclipse.daanse.rolap.mapping.model.database.relational.DialectSqlView sqlView = org.eclipse.daanse.rolap.mapping.model.database.relational.RelationalFactory.eINSTANCE.createDialectSqlView();
             sqlView.getDialectStatements().add(sqlStatement);
@@ -2647,7 +2654,7 @@ public abstract class RolapCube extends CubeBase {
                             org.eclipse.daanse.sql.statement.api.model.SetOperation.unionAll(arms),
                             dialect).sql();
                         org.eclipse.daanse.rolap.mapping.model.database.source.SqlStatement sqlStatement = SourceFactory.eINSTANCE.createSqlStatement();
-                        sqlStatement.setSql(sql);
+                        sqlStatement.setBody(sql);
                         sqlStatement.getDialects().add(dialect.name());
                         org.eclipse.daanse.rolap.mapping.model.database.relational.DialectSqlView sqlView = org.eclipse.daanse.rolap.mapping.model.database.relational.RelationalFactory.eINSTANCE.createDialectSqlView();
                         sqlView.getDialectStatements().add(sqlStatement);
@@ -2678,7 +2685,7 @@ public abstract class RolapCube extends CubeBase {
             List<? extends org.eclipse.daanse.rolap.mapping.model.database.source.SqlStatement> statements = mappingView.getSql().getDialectStatements().stream()
                 .map(sql -> {
                     SqlStatement sqlStatement = SourceFactory.eINSTANCE.createSqlStatement();
-                    sqlStatement.setSql(new StringBuilder(sql.getSql()).append(appended).toString());
+                    sqlStatement.setBody(new StringBuilder(sql.getBody()).append(appended).toString());
                     sqlStatement.getDialects().addAll(sql.getDialects());
                     return sqlStatement;
                 })

@@ -313,7 +313,7 @@ class RolapCatalogTest {
     	
     	org.eclipse.daanse.rolap.mapping.model.database.source.SqlStatement sqlWhereExpression = SourceFactory.eINSTANCE.createSqlStatement();
     	sqlWhereExpression.getDialects().add("mysql");
-    	sqlWhereExpression.setSql("`TableAlias`.`promotion_id` = 112");
+    	sqlWhereExpression.setBody("`TableAlias`.`promotion_id` = 112");
     	
     	org.eclipse.daanse.rolap.mapping.model.database.source.TableSource fact = SourceFactory.eINSTANCE.createTableSource();
     	fact.setTable(table);
@@ -351,7 +351,7 @@ class RolapCatalogTest {
     	
     	org.eclipse.daanse.rolap.mapping.model.database.source.SqlStatement sqlWhereExpression = SourceFactory.eINSTANCE.createSqlStatement();
     	sqlWhereExpression.getDialects().add("mysql");
-    	sqlWhereExpression.setSql("`TableAlias`.`promotion_id` = 112");
+    	sqlWhereExpression.setBody("`TableAlias`.`promotion_id` = 112");
 
     	org.eclipse.daanse.rolap.mapping.model.database.source.TableSource fact = SourceFactory.eINSTANCE.createTableSource();
     	fact.setTable(table);
@@ -451,7 +451,7 @@ class RolapCatalogTest {
         org.eclipse.daanse.olap.access.RoleImpl role = new org.eclipse.daanse.olap.access.RoleImpl();
 
         AccessMemberGrant memberGrant = OlapFactory.eINSTANCE.createAccessMemberGrant();
-        memberGrant.setMember("member");
+        memberGrant.setMember(org.eclipse.daanse.rolap.mapping.model.provider.util.Expressions.mdx("member"));
         memberGrant.setMemberAccess(MemberAccess.ALL);
 
         ExplicitHierarchy h = HierarchyFactory.eINSTANCE.createExplicitHierarchy();

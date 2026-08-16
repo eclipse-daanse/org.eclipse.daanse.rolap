@@ -50,7 +50,6 @@ import org.eclipse.daanse.olap.api.sql.SqlExpression;
 import org.eclipse.daanse.rolap.common.star.RolapSqlExpression;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.element.RolapLevel;
-import org.eclipse.daanse.rolap.mapping.model.database.relational.ColumnType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

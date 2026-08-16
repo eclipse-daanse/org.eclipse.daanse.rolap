@@ -48,7 +48,7 @@ public class PojoUtil {
         if (s != null) {
             //return SqlStatementMappingImpl.builder()
             //    .withDialects(s.getDialects())
-            //    .withSql(s.getSql())
+            //    .withSql(s.getBody())
             //    .build();
         	return s;
         }
@@ -64,7 +64,7 @@ public class PojoUtil {
 
 //    public static SqlStatementMappingImpl getSqlStatement(SqlStatementMapping s) {
 //    	List<String> dialects = getDialects(s.getDialects());
-//    	return SqlStatementMappingImpl.builder().withDialects(dialects).withSql(s.getSql()).build();
+//    	return SqlStatementMappingImpl.builder().withDialects(dialects).withSql(s.getBody()).build();
 //    }
 
 //	private static List<String> getDialects(List<String> dialects) {
@@ -150,13 +150,13 @@ public class PojoUtil {
 	}
 
 	private static org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationTable getAggregationTable(org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationTable a) {
-		if (a instanceof org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationName anm) {
-			org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationName aggregationName = AggregationFactory.eINSTANCE.createAggregationName();
+		if (a instanceof org.eclipse.daanse.rolap.mapping.model.database.aggregation.ExplicitAggregationTable anm) {
+			org.eclipse.daanse.rolap.mapping.model.database.aggregation.ExplicitAggregationTable aggregationName = AggregationFactory.eINSTANCE.createExplicitAggregationTable();
 			aggregationName.setApproxRowCount(anm.getApproxRowCount());
 			return aggregationName;
 		}
-		if (a instanceof org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationPattern apm) {
-			org.eclipse.daanse.rolap.mapping.model.database.aggregation.AggregationPattern aggregationPattern = AggregationFactory.eINSTANCE.createAggregationPattern();
+		if (a instanceof org.eclipse.daanse.rolap.mapping.model.database.aggregation.PatternAggregationTable apm) {
+			org.eclipse.daanse.rolap.mapping.model.database.aggregation.PatternAggregationTable aggregationPattern = AggregationFactory.eINSTANCE.createPatternAggregationTable();
 			aggregationPattern.setPattern(apm.getPattern());
 			aggregationPattern.getAggregationMeasures().addAll(getAggregationMeasures(apm.getAggregationMeasures()));
 			return aggregationPattern;

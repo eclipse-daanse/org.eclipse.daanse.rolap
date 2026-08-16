@@ -31,7 +31,7 @@ public class ViewCodeSet {
         ViewCodeSet codeSet = new ViewCodeSet();
         for (org.eclipse.daanse.rolap.mapping.model.database.source.SqlStatement sql : sqls) {
             for (String dialect : sql.getDialects()) {
-                codeSet.put(dialect, sql.getSql());
+                codeSet.put(dialect, sql.getBody());
             }
         }
         return codeSet;

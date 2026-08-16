@@ -43,8 +43,8 @@ public class Utils {
                 return false;
             }
             for (int i = 0; i < s1.getSql().getDialectStatements().size(); i++) {
-                String statement1 = s1.getSql().getDialectStatements().get(i).getSql();
-                String statement2 = s2.getSql().getDialectStatements().get(i).getSql();
+                String statement1 = s1.getSql().getDialectStatements().get(i).getBody();
+                String statement2 = s2.getSql().getDialectStatements().get(i).getBody();
                 List<String> dialects1 = s1.getSql().getDialectStatements().get(i).getDialects();
                 List<String> dialects2 = s2.getSql().getDialectStatements().get(i).getDialects();
 

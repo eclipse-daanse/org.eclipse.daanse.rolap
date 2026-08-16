@@ -328,7 +328,7 @@ public final class RelationFromMapper {
             org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource relation) {
         if (relation instanceof org.eclipse.daanse.rolap.mapping.model.database.source.TableSource ts
                 && ts.getSqlWhereExpression() != null) {
-            String sql = ts.getSqlWhereExpression().getSql();
+            String sql = ts.getSqlWhereExpression().getBody();
             if (sql != null && !sql.isBlank()) {
                 return Predicates.raw("(" + sql + ")");
             }

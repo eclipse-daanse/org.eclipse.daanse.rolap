@@ -58,6 +58,11 @@
   <modules>
     <module>core</module>
     <module>aggmatch</module>
+    <!--
+      cwm.supplier is written but not buildable: it compiles against
+      org.eclipse.daanse.olap.cwm.spi, which does not exist in any repository yet.
+      It joins the reactor once that module does.
+    -->
     <module>documentation</module>
     <module>testkit</module>
   </modules>

@@ -25,6 +25,7 @@
  */
 package org.eclipse.daanse.rolap.common.aggmatcher;
 
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.sql.Types;
@@ -183,7 +184,7 @@ public class AggGen {
      * create lost create and insert commands.
      */
     private void init() {
-    org.eclipse.daanse.cwm.model.cwm.resource.relational.Schema dbschema=	((RolapContext) star.getContext()).getCatalogMapping().getDbschemas().getFirst();
+    org.eclipse.daanse.cwm.model.cwm.resource.relational.Schema dbschema=	org.eclipse.daanse.cwm.model.cwm.objectmodel.core.util.Packages.available(((RolapContext) star.getContext()).getCatalogMapping(), org.eclipse.daanse.cwm.model.cwm.resource.relational.Schema.class).getFirst();
         JdbcSchema db =   new JdbcSchema(dbschema);
 
         JdbcSchema.Table factTable = getTable(db, getFactTableName());

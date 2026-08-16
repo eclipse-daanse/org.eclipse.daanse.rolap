@@ -29,6 +29,8 @@
 package org.eclipse.daanse.rolap.common.star;
 
 import static org.eclipse.daanse.rolap.common.util.SqlExpressionResolver.genericSql;
+
+import org.eclipse.daanse.rolap.common.util.SqlExpressionResolver;
 import static org.eclipse.daanse.rolap.common.util.JoinUtil.getLeftAlias;
 import static org.eclipse.daanse.rolap.common.util.JoinUtil.getRightAlias;
 import static org.eclipse.daanse.rolap.common.util.JoinUtil.left;
@@ -365,9 +367,9 @@ public class RolapStar {
     protected org.eclipse.daanse.rolap.mapping.model.database.source.SqlStatement sql(org.eclipse.daanse.rolap.mapping.model.database.source.SqlStatement sql, String possibleName, String aliasOrName) {
         if (sql != null) {
             List<String> dialects = sql.getDialects();
-            String statement = sql.getSql();
+            String statement = sql.getBody();
             org.eclipse.daanse.rolap.mapping.model.database.source.SqlStatement sqlStatement = SourceFactory.eINSTANCE.createSqlStatement();
-            sqlStatement.setSql(statement != null ?
+            sqlStatement.setBody(statement != null ?
                     statement.replace(aliasOrName, possibleName) : null);
             sqlStatement.getDialects().addAll(dialects);
             return sqlStatement;
@@ -1079,7 +1081,9 @@ public class RolapStar {
             pw.print(" (");
             pw.print(getBitPosition());
             pw.print("): ");
-            pw.print(generateExprString(getTable().getStar().getDialect()));
+            // computed expressions have no dialect string; a printer must never throw
+            pw.print(SqlExpressionResolver.describe(
+                getExpression(), getTable().getStar().getDialect()));
         }
 
         public Datatype getDatatype() {
@@ -1150,11 +1154,13 @@ public class RolapStar {
             pw.print(" (");
             pw.print(getBitPosition());
             pw.print("): ");
+            // computed expressions have no dialect string; a printer must never throw
             pw.print(
                 aggregator.getExpression(
                     getExpression() == null
                         ? null
-                        : super.generateExprString(getTable().getStar().getDialect())));
+                        : SqlExpressionResolver.describe(
+                            getExpression(), getTable().getStar().getDialect())));
         }
 
         public String getCubeName() {
@@ -2054,11 +2060,12 @@ public class RolapStar {
                     pw.print(") ");
                 }
              }
-            pw.println(RolapStar.generateExprString(left, dialect));
+            // computed expressions have no dialect string; a printer must never throw
+            pw.println(SqlExpressionResolver.describe(left, dialect));
 
             pw.print(subprefix);
             pw.print("right=");
-            pw.println(RolapStar.generateExprString(right, dialect));
+            pw.println(SqlExpressionResolver.describe(right, dialect));
         }
     }
 

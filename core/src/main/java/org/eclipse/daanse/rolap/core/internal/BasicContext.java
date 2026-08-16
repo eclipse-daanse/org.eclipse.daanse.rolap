@@ -13,6 +13,8 @@
 */
 package org.eclipse.daanse.rolap.core.internal;
 
+
+
 import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_PID;
 import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_REF_NAME_AGG_MATCH_RULES_SUPPLIER;
 import static org.eclipse.daanse.rolap.core.api.Constants.BASIC_CONTEXT_REF_NAME_CATALOG_MAPPING_SUPPLIER;
@@ -83,6 +85,10 @@ import org.osgi.service.metatype.annotations.Designate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.eclipse.daanse.rolap.mapping.model.access.common.AccessRole;
+import org.eclipse.daanse.rolap.mapping.model.provider.util.CwmHelper;
+import org.eclipse.daanse.cwm.model.cwm.foundation.businessinformation.util.Descriptions;
+import org.eclipse.daanse.cwm.model.cwm.objectmodel.core.util.Packages;
 @Designate(ocd = BasicContextOCD.class, factory = true)
 @Component(service = Context.class, scope = SINGLETON, configurationPid = BASIC_CONTEXT_PID)
 public class BasicContext extends AbstractRolapContext implements RolapContext {
@@ -304,7 +310,7 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
 
     @Override
     public Optional<String> getDescription() {
-        return Optional.ofNullable(getCatalogMapping().getDescription());
+        return Optional.ofNullable(Descriptions.localizedBody(getCatalogMapping(), CwmHelper.TYPE_DOCUMENTATION, null).orElse(null));
     }
 
     @Override
@@ -364,8 +370,8 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
     @Override
     public List<String> getAccessRoles() {
     	org.eclipse.daanse.rolap.mapping.model.catalog.Catalog catalogMapping = getCatalogMapping();
-        if (catalogMapping != null && catalogMapping.getAccessRoles() != null) {
-            return catalogMapping.getAccessRoles().stream().map(org.eclipse.daanse.rolap.mapping.model.access.common.AccessRole::getName).toList();
+        if (catalogMapping != null) {
+            return Packages.available(catalogMapping, AccessRole.class).stream().map(org.eclipse.daanse.rolap.mapping.model.access.common.AccessRole::getName).toList();
         }
         return List.of();// may take from mapping
     }

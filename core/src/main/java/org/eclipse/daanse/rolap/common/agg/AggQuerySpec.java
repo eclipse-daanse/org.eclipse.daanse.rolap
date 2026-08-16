@@ -504,7 +504,7 @@ class AggQuerySpec {
         if (table.getRelation()
                 instanceof org.eclipse.daanse.rolap.mapping.model.database.source.TableSource ts
             && ts.getSqlWhereExpression() != null) {
-            String sql = ts.getSqlWhereExpression().getSql();
+            String sql = ts.getSqlWhereExpression().getBody();
             if (sql != null && !sql.isBlank()) {
                 return org.eclipse.daanse.sql.statement.api.Predicates.raw("(" + sql + ")");
             }

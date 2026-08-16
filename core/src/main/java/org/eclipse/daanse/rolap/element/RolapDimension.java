@@ -28,6 +28,7 @@
 
 package org.eclipse.daanse.rolap.element;
 
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,6 +51,8 @@ import org.eclipse.daanse.rolap.common.util.DimensionTypeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.eclipse.daanse.rolap.mapping.model.provider.util.CwmHelper;
+import org.eclipse.daanse.cwm.model.cwm.foundation.businessinformation.util.Descriptions;
 /**
  * RolapDimension implements {@link Dimension}for a ROLAP
  * database.
@@ -128,9 +131,9 @@ public class RolapDimension extends DimensionBase {
             getDimensionName(dimensionConnector),
             getDimensionName(dimensionConnector),
             dimensionConnector.isVisible(),
-            mappingDimension != null ? mappingDimension.getDescription() : null,
+            mappingDimension != null ? Descriptions.localizedBody(mappingDimension, CwmHelper.TYPE_DOCUMENTATION, null).orElse(null) : null,
             DimensionTypeUtil.getDimensionType(mappingDimension),
-            RolapMetaData.createMetaData(mappingDimension != null ? mappingDimension.getAnnotations() : null));
+            RolapMetaData.createMetaData(mappingDimension));
 
         Util.assertPrecondition(schema != null);
 

@@ -519,7 +519,7 @@ public class QueryRecorder {
                     table.getTable().getName(),
                     tableAlias,
                     Optional.ofNullable(table.getSqlWhereExpression())
-                        .map(org.eclipse.daanse.rolap.mapping.model.database.source.SqlStatement::getSql)
+                        .map(org.eclipse.daanse.rolap.mapping.model.database.source.SqlStatement::getBody)
                         .orElse(null),
                     getHintMap(table),
                     failIfExists);
