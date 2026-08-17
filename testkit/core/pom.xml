@@ -322,6 +322,12 @@
     </dependency>
     <dependency>
       <groupId>org.eclipse.daanse</groupId>
+      <artifactId>org.eclipse.daanse.rolap.mapping.instance.emf.tutorial.cube.sqlview</artifactId>
+      <version>${revision}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.daanse</groupId>
       <artifactId>org.eclipse.daanse.rolap.mapping.instance.emf.tutorial.database.intro</artifactId>
       <version>${revision}</version>
       <scope>test</scope>
@@ -401,6 +407,12 @@
     <dependency>
       <groupId>org.eclipse.daanse</groupId>
       <artifactId>org.eclipse.daanse.rolap.mapping.instance.emf.tutorial.level.ordinalcolumns</artifactId>
+      <version>${revision}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.daanse</groupId>
+      <artifactId>org.eclipse.daanse.rolap.mapping.instance.emf.tutorial.level.relationalsource</artifactId>
       <version>${revision}</version>
       <scope>test</scope>
     </dependency>
