@@ -85,13 +85,23 @@ public class LevelConstraintGenerator {
       if ( columnValue == null || RolapUtil.mdxNullLiteral().equalsIgnoreCase( columnValue ) ) {
         continue;
       }
-      try {
-        Double.valueOf( columnValue );
-      } catch ( NumberFormatException e ) {
+      if ( !isNumber( columnValue ) ) {
         return declared;
       }
     }
     return physical;
+  }
+
+  private static boolean isNumber( String value ) {
+    if ( value == null ) {
+      return false;
+    }
+    try {
+      Double.valueOf( value );
+      return true;
+    } catch ( NumberFormatException e ) {
+      return false;
+    }
   }
 
   /**
@@ -161,13 +171,17 @@ public class LevelConstraintGenerator {
       if ( RolapUtil.mdxNullLiteral().equalsIgnoreCase( columnValue ) ) {
         containsNull = true;
       } else {
-        if ( datatype.isNumeric() ) {
-          Double.valueOf( columnValue );
+        if ( datatype.isNumeric() && !isNumber( columnValue ) ) {
+          // cannot match a numeric column; skip instead of failing the whole lookup
+          continue;
         }
         org.eclipse.daanse.sql.statement.api.expression.SqlExpression v =
             org.eclipse.daanse.sql.statement.api.Expressions.literal( columnValue, datatype );
         values.add( upper ? new org.eclipse.daanse.sql.statement.api.expression.SqlExpression.CaseFold( v ) : v );
       }
+    }
+    if ( values.isEmpty() && !containsNull ) {
+      return org.eclipse.daanse.sql.statement.api.Predicates.alwaysFalse();
     }
     if ( values.size() == 1 && !containsNull ) {
       return org.eclipse.daanse.sql.statement.api.Predicates.comparison( col,
