@@ -27,6 +27,7 @@
 package org.eclipse.daanse.rolap.common;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.BitSet;
 import java.util.Iterator;
@@ -51,24 +52,14 @@ class BitKeyTest {
 	@Test
     void badSize() {
         int size = -1;
-        boolean gotException = false;
-        BitKey bitKey = null;
-        try {
-            bitKey = BitKey.Factory.makeBitKey(size);
-//            discard(bitKey);
-        } catch (IllegalArgumentException e) {
-            gotException = true;
-        }
-        assertThat((gotException)).as("BitKey negative size " + size).isTrue();
+        assertThatThrownBy(() -> BitKey.Factory.makeBitKey(size))
+            .as("BitKey negative size " + size)
+            .isInstanceOf(IllegalArgumentException.class);
 
-        size = -10;
-        gotException = false;
-        try {
-            bitKey = BitKey.Factory.makeBitKey(size);
-        } catch (IllegalArgumentException e) {
-            gotException = true;
-        }
-        assertThat((gotException)).as("BitKey negative size " + size).isTrue();
+        int size2 = -10;
+        assertThatThrownBy(() -> BitKey.Factory.makeBitKey(size2))
+            .as("BitKey negative size " + size2)
+            .isInstanceOf(IllegalArgumentException.class);
     }
 
     /**
@@ -77,33 +68,13 @@ class BitKeyTest {
 	@Test
     void goodSize() {
         int size = 0;
-        boolean gotException = false;
-        BitKey bitKey = null;
-        try {
-            bitKey = BitKey.Factory.makeBitKey(size);
-//            discard(bitKey);
-        } catch (IllegalArgumentException e) {
-            gotException = true;
-        }
-        assertThat(gotException).as("BitKey size " + size).isFalse();
+        assertThat((Object) BitKey.Factory.makeBitKey(size)).as("BitKey size " + size).isInstanceOf(BitKey.class);
 
         size = 1;
-        gotException = false;
-        try {
-            bitKey = BitKey.Factory.makeBitKey(size);
-        } catch (IllegalArgumentException e) {
-            gotException = true;
-        }
-        assertThat(gotException).as("BitKey size " + size).isFalse();
+        assertThat((Object) BitKey.Factory.makeBitKey(size)).as("BitKey size " + size).isInstanceOf(BitKey.class);
 
         size = 10;
-        gotException = false;
-        try {
-            bitKey = BitKey.Factory.makeBitKey(size);
-        } catch (IllegalArgumentException e) {
-            gotException = true;
-        }
-        assertThat(gotException).as("BitKey size " + size).isFalse();
+        assertThat((Object) BitKey.Factory.makeBitKey(size)).as("BitKey size " + size).isInstanceOf(BitKey.class);
     }
 
     /**
@@ -113,35 +84,35 @@ class BitKeyTest {
     void sizeTypes() {
         int size = 0;
         BitKey bitKey = BitKey.Factory.makeBitKey(size);
-        assertThat((bitKey.getClass() == BitKey.Small.class)).as("BitKey size " + size + " not BitKey.Small").isTrue();
+        assertThat((Object) bitKey).as("BitKey size " + size + " not BitKey.Small").isInstanceOf(BitKey.Small.class);
 
         size = 63;
         bitKey = BitKey.Factory.makeBitKey(size);
-        assertThat((bitKey.getClass() == BitKey.Small.class)).as("BitKey size " + size + " not BitKey.Small").isTrue();
+        assertThat((Object) bitKey).as("BitKey size " + size + " not BitKey.Small").isInstanceOf(BitKey.Small.class);
 
         size = 64;
         bitKey = BitKey.Factory.makeBitKey(size);
-        assertThat((bitKey.getClass() == BitKey.Mid128.class)).as("BitKey size " + size + " not BitKey.Mid128").isTrue();
+        assertThat((Object) bitKey).as("BitKey size " + size + " not BitKey.Mid128").isInstanceOf(BitKey.Mid128.class);
 
         size = 65;
         bitKey = BitKey.Factory.makeBitKey(size);
-        assertThat((bitKey.getClass() == BitKey.Mid128.class)).as("BitKey size " + size + " not BitKey.Mid128").isTrue();
+        assertThat((Object) bitKey).as("BitKey size " + size + " not BitKey.Mid128").isInstanceOf(BitKey.Mid128.class);
 
         size = 127;
         bitKey = BitKey.Factory.makeBitKey(size);
-        assertThat((bitKey.getClass() == BitKey.Mid128.class)).as("BitKey size " + size + " not BitKey.Mid128").isTrue();
+        assertThat((Object) bitKey).as("BitKey size " + size + " not BitKey.Mid128").isInstanceOf(BitKey.Mid128.class);
 
         size = 128;
         bitKey = BitKey.Factory.makeBitKey(size);
-        assertThat((bitKey.getClass() == BitKey.Big.class)).as("BitKey size " + size + " not BitKey.Big").isTrue();
+        assertThat((Object) bitKey).as("BitKey size " + size + " not BitKey.Big").isInstanceOf(BitKey.Big.class);
 
         size = 129;
         bitKey = BitKey.Factory.makeBitKey(size);
-        assertThat((bitKey.getClass() == BitKey.Big.class)).as("BitKey size " + size + " not BitKey.Big").isTrue();
+        assertThat((Object) bitKey).as("BitKey size " + size + " not BitKey.Big").isInstanceOf(BitKey.Big.class);
 
         size = 1280;
         bitKey = BitKey.Factory.makeBitKey(size);
-        assertThat((bitKey.getClass() == BitKey.Big.class)).as("BitKey size " + size + " not BitKey.Big").isTrue();
+        assertThat((Object) bitKey).as("BitKey size " + size + " not BitKey.Big").isInstanceOf(BitKey.Big.class);
     }
 
     /**
@@ -298,9 +269,9 @@ class BitKeyTest {
         BitKey bitKey0 = makeAndSet(size0, positions0);
         bitKey0.clear();
 
-        assertThat((bitKey0.equals(bitKey_0))).as("BitKey 0 not equals after clear to 0").isTrue();
-        assertThat((bitKey0.equals(bitKey_64))).as("BitKey 0 not equals after clear to 64").isTrue();
-        assertThat((bitKey0.equals(bitKey_128))).as("BitKey 0 not equals after clear to 128").isTrue();
+        assertThat((Object) bitKey0).as("BitKey 0 not equals after clear to 0").isEqualTo(bitKey_0);
+        assertThat((Object) bitKey0).as("BitKey 0 not equals after clear to 64").isEqualTo(bitKey_64);
+        assertThat((Object) bitKey0).as("BitKey 0 not equals after clear to 128").isEqualTo(bitKey_128);
 
         int size1 = 68;
         int[] positions1 = {
@@ -309,9 +280,9 @@ class BitKeyTest {
         BitKey bitKey1 = makeAndSet(size1, positions1);
         bitKey1.clear();
 
-        assertThat((bitKey1.equals(bitKey_0))).as("BitKey 1 not equals after clear to 0").isTrue();
-        assertThat((bitKey1.equals(bitKey_64))).as("BitKey 1 not equals after clear to 64").isTrue();
-        assertThat((bitKey1.equals(bitKey_128))).as("BitKey 1 not equals after clear to 128").isTrue();
+        assertThat((Object) bitKey1).as("BitKey 1 not equals after clear to 0").isEqualTo(bitKey_0);
+        assertThat((Object) bitKey1).as("BitKey 1 not equals after clear to 64").isEqualTo(bitKey_64);
+        assertThat((Object) bitKey1).as("BitKey 1 not equals after clear to 128").isEqualTo(bitKey_128);
 
         int size2 = 400;
         int[] positions2 = {
@@ -320,9 +291,9 @@ class BitKeyTest {
         BitKey bitKey2 = makeAndSet(size2, positions2);
         bitKey2.clear();
 
-        assertThat((bitKey2.equals(bitKey_0))).as("BitKey 2 not equals after clear to 0").isTrue();
-        assertThat((bitKey2.equals(bitKey_64))).as("BitKey 2 not equals after clear to 64").isTrue();
-        assertThat((bitKey2.equals(bitKey_128))).as("BitKey 2 not equals after clear to 128").isTrue();
+        assertThat((Object) bitKey2).as("BitKey 2 not equals after clear to 0").isEqualTo(bitKey_0);
+        assertThat((Object) bitKey2).as("BitKey 2 not equals after clear to 64").isEqualTo(bitKey_64);
+        assertThat((Object) bitKey2).as("BitKey 2 not equals after clear to 128").isEqualTo(bitKey_128);
     }
 
 	@Test
@@ -839,8 +810,8 @@ class BitKeyTest {
             BitKey bitKey0 = makeAndSet(size0, positions);
             BitKey bitKey1 = makeAndSet(size1, positions);
 
-            assertThat((bitKey0.equals(bitKey1))).as("BitKey not equals size0=" + size0 + ", size1=" + size1 + ", i="
-                + i).isTrue();
+            assertThat((Object) bitKey0).as("BitKey not equals size0=" + size0 + ", size1=" + size1 + ", i="
+                + i).isEqualTo(bitKey1);
         }
     }
 
@@ -853,7 +824,7 @@ class BitKeyTest {
         BitKey bitKey0 = makeAndSet(size0, positions0);
         BitKey bitKey1 = makeAndSet(size1, positions1);
 
-        assertThat((!bitKey0.equals(bitKey1))).as("BitKey not equals size0=" + size0 + ", size1=" + size1).isTrue();
+        assertThat((Object) bitKey0).as("BitKey not equals size0=" + size0 + ", size1=" + size1).isNotEqualTo(bitKey1);
     }
 
     private static BitKey makeAndSet(int size, int[] positions) {
