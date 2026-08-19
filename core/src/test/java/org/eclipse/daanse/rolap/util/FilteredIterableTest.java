@@ -87,7 +87,7 @@ class FilteredIterableTest{
     }
 
     @Test
-    void test2Elements() throws Exception {
+    void twoElementsAllMatchYieldsIdenticalList() throws Exception {
         final List<Integer> base = new ArrayList<>();
         for (int i = 0; i < 2; i++) {
             base.add(i);
