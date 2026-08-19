@@ -31,8 +31,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 
 import org.eclipse.daanse.olap.key.CellKey;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -41,12 +39,6 @@ import org.junit.jupiter.api.Test;
  * @author Richard M. Emberson
  */
 class CellKeyTest  {
-
-    @BeforeEach void beforeEach() {
-    }
-
-    @AfterEach void afterEach() {
-    }
 
     @Test
     void many() {

@@ -22,7 +22,6 @@ import static org.mockito.Mockito.when;
 import static org.osgi.test.common.dictionary.Dictionaries.dictionaryOf;
 
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.Dictionary;
 import java.util.Hashtable;
 
@@ -41,7 +40,6 @@ import org.eclipse.daanse.rolap.core.api.Constants;
 import org.eclipse.daanse.rolap.mapping.model.RolapMappingFactory;
 import org.eclipse.daanse.rolap.mapping.model.provider.CatalogMappingSupplier;
 import org.eclipse.daanse.sql.guard.api.SqlGuardFactory;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -105,10 +103,6 @@ class BasicContextServiceTest {
 
     @Mock
     SqlGuardFactory sqlGuardFactory;
-
-    @BeforeEach void setup() throws SQLException {
-
-    }
 
     @Test void serviceExists(
         @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = BASIC_CONTEXT_PID, name = "name1")) Configuration c,

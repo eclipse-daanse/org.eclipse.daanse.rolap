@@ -33,7 +33,6 @@ import org.eclipse.daanse.rolap.element.RolapDimension;
 import org.eclipse.daanse.rolap.mapping.model.database.relational.ColumnInternalDataType;
 import org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.HideMemberIf;
 import org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.LevelDefinition;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -83,9 +82,6 @@ class RolapDimensionTest {
     hierarchy.setHasAll(false);
     hierarchy.getLevels().add(level);
 
-  }
-
-    @AfterEach void afterEach() {
   }
 
   @Disabled("disabled for CI build") //disabled for CI build

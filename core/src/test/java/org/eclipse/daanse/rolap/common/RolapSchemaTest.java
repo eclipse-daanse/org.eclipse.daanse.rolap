@@ -82,7 +82,6 @@ import org.eclipse.daanse.rolap.mapping.model.olap.cube.PhysicalCube;
 import org.eclipse.daanse.cwm.model.cwm.resource.relational.Table;
 import org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.RollupPolicy;
 import org.eclipse.daanse.rolap.mapping.model.olap.dimension.StandardDimension;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.invocation.InvocationOnMock;
@@ -106,9 +105,6 @@ class RolapCatalogTest {
     @BeforeEach void beforeEach() {
 
         schemaSpy = spy(createSchema());
-    }
-
-    @AfterEach void afterEach() {
     }
 
     private RolapCatalog createSchema() {
