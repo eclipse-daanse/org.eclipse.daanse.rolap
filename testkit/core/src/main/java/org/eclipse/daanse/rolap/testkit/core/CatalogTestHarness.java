@@ -38,8 +38,10 @@ import org.eclipse.daanse.olap.check.model.check.LevelCheckResult;
 import org.eclipse.daanse.olap.check.model.check.MemberCheckResult;
 import org.eclipse.daanse.olap.check.model.check.OlapCheckSuite;
 import org.eclipse.daanse.olap.check.model.check.QueryCheckResult;
+import org.eclipse.daanse.olap.check.runtime.api.OlapCheckSuiteSupplier;
 import org.eclipse.daanse.olap.testkit.core.OlapCheckSuiteRunner;
 import org.eclipse.daanse.rolap.mapping.instance.api.CatalogTestInstance;
+import org.eclipse.daanse.rolap.mapping.model.provider.CatalogMappingSupplier;
 import org.eclipse.daanse.rolap.testkit.api.CatalogTestSpec;
 import org.eclipse.daanse.cwm.testkit.api.DatabaseCheckSuiteSupplier;
 import org.eclipse.daanse.jdbc.datasource.testkit.api.ActiveDatabase;
@@ -51,6 +53,7 @@ import org.eclipse.daanse.cwm.testkit.data.DataLayer;
 import org.eclipse.daanse.cwm.testkit.database.DatabaseCheckExecutor;
 import org.eclipse.daanse.cwm.testkit.database.DatabaseLayer;
 import org.junit.jupiter.api.DynamicTest;
+import org.opentest4j.AssertionFailedError;
 
 /**
  * JUnit {@code @TestFactory} entry point. {@link #discoveredTests()} runs
@@ -82,7 +85,7 @@ public final class CatalogTestHarness {
      *                 class's name. Used as part of the cache key.
      */
     public static Stream<DynamicTest> discoveredTests(LoadScope scope, String scopeKey) {
-        return dynamicTests(scope, scopeKey, collectInstances().toArray(CatalogTestSpec[]::new));
+        return run(scope, scopeKey, discoverInstances());
     }
 
     /**
@@ -90,33 +93,54 @@ public final class CatalogTestHarness {
      * {@link #discoveredTests(LoadScope, String)} for the scopeKey contract.
      */
     public static Stream<DynamicTest> dynamicTests(LoadScope scope, String scopeKey, CatalogTestSpec... specs) {
-        return runImpl(scope, scopeKey, specs);
+        return run(scope, scopeKey, toInstances(specs));
     }
 
     public static Stream<DynamicTest> discoveredTests(LoadScope scope) {
+        return run(scope, scopeKey(scope), discoverInstances());
+    }
+
+    private static List<CatalogTestInstance> discoverInstances() {
         List<CatalogTestInstance> instances = new ArrayList<>();
         for (CatalogTestInstance instance : ServiceLoader.load(CatalogTestInstance.class)) {
             instances.add(instance);
         }
-        return runDiscovered(scope, scopeKey(scope), instances);
-    }
-
-    private static List<CatalogTestSpec> collectInstances() {
-        List<CatalogTestSpec> specs = new ArrayList<>();
-        for (CatalogTestInstance instance : ServiceLoader.load(CatalogTestInstance.class)) {
-            specs.add(new CatalogTestSpec(instance.name(), instance.mappingSupplier(), instance.checkSuiteSupplier(),
-                    instance.csvResources()));
-        }
-        return specs;
+        return instances;
     }
 
     /**
-     * Phase-2 layered execution for discovered instances. Routes through
+     * Adapts a hand-built {@link CatalogTestSpec} to the {@link CatalogTestInstance} SPI so it
+     * runs through the same pipeline as discovered instances. Neither
+     * {@code databaseSupplier()} nor {@code dbCheckSupplier()} is overridden, so a spec always
+     * falls back to the Phase-1 CSV path with no database-shape checks — matching
+     * {@link CatalogTestSpec}'s original CSV-only contract.
+     */
+    private record SpecInstance(CatalogTestSpec spec) implements CatalogTestInstance {
+        @Override public String name() { return spec.name(); }
+        @Override public CatalogMappingSupplier mappingSupplier() { return spec.mappingSupplier(); }
+        @Override public OlapCheckSuiteSupplier checkSuiteSupplier() { return spec.checkSuiteSupplier(); }
+        @Override public Map<String, URL> csvResources() { return spec.csvResources(); }
+    }
+
+    private static List<CatalogTestInstance> toInstances(CatalogTestSpec... specs) {
+        if (specs == null) {
+            return List.of();
+        }
+        List<CatalogTestInstance> instances = new ArrayList<>(specs.length);
+        for (CatalogTestSpec spec : specs) {
+            instances.add(new SpecInstance(spec));
+        }
+        return instances;
+    }
+
+    /**
+     * Phase-2 layered execution, shared by discovered instances and hand-built
+     * {@link CatalogTestSpec}s (adapted via {@link SpecInstance}). Routes through
      * {@link DatabaseLayer} / {@link DataLayer} when the instance provides a
      * {@link DatabaseSupplier}; falls back to the Phase-1 {@link CsvLoader} path
      * for instances that only set {@code csvResources()}.
      */
-    private static Stream<DynamicTest> runDiscovered(LoadScope scope, String scopeKey,
+    private static Stream<DynamicTest> run(LoadScope scope, String scopeKey,
             List<CatalogTestInstance> instances) {
         if (instances.isEmpty()) {
             return Stream.empty();
@@ -183,46 +207,7 @@ public final class CatalogTestHarness {
     }
 
     public static Stream<DynamicTest> dynamicTests(LoadScope scope, CatalogTestSpec... specs) {
-        return runImpl(scope, scopeKey(scope), specs);
-    }
-
-    private static Stream<DynamicTest> runImpl(LoadScope scope, String scopeKey, CatalogTestSpec... specs) {
-        if (specs == null || specs.length == 0) {
-            return Stream.empty();
-        }
-
-        DatabaseProvider provider = providerCache.computeIfAbsent("__selected__", k -> DatabaseProvider.selected());
-        String dbId = provider.id();
-        ActiveDatabase dbInfo = provider.activate();
-        DataSource dataSource = dbInfo.dataSource();
-        Dialect dialect = dbInfo.dialect();
-
-        List<DynamicTest> tests = new ArrayList<>();
-        for (CatalogTestSpec spec : specs) {
-            String specKey = dbId + "::" + spec.name() + "::" + scopeKey;
-            // load CSVs once per (db, spec, scopeKey) — PER_TEST never caches
-            boolean shouldLoad = scope == LoadScope.PER_TEST || loadedSpecs.putIfAbsent(specKey, Boolean.TRUE) == null;
-            if (shouldLoad) {
-                Map<String, URL> csv = spec.csvResources();
-                if (csv != null && !csv.isEmpty()) {
-                    try {
-                        CsvLoader.load(dataSource, new FixedDialectFactory(dialect), csv);
-                    } catch (Exception e) {
-                        tests.add(DynamicTest.dynamicTest("[" + dbId + "] " + spec.name() + " » CSV load", () -> {
-                            throw new AssertionError("CSV load failed", e);
-                        }));
-                        continue;
-                    }
-                }
-            }
-
-            // The ActiveDatabase's pool; see the note above.
-            TestContext ctx = new TestContext(dbInfo.connectionPool(), dialect, spec.mappingSupplier());
-            OlapCheckSuite suite = spec.checkSuiteSupplier().get();
-            List<CheckExecutionResult> results = OlapCheckSuiteRunner.run(suite, (Context<?>) ctx);
-            collect(dbId, spec.name(), results, tests);
-        }
-        return tests.stream();
+        return run(scope, scopeKey(scope), toInstances(specs));
     }
 
     private static String scopeKey(LoadScope scope) {
@@ -287,7 +272,7 @@ public final class CatalogTestHarness {
 
     private static void collectResult(String breadcrumb, CheckResult r, List<DynamicTest> out) {
         String here = breadcrumb + " » " + safe(r.getCheckName());
-        out.add(DynamicTest.dynamicTest(here, () -> assertOk(r)));
+        out.add(DynamicTest.dynamicTest(here, () -> assertOk(breadcrumb, r)));
         switch (r) {
         case CatalogCheckResult cat -> {
             cat.getCubeResults().forEach(c -> collectResult(here, c, out));
@@ -316,34 +301,61 @@ public final class CatalogTestHarness {
         }
     }
 
-    private static void assertOk(CheckResult r) {
-        if (r.getStatus() == CheckStatus.FAILURE) {
-            String msg;
-            if (r.isAbsent()) {
-                msg = "absent: " + safe(r.getCheckName());
-            } else if (r instanceof CheckFailure cf) {
-                msg = cf.getMessage() != null ? cf.getMessage() : "check failed";
-                if (cf.getException() != null) {
-                    msg += " — " + cf.getException();
-                }
-            } else if (r instanceof QueryCheckResult qr && !qr.isExecutedSuccessfully()) {
-                msg = "query did not execute successfully: " + safe(r.getCheckName());
-                if (qr.getCheckDescription() != null && !qr.getCheckDescription().isBlank()) {
-                    msg += " — " + qr.getCheckDescription();
-                }
-            } else if (r instanceof org.eclipse.daanse.olap.check.model.check.CellCheckResult cr) {
-                msg = "check failed: " + safe(r.getCheckName()) + " (expected=" + safe(cr.getExpectedValue())
-                        + ", actual=" + safe(cr.getActualValue()) + ")";
-            } else if (r instanceof org.eclipse.daanse.olap.check.model.check.AxisCheckResult ar) {
-                msg = "check failed: " + safe(r.getCheckName()) + " axis=" + ar.getAxisIndex() + " (expectedPositions="
-                        + ar.getExpectedPositionCount() + ", actualPositions=" + ar.getActualPositionCount()
-                        + ", expectedFirstUN=" + safe(ar.getExpectedFirstMemberUniqueName()) + ", actualFirstUN="
-                        + safe(ar.getActualFirstMemberUniqueName()) + ")";
-            } else {
-                msg = "check failed: " + safe(r.getCheckName());
-            }
-            throw new AssertionError(msg);
+    /**
+     * Throws a structured {@link AssertionFailedError} — expected/actual as real fields, not
+     * baked into the message text — so IDEs and JUnit's own diff view can render a proper
+     * comparison. Covers the fallback arm too: previously that was a bare
+     * {@code "check failed: <name>"} with no values at all.
+     */
+    private static void assertOk(String breadcrumb, CheckResult r) {
+        if (r.getStatus() != CheckStatus.FAILURE) {
+            return;
         }
+        String checkName = safe(r.getCheckName());
+        if (r.isAbsent()) {
+            throw new AssertionFailedError("check '%s' in %s".formatted(checkName, breadcrumb), "present", "absent");
+        }
+        throw switch (r) {
+        case CheckFailure cf -> {
+            String message = "check '%s' in %s".formatted(checkName, breadcrumb)
+                    + (cf.getMessage() != null ? ": " + cf.getMessage() : "")
+                    + (cf.getException() != null ? " (cause: " + cf.getException() + ")" : "");
+            yield new AssertionFailedError(message, safe(cf.getExpectedValue()), safe(cf.getActualValue()));
+        }
+        case QueryCheckResult qr when !qr.isExecutedSuccessfully() -> {
+            String message = "query check '%s' in %s".formatted(checkName, breadcrumb)
+                    + (qr.getCheckDescription() != null && !qr.getCheckDescription().isBlank()
+                            ? ": " + qr.getCheckDescription()
+                            : "");
+            yield new AssertionFailedError(message, "executed successfully", "did not execute successfully");
+        }
+        case org.eclipse.daanse.olap.check.model.check.CellCheckResult cr -> new AssertionFailedError(
+                "cell check '%s' in %s".formatted(checkName, breadcrumb),
+                renderExpected(cr), renderActual(cr));
+        case org.eclipse.daanse.olap.check.model.check.AxisCheckResult ar -> new AssertionFailedError(
+                "axis check '%s' in %s (axis=%d)".formatted(checkName, breadcrumb, ar.getAxisIndex()),
+                renderExpected(ar), renderActual(ar));
+        default -> new AssertionFailedError(
+                "check '%s' in %s".formatted(checkName, breadcrumb), CheckStatus.SUCCESS, r.getStatus());
+        };
+    }
+
+    private static String renderExpected(org.eclipse.daanse.olap.check.model.check.CellCheckResult cr) {
+        return safe(cr.getExpectedValue());
+    }
+
+    private static String renderActual(org.eclipse.daanse.olap.check.model.check.CellCheckResult cr) {
+        return safe(cr.getActualValue());
+    }
+
+    private static String renderExpected(org.eclipse.daanse.olap.check.model.check.AxisCheckResult ar) {
+        return "positions=%d, firstUN=%s".formatted(ar.getExpectedPositionCount(),
+                safe(ar.getExpectedFirstMemberUniqueName()));
+    }
+
+    private static String renderActual(org.eclipse.daanse.olap.check.model.check.AxisCheckResult ar) {
+        return "positions=%d, firstUN=%s".formatted(ar.getActualPositionCount(),
+                safe(ar.getActualFirstMemberUniqueName()));
     }
 
     private static String safe(String s) {
