@@ -25,6 +25,7 @@
 package org.eclipse.daanse.rolap.common;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -43,6 +44,8 @@ import org.eclipse.daanse.rolap.common.nativize.RolapNativeSql;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 /**
  * @author Andrey Khayrutdinov
@@ -69,6 +72,22 @@ class NumberSqlCompilerTest {
         compiler = null;
     }
 
+    @ParameterizedTest(name = "accepts a numeric literal \"{0}\"")
+    @ValueSource(strings = { "1", "-1", "+1.01", "-.00001" })
+    void acceptsNumericString(String value) {
+        assertThat(compiler.compileNodeExpr(StringLiteralImpl.create(value)))
+                .as(value).isNotNull();
+    }
+
+    @ParameterizedTest(name = "rejects non-literal \"{0}\"")
+    @ValueSource(strings = { "(select 100)", "NaN", "Infinity", "1.0.", ".", "--1.0" })
+    void rejectsNonNumericString(String value) {
+        assertThatThrownBy(() ->
+                compiler.compileNodeExpr(StringLiteralImpl.create(value)))
+                .as("Expected to get DaanseEvaluationException for " + value)
+                .isInstanceOf(DaanseEvaluationException.class);
+    }
+    
     @Test
     void rejectsNonLiteral() {
         Expression exp = new TypeWrapperExp(NullType.INSTANCE);
@@ -79,71 +98,5 @@ class NumberSqlCompilerTest {
     void acceptsNumeric() {
         Expression exp = NumericLiteralImpl.create(BigDecimal.ONE);
         assertThat(compiler.compileNodeExpr(exp)).isNotNull();
-    }
-
-    @Test
-    void acceptsStringInt() {
-        checkAcceptsString("1");
-    }
-
-    @Test
-    void acceptsStringNegative() {
-        checkAcceptsString("-1");
-    }
-
-    @Test
-    void acceptsStringExplicitlyPositive() {
-        checkAcceptsString("+1.01");
-    }
-
-    @Test
-    void acceptsStringNoIntegerPart() {
-        checkAcceptsString("-.00001");
-    }
-
-    private void checkAcceptsString(String value) {
-        Expression exp = StringLiteralImpl.create(value);
-        assertThat(compiler.compileNodeExpr(exp)).as(value).isNotNull();
-    }
-
-
-    @Test
-    void rejectsStringSelectStatement() {
-        checkRejectsString("(select 100)");
-    }
-
-    @Test
-    void rejectsStringNaN() {
-        checkRejectsString("NaN");
-    }
-
-    @Test
-    void rejectsStringInfinity() {
-        checkRejectsString("Infinity");
-    }
-
-    @Test
-    void rejectsStringTwoDots() {
-        checkRejectsString("1.0.");
-    }
-
-    @Test
-    void rejectsStringOnlyDot() {
-        checkRejectsString(".");
-    }
-
-    @Test
-    void rejectsStringDoubleNegation() {
-        checkRejectsString("--1.0");
-    }
-
-    private void checkRejectsString(String value) {
-        Expression exp = StringLiteralImpl.create(value);
-        try {
-            compiler.compileNodeExpr(exp);
-        } catch (DaanseEvaluationException e) {
-            return;
-        }
-        fail("Expected to get DaanseEvaluationException for " + value);
     }
 }

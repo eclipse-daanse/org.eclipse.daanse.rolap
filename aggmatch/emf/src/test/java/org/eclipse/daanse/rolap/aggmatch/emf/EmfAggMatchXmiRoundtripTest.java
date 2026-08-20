@@ -36,71 +36,32 @@ import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
 import org.eclipse.emf.ecore.xmi.impl.XMIResourceFactoryImpl;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.io.TempDir;
 
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class EmfAggMatchXmiRoundtripTest {
 
     private static final AggMatchFactory F = AggMatchFactory.eINSTANCE;
 
-    @TempDir
-    static Path tempDir;
-
-    static Path defaultRulesXmi;
-    static Path minimalRulesXmi;
-    static Path fullRulesXmi;
-
     @BeforeAll
-    static void registerEmf() throws IOException {
+    static void registerEmf() {
+        // Registration mutates the shared EPackage.Registry/Resource.Factory.Registry
+        // singletons, but both puts are idempotent (same key -> same value each time),
+        // so re-running this across test classes in the same JVM is harmless.
         org.eclipse.emf.ecore.EPackage.Registry.INSTANCE.put(AggMatchPackage.eNS_URI, AggMatchPackage.eINSTANCE);
         Resource.Factory.Registry.INSTANCE.getExtensionToFactoryMap().put("xmi", new XMIResourceFactoryImpl());
-
-        defaultRulesXmi = Files.createFile(tempDir.resolve("default-rules.xmi"));
-        minimalRulesXmi = Files.createFile(tempDir.resolve("minimal-rules.xmi"));
-        fullRulesXmi = Files.createFile(tempDir.resolve("full-rules.xmi"));
     }
 
-    // --- Phase 1: Generate XMI files via EMF ---
+    // --- Each test generates its own XMI file, then loads it back and verifies ---
 
     @Test
-    @Order(1)
-    void generateDefaultRulesXmi() throws IOException {
-        AggregationMatchRules emfRules = buildDefaultEmfRules();
-        saveXmi(emfRules, defaultRulesXmi);
-
-        assertThat(defaultRulesXmi).exists();
-        assertThat(Files.size(defaultRulesXmi)).isGreaterThan(0);
-    }
-
-    @Test
-    @Order(1)
-    void generateMinimalRulesXmi() throws IOException {
-        AggregationMatchRules emfRules = buildMinimalEmfRules();
-        saveXmi(emfRules, minimalRulesXmi);
+    void minimalRulesRoundtrip(@TempDir Path tempDir) throws IOException {
+        Path minimalRulesXmi = tempDir.resolve("minimal-rules.xmi");
+        saveXmi(buildMinimalEmfRules(), minimalRulesXmi);
 
         assertThat(minimalRulesXmi).exists();
         assertThat(Files.size(minimalRulesXmi)).isGreaterThan(0);
-    }
 
-    @Test
-    @Order(1)
-    void generateFullRulesXmi() throws IOException {
-        AggregationMatchRules emfRules = buildFullEmfRules();
-        saveXmi(emfRules, fullRulesXmi);
-
-        assertThat(fullRulesXmi).exists();
-        assertThat(Files.size(fullRulesXmi)).isGreaterThan(0);
-    }
-
-    // --- Phase 2: Load generated XMI, convert, and verify ---
-
-    @Test
-    @Order(2)
-    void loadMinimalRulesAndVerify() throws IOException {
         var emfRules = loadXmi(minimalRulesXmi);
         var result = EmfAggMatchConverter.convert(emfRules);
 
@@ -120,8 +81,13 @@ class EmfAggMatchXmiRoundtripTest {
     }
 
     @Test
-    @Order(2)
-    void loadFullRulesAndVerify() throws IOException {
+    void fullRulesRoundtrip(@TempDir Path tempDir) throws IOException {
+        Path fullRulesXmi = tempDir.resolve("full-rules.xmi");
+        saveXmi(buildFullEmfRules(), fullRulesXmi);
+
+        assertThat(fullRulesXmi).exists();
+        assertThat(Files.size(fullRulesXmi)).isGreaterThan(0);
+
         var emfRules = loadXmi(fullRulesXmi);
         var result = EmfAggMatchConverter.convert(emfRules);
 
@@ -163,8 +129,13 @@ class EmfAggMatchXmiRoundtripTest {
     }
 
     @Test
-    @Order(2)
-    void loadDefaultRulesAndCompareToRecordDefault() throws IOException {
+    void defaultRulesRoundtripMatchesRecordDefault(@TempDir Path tempDir) throws IOException {
+        Path defaultRulesXmi = tempDir.resolve("default-rules.xmi");
+        saveXmi(buildDefaultEmfRules(), defaultRulesXmi);
+
+        assertThat(defaultRulesXmi).exists();
+        assertThat(Files.size(defaultRulesXmi)).isGreaterThan(0);
+
         var emfRules = loadXmi(defaultRulesXmi);
         var fromXmi = EmfAggMatchConverter.convert(emfRules);
         var fromRecord = new BasicAggMatchRulesSupplier().get();

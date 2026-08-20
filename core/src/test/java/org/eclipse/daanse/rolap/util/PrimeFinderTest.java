@@ -87,7 +87,7 @@ class PrimeFinderTest{
 
     // disabled because it takes a LONG time
     @Test
-    @Disabled
+    @Disabled("disabled because it takes a LONG time")
     void four() {
         assertStatistics(1000, Integer.MAX_VALUE, "");
     }
