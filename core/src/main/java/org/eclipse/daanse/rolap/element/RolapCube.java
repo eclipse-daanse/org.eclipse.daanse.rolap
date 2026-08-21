@@ -234,6 +234,14 @@ public abstract class RolapCube extends CubeBase {
     private Optional<RolapWritebackTable> writebackTable = Optional.empty();
 
     /**
+     * Holds the cube still while one caller's pending rows are in its fact; see
+     * {@link org.eclipse.daanse.rolap.common.writeback.PendingFact} for why that
+     * has to be exclusive.
+     */
+    private final org.eclipse.daanse.rolap.common.writeback.PendingFact pendingFact =
+        new org.eclipse.daanse.rolap.common.writeback.PendingFact();
+
+    /**
      * Used for virtual cubes.
      * Contains a list of all base cubes related to a virtual cube
      */
@@ -2624,6 +2632,22 @@ public abstract class RolapCube extends CubeBase {
 
             return view;
         }
+
+    @Override
+    public boolean isWriteEnabled() {
+        return writebackTable.isPresent();
+    }
+
+    @Override
+    public <T> T withPendingRows(List<Map<String, Entry<DataTypeJdbc, Object>>> sessionValues,
+            java.util.function.Supplier<T> work) {
+        if (!isWriteEnabled()) {
+            // No writeback table, so modifyFact would put the fact back exactly as it
+            // found it. Nothing to isolate, and no reason to make readers queue.
+            return work.get();
+        }
+        return pendingFact.run(() -> modifyFact(sessionValues), work, this::restoreFact);
+    }
 
 	@Override
     public void modifyFact(List<Map<String, Entry<DataTypeJdbc, Object>>> sessionValues) {
