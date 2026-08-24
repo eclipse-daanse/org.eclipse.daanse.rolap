@@ -25,7 +25,10 @@
     expression), FunDependencies (hierarchy-dependency checks) - built on a
     plain Connection, with failures reported as AssertionFailedError
     (expected/actual fields plus a rendered side-by-side diff via GridDiff)
-    instead of assertEquals on giant strings.</description>
+    instead of assertEquals on giant strings. CellRequestFixture extends this
+    to CellRequest/Batch/GroupingSet construction and cell-request-level SQL
+    assertions, so it also depends on rolap.core for CellRequest, BatchLoader,
+    RolapStar and friends.</description>
 
   <packaging>jar</packaging>
 
@@ -33,6 +36,12 @@
     <dependency>
       <groupId>org.eclipse.daanse</groupId>
       <artifactId>org.eclipse.daanse.olap.common</artifactId>
+      <version>${revision}</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.daanse</groupId>
+      <artifactId>org.eclipse.daanse.rolap.core</artifactId>
       <version>${revision}</version>
       <scope>compile</scope>
     </dependency>
