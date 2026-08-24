@@ -11,7 +11,7 @@
  *   SmartCity Jena - initial
  *   Stefan Bischof (bipolis.org) - initial
  */
-package org.eclipse.daanse.rolap.common.sqlbuild;
+package org.eclipse.daanse.rolap.common.querymap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -30,6 +30,7 @@ import org.eclipse.daanse.rolap.common.agg.MemberTuplePredicate;
 import org.eclipse.daanse.rolap.common.agg.MinusStarPredicate;
 import org.eclipse.daanse.rolap.common.agg.RangeColumnPredicate;
 import org.eclipse.daanse.rolap.common.agg.ValueColumnPredicate;
+import org.eclipse.daanse.rolap.common.sqlbuild.StarPredicateTranslator;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.star.StarColumnPredicate;
 import org.eclipse.daanse.sql.statement.api.From;

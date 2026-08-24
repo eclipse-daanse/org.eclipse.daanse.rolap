@@ -11,7 +11,7 @@
  *   SmartCity Jena - initial
  *   Stefan Bischof (bipolis.org) - initial
  */
-package org.eclipse.daanse.rolap.common.sqlbuild;
+package org.eclipse.daanse.rolap.common.querymap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -25,6 +25,8 @@ import org.eclipse.daanse.sql.model.type.BestFitColumnType;
 import org.eclipse.daanse.sql.dialect.db.common.AnsiDialect;
 import org.eclipse.daanse.olap.api.sql.SqlExpression;
 import org.eclipse.daanse.rolap.common.sql.ConstraintContribution;
+import org.eclipse.daanse.rolap.common.sqlbuild.CountQueries;
+import org.eclipse.daanse.rolap.common.sqlbuild.TupleSqlMapper;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.star.RolapStar.Condition.JoinColumn;
 import org.eclipse.daanse.rolap.element.RolapColumn;
