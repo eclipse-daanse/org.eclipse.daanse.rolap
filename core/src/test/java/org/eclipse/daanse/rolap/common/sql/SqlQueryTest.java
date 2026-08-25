@@ -41,26 +41,26 @@ class SqlQueryTest {
     }
 
     @Test
-    void testAddSelectWithAlias() {
+    void addSelectWithAlias() {
         String alias = sqlQuery.addSelect("column1", BestFitColumnType.STRING, "c0");
         assertThat(alias).isEqualTo("c0");
     }
 
     @Test
-    void testAddSelectWithoutAlias() {
+    void addSelectWithoutAlias() {
         String alias = sqlQuery.addSelect("column1", BestFitColumnType.STRING);
         assertThat(alias).isEqualTo("c0");
     }
 
     @Test
-    void testAutoAliasAdvancesPerSelect() {
+    void autoAliasAdvancesPerSelect() {
         sqlQuery.addSelect("col1", BestFitColumnType.STRING);
         String alias = sqlQuery.addSelect("col2", BestFitColumnType.STRING);
         assertThat(alias).isEqualTo("c1");
     }
 
     @Test
-    void testAddWhereWithNullThrowsException() {
+    void addWhereWithNullThrowsException() {
         String nullExpression = null;
         assertThatThrownBy(() -> sqlQuery.addWhere(nullExpression))
             .isInstanceOf(IllegalArgumentException.class)
@@ -68,53 +68,53 @@ class SqlQueryTest {
     }
 
     @Test
-    void testAddWhereWithBlankThrowsException() {
+    void addWhereWithBlankThrowsException() {
         assertThatThrownBy(() -> sqlQuery.addWhere("   "))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessage("expression must not be null or blank");
     }
 
     @Test
-    void testAddWhereWithEmptyThrowsException() {
+    void addWhereWithEmptyThrowsException() {
         assertThatThrownBy(() -> sqlQuery.addWhere(""))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessage("expression must not be null or blank");
     }
 
     @Test
-    void testAddWhereWithValidExpression() {
+    void addWhereWithValidExpression() {
         sqlQuery.addWhere("column1 = 'value'");
         // No exception should be thrown
     }
 
     @Test
-    void testSetDistinct() {
+    void setDistinct() {
         sqlQuery.setDistinct(true);
         // Verify via generated SQL would require more setup
     }
 
     @Test
-    void testSetAllowHints() {
+    void setAllowHints() {
         sqlQuery.setAllowHints(true);
         // Verify via generated SQL would require more setup
     }
 
     @Test
-    void testAddFromTableWithEmptyAliasThrowsException() {
+    void addFromTableWithEmptyAliasThrowsException() {
         assertThatThrownBy(() -> sqlQuery.addFromTable("schema", "table", "", null, null, false))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessage("alias must not be null or blank");
     }
 
     @Test
-    void testAddFromTableWithBlankAliasThrowsException() {
+    void addFromTableWithBlankAliasThrowsException() {
         assertThatThrownBy(() -> sqlQuery.addFromTable("schema", "table", "  ", null, null, false))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessage("alias must not be null or blank");
     }
 
     @Test
-    void testAddFromTableWithNullAliasDoesNotThrow() {
+    void addFromTableWithNullAliasDoesNotThrow() {
         // null alias is allowed for addFromTable
         sqlQuery.addFromTable("schema", "table", null, null, null, false);
         // No exception should be thrown
@@ -130,7 +130,7 @@ class SqlQueryTest {
     }
 
     @Test
-    void testAddJoinConditionEmitsEdgeWhenBothTablesRegistered() {
+    void addJoinConditionEmitsEdgeWhenBothTablesRegistered() {
         sqlQuery.addFromTable(null, "sales_fact", "sales_fact", null, null, false);
         sqlQuery.addFromTable(null, "agg_time", "agg_time", null, null, false);
         sqlQuery.addJoinCondition(
@@ -142,7 +142,7 @@ class SqlQueryTest {
     }
 
     @Test
-    void testAddJoinConditionParentWalkGuardWhenTableNotRegistered() {
+    void addJoinConditionParentWalkGuardWhenTableNotRegistered() {
         // Case (1): alias resolvable but table never registered in FROM — the legitimate
         // parent-walk guard; silent no-op, no edge.
         sqlQuery.addFromTable(null, "sales_fact", "sales_fact", null, null, false);
@@ -153,7 +153,7 @@ class SqlQueryTest {
     }
 
     @Test
-    void testAddJoinConditionDropsComputedSideWithoutThrowing() {
+    void addJoinConditionDropsComputedSideWithoutThrowing() {
         // Case (2): a computed <SQL> join-expression side has no resolvable table alias — the
         // condition is dropped (WARN "agg-join-dropped" logged; behavior-preserving no-op even
         // though both tables ARE in the FROM). Documents the correctness hazard: legacy SqlQuery

@@ -53,7 +53,7 @@ import org.mockito.Mockito;
  * {@code getSlicerMembersByHierarchy()}). The expander's calc-member expansion itself is covered
  * by {@code org.eclipse.daanse.rolap.common.CalculatedMemberExpanderTest}.
  */
-class CalculatedMemberExpanderTest {
+class CalculatedMemberExpanderCompoundSlicerTest {
 
     private void assertSameContent(
         String msg, Collection<Member> expected, Collection<Member> actual)
@@ -112,7 +112,7 @@ class CalculatedMemberExpanderTest {
     }
 
     @Test
-    void testReplaceCompoundSlicerPlaceholder() {
+    void replaceCompoundSlicerPlaceholder() {
         RolapHierarchy hierarchy = mock(RolapHierarchy.class);
         Member slicerMember = makeNoncalculatedMember("slicer");
         RolapEvaluator evaluator = evaluatorWithSlicer(hierarchy, slicerMember);
@@ -125,7 +125,7 @@ class CalculatedMemberExpanderTest {
 
     // placeholder expansion: replaced by the slicer member by default, dropped on disjoint tuples
     @Test
-    void testExpandSupportedCalculatedMembersPlaceholder() {
+    void expandSupportedCalculatedMembersPlaceholder() {
         RolapHierarchy hierarchy = mock(RolapHierarchy.class);
         Member slicerMember = makeNoncalculatedMember("slicer");
         RolapEvaluator evaluator = evaluatorWithSlicer(hierarchy, slicerMember);

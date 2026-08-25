@@ -27,10 +27,10 @@
 package org.eclipse.daanse.rolap.common;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 
 import org.eclipse.daanse.olap.key.CellKey;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -39,12 +39,6 @@ import org.junit.jupiter.api.Test;
  * @author Richard M. Emberson
  */
 class CellKeyTest  {
-
-    @BeforeEach void beforeEach() {
-    }
-
-    @AfterEach void afterEach() {
-    }
 
     @Test
     void many() {
@@ -59,29 +53,17 @@ class CellKeyTest  {
         copy = CellKey.Generator.newCellKey(ordinals);
         assertThat(copy).as("CellKey equals").isEqualTo(key);
 
-        boolean gotException = false;
-        try {
-            key.setAxis(6, 1);
-        } catch (Exception ex) {
-            gotException = true;
-        }
-        assertThat(gotException).as("CellKey axis too big").isTrue();
+       assertThatThrownBy(() -> key.setAxis(6, 1))
+         .as("CellKey axis too big")
+         .isInstanceOf(ArrayIndexOutOfBoundsException.class);
 
-        gotException = false;
-        try {
-            key.setOrdinals(new int[6]);
-        } catch (Exception ex) {
-            gotException = true;
-        }
-        assertThat(gotException).as("CellKey array too big").isTrue();
+        assertThatThrownBy(() -> key.setOrdinals(new int[6]))
+        .as("CellKey array too big")
+        .isInstanceOf(IllegalArgumentException.class);
 
-        gotException = false;
-        try {
-            key.setOrdinals(new int[4]);
-        } catch (Exception ex) {
-            gotException = true;
-        }
-        assertThat(gotException).as("CellKey array too small").isTrue();
+        assertThatThrownBy(() -> key.setOrdinals(new int[4]))
+        .as("CellKey array too small")
+        .isInstanceOf(IllegalArgumentException.class);
 
         key.setAxis(0, 1);
         key.setAxis(1, 3);
@@ -108,14 +90,10 @@ class CellKeyTest  {
         CellKey copy = key.copy();
         assertThat(key).isEqualTo(copy);
 
-        boolean gotException = false;
-        try {
-            key.setAxis(0, 0);
-        } catch (Exception ex) {
-            gotException = true;
-        }
-        assertThat(gotException).as("CellKey axis too big").isTrue();
-
+        assertThatThrownBy(() -> key.setAxis(0, 0))
+        .as("CellKey axis too big")
+        .isInstanceOf(ArrayIndexOutOfBoundsException.class);
+        
         int[] ordinals = key.getOrdinals();
         assertThat(ordinals.length).isEqualTo(0);
         copy = CellKey.Generator.newCellKey(ordinals);
@@ -134,29 +112,17 @@ class CellKeyTest  {
         copy = CellKey.Generator.newCellKey(ordinals);
         assertThat(copy).as("CellKey equals").isEqualTo(key);
 
-        boolean gotException = false;
-        try {
-            key.setAxis(3, 1);
-        } catch (Exception ex) {
-            gotException = true;
-        }
-        assertThat(gotException).as("CellKey axis too big").isTrue();
+        assertThatThrownBy(() -> key.setAxis(3, 1))
+        .as("CellKey axis too big")
+        .isInstanceOf(ArrayIndexOutOfBoundsException.class);
 
-        gotException = false;
-        try {
-            key.setOrdinals(new int[3]);
-        } catch (Exception ex) {
-            gotException = true;
-        }
-        assertThat(gotException).as("CellKey array too big").isTrue();
+        assertThatThrownBy(() -> key.setOrdinals(new int[3]))
+        .as("CellKey array too big")
+        .isInstanceOf(IllegalArgumentException.class);
 
-        gotException = false;
-        try {
-            key.setOrdinals(new int[0]);
-        } catch (Exception ex) {
-            gotException = true;
-        }
-        assertThat(gotException).as("CellKey array too small").isTrue();
+        assertThatThrownBy(() -> key.setOrdinals(new int[0]))
+        .as("CellKey array too small")
+        .isInstanceOf(IllegalArgumentException.class);
 
         key.setAxis(0, 1);
 
@@ -181,29 +147,17 @@ class CellKeyTest  {
         copy = CellKey.Generator.newCellKey(ordinals);
         assertThat(copy).as("CellKey equals").isEqualTo(key);
 
-        boolean gotException = false;
-        try {
-            key.setAxis(3, 1);
-        } catch (Exception ex) {
-            gotException = true;
-        }
-        assertThat(gotException).as("CellKey axis too big").isTrue();
+        assertThatThrownBy(() -> key.setAxis(3, 1))
+        .as("CellKey axis too big")
+        .isInstanceOf(ArrayIndexOutOfBoundsException.class);
 
-        gotException = false;
-        try {
-            key.setOrdinals(new int[3]);
-        } catch (Exception ex) {
-            gotException = true;
-        }
-        assertThat(gotException).as("CellKey array too big").isTrue();
+        assertThatThrownBy(() -> key.setOrdinals(new int[3]))
+        .as("CellKey array too big")
+        .isInstanceOf(IllegalArgumentException.class);
 
-        gotException = false;
-        try {
-            key.setOrdinals(new int[1]);
-        } catch (Exception ex) {
-            gotException = true;
-        }
-        assertThat(gotException).as("CellKey array too small").isTrue();
+        assertThatThrownBy(() -> key.setOrdinals(new int[1]))
+        .as("CellKey array too small")
+        .isInstanceOf(IllegalArgumentException.class);
 
         key.setAxis(0, 1);
         key.setAxis(1, 3);
@@ -229,29 +183,17 @@ class CellKeyTest  {
         copy = CellKey.Generator.newCellKey(ordinals);
         assertThat(copy).as("CellKey equals").isEqualTo(key);
 
-        boolean gotException = false;
-        try {
-            key.setAxis(3, 1);
-        } catch (Exception ex) {
-            gotException = true;
-        }
-        assertThat(gotException).as("CellKey axis too big").isTrue();
+        assertThatThrownBy(() -> key.setAxis(3, 1))
+        .as("CellKey axis too big")
+        .isInstanceOf(ArrayIndexOutOfBoundsException.class);
 
-        gotException = false;
-        try {
-            key.setOrdinals(new int[4]);
-        } catch (Exception ex) {
-            gotException = true;
-        }
-        assertThat(gotException).as("CellKey array too big").isTrue();
+        assertThatThrownBy(() -> key.setOrdinals(new int[4]))
+        .as("CellKey array too big")
+        .isInstanceOf(IllegalArgumentException.class);
 
-        gotException = false;
-        try {
-            key.setOrdinals(new int[1]);
-        } catch (Exception ex) {
-            gotException = true;
-        }
-        assertThat(gotException).as("CellKey array too small").isTrue();
+        assertThatThrownBy(() -> key.setOrdinals(new int[1]))
+        .as("CellKey array too small")
+        .isInstanceOf(IllegalArgumentException.class);
 
         key.setAxis(0, 1);
         key.setAxis(1, 3);
@@ -278,29 +220,17 @@ class CellKeyTest  {
         copy = CellKey.Generator.newCellKey(ordinals);
         assertThat(copy).as("CellKey equals").isEqualTo(key);
 
-        boolean gotException = false;
-        try {
-            key.setAxis(4, 1);
-        } catch (Exception ex) {
-            gotException = true;
-        }
-        assertThat(gotException).as("CellKey axis too big").isTrue();
+        assertThatThrownBy(() -> key.setAxis(4, 1))
+        .as("CellKey axis too big")
+        .isInstanceOf(ArrayIndexOutOfBoundsException.class);
 
-        gotException = false;
-        try {
-            key.setOrdinals(new int[5]);
-        } catch (Exception ex) {
-            gotException = true;
-        }
-        assertThat(gotException).as("CellKey array too big").isTrue();
+        assertThatThrownBy(() -> key.setOrdinals(new int[5]))
+        .as("CellKey array too big")
+        .isInstanceOf(IllegalArgumentException.class);
 
-        gotException = false;
-        try {
-            key.setOrdinals(new int[1]);
-        } catch (Exception ex) {
-            gotException = true;
-        }
-        assertThat(gotException).as("CellKey array too small").isTrue();
+        assertThatThrownBy(() -> key.setOrdinals(new int[1]))
+        .as("CellKey array too small")
+        .isInstanceOf(IllegalArgumentException.class);
 
         key.setAxis(0, 1);
         key.setAxis(1, 3);
