@@ -293,7 +293,11 @@ public final class JoinPlanner {
         }
         // A star table declared with a schema SQL filter carries it in the FromTable.filter
         // slot — the renderer pushes it into WHERE, matching the recorder's addFromTable conjunct.
-        return From.table(From.tableRef(null, name), TableAlias.of(table.getAlias()),
+        // Schema-qualified like RelationFromMapper.fromTable — a fact table outside the
+        // connection's default search path is unreachable otherwise.
+        org.eclipse.daanse.cwm.model.cwm.resource.relational.NamedColumnSet ncs = table.getTable();
+        String schema = ncs != null ? RelationFromMapper.schemaName(ncs) : null;
+        return From.table(From.tableRef(schema, name), TableAlias.of(table.getAlias()),
                 RelationFromMapper.tableFilter(table.getRelation()), java.util.Map.of());
     }
 

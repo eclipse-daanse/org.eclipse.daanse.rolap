@@ -2672,7 +2672,11 @@ public abstract class RolapCube extends CubeBase {
                         // dialect only (the body is dialect-rendered, not generic).
                         java.util.List<org.eclipse.daanse.sql.statement.api.model.Statement> arms =
                             new ArrayList<>();
-                        arms.add(writebackColumnsArm(writebackTable, mappingTable.getTable().getName()));
+                        String factSchema = mappingTable.getTable()
+                            .getNamespace() instanceof org.eclipse.daanse.cwm.model.cwm.resource.relational.Schema s
+                                    ? s.getName()
+                                    : null;
+                        arms.add(writebackColumnsArm(writebackTable, factSchema, mappingTable.getTable().getName()));
                         arms.addAll(writebackUnionArms(writebackTable, rolapSessionValues));
                         String sql = org.eclipse.daanse.rolap.common.SqlRender.render(
                             org.eclipse.daanse.sql.statement.api.model.SetOperation.unionAll(arms),
@@ -2728,15 +2732,17 @@ public abstract class RolapCube extends CubeBase {
         register();
     }
 
-    /** One {@code select <writeback columns> from <table>} arm of the writeback fact view. */
+    /** One {@code select <writeback columns> from <table>} arm of the writeback fact view —
+     *  schema-qualified when the table carries one; the alias stays the bare table name. */
     static org.eclipse.daanse.sql.statement.api.model.Statement writebackColumnsArm(
-            RolapWritebackTable writebackTable, String table) {
+            RolapWritebackTable writebackTable, String schema, String table) {
         org.eclipse.daanse.sql.statement.api.SelectStatementBuilder q =
             org.eclipse.daanse.sql.statement.api.SelectStatementBuilder.create();
         for (org.eclipse.daanse.rolap.common.writeback.RolapWritebackColumn c : writebackTable.getColumns()) {
             q.project(org.eclipse.daanse.sql.statement.api.Expressions.column(c.getColumn().getName()), null);
         }
-        q.from(org.eclipse.daanse.sql.statement.api.From.table(table,
+        q.from(org.eclipse.daanse.sql.statement.api.From.table(
+            org.eclipse.daanse.sql.statement.api.From.tableRef(schema, table),
             org.eclipse.daanse.sql.statement.api.model.TableAlias.of(table)));
         return q.build();
     }
@@ -2749,7 +2755,7 @@ public abstract class RolapCube extends CubeBase {
     static java.util.List<org.eclipse.daanse.sql.statement.api.model.Statement> writebackUnionArms(
             RolapWritebackTable writebackTable, List<Map<String, Map.Entry<Datatype, Object>>> sessionValues) {
         java.util.List<org.eclipse.daanse.sql.statement.api.model.Statement> arms = new ArrayList<>();
-        arms.add(writebackColumnsArm(writebackTable, writebackTable.getName()));
+        arms.add(writebackColumnsArm(writebackTable, writebackTable.getSchema(), writebackTable.getName()));
         if (sessionValues != null) {
             for (Map<String, Map.Entry<Datatype, Object>> row : sessionValues) {
                 org.eclipse.daanse.sql.statement.api.SelectStatementBuilder q =

@@ -62,6 +62,15 @@ class WritebackViewSqlTest {
             .contains("union all select 42 as \"units\", 's1' as \"store_id\"");
     }
 
+    /** A writeback table owned by a schema renders schema-qualified, aliased by the bare name. */
+    @Test
+    void writebackArmQualifiesSchema() {
+        RolapWritebackTable table = writebackTable();
+        when(table.getSchema()).thenReturn("theschema");
+        String sql = RolapCube.renderWritebackUnionArms(new AnsiDialect(), table, List.of());
+        assertThat(sql).contains("from \"theschema\".\"wb_fact\" as \"wb_fact\"");
+    }
+
     @Test
     void emptySessionValuesKeepOnlyTheWritebackArm() {
         String sql = RolapCube.renderWritebackUnionArms(new AnsiDialect(), writebackTable(), List.of());

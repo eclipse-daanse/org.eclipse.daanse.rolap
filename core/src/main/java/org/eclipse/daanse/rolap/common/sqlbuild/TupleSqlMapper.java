@@ -540,8 +540,12 @@ public final class TupleSqlMapper {
      */
     private static org.eclipse.daanse.sql.statement.api.model.FromClause starTableFrom(
             RolapStar.Table table) {
+        // Schema-qualified like RelationFromMapper.fromTable — the star table's relation may
+        // live outside the connection's default search path.
+        org.eclipse.daanse.cwm.model.cwm.resource.relational.NamedColumnSet ncs = table.getTable();
+        String schema = ncs != null ? RelationFromMapper.schemaName(ncs) : null;
         return org.eclipse.daanse.sql.statement.api.From.table(
-                org.eclipse.daanse.sql.statement.api.From.tableRef(null, table.getTableName()),
+                org.eclipse.daanse.sql.statement.api.From.tableRef(schema, table.getTableName()),
                 org.eclipse.daanse.sql.statement.api.model.TableAlias.of(table.getAlias()),
                 RelationFromMapper.tableFilter(table.getRelation()), java.util.Map.of());
     }

@@ -712,7 +712,11 @@ public final class AggregateSqlMapper {
         if (name == null || name.isBlank()) {
             return RelationFromMapper.from(table.getRelation());
         }
-        return From.table(name, TableAlias.of(table.getAlias()));
+        // Schema-qualified like RelationFromMapper.fromTable / AggJoinPlanner.aggTableFrom — a fact
+        // table outside the connection's default search path is unreachable otherwise.
+        org.eclipse.daanse.cwm.model.cwm.resource.relational.NamedColumnSet ncs = table.getTable();
+        String schema = ncs != null ? RelationFromMapper.schemaName(ncs) : null;
+        return From.table(From.tableRef(schema, name), TableAlias.of(table.getAlias()));
     }
 
     /** The table's own {@code sqlWhereExpression} as a parenthesised WHERE predicate (or
