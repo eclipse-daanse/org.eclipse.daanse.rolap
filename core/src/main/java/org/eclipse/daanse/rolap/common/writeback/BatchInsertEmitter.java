@@ -40,7 +40,8 @@ public class BatchInsertEmitter {
         final boolean withUser = userId != null;
         final List<String> dataColumns = writebackTable.getColumns().stream()
                 .map(c -> c.getColumn().getName()).toList();
-        final String sql = buildInsertSql(dialect, writebackTable.getName(), dataColumns, withUser);
+        final String sql = buildInsertSql(dialect, writebackTable.getSchema(), writebackTable.getName(), dataColumns,
+                withUser);
         try (final java.sql.Connection conn = dataSource.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
         	boolean prev = conn.getAutoCommit();
             conn.setAutoCommit(false);
@@ -86,14 +87,15 @@ public class BatchInsertEmitter {
      * {@link #execute} (via {@link #setData}); the marker datatype is immaterial to the rendered
      * {@code ?} placeholder.
      */
-    static String buildInsertSql(Dialect dialect, String tableName, List<String> dataColumns, boolean withUser) {
+    static String buildInsertSql(Dialect dialect, String schema, String tableName, List<String> dataColumns,
+            boolean withUser) {
         final List<String> columns = new ArrayList<>(dataColumns);
         columns.add("ID");
         if (withUser) {
             columns.add("USER");
         }
         InsertStatementBuilder insert = InsertStatementBuilder.create()
-                .into(tableName)
+                .into(schema, tableName)
                 .columns(columns.toArray(new String[0]));
         SqlExpression[] markers = new SqlExpression[columns.size()];
         for (int i = 0; i < markers.length; i++) {

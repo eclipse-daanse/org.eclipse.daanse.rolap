@@ -32,15 +32,23 @@ class BatchInsertEmitterSqlTest {
 
     @Test
     void insertWithoutUser() {
-        String sql = BatchInsertEmitter.buildInsertSql(ansi, "WB_TABLE", List.of("amount", "qty"), false);
+        String sql = BatchInsertEmitter.buildInsertSql(ansi, null, "WB_TABLE", List.of("amount", "qty"), false);
         assertThat(sql).isEqualTo(
             "insert into \"WB_TABLE\" (\"amount\", \"qty\", \"ID\") values (?, ?, ?)");
     }
 
     @Test
     void insertWithUser() {
-        String sql = BatchInsertEmitter.buildInsertSql(ansi, "WB_TABLE", List.of("amount"), true);
+        String sql = BatchInsertEmitter.buildInsertSql(ansi, null, "WB_TABLE", List.of("amount"), true);
         assertThat(sql).isEqualTo(
             "insert into \"WB_TABLE\" (\"amount\", \"ID\", \"USER\") values (?, ?, ?)");
+    }
+
+    /** A writeback table owned by a schema renders the qualified name. */
+    @Test
+    void insertQualifiesSchema() {
+        String sql = BatchInsertEmitter.buildInsertSql(ansi, "theschema", "WB_TABLE", List.of("amount"), false);
+        assertThat(sql).isEqualTo(
+            "insert into \"theschema\".\"WB_TABLE\" (\"amount\", \"ID\") values (?, ?)");
     }
 }

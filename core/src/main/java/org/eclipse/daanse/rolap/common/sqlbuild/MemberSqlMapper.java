@@ -329,7 +329,11 @@ public final class MemberSqlMapper {
         for (RolapStar.Table t : joinTables) {
             referenced.add(t);
             if (!dimAliases.contains(t.getAlias()) && addedAliases.add(t.getAlias())) {
-                items.add(From.table(t.getTableName(), TableAlias.of(t.getAlias())));
+                // Schema-qualified like RelationFromMapper.fromTable — the star table's relation may
+                // live outside the connection's default search path.
+                org.eclipse.daanse.cwm.model.cwm.resource.relational.NamedColumnSet ncs = t.getTable();
+                String schema = ncs != null ? RelationFromMapper.schemaName(ncs) : null;
+                items.add(From.table(From.tableRef(schema, t.getTableName()), TableAlias.of(t.getAlias())));
             }
         }
         q.from(new FromClause.FromProduct(items));
@@ -472,8 +476,13 @@ public final class MemberSqlMapper {
         // expression AND the FROM alias source.
         org.eclipse.daanse.sql.statement.api.expression.SqlExpression node = aggColumn.toSqlExpression();
         SelectStatementBuilder q = SelectStatementBuilder.create();
-        // FROM the single agg table (collapsed = the agg column's table IS the agg fact table).
-        q.from(From.table(aggColumn.getTable().getName(),
+        // FROM the single agg table (collapsed = the agg column's table IS the agg fact table),
+        // schema-qualified like AggJoinPlanner.aggTableFrom when the agg relation carries one.
+        String aggSchema = aggColumn.getTable()
+                .getRelation() instanceof org.eclipse.daanse.rolap.mapping.model.database.source.TableSource ts
+                        ? RelationFromMapper.schemaName(ts.getTable())
+                        : null;
+        q.from(From.table(From.tableRef(aggSchema, aggColumn.getTable().getName()),
                 TableAlias.of(SqlExpressionResolver.getTableAlias(aggColumn.getExpression()))));
         // Diagnostic provenance (rendered only when comments are on; never part of the executed SQL).
         q.header("children at " + level.getUniqueName());

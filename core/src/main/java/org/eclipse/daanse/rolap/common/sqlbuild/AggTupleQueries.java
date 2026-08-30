@@ -108,8 +108,14 @@ public final class AggTupleQueries {
         AggStar.Table.Column firstAgg =
                 aggStar.lookupColumn(firstLevel.getStarKeyColumn().getBitPosition());
         SelectStatementBuilder q = SelectStatementBuilder.create();
-        // FROM the single agg table (collapsed = every level's key column IS a column of the agg fact).
-        q.from(org.eclipse.daanse.sql.statement.api.From.table(firstAgg.getTable().getName(),
+        // FROM the single agg table (collapsed = every level's key column IS a column of the agg fact),
+        // schema-qualified like AggJoinPlanner.aggTableFrom when the agg relation carries one.
+        String aggSchema = firstAgg.getTable()
+                .getRelation() instanceof org.eclipse.daanse.rolap.mapping.model.database.source.TableSource ts
+                        ? RelationFromMapper.schemaName(ts.getTable())
+                        : null;
+        q.from(org.eclipse.daanse.sql.statement.api.From.table(
+                org.eclipse.daanse.sql.statement.api.From.tableRef(aggSchema, firstAgg.getTable().getName()),
                 org.eclipse.daanse.sql.statement.api.model.TableAlias.of(
                         org.eclipse.daanse.rolap.common.util.SqlExpressionResolver.getTableAlias(
                                 firstAgg.getExpression()))));
