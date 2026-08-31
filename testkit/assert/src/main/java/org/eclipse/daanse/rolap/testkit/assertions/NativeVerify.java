@@ -40,8 +40,8 @@ import org.opentest4j.AssertionFailedError;
  *
  * <p>
  * Unlike the legacy version, which left the four switches at {@code false} once it returned,
- * each run is scoped with {@link ConfigOverride}: {@code context}'s configuration is back to
- * whatever it was before this call by the time it returns.
+ * each run is scoped with {@link ConfigOverride}: the context's configuration is back to whatever
+ * it was before this call by the time it returns.
  * </p>
  */
 public final class NativeVerify {
@@ -55,9 +55,22 @@ public final class NativeVerify {
      * @param message included in the failure text if the two results differ; may be null
      */
     public static void assertSameNativeAndNot(Context<?> context, String mdx, String message) {
-        Objects.requireNonNull(context, "context");
+        assertSameNativeAndNot(context.getConnectionWithDefaultRole(), mdx, message);
+    }
+
+    /**
+     * Like {@link #assertSameNativeAndNot(Context, String, String)}, but runs both renderings over
+     * {@code connection} - use this for a role-scoped or otherwise non-default connection.
+     *
+     * @param connection the connection both renderings are run over; its context's native-evaluation
+     *                   switches are flipped for the two runs
+     * @param mdx        the query to run both ways
+     * @param message    included in the failure text if the two results differ; may be null
+     */
+    public static void assertSameNativeAndNot(Connection connection, String mdx, String message) {
+        Objects.requireNonNull(connection, "connection");
         Objects.requireNonNull(mdx, "mdx");
-        Connection connection = context.getConnectionWithDefaultRole();
+        Context<?> context = connection.getContext();
 
         String nativeResult;
         try (ConfigOverride override = ConfigOverride.of(context)
