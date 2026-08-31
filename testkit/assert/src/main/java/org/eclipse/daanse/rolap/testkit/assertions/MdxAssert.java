@@ -20,13 +20,10 @@ import java.util.Objects;
 import java.util.Optional;
 
 import org.eclipse.daanse.olap.api.connection.Connection;
-import org.eclipse.daanse.olap.api.execution.Statement;
-import org.eclipse.daanse.olap.api.query.component.Query;
 import org.eclipse.daanse.olap.api.result.Cell;
 import org.eclipse.daanse.olap.api.result.Position;
 import org.eclipse.daanse.olap.api.result.Result;
 import org.eclipse.daanse.olap.common.Util;
-import org.eclipse.daanse.olap.execution.ExecutionImpl;
 import org.opentest4j.AssertionFailedError;
 
 /**
@@ -106,7 +103,7 @@ public final class MdxAssert {
         }
 
         private Result execute() {
-            return MdxAssert.execute(connection, mdx, timeout);
+            return Mdx.execute(connection, mdx, timeout);
         }
     }
 
@@ -130,7 +127,7 @@ public final class MdxAssert {
         public void returns(String expected) {
             Objects.requireNonNull(expected, "expected");
             String mdx = query();
-            List<Position> positions = MdxAssert.execute(connection, mdx, Optional.empty()).getAxes()[0]
+            List<Position> positions = Mdx.execute(connection, mdx, Optional.empty()).getAxes()[0]
                     .getPositions();
             String actual = renderPositions(positions);
             if (!expected.equals(actual)) {
@@ -144,7 +141,7 @@ public final class MdxAssert {
             String mdx = query();
             Throwable thrown = null;
             try {
-                MdxAssert.execute(connection, mdx, Optional.empty());
+                Mdx.execute(connection, mdx, Optional.empty());
             } catch (Throwable t) {
                 thrown = t;
             }
@@ -176,7 +173,7 @@ public final class MdxAssert {
         public void returns(String expected) {
             String expectedOrEmpty = expected == null ? "" : expected;
             String mdx = queryFor(expression);
-            String actual = MdxAssert.execute(connection, mdx, Optional.empty()).getCell(new int[] { 0 })
+            String actual = Mdx.execute(connection, mdx, Optional.empty()).getCell(new int[] { 0 })
                     .getFormattedValue();
             if (!expectedOrEmpty.equals(actual)) {
                 throw mismatch("MDX expression", mdx, expectedOrEmpty, actual);
@@ -193,9 +190,32 @@ public final class MdxAssert {
             checkBoolean(false);
         }
 
+        /**
+         * Runs {@code expression} as a calculated measure and fails unless its raw numeric value is
+         * within {@code delta} of {@code expected}; two {@code NaN} values are considered equal.
+         */
+        public void returns(double expected, double delta) {
+            String mdx = queryFor(expression);
+            Object value = Mdx.execute(connection, mdx, Optional.empty()).getCell(new int[] { 0 })
+                    .getValue();
+            double actual;
+            try {
+                actual = ((Number) value).doubleValue();
+            } catch (ClassCastException ex) {
+                throw new AssertionFailedError("Actual value \"" + value + "\" is not a number.",
+                        Double.toString(expected), String.valueOf(value));
+            }
+            if (Double.isNaN(expected) && Double.isNaN(actual)) {
+                return;
+            }
+            if (Math.abs(expected - actual) > delta) {
+                throw mismatch("MDX expression", mdx, Double.toString(expected), Double.toString(actual));
+            }
+        }
+
         private void checkBoolean(boolean expected) {
             String mdx = queryFor("Iif (" + expression + ",\"true\",\"false\")");
-            String actual = MdxAssert.execute(connection, mdx, Optional.empty()).getCell(new int[] { 0 })
+            String actual = Mdx.execute(connection, mdx, Optional.empty()).getCell(new int[] { 0 })
                     .getFormattedValue();
             String expectedString = expected ? "true" : "false";
             if (!expectedString.equals(actual)) {
@@ -213,7 +233,7 @@ public final class MdxAssert {
             String mdx = queryFor(expression);
             Throwable thrown = null;
             try {
-                Cell cell = MdxAssert.execute(connection, mdx, Optional.empty()).getCell(new int[] { 0 });
+                Cell cell = Mdx.execute(connection, mdx, Optional.empty()).getCell(new int[] { 0 });
                 if (cell.isError()) {
                     thrown = (Throwable) cell.getValue();
                 }
@@ -227,12 +247,6 @@ public final class MdxAssert {
             return "with member [Measures].[Foo] as " + Util.singleQuoteString(expr)
                     + " select {[Measures].[Foo]} on columns from " + quoteCubeName(cubeName);
         }
-    }
-
-    private static Result execute(Connection connection, String mdx, Optional<Duration> timeout) {
-        Query query = connection.parseQuery(mdx);
-        Statement statement = query.getStatement();
-        return statement.getDaanseConnection().execute(new ExecutionImpl(statement, timeout));
     }
 
     private static String quoteCubeName(String cubeName) {
