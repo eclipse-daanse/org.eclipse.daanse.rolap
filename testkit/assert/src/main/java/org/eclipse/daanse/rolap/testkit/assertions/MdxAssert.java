@@ -19,7 +19,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.connection.Connection;
+import org.eclipse.daanse.olap.api.connection.ConnectionProps;
 import org.eclipse.daanse.olap.api.result.Cell;
 import org.eclipse.daanse.olap.api.result.Position;
 import org.eclipse.daanse.olap.api.result.Result;
@@ -50,6 +52,38 @@ public final class MdxAssert {
         return new QueryAssert(connection, mdx);
     }
 
+    /**
+     * Like {@link #assertThatQuery(Connection, String)}, but resolves the connection lazily -
+     * inside the same try/catch as query execution - so {@link QueryAssert#throwsMessage} also
+     * catches exceptions thrown while building the connection itself (e.g. schema-load-time
+     * validation errors), matching the legacy {@code TestUtil.assertQueryThrows(Context, String,
+     * String)}. Use the {@link Connection}-based overload when the connection is already built
+     * and known not to throw.
+     */
+    public static QueryAssert assertThatQuery(Context<?> context, String mdx) {
+        return new QueryAssert(context, mdx);
+    }
+
+    /**
+     * Like {@link #assertThatQuery(Context, String)}, but resolves the connection with
+     * {@code roles} (via {@link ConnectionProps}) instead of the default role - still lazily,
+     * inside the same try/catch as query execution. Matches the legacy {@code
+     * TestUtil.assertQueryThrows(Context, List, String, String)}.
+     */
+    public static QueryAssert assertThatQuery(Context<?> context, List<String> roles, String mdx) {
+        return new QueryAssert(context, new ConnectionProps(roles), mdx);
+    }
+
+    /**
+     * Like {@link #assertThatQuery(Context, String)}, but resolves the connection with
+     * {@code props} instead of the default role - still lazily, inside the same try/catch as
+     * query execution. Matches the legacy {@code TestUtil.assertQueryThrows(Context,
+     * ConnectionProps, String, String)}.
+     */
+    public static QueryAssert assertThatQuery(Context<?> context, ConnectionProps props, String mdx) {
+        return new QueryAssert(context, props, mdx);
+    }
+
     /** Starts a fluent assertion for the set {@code expression} evaluated on {@code cubeName}'s columns axis. */
     public static AxisAssert assertThatAxis(Connection connection, String cubeName, String expression) {
         return new AxisAssert(connection, cubeName, expression);
@@ -63,11 +97,29 @@ public final class MdxAssert {
     public static final class QueryAssert {
 
         private final Connection connection;
+        private final Context<?> context;
+        private final ConnectionProps props;
         private final String mdx;
         private Optional<Duration> timeout = Optional.empty();
 
         private QueryAssert(Connection connection, String mdx) {
             this.connection = Objects.requireNonNull(connection, "connection");
+            this.context = null;
+            this.props = null;
+            this.mdx = Objects.requireNonNull(mdx, "mdx");
+        }
+
+        private QueryAssert(Context<?> context, String mdx) {
+            this.connection = null;
+            this.context = Objects.requireNonNull(context, "context");
+            this.props = null;
+            this.mdx = Objects.requireNonNull(mdx, "mdx");
+        }
+
+        private QueryAssert(Context<?> context, ConnectionProps props, String mdx) {
+            this.connection = null;
+            this.context = Objects.requireNonNull(context, "context");
+            this.props = Objects.requireNonNull(props, "props");
             this.mdx = Objects.requireNonNull(mdx, "mdx");
         }
 
@@ -103,7 +155,15 @@ public final class MdxAssert {
         }
 
         private Result execute() {
-            return Mdx.execute(connection, mdx, timeout);
+            Connection conn;
+            if (context == null) {
+                conn = connection;
+            } else if (props == null) {
+                conn = context.getConnectionWithDefaultRole();
+            } else {
+                conn = context.getConnection(props);
+            }
+            return Mdx.execute(conn, mdx, timeout);
         }
     }
 
