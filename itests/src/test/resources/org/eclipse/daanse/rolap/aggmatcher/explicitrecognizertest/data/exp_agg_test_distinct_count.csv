@@ -1,0 +1,27 @@
+fact_count,testyear,gender,store_name,store_country,store_st,store_cty,store_add,unit_s,cust_cnt
+3957,1997,F,Store 11,USA,OR,Portland,5371 Holland Circle,12488,269
+6580,1997,F,Store 13,USA,OR,Salem,5179 Valley Ave,20548,232
+653,1997,F,Store 14,USA,CA,San Francisco,4365 Indigo Ct,1064,146
+4301,1997,F,Store 15,USA,WA,Seattle,5006 Highland Drive,13513,470
+3797,1997,F,Store 16,USA,WA,Spokane,5922 La Salle Ct,12068,45
+5538,1997,F,Store 17,USA,WA,Tacoma,490 Risdon Road,17420,139
+676,1997,F,Store 2,USA,WA,Bellingham,5203 Catanzaro Way,1096,100
+641,1997,F,Store 22,USA,WA,Walla Walla,9606 Julpum Loop,1019,44
+1597,1997,F,Store 23,USA,WA,Yakima,3920 Noah Court,5007,42
+4048,1997,F,Store 24,USA,CA,San Diego,2342 Waltham St.,12835,474
+3753,1997,F,Store 3,USA,WA,Bremerton,1501 Ramsey Circle,11640,87
+3426,1997,F,Store 6,USA,CA,Beverly Hills,5495 Mitchell Canyon Road,10771,519
+3864,1997,F,Store 7,USA,CA,Los Angeles,1077 Wharf Drive,12089,551
+4307,1997,M,Store 11,USA,OR,Portland,5371 Holland Circle,13591,294
+6767,1997,M,Store 13,USA,OR,Salem,5179 Valley Ave,21032,242
+672,1997,M,Store 14,USA,CA,San Francisco,4365 Indigo Ct,1053,150
+3655,1997,M,Store 15,USA,WA,Seattle,5006 Highland Drive,11498,436
+3600,1997,M,Store 16,USA,WA,Spokane,5922 La Salle Ct,11523,39
+5646,1997,M,Store 17,USA,WA,Tacoma,490 Risdon Road,17837,139
+704,1997,M,Store 2,USA,WA,Bellingham,5203 Catanzaro Way,1141,90
+698,1997,M,Store 22,USA,WA,Walla Walla,9606 Julpum Loop,1184,52
+2055,1997,M,Store 23,USA,WA,Yakima,3920 Noah Court,6484,53
+4047,1997,M,Store 24,USA,CA,San Diego,2342 Waltham St.,12800,488
+4123,1997,M,Store 3,USA,WA,Bremerton,1501 Ramsey Circle,12936,92
+3389,1997,M,Store 6,USA,CA,Beverly Hills,5495 Mitchell Canyon Road,10562,540
+4343,1997,M,Store 7,USA,CA,Los Angeles,1077 Wharf Drive,13574,596

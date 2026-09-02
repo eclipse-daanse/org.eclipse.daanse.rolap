@@ -1,0 +1,4 @@
+tenant_id,tenant_name
+INTEGER,VARCHAR(255)
+1,tenant one
+2,tenant two

@@ -1,0 +1,4 @@
+line_class_id,line_class_name
+INTEGER,VARCHAR(255)
+1,line class one
+2,line class two

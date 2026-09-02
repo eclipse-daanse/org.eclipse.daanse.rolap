@@ -31,7 +31,7 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
-          <argLine>-Xmx4g</argLine>
+          <argLine>-Xms4g -Xmx6g</argLine>
           <!-- Intentionally misconfigured case classes only run via EngineTestKit. -->
           <excludedGroups>failure-mode-case</excludedGroups>
         </configuration>

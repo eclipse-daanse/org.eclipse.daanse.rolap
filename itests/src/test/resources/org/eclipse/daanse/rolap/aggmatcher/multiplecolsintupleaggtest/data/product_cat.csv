@@ -1,0 +1,6 @@
+prod_cat,cat,name2,ord,cap
+INTEGER,INTEGER,VARCHAR(255),INTEGER,VARCHAR(255)
+1,1,Prod Cat One,4,PCOne
+2,1,Prod Cat Two,3,PCTwo
+3,2,Prod Cat One,2,PCThree
+4,2,Prod Cat Two,1,PCFour

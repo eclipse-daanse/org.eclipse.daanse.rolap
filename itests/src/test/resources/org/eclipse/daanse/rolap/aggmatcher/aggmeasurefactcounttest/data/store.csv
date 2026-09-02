@@ -1,0 +1,3 @@
+store_id,store_country,store_state,store_city,store_name
+INTEGER,VARCHAR(255),VARCHAR(255),VARCHAR(255),VARCHAR(255)
+2,USA,CA,Los Angeles,Store 2

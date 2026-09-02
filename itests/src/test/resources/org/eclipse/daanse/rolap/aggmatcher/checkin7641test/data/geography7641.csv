@@ -1,0 +1,10 @@
+cust_loc_id,state_cd,city_nm,zip_cd
+INTEGER,VARCHAR(255),VARCHAR(255),VARCHAR(255)
+1,New York,New York,1000
+2,New York,New York,1001
+3,New York,Albany,1010
+4,New York,Albany,1011
+5,California,San Fransisco,2000
+6,California,San Fransisco,2001
+7,California,San Diego,2010
+8,California,San Diego,2011

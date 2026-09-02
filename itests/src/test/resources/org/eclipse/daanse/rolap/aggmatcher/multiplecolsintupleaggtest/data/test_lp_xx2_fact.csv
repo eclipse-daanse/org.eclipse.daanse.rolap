@@ -1,0 +1,10 @@
+prodname,amount,fact_count
+VARCHAR(255),INTEGER,INTEGER
+One,9,2
+Two,6,2
+Three,9,2
+Four,9,2
+Five,9,2
+Six,8,2
+Seven,8,2
+Eight,8,2

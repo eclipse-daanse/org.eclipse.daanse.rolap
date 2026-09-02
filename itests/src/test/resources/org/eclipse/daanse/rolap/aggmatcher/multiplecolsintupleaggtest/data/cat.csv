@@ -1,0 +1,4 @@
+cat,name3,ord,cap
+INTEGER,VARCHAR(255),INTEGER,VARCHAR(255)
+1,Cat One,2,COne
+2,Cat Two,1,CTwo

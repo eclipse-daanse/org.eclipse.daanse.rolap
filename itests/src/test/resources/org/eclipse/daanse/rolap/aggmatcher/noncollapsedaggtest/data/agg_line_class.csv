@@ -1,0 +1,4 @@
+line_class_id,unit_sales,fact_count
+INTEGER,INTEGER,INTEGER
+1,31,2
+2,121,2

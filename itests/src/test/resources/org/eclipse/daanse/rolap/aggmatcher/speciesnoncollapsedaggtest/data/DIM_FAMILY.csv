@@ -1,0 +1,5 @@
+FAMILY_ID,FAMILY_NAME
+INTEGER,VARCHAR(255)
+100,Loricariidae
+200,Cichlidae
+300,Cyprinidae

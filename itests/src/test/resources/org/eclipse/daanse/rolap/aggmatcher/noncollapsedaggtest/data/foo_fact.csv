@@ -1,0 +1,6 @@
+line_id,unit_sales
+INTEGER,INTEGER
+1,10
+2,20
+3,40
+4,80

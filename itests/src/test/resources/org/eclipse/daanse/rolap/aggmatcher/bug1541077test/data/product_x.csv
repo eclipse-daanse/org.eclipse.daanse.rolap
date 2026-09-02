@@ -1,0 +1,4 @@
+prod_id,name
+INTEGER,VARCHAR(255)
+1,One
+2,Two

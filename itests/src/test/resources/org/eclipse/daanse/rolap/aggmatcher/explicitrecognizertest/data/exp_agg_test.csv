@@ -1,0 +1,13 @@
+testyear,testqtr,testmonthord,testmonthname,testmonthcap,testmonprop1,testmonprop2,gender,test_unit_sales,test_store_cost,fact_count
+1997,Q1,1,January,January-,January-prop1,January-prop2,M,663152,549965.3518,217372
+1997,Q1,2,February,February-,February-prop1,February-prop2,M,598696,500406.3176,196224
+1997,Q1,3,March,March-,March-prop1,March-prop2,M,743628,627702.6878,241676
+1997,Q2,4,April,April-,April-prop1,April-prop2,M,611340,518570.178,200340
+1997,Q2,5,May,May-,May-prop1,May-prop2,M,653790,553017.7482,212536
+1997,Q2,6,June,June-,June-prop1,June-prop2,M,653040,545530.242,211440
+1997,Q3,7,July,July-,July-prop1,July-prop2,M,738854,614466.6922,240002
+1997,Q3,8,August,August-,August-prop1,August-prop2,M,699174,592095.0338,226610
+1997,Q3,9,September,September-,September-prop1,September-prop2,M,603300,514856.136,195720
+1997,Q4,10,October,October-,October-prop1,October-prop2,M,648024,545237.9386,210552
+1997,Q4,11,November,November-,November-prop1,November-prop2,M,777000,653573.166,253140
+1997,Q4,12,December,December-,December-prop1,December-prop2,M,841030,715230.6732,273048
