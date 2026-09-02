@@ -65,6 +65,7 @@
     -->
     <module>documentation</module>
     <module>testkit</module>
+    <module>itests</module>
   </modules>
 
   <dependencies>
