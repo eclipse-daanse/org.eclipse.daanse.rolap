@@ -27,6 +27,7 @@ import org.eclipse.daanse.rolap.testkit.junit.internal.InjectionSupport;
 import org.eclipse.daanse.rolap.testkit.junit.internal.ManagedContext;
 import org.eclipse.daanse.rolap.testkit.junit.internal.Provisioning;
 import org.eclipse.daanse.rolap.testkit.junit.internal.RolapFixture;
+import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionConfigurationException;
@@ -45,7 +46,8 @@ import org.junit.platform.commons.support.AnnotationSupport;
  * <p>{@code supportsParameter} claims only this extension's types, so it
  * coexists with MockitoExtension and other parameter resolvers.
  */
-public class RolapContextExtension implements BeforeAllCallback, BeforeEachCallback, ParameterResolver {
+public class RolapContextExtension implements BeforeAllCallback, BeforeEachCallback, AfterAllCallback,
+        ParameterResolver {
 
     private static final Namespace NAMESPACE = Namespace.create(RolapContextExtension.class);
     private static final String MANAGED = "managedContext";
@@ -118,6 +120,28 @@ public class RolapContextExtension implements BeforeAllCallback, BeforeEachCallb
                             "No managed context available for " + where));
         }
         InjectionSupport.injectFields(testClass, extensionContext.getRequiredTestInstance(), current);
+    }
+
+    /**
+     * Releases a {@link DbScope#PER_CLASS} database once the class is done with
+     * it. Keyed off the class-level {@code @RolapContextTest} only — a
+     * method-level override to a different scope keeps its own database key and
+     * is unaffected. {@code Provisioning.release} is idempotent, so this is
+     * harmless if a {@code PER_TEST}-scoped {@link ManagedContext} (a different
+     * scope, a different key) already released its own database on close.
+     */
+    @Override
+    public void afterAll(ExtensionContext extensionContext) {
+        Class<?> testClass = extensionContext.getRequiredTestClass();
+        Optional<RolapContextTest> classAnnotation =
+                AnnotationSupport.findAnnotation(testClass, RolapContextTest.class);
+        if (classAnnotation.isEmpty()) {
+            return;
+        }
+        RolapFixture fixture = RolapFixture.resolve(classAnnotation.get(), testClass.getName());
+        if (fixture.dbScope() == DbScope.PER_CLASS) {
+            Provisioning.release(isolationKey(fixture, extensionContext, testClass.getName()));
+        }
     }
 
     @Override
