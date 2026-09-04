@@ -36,19 +36,29 @@ public final class ManagedContext implements ExtensionContext.Store.CloseableRes
 
     private final ExtensionTestContext context;
     private final ActiveDatabase database;
+    private final Runnable releaseDatabase;
     private final List<Connection> connections = new CopyOnWriteArrayList<>();
     private final Map<Class<? extends ContextModifier>, ContextModifier> modifiers = new LinkedHashMap<>();
     private final AtomicBoolean closed = new AtomicBoolean();
 
-    private ManagedContext(ExtensionTestContext context, ActiveDatabase database) {
+    private ManagedContext(ExtensionTestContext context, ActiveDatabase database, Runnable releaseDatabase) {
         this.context = context;
         this.database = database;
+        this.releaseDatabase = releaseDatabase;
     }
 
-    public static ManagedContext open(RolapFixture fixture, ActiveDatabase database, Map<String, Object> config) {
+    /**
+     * @param releaseDatabase if non-null, run once after teardown on
+     *            {@link #close()} to free the underlying database early — only
+     *            safe when this context is provably its database's sole/last
+     *            user (see {@code Provisioning#openManaged}); {@code null} for
+     *            a database other contexts may still be using.
+     */
+    public static ManagedContext open(RolapFixture fixture, ActiveDatabase database, Map<String, Object> config,
+            Runnable releaseDatabase) {
         ExtensionTestContext ctx = new ExtensionTestContext(database.connectionPool(), database.dialect(),
                 fixture.mappingSupplier());
-        ManagedContext managed = new ManagedContext(ctx, database);
+        ManagedContext managed = new ManagedContext(ctx, database, releaseDatabase);
         try {
             config.forEach(ctx::putConfig);
             for (Class<? extends ContextModifier> type : fixture.modifierClasses()) {
@@ -129,6 +139,13 @@ public final class ManagedContext implements ExtensionContext.Store.CloseableRes
             context.deactivate(Map.of());
         } catch (Exception e) {
             first = suppress(first, e);
+        }
+        if (releaseDatabase != null) {
+            try {
+                releaseDatabase.run();
+            } catch (RuntimeException e) {
+                first = suppress(first, e);
+            }
         }
         if (first != null) {
             throw first;

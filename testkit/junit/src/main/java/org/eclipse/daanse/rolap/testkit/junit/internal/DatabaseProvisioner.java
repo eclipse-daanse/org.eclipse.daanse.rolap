@@ -81,6 +81,28 @@ final class DatabaseProvisioner {
         return entry.database();
     }
 
+    /**
+     * Forgets and releases {@code isolationKey}'s database ahead of the JVM-run
+     * cache's normal lifetime, via {@link DatabaseProvider#close(String)}.
+     * Idempotent — a no-op if the key was never provisioned or was already
+     * released, so callers that might race (a per-test release alongside a
+     * belt-and-braces per-class one) don't need to coordinate.
+     *
+     * <p>Only call this for a key that is provably done for good — see
+     * {@code DbScope}'s PER_TEST/PER_CLASS javadoc. PER_RUNTIME and NAMED keys
+     * are shared across classes for the whole run and must never be released
+     * early.
+     */
+    static void release(String isolationKey) {
+        String prefixedKey = KEY_PREFIX + isolationKey;
+        if (DATABASES.remove(prefixedKey) != null) {
+            DatabaseProvider provider = PROVIDER.get("selected");
+            if (provider != null) {
+                provider.close(prefixedKey);
+            }
+        }
+    }
+
     private static void load(RolapFixture fixture, ActiveDatabase database) throws Exception {
         if (fixture.databaseSupplier() != null) {
             // Phase-2 layered path: CWM Schema -> DDL -> data.
