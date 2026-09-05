@@ -1,0 +1,9 @@
+dim_code,fact_measure,fact_count
+VARCHAR(255),DECIMAL(18.4),INTEGER
+eight,175,14
+five,5,1
+four,4,1
+mdg,2,1
+tst,1000,1
+three,3,1
+two,2,1

@@ -1,0 +1,4 @@
+line_class_id,distributor_id
+INTEGER,INTEGER
+1,1
+2,2

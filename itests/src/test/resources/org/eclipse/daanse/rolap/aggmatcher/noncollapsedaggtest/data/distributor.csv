@@ -1,0 +1,4 @@
+distributor_id,distributor_name
+INTEGER,VARCHAR(255)
+1,distributor one
+2,distributor two

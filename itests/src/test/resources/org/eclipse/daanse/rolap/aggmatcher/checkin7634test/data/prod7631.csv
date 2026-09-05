@@ -1,0 +1,14 @@
+prod_id,class,brand,item
+INTEGER,VARCHAR(255),VARCHAR(255),VARCHAR(255)
+1,Class0,Brand01,Item011
+2,Class0,Brand01,Item011
+3,Class1,Brand11,Item111
+4,Class1,Brand11,Item112
+5,Class1,Brand12,Item121
+6,Class1,Brand12,Item122
+7,Class1,Brand12,Item123
+8,Class2,Brand21,Item211
+9,Class2,Brand21,Item212
+10,Class2,Brand22,Item121
+11,Class2,Brand22,Item122
+12,Class2,Brand22,Item123

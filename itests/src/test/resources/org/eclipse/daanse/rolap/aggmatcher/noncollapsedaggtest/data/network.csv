@@ -1,0 +1,4 @@
+network_id,network_name
+INTEGER,VARCHAR(255)
+1,network one
+2,network two

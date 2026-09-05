@@ -1,0 +1,5 @@
+firstprefix_value,secondprefix_value,amount,FACT_COUNT
+VARCHAR(255),VARCHAR(255),DECIMAL(18.4),INTEGER
+store1,OtherStore1,5.0,2
+store2,OtherStore2,2.5,2
+store3,OtherStore3,2.0,2

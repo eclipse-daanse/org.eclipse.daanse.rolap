@@ -1,0 +1,5 @@
+store_id,value
+INTEGER,VARCHAR(255)
+10,store1
+11,store2
+12,store3

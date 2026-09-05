@@ -1,0 +1,10 @@
+prod_id,prod_cat,name1,color
+INTEGER,INTEGER,VARCHAR(255),VARCHAR(255)
+1,1,One,Blue
+2,1,Two,Black
+3,2,Three,Brown
+4,2,Four,Purple
+5,3,Five,Olive
+6,3,Six,Orange
+7,4,Seven,Cyan
+8,4,Eight,Pink

@@ -48,5 +48,6 @@ header:
     - '**/*.svg'
     - '**/*.mdx'
     - '**/org.mockito.plugins.MockMaker'
+    - '**/*.ref.xml'
 
   comment: always
