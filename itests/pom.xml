@@ -118,18 +118,6 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.junit.platform</groupId>
-      <artifactId>junit-platform-testkit</artifactId>
-      <version>1.12.2</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.daanse</groupId>
-      <artifactId>org.eclipse.daanse.jdbc.datasource.testkit.h2</artifactId>
-      <version>${revision}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>org.eclipse.daanse</groupId>
       <artifactId>org.eclipse.daanse.jdbc.datasource.testkit.duckdb</artifactId>
       <version>${revision}</version>
@@ -161,12 +149,6 @@
     </dependency>
     <dependency>
       <groupId>org.eclipse.daanse</groupId>
-      <artifactId>org.eclipse.daanse.rolap.mapping.instance.emf.tutorial.cube.minimal</artifactId>
-      <version>${revision}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.daanse</groupId>
       <artifactId>org.eclipse.daanse.rolap.testkit.assert</artifactId>
       <version>${revision}</version>
       <scope>test</scope>
@@ -176,29 +158,21 @@
       <artifactId>org.eclipse.daanse.rolap.testkit.junit</artifactId>
       <version>${revision}</version>
       <scope>test</scope>
-    </dependency>    
-    <dependency>
-      <groupId>org.eclipse.daanse</groupId>
-      <artifactId>org.eclipse.daanse.rolap.mapping.instance.emf.tutorial.access.cubegrand</artifactId>
-      <version>${revision}</version>
-      <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>org.eclipse.daanse</groupId>
-      <artifactId>org.eclipse.daanse.rolap.mapping.instance.emf.tutorial.access.defaultrole</artifactId>
-      <version>${revision}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.daanse</groupId>
-      <artifactId>org.eclipse.daanse.rolap.mapping.instance.emf.tutorial.access.dimensiongrand</artifactId>
-      <version>${revision}</version>
-      <scope>test</scope>
-    </dependency>
+    <!-- used directly by FunctionTest and I18nTest; previously leaked in
+         transitively via commons-vfs2 -->
     <dependency>
       <groupId>org.apache.commons</groupId>
-      <artifactId>commons-vfs2</artifactId>
-      <version>2.9.0</version>
+      <artifactId>commons-lang3</artifactId>
+      <version>3.14.0</version>
+      <scope>test</scope>
+    </dependency>
+    <!-- used directly by CVConcurrentMdxTest; previously leaked in
+         transitively via junit-platform-testkit -->
+    <dependency>
+      <groupId>org.junit.platform</groupId>
+      <artifactId>junit-platform-launcher</artifactId>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 </project>
