@@ -23,156 +23,18 @@
   <name>Daanse ROLAP Tests</name>
   <description>Daanse ROLAP Tests</description>
 
-  <packaging>jar</packaging>
+  <packaging>pom</packaging>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <configuration>
-          <argLine>-Xmx4g -Duser.language=en -Duser.country=US</argLine>
-          <systemPropertyVariables>
-            <daanse.test.db>duckdb</daanse.test.db>
-          </systemPropertyVariables>
-          <!-- Intentionally misconfigured case classes only run via EngineTestKit. -->
-          <excludedGroups>failure-mode-case</excludedGroups>
-          <!-- Overrides the matching junit-platform.properties keys. -->
-          <properties>
-            <configurationParameters>
-              junit.jupiter.execution.parallel.enabled = ${daanse.test.parallel.enabled}
-              junit.jupiter.execution.parallel.config.dynamic.factor = ${daanse.test.parallel.factor}
-            </configurationParameters>
-          </properties>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
-
-  <dependencies>
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter-api</artifactId>
-      <version>5.12.2</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.platform</groupId>
-      <artifactId>junit-platform-commons</artifactId>
-      <version>1.12.2</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.daanse</groupId>
-      <artifactId>org.eclipse.daanse.rolap.testkit.api</artifactId>
-      <version>${revision}</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.daanse</groupId>
-      <artifactId>org.eclipse.daanse.rolap.testkit.core</artifactId>
-      <version>${revision}</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.daanse</groupId>
-      <artifactId>org.eclipse.daanse.rolap.core</artifactId>
-      <version>${revision}</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.daanse</groupId>
-      <artifactId>org.eclipse.daanse.jdbc.datasource.testkit.api</artifactId>
-      <version>${revision}</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.daanse</groupId>
-      <artifactId>org.eclipse.daanse.jdbc.datasource.pools.api</artifactId>
-      <version>0.0.1-SNAPSHOT</version>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.daanse</groupId>
-      <artifactId>org.eclipse.daanse.cwm.testkit</artifactId>
-      <version>${revision}</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.daanse</groupId>
-      <artifactId>org.eclipse.daanse.rolap.mapping.instance.api</artifactId>
-      <version>${revision}</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.daanse</groupId>
-      <artifactId>org.eclipse.daanse.cwm.resource.relational.ddl</artifactId>
-      <version>${revision}</version>
-      <scope>runtime</scope>
-    </dependency>
-
-    <!-- test -->
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter-engine</artifactId>
-      <version>5.12.2</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.daanse</groupId>
-      <artifactId>org.eclipse.daanse.jdbc.datasource.testkit.duckdb</artifactId>
-      <version>${revision}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.daanse</groupId>
-      <artifactId>org.eclipse.daanse.rolap.mapping.instance.emf.complex.expressivenames</artifactId>
-      <version>${revision}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.daanse</groupId>
-      <artifactId>org.eclipse.daanse.rolap.mapping.instance.emf.complex.steelwheels</artifactId>
-      <version>${revision}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.daanse</groupId>
-      <artifactId>org.eclipse.daanse.rolap.mapping.instance.emf.complex.foodmart</artifactId>
-      <version>${revision}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.daanse</groupId>
-      <artifactId>org.eclipse.daanse.rolap.mapping.instance.emf.complex.school</artifactId>
-      <version>${revision}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.daanse</groupId>
-      <artifactId>org.eclipse.daanse.rolap.testkit.assert</artifactId>
-      <version>${revision}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.daanse</groupId>
-      <artifactId>org.eclipse.daanse.rolap.testkit.junit</artifactId>
-      <version>${revision}</version>
-      <scope>test</scope>
-    </dependency>
-    <!-- used directly by FunctionTest and I18nTest; previously leaked in
-         transitively via commons-vfs2 -->
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-lang3</artifactId>
-      <version>3.14.0</version>
-      <scope>test</scope>
-    </dependency>
-    <!-- used directly by CVConcurrentMdxTest; previously leaked in
-         transitively via junit-platform-testkit -->
-    <dependency>
-      <groupId>org.junit.platform</groupId>
-      <artifactId>junit-platform-launcher</artifactId>
-      <scope>test</scope>
-    </dependency>
-  </dependencies>
+  <modules>
+    <module>support</module>
+    <module>access</module>
+    <module>aggtable</module>
+    <module>cache</module>
+    <module>clearview</module>
+    <module>concurrency</module>
+    <module>mdx</module>
+    <module>schema</module>
+    <module>sql</module>
+    <module>steelwheels</module>
+  </modules>
 </project>
