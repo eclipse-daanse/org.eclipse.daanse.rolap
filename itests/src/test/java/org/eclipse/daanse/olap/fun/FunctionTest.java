@@ -79,7 +79,7 @@ import org.eclipse.daanse.test.FoodmartData;
 public class FunctionTest {
 
   private static final Logger LOGGER = LoggerFactory.getLogger( FunctionTest.class );
-  private static final int NUM_EXPECTED_FUNCTIONS = 301;
+  private static final int NUM_EXPECTED_FUNCTIONS = 307;
 
   private static final String TimeWeekly = "[Time].[Weekly]";
 

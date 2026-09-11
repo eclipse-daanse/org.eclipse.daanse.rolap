@@ -114,7 +114,7 @@ class SetItemFunDefTest {
 
         assertThatAxis(context.getConnectionWithDefaultRole(), "Sales",
             "CrossJoin([Gender].Members, [Marital Status].Members).Item(\"M\")")
-            .throwsMessage( "Argument count does not match set's cardinality 2" );
+            .throwsMessage( "No function matches signature '<Set>.Item(<String>)'" );
     }
 
 }
