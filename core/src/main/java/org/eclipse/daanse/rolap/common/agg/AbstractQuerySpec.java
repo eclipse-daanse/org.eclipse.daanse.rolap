@@ -49,7 +49,8 @@ import org.eclipse.daanse.sql.statement.api.expression.SqlExpression;
 import java.util.ArrayList;
 
 /**
- * Base class for {@link QuerySpec} implementations.
+ * Base class for the query specifications that build a star query:
+ * {@link SegmentArrayQuerySpec} and {@link DrillThroughQuerySpec}.
  *
  * @author jhyde
  * @author Richard M. Emberson
