@@ -39,6 +39,21 @@
   <properties>
     <revision>0.0.1-SNAPSHOT</revision>
     <slf4j.version>2.0.9</slf4j.version>
+
+    <!-- JUnit parallel execution, tunable per build without touching sources.
+         These override the matching keys in each test module's
+         src/test/resources/junit-platform.properties, which stays the place
+         where the non-tunable settings and their rationale are documented.
+
+         The dynamic strategy sizes the pool to availableProcessors() * factor,
+         so factor=1 gives 4 threads on a standard GitHub-hosted runner. The
+         suite is not CPU-saturated - it is starved by a serialized tail - so
+         oversubscribing can help in CI:
+           mvn verify -Ddaanse.test.parallel.factor=2
+         Turn parallelism off entirely when judging a failure:
+           mvn verify -Ddaanse.test.parallel.enabled=false -->
+    <daanse.test.parallel.enabled>true</daanse.test.parallel.enabled>
+    <daanse.test.parallel.factor>1</daanse.test.parallel.factor>
   </properties>
 
   <repositories>
