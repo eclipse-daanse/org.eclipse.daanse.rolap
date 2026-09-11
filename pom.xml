@@ -39,6 +39,11 @@
   <properties>
     <revision>0.0.1-SNAPSHOT</revision>
     <slf4j.version>2.0.9</slf4j.version>
+
+    <!-- JUnit pool size: availableProcessors() * factor. Override per build,
+         e.g. -Ddaanse.test.parallel.factor=2 or -Ddaanse.test.parallel.enabled=false -->
+    <daanse.test.parallel.enabled>true</daanse.test.parallel.enabled>
+    <daanse.test.parallel.factor>1</daanse.test.parallel.factor>
   </properties>
 
   <repositories>

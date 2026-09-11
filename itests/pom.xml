@@ -37,6 +37,13 @@
           </systemPropertyVariables>
           <!-- Intentionally misconfigured case classes only run via EngineTestKit. -->
           <excludedGroups>failure-mode-case</excludedGroups>
+          <!-- Overrides the matching junit-platform.properties keys. -->
+          <properties>
+            <configurationParameters>
+              junit.jupiter.execution.parallel.enabled = ${daanse.test.parallel.enabled}
+              junit.jupiter.execution.parallel.config.dynamic.factor = ${daanse.test.parallel.factor}
+            </configurationParameters>
+          </properties>
         </configuration>
       </plugin>
     </plugins>
