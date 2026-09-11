@@ -1033,7 +1033,7 @@ public abstract class RolapCube extends CubeBase {
         String name)
     {
         for (org.eclipse.daanse.rolap.mapping.model.olap.dimension.DimensionConnector cd : mappingDimensions) {
-            if (name.equals(cd.getOverrideDimensionName())) {
+            if (name.equals(RolapDimension.getDimensionName(cd))) {
                 return cd;
             }
         }
@@ -1228,7 +1228,7 @@ public abstract class RolapCube extends CubeBase {
 
     private synchronized HierarchyUsage getUsageByName(String name) {
         for (HierarchyUsage hierUsage : hierarchyUsages) {
-            if (hierUsage.getFullName().equals(name)) {
+            if (name.equals(hierUsage.getFullName())) {
                 return hierUsage;
             }
         }

@@ -45,6 +45,7 @@ import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.rolap.common.Utils;
 import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.element.RolapCubeHierarchy;
+import org.eclipse.daanse.rolap.element.RolapDimension;
 import org.eclipse.daanse.rolap.element.RolapHierarchy;
 import org.eclipse.daanse.rolap.element.RolapLevel;
 import org.slf4j.Logger;
@@ -172,7 +173,7 @@ public class HierarchyUsage {
         // Attributes common to all Hierarchy kinds
         // name
         // foreignKey
-        this.name = cubeDim.getOverrideDimensionName();
+        this.name = RolapDimension.getDimensionName(cubeDim);
         this.foreignKey = cubeDim.getForeignKey();
         org.eclipse.daanse.rolap.mapping.model.olap.dimension.Dimension du = cubeDim.getDimension();
 

@@ -200,14 +200,14 @@ public class RolapPhysicalCube extends RolapCube implements PhysicalCube {
                 Dimension dimension = null;
                 for (Dimension currentDimension : this.getDimensions()) {
                     if (currentDimension.getName()
-                            .equals(writebackAttribute.getDimensionConnector().getOverrideDimensionName())) {
+                            .equals(RolapDimension.getDimensionName(writebackAttribute.getDimensionConnector()))) {
                         dimension = currentDimension;
                         break;
                     }
                 }
                 if (dimension == null) {
                     throw Util.newError(new StringBuilder("Error while creating `WritebackTable`. Dimension '")
-                            .append(writebackAttribute.getDimensionConnector().getOverrideDimensionName())
+                            .append(RolapDimension.getDimensionName(writebackAttribute.getDimensionConnector()))
                             .append("' not found").toString());
                 }
 

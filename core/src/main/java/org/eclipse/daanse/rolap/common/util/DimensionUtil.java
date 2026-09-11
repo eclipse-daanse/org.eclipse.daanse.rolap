@@ -14,6 +14,7 @@
 package org.eclipse.daanse.rolap.common.util;
 
 import org.eclipse.daanse.olap.common.Util;
+import org.eclipse.daanse.rolap.element.RolapDimension;
 
 public class DimensionUtil {
 
@@ -79,7 +80,7 @@ public class DimensionUtil {
 
     public static org.eclipse.daanse.rolap.mapping.model.olap.dimension.Dimension getDimension(org.eclipse.daanse.rolap.mapping.model.olap.cube.PhysicalCube cube, org.eclipse.daanse.rolap.mapping.model.catalog.Catalog schema, String dimensionName) {
         for (int i = 0; i < cube.getDimensionConnectors().size(); i++) {
-            if (cube.getDimensionConnectors().get(i).getOverrideDimensionName().equals(dimensionName)) {
+            if (RolapDimension.getDimensionName(cube.getDimensionConnectors().get(i)).equals(dimensionName)) {
                 return getDimension(schema, cube.getDimensionConnectors().get(i));
             }
         }
