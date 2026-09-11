@@ -10,7 +10,7 @@ on:
 
 jobs:
   build_test:
-    uses: eclipse-daanse/.github/.github/workflows/reuse_java_build_test.yml@main
+    uses: eclipse-daanse/.github/.github/workflows/reuse_java_build_test.yml@feat/build-test-matrix
 
   maven_deploy:
     if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
