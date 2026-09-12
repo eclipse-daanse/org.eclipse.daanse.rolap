@@ -83,8 +83,6 @@ import org.eclipse.daanse.rolap.testkit.junit.api.Roles;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import org.eclipse.daanse.rolap.SchemaModifiersEmf;
 
@@ -92,18 +90,12 @@ import org.eclipse.daanse.rolap.SchemaModifiersEmf;
  * <code>AccessControlTest</code> is a set of unit-tests for access-control.
  * For these tests, all of the roles are of type RoleImpl.
  *
- * <p>{@code SAME_THREAD}: many scenarios compose their own {@code CatalogSupplier}
- * (FoodMart mapping) instance -- like {@link mondrian.rolap.aggmatcher.ExplicitRecognizerTest},
- * this opts out of the module's default concurrent execution so those
- * constructions don't race across this class's own methods.
- *
  * @see Role
  *
  * @author jhyde
  * @since Feb 21, 2003
  */
 @RolapContextTest(FoodmartTestInstance.class)
-@Execution(ExecutionMode.SAME_THREAD)
 class AccessControlTest {
 
 
