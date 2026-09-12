@@ -165,6 +165,27 @@ public final class RolapFixture {
      * phase-1 instance form keys on the instance class: its CSV set is part of
      * the instance.
      */
+    /**
+     * Identity of the DDL a fixture's schema supplier produces, for the database
+     * key. The supplier's class is only usable when it is a real class: instances
+     * that return a method reference (for example
+     * {@code ExplicitRecognizerTestInstances::databaseSchema}) get a fresh
+     * synthetic lambda class on every call, whose name would make the key unstable
+     * and silently defeat the load-once guard. Those fall back to the instance
+     * class, which is stable and no coarser than the pre-existing behaviour.
+     */
+    private static String schemaIdentity(CatalogTestInstance instance) {
+        DatabaseSupplier supplier = instance.databaseSupplier();
+        if (supplier == null) {
+            return "-";
+        }
+        Class<?> type = supplier.getClass();
+        if (type.isSynthetic() || type.getCanonicalName() == null) {
+            return instance.getClass().getName();
+        }
+        return type.getName();
+    }
+
     public String databaseKey() {
         if (instance != null) {
             // Key on the CSV set the instance loads, not on its class: fixtures that
@@ -176,7 +197,7 @@ public final class RolapFixture {
             // whose getClass().getName() differs on every call.
             Map<String, URL> csv = instance.csvResources();
             if (csv != null && !csv.isEmpty()) {
-                return "csv:" + new TreeSet<>(csv.keySet());
+                return "csv:" + new TreeSet<>(csv.keySet()) + "+" + schemaIdentity(instance);
             }
             return instance.getClass().getName();
         }
