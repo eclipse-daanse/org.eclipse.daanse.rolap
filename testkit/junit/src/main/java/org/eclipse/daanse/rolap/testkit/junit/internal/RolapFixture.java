@@ -12,7 +12,10 @@
  */
 package org.eclipse.daanse.rolap.testkit.junit.internal;
 
+import java.net.URL;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -164,6 +167,17 @@ public final class RolapFixture {
      */
     public String databaseKey() {
         if (instance != null) {
+            // Key on the CSV set the instance loads, not on its class: fixtures that
+            // differ only in catalog mapping then share one loaded database. The 24
+            // AccessControlRollupInstances variants all delegate to FoodmartTestInstance's
+            // CSVs, so they collapse onto one; ExplicitRecognizerTestInstances add two
+            // extra header CSVs, so they stay separate. Keying on databaseSupplier()
+            // instead would be unstable -- some instances return a method reference,
+            // whose getClass().getName() differs on every call.
+            Map<String, URL> csv = instance.csvResources();
+            if (csv != null && !csv.isEmpty()) {
+                return "csv:" + new TreeSet<>(csv.keySet());
+            }
             return instance.getClass().getName();
         }
         return (databaseSupplier == null ? "-" : databaseSupplier.getClass().getName()) + "+"
