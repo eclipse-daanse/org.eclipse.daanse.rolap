@@ -78,6 +78,7 @@ import org.eclipse.daanse.rolap.mapping.model.catalog.Catalog;
 import org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.HideMemberIf;
 import org.eclipse.daanse.rolap.testkit.assertions.NativeVerify;
 import org.eclipse.daanse.rolap.testkit.junit.api.DbScope;
+import org.junit.jupiter.api.parallel.ResourceLock;
 import org.eclipse.daanse.rolap.testkit.junit.api.RolapConfig;
 import org.eclipse.daanse.rolap.testkit.junit.api.RolapContextTest;
 import org.eclipse.daanse.rolap.testkit.junit.api.Roles;
@@ -5925,6 +5926,12 @@ class NonEmptyTest extends BatchTestCase {
   @Test
   @RolapConfig(key = ConfigConstants.LEVEL_PRE_CACHE_THRESHOLD, value = "0", type = Integer.class)
   @RolapConfig(key = ConfigConstants.ALERT_NATIVE_EVALUATION_UNSUPPORTED, value = "ERROR", type = String.class)
+  // The DuckDB column_lifetime workaround below issues SET GLOBAL, which reaches the
+  // whole database instance. NAMED keeps that instance private to these methods and
+  // the lock stops them resetting the flag under each other.
+  @RolapContextTest(value = FoodmartTestInstance.class, dbScope = DbScope.NAMED,
+      scopeName = "duckdb-column-lifetime")
+  @ResourceLock("duckdb-disabled-optimizers")
   void testMon2202AnalyzerFilter(Context<?> context)  {
     withDuckDbColumnLifetimeDisabled(context, () -> {
         assertThatQuery(context.getConnectionWithDefaultRole(),
@@ -5999,6 +6006,12 @@ class NonEmptyTest extends BatchTestCase {
   @Test
   @RolapConfig(key = ConfigConstants.LEVEL_PRE_CACHE_THRESHOLD, value = "0", type = Integer.class)
   @RolapConfig(key = ConfigConstants.ALERT_NATIVE_EVALUATION_UNSUPPORTED, value = "ERROR", type = String.class)
+  // The DuckDB column_lifetime workaround below issues SET GLOBAL, which reaches the
+  // whole database instance. NAMED keeps that instance private to these methods and
+  // the lock stops them resetting the flag under each other.
+  @RolapContextTest(value = FoodmartTestInstance.class, dbScope = DbScope.NAMED,
+      scopeName = "duckdb-column-lifetime")
+  @ResourceLock("duckdb-disabled-optimizers")
   void testMon2202AnalyzerPercOfMeasure(Context<?> context)  {
     withDuckDbColumnLifetimeDisabled(context, () -> {
         assertThatQuery(context.getConnectionWithDefaultRole(),
@@ -6083,6 +6096,12 @@ class NonEmptyTest extends BatchTestCase {
   @Test
   @RolapConfig(key = ConfigConstants.LEVEL_PRE_CACHE_THRESHOLD, value = "0", type = Integer.class)
   @RolapConfig(key = ConfigConstants.ALERT_NATIVE_EVALUATION_UNSUPPORTED, value = "ERROR", type = String.class)
+  // The DuckDB column_lifetime workaround below issues SET GLOBAL, which reaches the
+  // whole database instance. NAMED keeps that instance private to these methods and
+  // the lock stops them resetting the flag under each other.
+  @RolapContextTest(value = FoodmartTestInstance.class, dbScope = DbScope.NAMED,
+      scopeName = "duckdb-column-lifetime")
+  @ResourceLock("duckdb-disabled-optimizers")
   void testMon2202AnalyzerRunningSum(Context<?> context)  {
     withDuckDbColumnLifetimeDisabled(context, () -> {
         assertThatQuery(context.getConnectionWithDefaultRole(),
@@ -6177,6 +6196,12 @@ class NonEmptyTest extends BatchTestCase {
   @Test
   @RolapConfig(key = ConfigConstants.LEVEL_PRE_CACHE_THRESHOLD, value = "0", type = Integer.class)
   @RolapConfig(key = ConfigConstants.ALERT_NATIVE_EVALUATION_UNSUPPORTED, value = "ERROR", type = String.class)
+  // The DuckDB column_lifetime workaround below issues SET GLOBAL, which reaches the
+  // whole database instance. NAMED keeps that instance private to these methods and
+  // the lock stops them resetting the flag under each other.
+  @RolapContextTest(value = FoodmartTestInstance.class, dbScope = DbScope.NAMED,
+      scopeName = "duckdb-column-lifetime")
+  @ResourceLock("duckdb-disabled-optimizers")
   void testMon2202SeveralFilteredHierarchiesPlusMeasureFilter(Context<?> context)  {
     withDuckDbColumnLifetimeDisabled(context, () -> {
         assertThatQuery(context.getConnectionWithDefaultRole(),
@@ -6256,6 +6281,12 @@ class NonEmptyTest extends BatchTestCase {
   @Test
   @RolapConfig(key = ConfigConstants.LEVEL_PRE_CACHE_THRESHOLD, value = "0", type = Integer.class)
   @RolapConfig(key = ConfigConstants.ALERT_NATIVE_EVALUATION_UNSUPPORTED, value = "ERROR", type = String.class)
+  // The DuckDB column_lifetime workaround below issues SET GLOBAL, which reaches the
+  // whole database instance. NAMED keeps that instance private to these methods and
+  // the lock stops them resetting the flag under each other.
+  @RolapContextTest(value = FoodmartTestInstance.class, dbScope = DbScope.NAMED,
+      scopeName = "duckdb-column-lifetime")
+  @ResourceLock("duckdb-disabled-optimizers")
   void testMon2202AnalyzerCompoundMeasureFilterPlusTopCount(Context<?> context)  {
     withDuckDbColumnLifetimeDisabled(context, () -> {
         assertThatQuery(context.getConnectionWithDefaultRole(),
