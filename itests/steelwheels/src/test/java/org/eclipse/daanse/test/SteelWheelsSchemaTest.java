@@ -57,13 +57,10 @@ import org.eclipse.daanse.rolap.testkit.junit.api.RolapContextTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import org.eclipse.daanse.rolap.SchemaModifiersEmf;
 
 @RolapContextTest(SteelWheelsTestInstance.class)
-@Execution(ExecutionMode.SAME_THREAD)
 class SteelWheelsSchemaTest {
 
     /** Named bridge onto the SteelWheels CSVs (for the {@code data =} supplier form). */

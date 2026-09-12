@@ -151,8 +151,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.eclipse.daanse.rolap.itests.utils.EmfUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -164,7 +162,6 @@ import org.slf4j.LoggerFactory;
  * @since August 7, 2006
  */
 @RolapContextTest(FoodmartTestInstance.class)
-@Execution(ExecutionMode.SAME_THREAD)
 class SchemaTest {
 
     @AfterEach
