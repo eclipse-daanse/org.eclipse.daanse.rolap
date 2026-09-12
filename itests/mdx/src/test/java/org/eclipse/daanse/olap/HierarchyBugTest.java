@@ -61,11 +61,8 @@ import org.eclipse.daanse.rolap.testkit.junit.api.RolapContextTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.eclipse.daanse.test.FoodmartData;
 
-@Execution(ExecutionMode.SAME_THREAD)
 @RolapContextTest(FoodmartTestInstance.class)
 class HierarchyBugTest {
 

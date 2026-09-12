@@ -16,7 +16,10 @@ package org.eclipse.daanse.olap;
 
 import java.util.List;
 
+import org.eclipse.daanse.cwm.model.cwm.resource.relational.Column;
+import org.eclipse.daanse.cwm.model.cwm.resource.relational.Table;
 import org.eclipse.daanse.rolap.itests.utils.EmfUtil;
+import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.daanse.rolap.mapping.instance.emf.complex.foodmart.CatalogSupplier;
 import org.eclipse.daanse.rolap.mapping.model.catalog.Catalog;
 import org.eclipse.daanse.rolap.mapping.model.catalog.impl.CatalogImpl;
@@ -57,52 +60,55 @@ public class VerifyMemberLevelNamesIdentityOlap4jDateDimModifier implements Cata
     private final CatalogImpl catalog;
 
     // Static levels
-    private static final Level LEVEL_YEAR;
-    private static final Level LEVEL_QUARTER;
-    private static final Level LEVEL_MONTH;
+    private final Level LEVEL_YEAR;
+    private final Level LEVEL_QUARTER;
+    private final Level LEVEL_MONTH;
 
     // Static hierarchy
-    private static final ExplicitHierarchy HIERARCHY_DATE;
+    private final ExplicitHierarchy HIERARCHY_DATE;
 
     // Static dimension
-    private static final TimeDimension DIMENSION_DATE;
+    private final TimeDimension DIMENSION_DATE;
 
     // Static table query
-    private static final TableSource TABLE_QUERY;
+    private final TableSource TABLE_QUERY;
 
     // Static dimension connector
-    private static final DimensionConnector DIMENSION_CONNECTOR_DATE;
+    private final DimensionConnector DIMENSION_CONNECTOR_DATE;
 
-    static {
+
+    public VerifyMemberLevelNamesIdentityOlap4jDateDimModifier(Catalog baseCatalog) {
+        EcoreUtil.Copier copier = EmfUtil.copier((CatalogImpl) baseCatalog);
+        this.catalog = (CatalogImpl) copier.get(baseCatalog);
         // Create Level definitions using columns from CatalogSupplier
         LEVEL_YEAR = LevelFactory.eINSTANCE.createLevel();
         LEVEL_YEAR.setName("Year");
-        LEVEL_YEAR.setColumn(CatalogSupplier.COLUMN_THE_YEAR_TIME_BY_DAY);
+        LEVEL_YEAR.setColumn((Column) copier.get(CatalogSupplier.COLUMN_THE_YEAR_TIME_BY_DAY));
         LEVEL_YEAR.setColumnType(ColumnInternalDataType.NUMERIC);
         LEVEL_YEAR.setUniqueMembers(true);
         LEVEL_YEAR.setType(LevelDefinition.TIME_YEARS);
 
         LEVEL_QUARTER = LevelFactory.eINSTANCE.createLevel();
         LEVEL_QUARTER.setName("Quarter");
-        LEVEL_QUARTER.setColumn(CatalogSupplier.COLUMN_QUARTER_TIME_BY_DAY);
+        LEVEL_QUARTER.setColumn((Column) copier.get(CatalogSupplier.COLUMN_QUARTER_TIME_BY_DAY));
         LEVEL_QUARTER.setUniqueMembers(false);
         LEVEL_QUARTER.setType(LevelDefinition.TIME_QUARTERS);
 
         LEVEL_MONTH = LevelFactory.eINSTANCE.createLevel();
         LEVEL_MONTH.setName("Month");
-        LEVEL_MONTH.setColumn(CatalogSupplier.COLUMN_MONTH_OF_YEAR_TIME_BY_DAY);
+        LEVEL_MONTH.setColumn((Column) copier.get(CatalogSupplier.COLUMN_MONTH_OF_YEAR_TIME_BY_DAY));
         LEVEL_MONTH.setUniqueMembers(false);
         LEVEL_MONTH.setColumnType(ColumnInternalDataType.NUMERIC);
         LEVEL_MONTH.setType(LevelDefinition.TIME_MONTHS);
 
         // Create table query using table from CatalogSupplier
         TABLE_QUERY = SourceFactory.eINSTANCE.createTableSource();
-        TABLE_QUERY.setTable(CatalogSupplier.TABLE_TIME_BY_DAY);
+        TABLE_QUERY.setTable((Table) copier.get(CatalogSupplier.TABLE_TIME_BY_DAY));
 
         // Create Date hierarchy with hasAll=false
         HIERARCHY_DATE = HierarchyFactory.eINSTANCE.createExplicitHierarchy();
         HIERARCHY_DATE.setHasAll(false);
-        HIERARCHY_DATE.setPrimaryKey(CatalogSupplier.COLUMN_TIME_ID_TIME_BY_DAY);
+        HIERARCHY_DATE.setPrimaryKey((Column) copier.get(CatalogSupplier.COLUMN_TIME_ID_TIME_BY_DAY));
         HIERARCHY_DATE.setSource(TABLE_QUERY);
         HIERARCHY_DATE.getLevels().addAll(List.of(LEVEL_YEAR, LEVEL_QUARTER, LEVEL_MONTH));
 
@@ -114,13 +120,9 @@ public class VerifyMemberLevelNamesIdentityOlap4jDateDimModifier implements Cata
         // Create Dimension Connector using foreign key from CatalogSupplier
         DIMENSION_CONNECTOR_DATE = DimensionFactory.eINSTANCE.createDimensionConnector();
         DIMENSION_CONNECTOR_DATE.setOverrideDimensionName("Date");
-        DIMENSION_CONNECTOR_DATE.setForeignKey(CatalogSupplier.COLUMN_TIME_ID_SALESFACT);
+        DIMENSION_CONNECTOR_DATE.setForeignKey((Column) copier.get(CatalogSupplier.COLUMN_TIME_ID_SALESFACT));
         DIMENSION_CONNECTOR_DATE.setDimension(DIMENSION_DATE);
-    }
-
-    public VerifyMemberLevelNamesIdentityOlap4jDateDimModifier(Catalog baseCatalog) {
         // Copy the base catalog using EcoreUtil
-        this.catalog = EmfUtil.copy((CatalogImpl) baseCatalog);
 
         // Find and modify the Sales cube
         for (Cube cube : Packages.available(this.catalog, Cube.class)) {
