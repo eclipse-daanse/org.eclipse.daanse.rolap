@@ -8976,7 +8976,9 @@ public class SchemaModifiersEmf {
          * + "</VirtualCubeMeasure>" + "</VirtualCube>" + "</Schema>";
          */
         private Catalog catalog;
-        private static TimeDimension dTime;
+        // Instance, not static: the constructor builds it per modifier, so a shared
+        // field let two concurrent tests overwrite each other's Time dimension.
+        private TimeDimension dTime;
 
         public VirtualCubeTestModifier3(Catalog catalog2) {
             catalog = CatalogFactory.eINSTANCE.createCatalog();
