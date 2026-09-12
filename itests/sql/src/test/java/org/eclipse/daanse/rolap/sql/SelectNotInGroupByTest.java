@@ -41,8 +41,6 @@ import org.eclipse.daanse.rolap.testkit.junit.api.RolapConfig;
 import org.eclipse.daanse.rolap.testkit.junit.api.RolapContextTest;
 import org.eclipse.daanse.sql.dialect.api.Dialect;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import org.eclipse.daanse.rolap.testkit.assertions.DatabaseProduct;
 import org.eclipse.daanse.rolap.SchemaModifiersEmf;
@@ -53,15 +51,9 @@ import org.eclipse.daanse.test.FoodmartData;
  * Test that various values of {@link Dialect#allowsSelectNotInGroupBy}
  * produce correctly optimized SQL.
  *
- * <p>{@code SAME_THREAD}: every scenario composes its own {@code CatalogSupplier}
- * (FoodMart mapping) instance -- like {@link mondrian.rolap.aggmatcher.ExplicitRecognizerTest},
- * this opts out of the module's default concurrent execution so those
- * constructions don't race across this class's own methods.
- *
  * @author Eric McDermid
  */
 @RolapContextTest(FoodmartTestInstance.class)
-@Execution(ExecutionMode.SAME_THREAD)
 class SelectNotInGroupByTest {
 
     public static final String queryCubeA =

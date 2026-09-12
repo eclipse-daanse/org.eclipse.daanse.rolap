@@ -353,7 +353,7 @@ public class SchemaModifiersEmf {
 
         public RoleRestrictionWorksDfRoleDef(Catalog cat) {
             EcoreUtil.Copier copier = EmfUtil.copier((CatalogImpl) cat);
-            catalog = (Catalog) copier.get(cat);
+            this.catalog = (Catalog) copier.get(cat);
 
             AccessMemberGrant memberGrantWA = OlapFactory.eINSTANCE.createAccessMemberGrant();
             AccessMemberGrant memberGrantOR = OlapFactory.eINSTANCE.createAccessMemberGrant();
@@ -806,51 +806,54 @@ public class SchemaModifiersEmf {
 
     public static class SelectNotInGroupByTestModifier2 implements CatalogMappingSupplier {
 
-        private static final StandardDimension customStoreDimension = DimensionFactory.eINSTANCE.createStandardDimension();
-        private static final ExplicitHierarchy customStoreHierarchy = HierarchyFactory.eINSTANCE.createExplicitHierarchy();
-        private static final Level storeCountryLevel = LevelFactory.eINSTANCE.createLevel();
-        private static final Level storeCityLevel = LevelFactory.eINSTANCE.createLevel();
-        private static final Level storeNameLevel = LevelFactory.eINSTANCE.createLevel();
-        private static final MemberProperty storeStateProperty = LevelFactory.eINSTANCE.createMemberProperty();
+        private final StandardDimension customStoreDimension = DimensionFactory.eINSTANCE.createStandardDimension();
+        private final ExplicitHierarchy customStoreHierarchy = HierarchyFactory.eINSTANCE.createExplicitHierarchy();
+        private final Level storeCountryLevel = LevelFactory.eINSTANCE.createLevel();
+        private final Level storeCityLevel = LevelFactory.eINSTANCE.createLevel();
+        private final Level storeNameLevel = LevelFactory.eINSTANCE.createLevel();
+        private final MemberProperty storeStateProperty = LevelFactory.eINSTANCE.createMemberProperty();
 
-        private static final SumMeasure customStoreSalesMeasure = MeasureFactory.eINSTANCE.createSumMeasure();
-        private static final SumMeasure customStoreCostMeasure = MeasureFactory.eINSTANCE.createSumMeasure();
-        private static final CountMeasure salesCountMeasure = MeasureFactory.eINSTANCE.createCountMeasure();
-        private static final MeasureGroup measureGroup = CubeFactory.eINSTANCE.createMeasureGroup();
+        private final SumMeasure customStoreSalesMeasure = MeasureFactory.eINSTANCE.createSumMeasure();
+        private final SumMeasure customStoreCostMeasure = MeasureFactory.eINSTANCE.createSumMeasure();
+        private final CountMeasure salesCountMeasure = MeasureFactory.eINSTANCE.createCountMeasure();
+        private final MeasureGroup measureGroup = CubeFactory.eINSTANCE.createMeasureGroup();
 
-        private static final TableSource salesFactQuery = SourceFactory.eINSTANCE.createTableSource();
-        private static final TableSource storeQuery = SourceFactory.eINSTANCE.createTableSource();
-        private static final DimensionConnector customStoreConnector = DimensionFactory.eINSTANCE.createDimensionConnector();
-        private static final PhysicalCube customSalesCube = CubeFactory.eINSTANCE.createPhysicalCube();
+        private final TableSource salesFactQuery = SourceFactory.eINSTANCE.createTableSource();
+        private final TableSource storeQuery = SourceFactory.eINSTANCE.createTableSource();
+        private final DimensionConnector customStoreConnector = DimensionFactory.eINSTANCE.createDimensionConnector();
+        private final PhysicalCube customSalesCube = CubeFactory.eINSTANCE.createPhysicalCube();
         private Catalog catalog;
 
-        static {
+
+        public SelectNotInGroupByTestModifier2(Catalog cat) {
+            EcoreUtil.Copier copier = EmfUtil.copier((CatalogImpl) cat);
+            this.catalog = (Catalog) copier.get(cat);
             // Store State Property
             storeStateProperty.setName("Store State");
-            storeStateProperty.setColumn(CatalogSupplier.COLUMN_STORE_STATE_STORE);
+            storeStateProperty.setColumn((Column) copier.get(CatalogSupplier.COLUMN_STORE_STATE_STORE));
 
             // Store Country Level
             storeCountryLevel.setName("Store Country");
-            storeCountryLevel.setColumn(CatalogSupplier.COLUMN_STORE_COUNTRY_STORE);
+            storeCountryLevel.setColumn((Column) copier.get(CatalogSupplier.COLUMN_STORE_COUNTRY_STORE));
             storeCountryLevel.setUniqueMembers(true);
 
             // Store City Level
             storeCityLevel.setName("Store City");
-            storeCityLevel.setColumn(CatalogSupplier.COLUMN_STORE_CITY_STORE);
+            storeCityLevel.setColumn((Column) copier.get(CatalogSupplier.COLUMN_STORE_CITY_STORE));
             storeCityLevel.setUniqueMembers(false);
             storeCityLevel.getMemberProperties().add(storeStateProperty);
 
             // Store Name Level
             storeNameLevel.setName("Store Name");
-            storeNameLevel.setColumn(CatalogSupplier.COLUMN_STORE_NAME_STORE);
+            storeNameLevel.setColumn((Column) copier.get(CatalogSupplier.COLUMN_STORE_NAME_STORE));
             storeNameLevel.setUniqueMembers(true);
 
             // Store Query
-            storeQuery.setTable(CatalogSupplier.TABLE_STORE);
+            storeQuery.setTable((Table) copier.get(CatalogSupplier.TABLE_STORE));
 
             // Custom Store Hierarchy
             customStoreHierarchy.setHasAll(true);
-            customStoreHierarchy.setPrimaryKey(CatalogSupplier.COLUMN_STORE_ID_STORE);
+            customStoreHierarchy.setPrimaryKey((Column) copier.get(CatalogSupplier.COLUMN_STORE_ID_STORE));
             customStoreHierarchy.setSource(storeQuery);
             customStoreHierarchy.getLevels().addAll(List.of(storeCountryLevel, storeCityLevel, storeNameLevel));
 
@@ -860,35 +863,31 @@ public class SchemaModifiersEmf {
 
             // Measures
             customStoreSalesMeasure.setName("Custom Store Sales");
-            customStoreSalesMeasure.setColumn(CatalogSupplier.COLUMN_STORE_SALES_SALESFACT);
+            customStoreSalesMeasure.setColumn((Column) copier.get(CatalogSupplier.COLUMN_STORE_SALES_SALESFACT));
             customStoreSalesMeasure.setFormatString("#,###.00");
 
             customStoreCostMeasure.setName("Custom Store Cost");
-            customStoreCostMeasure.setColumn(CatalogSupplier.COLUMN_STORE_COST_SALESFACT);
+            customStoreCostMeasure.setColumn((Column) copier.get(CatalogSupplier.COLUMN_STORE_COST_SALESFACT));
 
             salesCountMeasure.setName("Sales Count");
-            salesCountMeasure.setColumn(CatalogSupplier.COLUMN_PRODUCT_ID_SALESFACT);
+            salesCountMeasure.setColumn((Column) copier.get(CatalogSupplier.COLUMN_PRODUCT_ID_SALESFACT));
 
             measureGroup.getMeasures()
                     .addAll(List.of(customStoreSalesMeasure, customStoreCostMeasure, salesCountMeasure));
 
             // Sales Fact Query
-            salesFactQuery.setTable(CatalogSupplier.TABLE_SALES_FACT);
+            salesFactQuery.setTable((Table) copier.get(CatalogSupplier.TABLE_SALES_FACT));
 
             // Custom Store Connector
             customStoreConnector.setOverrideDimensionName("CustomStore");
             customStoreConnector.setDimension(customStoreDimension);
-            customStoreConnector.setForeignKey(CatalogSupplier.COLUMN_STORE_ID_SALESFACT);
+            customStoreConnector.setForeignKey((Column) copier.get(CatalogSupplier.COLUMN_STORE_ID_SALESFACT));
 
             // Custom Sales Cube
             customSalesCube.setName("CustomSales");
             customSalesCube.setSource(salesFactQuery);
             customSalesCube.getDimensionConnectors().add(customStoreConnector);
             customSalesCube.getMeasureGroups().add(measureGroup);
-        }
-
-        public SelectNotInGroupByTestModifier2(Catalog cat) {
-            catalog = EmfUtil.copy((CatalogImpl) cat);
             catalog.getImportedElement().add(customSalesCube);
         }
 
@@ -905,7 +904,7 @@ public class SchemaModifiersEmf {
 
         public AggregationOnDistinctCountMeasuresTestModifier(Catalog cat) {
             EcoreUtil.Copier copier = EmfUtil.copier((CatalogImpl) cat);
-            catalog = (Catalog) copier.get(cat);
+            this.catalog = (Catalog) copier.get(cat);
             VirtualCube warehouseAndSales2 = CubeFactory.eINSTANCE.createVirtualCube();
             VirtualCube warehouseAndSales3 = CubeFactory.eINSTANCE.createVirtualCube();
 
@@ -993,52 +992,55 @@ public class SchemaModifiersEmf {
     // cubeA,
     public static class SelectNotInGroupByTestModifier1 implements CatalogMappingSupplier {
 
-        private static final StandardDimension customStoreDimension = DimensionFactory.eINSTANCE.createStandardDimension();
-        private static final ExplicitHierarchy customStoreHierarchy = HierarchyFactory.eINSTANCE.createExplicitHierarchy();
-        private static final Level levelStoreCountry = LevelFactory.eINSTANCE.createLevel();
-        private static final Level levelStoreCity = LevelFactory.eINSTANCE.createLevel();
-        private static final MemberProperty propertyStoreState = LevelFactory.eINSTANCE.createMemberProperty();
-        private static final Level levelStoreName = LevelFactory.eINSTANCE.createLevel();
+        private final StandardDimension customStoreDimension = DimensionFactory.eINSTANCE.createStandardDimension();
+        private final ExplicitHierarchy customStoreHierarchy = HierarchyFactory.eINSTANCE.createExplicitHierarchy();
+        private final Level levelStoreCountry = LevelFactory.eINSTANCE.createLevel();
+        private final Level levelStoreCity = LevelFactory.eINSTANCE.createLevel();
+        private final MemberProperty propertyStoreState = LevelFactory.eINSTANCE.createMemberProperty();
+        private final Level levelStoreName = LevelFactory.eINSTANCE.createLevel();
 
-        private static final TableSource queryStore = SourceFactory.eINSTANCE.createTableSource();
-        private static final TableSource querySalesFact = SourceFactory.eINSTANCE.createTableSource();
+        private final TableSource queryStore = SourceFactory.eINSTANCE.createTableSource();
+        private final TableSource querySalesFact = SourceFactory.eINSTANCE.createTableSource();
 
-        private static final SumMeasure measureStoreSales = MeasureFactory.eINSTANCE.createSumMeasure();
-        private static final SumMeasure measureStoreCost = MeasureFactory.eINSTANCE.createSumMeasure();
-        private static final CountMeasure measureSalesCount = MeasureFactory.eINSTANCE.createCountMeasure();
+        private final SumMeasure measureStoreSales = MeasureFactory.eINSTANCE.createSumMeasure();
+        private final SumMeasure measureStoreCost = MeasureFactory.eINSTANCE.createSumMeasure();
+        private final CountMeasure measureSalesCount = MeasureFactory.eINSTANCE.createCountMeasure();
 
-        private static final PhysicalCube customSalesCube = CubeFactory.eINSTANCE.createPhysicalCube();
-        private static final DimensionConnector dimensionConnectorStore = DimensionFactory.eINSTANCE.createDimensionConnector();
-        private static final MeasureGroup measureGroup = CubeFactory.eINSTANCE.createMeasureGroup();
+        private final PhysicalCube customSalesCube = CubeFactory.eINSTANCE.createPhysicalCube();
+        private final DimensionConnector dimensionConnectorStore = DimensionFactory.eINSTANCE.createDimensionConnector();
+        private final MeasureGroup measureGroup = CubeFactory.eINSTANCE.createMeasureGroup();
         private Catalog catalog;
-        static {
+
+        public SelectNotInGroupByTestModifier1(Catalog catalog) {
+            EcoreUtil.Copier copier = EmfUtil.copier((CatalogImpl) catalog);
+            this.catalog = (Catalog) copier.get(catalog);
             // Configure Store Country level
             levelStoreCountry.setName("Store Country");
-            levelStoreCountry.setColumn(CatalogSupplier.COLUMN_STORE_COUNTRY_STORE);
+            levelStoreCountry.setColumn((Column) copier.get(CatalogSupplier.COLUMN_STORE_COUNTRY_STORE));
             levelStoreCountry.setUniqueMembers(true);
 
             // Configure Store State property
             propertyStoreState.setName("Store State");
-            propertyStoreState.setColumn(CatalogSupplier.COLUMN_STORE_STATE_STORE);
+            propertyStoreState.setColumn((Column) copier.get(CatalogSupplier.COLUMN_STORE_STATE_STORE));
             propertyStoreState.setDependsOnLevelValue(true);
 
             // Configure Store City level with property
             levelStoreCity.setName("Store City");
-            levelStoreCity.setColumn(CatalogSupplier.COLUMN_STORE_CITY_STORE);
+            levelStoreCity.setColumn((Column) copier.get(CatalogSupplier.COLUMN_STORE_CITY_STORE));
             levelStoreCity.setUniqueMembers(false);
             levelStoreCity.getMemberProperties().add(propertyStoreState);
 
             // Configure Store Name level
             levelStoreName.setName("Store Name");
-            levelStoreName.setColumn(CatalogSupplier.COLUMN_STORE_NAME_STORE);
+            levelStoreName.setColumn((Column) copier.get(CatalogSupplier.COLUMN_STORE_NAME_STORE));
             levelStoreName.setUniqueMembers(true);
 
             // Configure store table query
-            queryStore.setTable(CatalogSupplier.TABLE_STORE);
+            queryStore.setTable((Table) copier.get(CatalogSupplier.TABLE_STORE));
 
             // Configure custom store hierarchy
             customStoreHierarchy.setHasAll(true);
-            customStoreHierarchy.setPrimaryKey(CatalogSupplier.COLUMN_STORE_ID_STORE);
+            customStoreHierarchy.setPrimaryKey((Column) copier.get(CatalogSupplier.COLUMN_STORE_ID_STORE));
             customStoreHierarchy.setSource(queryStore);
             customStoreHierarchy.getLevels().addAll(List.of(levelStoreCountry, levelStoreCity, levelStoreName));
 
@@ -1048,22 +1050,22 @@ public class SchemaModifiersEmf {
 
             // Configure measures
             measureStoreSales.setName("Custom Store Sales");
-            measureStoreSales.setColumn(CatalogSupplier.COLUMN_STORE_SALES_SALESFACT);
+            measureStoreSales.setColumn((Column) copier.get(CatalogSupplier.COLUMN_STORE_SALES_SALESFACT));
             measureStoreSales.setFormatString("#,###.00");
 
             measureStoreCost.setName("Custom Store Cost");
-            measureStoreCost.setColumn(CatalogSupplier.COLUMN_STORE_COST_SALESFACT);
+            measureStoreCost.setColumn((Column) copier.get(CatalogSupplier.COLUMN_STORE_COST_SALESFACT));
 
             measureSalesCount.setName("Sales Count");
-            measureSalesCount.setColumn(CatalogSupplier.COLUMN_PRODUCT_ID_SALESFACT);
+            measureSalesCount.setColumn((Column) copier.get(CatalogSupplier.COLUMN_PRODUCT_ID_SALESFACT));
 
             // Configure sales fact query
-            querySalesFact.setTable(CatalogSupplier.TABLE_SALES_FACT);
+            querySalesFact.setTable((Table) copier.get(CatalogSupplier.TABLE_SALES_FACT));
 
             // Configure dimension connector
             dimensionConnectorStore.setOverrideDimensionName("CustomStore");
             dimensionConnectorStore.setDimension(customStoreDimension);
-            dimensionConnectorStore.setForeignKey(CatalogSupplier.COLUMN_STORE_ID_SALESFACT);
+            dimensionConnectorStore.setForeignKey((Column) copier.get(CatalogSupplier.COLUMN_STORE_ID_SALESFACT));
 
             // Configure measure group
             measureGroup.getMeasures().addAll(List.of(measureStoreSales, measureStoreCost, measureSalesCount));
@@ -1073,10 +1075,6 @@ public class SchemaModifiersEmf {
             customSalesCube.setSource(querySalesFact);
             customSalesCube.getDimensionConnectors().add(dimensionConnectorStore);
             customSalesCube.getMeasureGroups().add(measureGroup);
-        }
-
-        public SelectNotInGroupByTestModifier1(Catalog catalog) {
-            this.catalog = EmfUtil.copy((CatalogImpl) catalog);
             this.catalog.getImportedElement().add(customSalesCube);
         }
 
@@ -1091,53 +1089,56 @@ public class SchemaModifiersEmf {
     // cubeA
     public static class SelectNotInGroupByTestModifier3 implements CatalogMappingSupplier {
 
-        private static final StandardDimension customStoreDimension = DimensionFactory.eINSTANCE.createStandardDimension();
-        private static final ExplicitHierarchy customStoreHierarchy = HierarchyFactory.eINSTANCE.createExplicitHierarchy();
-        private static final Level levelStoreCountry = LevelFactory.eINSTANCE.createLevel();
-        private static final Level levelStoreCity = LevelFactory.eINSTANCE.createLevel();
-        private static final MemberProperty propertyStoreState = LevelFactory.eINSTANCE.createMemberProperty();
-        private static final Level levelStoreName = LevelFactory.eINSTANCE.createLevel();
+        private final StandardDimension customStoreDimension = DimensionFactory.eINSTANCE.createStandardDimension();
+        private final ExplicitHierarchy customStoreHierarchy = HierarchyFactory.eINSTANCE.createExplicitHierarchy();
+        private final Level levelStoreCountry = LevelFactory.eINSTANCE.createLevel();
+        private final Level levelStoreCity = LevelFactory.eINSTANCE.createLevel();
+        private final MemberProperty propertyStoreState = LevelFactory.eINSTANCE.createMemberProperty();
+        private final Level levelStoreName = LevelFactory.eINSTANCE.createLevel();
 
-        private static final TableSource queryStore = SourceFactory.eINSTANCE.createTableSource();
-        private static final TableSource querySalesFact = SourceFactory.eINSTANCE.createTableSource();
+        private final TableSource queryStore = SourceFactory.eINSTANCE.createTableSource();
+        private final TableSource querySalesFact = SourceFactory.eINSTANCE.createTableSource();
 
-        private static final SumMeasure measureStoreSales = MeasureFactory.eINSTANCE.createSumMeasure();
-        private static final SumMeasure measureStoreCost = MeasureFactory.eINSTANCE.createSumMeasure();
-        private static final CountMeasure measureSalesCount = MeasureFactory.eINSTANCE.createCountMeasure();
+        private final SumMeasure measureStoreSales = MeasureFactory.eINSTANCE.createSumMeasure();
+        private final SumMeasure measureStoreCost = MeasureFactory.eINSTANCE.createSumMeasure();
+        private final CountMeasure measureSalesCount = MeasureFactory.eINSTANCE.createCountMeasure();
 
-        private static final PhysicalCube customSalesCube = CubeFactory.eINSTANCE.createPhysicalCube();
-        private static final DimensionConnector dimensionConnectorStore = DimensionFactory.eINSTANCE.createDimensionConnector();
-        private static final MeasureGroup measureGroup = CubeFactory.eINSTANCE.createMeasureGroup();
+        private final PhysicalCube customSalesCube = CubeFactory.eINSTANCE.createPhysicalCube();
+        private final DimensionConnector dimensionConnectorStore = DimensionFactory.eINSTANCE.createDimensionConnector();
+        private final MeasureGroup measureGroup = CubeFactory.eINSTANCE.createMeasureGroup();
         private Catalog catalog;
 
-        static {
+
+        public SelectNotInGroupByTestModifier3(Catalog catalog) {
+            EcoreUtil.Copier copier = EmfUtil.copier((CatalogImpl) catalog);
+            this.catalog = (Catalog) copier.get(catalog);
             // Configure Store Country level
             levelStoreCountry.setName("Store Country");
-            levelStoreCountry.setColumn(CatalogSupplier.COLUMN_STORE_COUNTRY_STORE);
+            levelStoreCountry.setColumn((Column) copier.get(CatalogSupplier.COLUMN_STORE_COUNTRY_STORE));
             levelStoreCountry.setUniqueMembers(true);
 
             // Configure Store State property (depends on level value)
             propertyStoreState.setName("Store State");
-            propertyStoreState.setColumn(CatalogSupplier.COLUMN_STORE_STATE_STORE);
+            propertyStoreState.setColumn((Column) copier.get(CatalogSupplier.COLUMN_STORE_STATE_STORE));
             propertyStoreState.setDependsOnLevelValue(true);
 
             // Configure Store City level with property
             levelStoreCity.setName("Store City");
-            levelStoreCity.setColumn(CatalogSupplier.COLUMN_STORE_CITY_STORE);
+            levelStoreCity.setColumn((Column) copier.get(CatalogSupplier.COLUMN_STORE_CITY_STORE));
             levelStoreCity.setUniqueMembers(false);
             levelStoreCity.getMemberProperties().add(propertyStoreState);
 
             // Configure Store Name level
             levelStoreName.setName("Store Name");
-            levelStoreName.setColumn(CatalogSupplier.COLUMN_STORE_NAME_STORE);
+            levelStoreName.setColumn((Column) copier.get(CatalogSupplier.COLUMN_STORE_NAME_STORE));
             levelStoreName.setUniqueMembers(true);
 
             // Configure store table query
-            queryStore.setTable(CatalogSupplier.TABLE_STORE);
+            queryStore.setTable((Table) copier.get(CatalogSupplier.TABLE_STORE));
 
             // Configure custom store hierarchy with unique key level
             customStoreHierarchy.setHasAll(true);
-            customStoreHierarchy.setPrimaryKey(CatalogSupplier.COLUMN_STORE_ID_STORE);
+            customStoreHierarchy.setPrimaryKey((Column) copier.get(CatalogSupplier.COLUMN_STORE_ID_STORE));
             customStoreHierarchy.setUniqueKeyLevelName("Store Name");
             customStoreHierarchy.setSource(queryStore);
             customStoreHierarchy.getLevels().addAll(List.of(levelStoreCountry, levelStoreCity, levelStoreName));
@@ -1148,22 +1149,22 @@ public class SchemaModifiersEmf {
 
             // Configure measures
             measureStoreSales.setName("Custom Store Sales");
-            measureStoreSales.setColumn(CatalogSupplier.COLUMN_STORE_SALES_SALESFACT);
+            measureStoreSales.setColumn((Column) copier.get(CatalogSupplier.COLUMN_STORE_SALES_SALESFACT));
             measureStoreSales.setFormatString("#,###.00");
 
             measureStoreCost.setName("Custom Store Cost");
-            measureStoreCost.setColumn(CatalogSupplier.COLUMN_STORE_COST_SALESFACT);
+            measureStoreCost.setColumn((Column) copier.get(CatalogSupplier.COLUMN_STORE_COST_SALESFACT));
 
             measureSalesCount.setName("Sales Count");
-            measureSalesCount.setColumn(CatalogSupplier.COLUMN_PRODUCT_ID_SALESFACT);
+            measureSalesCount.setColumn((Column) copier.get(CatalogSupplier.COLUMN_PRODUCT_ID_SALESFACT));
 
             // Configure sales fact query
-            querySalesFact.setTable(CatalogSupplier.TABLE_SALES_FACT);
+            querySalesFact.setTable((Table) copier.get(CatalogSupplier.TABLE_SALES_FACT));
 
             // Configure dimension connector
             dimensionConnectorStore.setOverrideDimensionName("CustomStore");
             dimensionConnectorStore.setDimension(customStoreDimension);
-            dimensionConnectorStore.setForeignKey(CatalogSupplier.COLUMN_STORE_ID_SALESFACT);
+            dimensionConnectorStore.setForeignKey((Column) copier.get(CatalogSupplier.COLUMN_STORE_ID_SALESFACT));
 
             // Configure measure group
             measureGroup.getMeasures().addAll(List.of(measureStoreSales, measureStoreCost, measureSalesCount));
@@ -1173,10 +1174,6 @@ public class SchemaModifiersEmf {
             customSalesCube.setSource(querySalesFact);
             customSalesCube.getDimensionConnectors().add(dimensionConnectorStore);
             customSalesCube.getMeasureGroups().add(measureGroup);
-        }
-
-        public SelectNotInGroupByTestModifier3(Catalog catalog) {
-            this.catalog = EmfUtil.copy((CatalogImpl) catalog);
             this.catalog.getImportedElement().add(customSalesCube);
         }
 
@@ -1191,53 +1188,56 @@ public class SchemaModifiersEmf {
     // cubeA
     public static class SelectNotInGroupByTestModifier4 implements CatalogMappingSupplier {
 
-        private static final StandardDimension customStoreDimension = DimensionFactory.eINSTANCE.createStandardDimension();
-        private static final ExplicitHierarchy customStoreHierarchy = HierarchyFactory.eINSTANCE.createExplicitHierarchy();
-        private static final Level levelStoreCountry = LevelFactory.eINSTANCE.createLevel();
-        private static final Level levelStoreCity = LevelFactory.eINSTANCE.createLevel();
-        private static final MemberProperty propertyStoreState = LevelFactory.eINSTANCE.createMemberProperty();
-        private static final Level levelStoreName = LevelFactory.eINSTANCE.createLevel();
+        private final StandardDimension customStoreDimension = DimensionFactory.eINSTANCE.createStandardDimension();
+        private final ExplicitHierarchy customStoreHierarchy = HierarchyFactory.eINSTANCE.createExplicitHierarchy();
+        private final Level levelStoreCountry = LevelFactory.eINSTANCE.createLevel();
+        private final Level levelStoreCity = LevelFactory.eINSTANCE.createLevel();
+        private final MemberProperty propertyStoreState = LevelFactory.eINSTANCE.createMemberProperty();
+        private final Level levelStoreName = LevelFactory.eINSTANCE.createLevel();
 
-        private static final TableSource queryStore = SourceFactory.eINSTANCE.createTableSource();
-        private static final TableSource querySalesFact = SourceFactory.eINSTANCE.createTableSource();
+        private final TableSource queryStore = SourceFactory.eINSTANCE.createTableSource();
+        private final TableSource querySalesFact = SourceFactory.eINSTANCE.createTableSource();
 
-        private static final SumMeasure measureStoreSales = MeasureFactory.eINSTANCE.createSumMeasure();
-        private static final SumMeasure measureStoreCost = MeasureFactory.eINSTANCE.createSumMeasure();
-        private static final CountMeasure measureSalesCount = MeasureFactory.eINSTANCE.createCountMeasure();
+        private final SumMeasure measureStoreSales = MeasureFactory.eINSTANCE.createSumMeasure();
+        private final SumMeasure measureStoreCost = MeasureFactory.eINSTANCE.createSumMeasure();
+        private final CountMeasure measureSalesCount = MeasureFactory.eINSTANCE.createCountMeasure();
 
-        private static final PhysicalCube customSalesCube = CubeFactory.eINSTANCE.createPhysicalCube();
-        private static final DimensionConnector dimensionConnectorStore = DimensionFactory.eINSTANCE.createDimensionConnector();
-        private static final MeasureGroup measureGroup = CubeFactory.eINSTANCE.createMeasureGroup();
+        private final PhysicalCube customSalesCube = CubeFactory.eINSTANCE.createPhysicalCube();
+        private final DimensionConnector dimensionConnectorStore = DimensionFactory.eINSTANCE.createDimensionConnector();
+        private final MeasureGroup measureGroup = CubeFactory.eINSTANCE.createMeasureGroup();
         private Catalog catalog;
 
-        static {
+
+        public SelectNotInGroupByTestModifier4(Catalog catalog) {
+            EcoreUtil.Copier copier = EmfUtil.copier((CatalogImpl) catalog);
+            this.catalog = (Catalog) copier.get(catalog);
             // Configure Store Country level
             levelStoreCountry.setName("Store Country");
-            levelStoreCountry.setColumn(CatalogSupplier.COLUMN_STORE_COUNTRY_STORE);
+            levelStoreCountry.setColumn((Column) copier.get(CatalogSupplier.COLUMN_STORE_COUNTRY_STORE));
             levelStoreCountry.setUniqueMembers(true);
 
             // Configure Store State property (does NOT depend on level value)
             propertyStoreState.setName("Store State");
-            propertyStoreState.setColumn(CatalogSupplier.COLUMN_STORE_STATE_STORE);
+            propertyStoreState.setColumn((Column) copier.get(CatalogSupplier.COLUMN_STORE_STATE_STORE));
             propertyStoreState.setDependsOnLevelValue(false);
 
             // Configure Store City level with property
             levelStoreCity.setName("Store City");
-            levelStoreCity.setColumn(CatalogSupplier.COLUMN_STORE_CITY_STORE);
+            levelStoreCity.setColumn((Column) copier.get(CatalogSupplier.COLUMN_STORE_CITY_STORE));
             levelStoreCity.setUniqueMembers(false);
             levelStoreCity.getMemberProperties().add(propertyStoreState);
 
             // Configure Store Name level
             levelStoreName.setName("Store Name");
-            levelStoreName.setColumn(CatalogSupplier.COLUMN_STORE_NAME_STORE);
+            levelStoreName.setColumn((Column) copier.get(CatalogSupplier.COLUMN_STORE_NAME_STORE));
             levelStoreName.setUniqueMembers(true);
 
             // Configure store table query
-            queryStore.setTable(CatalogSupplier.TABLE_STORE);
+            queryStore.setTable((Table) copier.get(CatalogSupplier.TABLE_STORE));
 
             // Configure custom store hierarchy with unique key level
             customStoreHierarchy.setHasAll(true);
-            customStoreHierarchy.setPrimaryKey(CatalogSupplier.COLUMN_STORE_ID_STORE);
+            customStoreHierarchy.setPrimaryKey((Column) copier.get(CatalogSupplier.COLUMN_STORE_ID_STORE));
             customStoreHierarchy.setUniqueKeyLevelName("Store Name");
             customStoreHierarchy.setSource(queryStore);
             customStoreHierarchy.getLevels().addAll(List.of(levelStoreCountry, levelStoreCity, levelStoreName));
@@ -1248,22 +1248,22 @@ public class SchemaModifiersEmf {
 
             // Configure measures
             measureStoreSales.setName("Custom Store Sales");
-            measureStoreSales.setColumn(CatalogSupplier.COLUMN_STORE_SALES_SALESFACT);
+            measureStoreSales.setColumn((Column) copier.get(CatalogSupplier.COLUMN_STORE_SALES_SALESFACT));
             measureStoreSales.setFormatString("#,###.00");
 
             measureStoreCost.setName("Custom Store Cost");
-            measureStoreCost.setColumn(CatalogSupplier.COLUMN_STORE_COST_SALESFACT);
+            measureStoreCost.setColumn((Column) copier.get(CatalogSupplier.COLUMN_STORE_COST_SALESFACT));
 
             measureSalesCount.setName("Sales Count");
-            measureSalesCount.setColumn(CatalogSupplier.COLUMN_PRODUCT_ID_SALESFACT);
+            measureSalesCount.setColumn((Column) copier.get(CatalogSupplier.COLUMN_PRODUCT_ID_SALESFACT));
 
             // Configure sales fact query
-            querySalesFact.setTable(CatalogSupplier.TABLE_SALES_FACT);
+            querySalesFact.setTable((Table) copier.get(CatalogSupplier.TABLE_SALES_FACT));
 
             // Configure dimension connector
             dimensionConnectorStore.setOverrideDimensionName("CustomStore");
             dimensionConnectorStore.setDimension(customStoreDimension);
-            dimensionConnectorStore.setForeignKey(CatalogSupplier.COLUMN_STORE_ID_SALESFACT);
+            dimensionConnectorStore.setForeignKey((Column) copier.get(CatalogSupplier.COLUMN_STORE_ID_SALESFACT));
 
             // Configure measure group
             measureGroup.getMeasures().addAll(List.of(measureStoreSales, measureStoreCost, measureSalesCount));
@@ -1273,10 +1273,6 @@ public class SchemaModifiersEmf {
             customSalesCube.setSource(querySalesFact);
             customSalesCube.getDimensionConnectors().add(dimensionConnectorStore);
             customSalesCube.getMeasureGroups().add(measureGroup);
-        }
-
-        public SelectNotInGroupByTestModifier4(Catalog catalog) {
-            this.catalog = EmfUtil.copy((CatalogImpl) catalog);
             this.catalog.getImportedElement().add(customSalesCube);
         }
 

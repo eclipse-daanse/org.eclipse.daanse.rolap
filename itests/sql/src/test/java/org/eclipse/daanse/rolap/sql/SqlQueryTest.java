@@ -57,8 +57,6 @@ import org.eclipse.daanse.rolap.testkit.junit.api.Roles;
 import org.eclipse.daanse.sql.dialect.api.Dialect;
 import org.eclipse.daanse.sql.dialect.db.common.AbstractJdbcDialect;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import org.eclipse.daanse.rolap.testkit.assertions.DatabaseProduct;
 import org.eclipse.daanse.rolap.SchemaModifiersEmf;
@@ -67,17 +65,10 @@ import org.eclipse.daanse.test.FoodmartData;
 /**
  * Test for <code>QueryRecorder</code>.
  *
- * <p>{@code SAME_THREAD}: the methods that need extra schema each compose
- * their own {@code CatalogSupplier} (FoodMart mapping) instance -- like
- * {@link mondrian.rolap.aggmatcher.ExplicitRecognizerTest}, this opts out of
- * the module's default concurrent execution so those constructions don't
- * race across this class's own methods.
- *
  * @author Thiyagu
  * @since 06-Jun-2007
  */
 @RolapContextTest(FoodmartTestInstance.class)
-@Execution(ExecutionMode.SAME_THREAD)
 class SqlQueryTest {
 
     @Test
