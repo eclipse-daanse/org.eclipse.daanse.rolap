@@ -121,7 +121,8 @@ public final class RolapFixture {
     }
 
     public CatalogMappingSupplier mappingSupplier() {
-        return mappingSupplier;
+        // Guarded: the generated suppliers mutate a JVM-shared model on get().
+        return SharedMappingAccess.guarded(mappingSupplier);
     }
 
     public DatabaseSupplier databaseSupplier() {

@@ -110,11 +110,13 @@ final class DatabaseProvisioner {
 
     private static void load(RolapFixture fixture, ActiveDatabase database) throws Exception {
         if (fixture.databaseSupplier() != null) {
-            // Phase-2 layered path: CWM Schema -> DDL -> data.
-            DatabaseLayer.apply(database.dataSource(), database.dialect(), fixture.databaseSupplier().schema());
+            // Phase-2 layered path: CWM Schema -> DDL -> data. Resolved once, under
+            // the shared-model lock: schema() reaches the generated CatalogSupplier,
+            // which mutates a JVM-shared EMF graph on every call.
+            var schema = SharedMappingAccess.resolve(() -> fixture.databaseSupplier().schema());
+            DatabaseLayer.apply(database.dataSource(), database.dialect(), schema);
             if (fixture.dataSupplier() != null) {
-                DataLayer.apply(database.dataSource(), database.dialect(), fixture.databaseSupplier().schema(),
-                        fixture.dataSupplier());
+                DataLayer.apply(database.dataSource(), database.dialect(), schema, fixture.dataSupplier());
             }
         } else if (fixture.instance() != null) {
             // Phase-1 backwards-compat: CSVs with SQL-type row.

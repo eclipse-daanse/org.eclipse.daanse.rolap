@@ -31,6 +31,12 @@ final class CatalogComposer {
 
     static CatalogMappingSupplier compose(List<Class<? extends CatalogMappingSupplier>> classes,
             String describedLocation) {
+        // Composition reads (and the generated suppliers mutate) the shared model.
+        return SharedMappingAccess.resolve(() -> composeUnguarded(classes, describedLocation));
+    }
+
+    private static CatalogMappingSupplier composeUnguarded(List<Class<? extends CatalogMappingSupplier>> classes,
+            String describedLocation) {
         CatalogMappingSupplier current = RolapFixture.instantiate(classes.get(0), describedLocation);
         for (Class<? extends CatalogMappingSupplier> next : classes.subList(1, classes.size())) {
             Constructor<? extends CatalogMappingSupplier> wrapping = catalogConstructor(next);
