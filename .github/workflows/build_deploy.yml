@@ -16,6 +16,11 @@ jobs:
       contents: read
       checks: write
     uses: eclipse-daanse/.github/.github/workflows/reuse_java_build_test.yml@main
+    with:
+      # the restored Maven cache carries snapshot metadata from before a
+      # sibling repository's deploy; -U re-checks the snapshots every run
+      build-maven-args: '-U'
+      test-maven-args: '-U'
 
   maven_deploy:
     if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
