@@ -22,7 +22,8 @@ import org.eclipse.daanse.olap.api.query.component.Expression;
 import org.eclipse.daanse.olap.element.MemberBase;
 import org.eclipse.daanse.olap.util.type.TypeWrapperExp;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
-import org.eclipse.daanse.rolap.common.evaluator.RolapEvaluatorRoot;
+import org.eclipse.daanse.olap.evaluator.CompoundSlicerMember;
+import org.eclipse.daanse.olap.evaluator.EvaluatorRoot;
 import org.eclipse.daanse.olap.result.ValueFormatter;
 
 /**
@@ -30,7 +31,7 @@ import org.eclipse.daanse.olap.result.ValueFormatter;
  * cases where calculated members elsewhere in the query can override the context of the slicer members. See
  * MONDRIAN-1226.
  */
-public class CompoundSlicerRolapMember extends DelegatingRolapMember implements RolapMeasure {
+public class CompoundSlicerRolapMember extends DelegatingRolapMember implements RolapMeasure, CompoundSlicerMember {
   private final Calc calc;
   private final ValueFormatter valueFormatter;
   private final TupleList tupleList;
@@ -56,7 +57,7 @@ public class CompoundSlicerRolapMember extends DelegatingRolapMember implements 
   }
 
   @Override
-  public Calc getCompiledExpression( RolapEvaluatorRoot root ) {
+  public Calc getCompiledExpression( EvaluatorRoot root ) {
     return calc;
   }
 

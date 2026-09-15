@@ -177,7 +177,7 @@ public class RolapDependencyTestingEvaluator extends RolapEvaluator {
 
     @Override
 	public RolapEvaluator pushClone(List<List<Member>> aggregationList) {
-        return new RolapDependencyTestingEvaluator(root, this, aggregationList);
+        return new RolapDependencyTestingEvaluator(getRoot(), this, aggregationList);
     }
 
     private boolean equals(Object o1, Object o2) {

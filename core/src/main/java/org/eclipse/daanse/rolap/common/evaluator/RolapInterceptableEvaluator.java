@@ -86,7 +86,7 @@ public class RolapInterceptableEvaluator extends RolapEvaluator {
 
     @Override
     protected RolapEvaluator pushClone(List<List<Member>> aggregationList) {
-        return new RolapInterceptableEvaluator(root, this, aggregationList);
+        return new RolapInterceptableEvaluator(getRoot(), this, aggregationList);
     }
 
     public static class InterceptableEvaluatorCompiler extends DelegatingExpressionCompiler {

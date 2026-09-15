@@ -106,7 +106,7 @@ class ContextContributionLazySlicerExpansionTest {
     @Test
     void executedLiftedReadExpandsWithAResultRootInjected() throws Exception {
         RolapEvaluator evaluator = mockEvaluator();
-        Field rootField = RolapEvaluator.class.getDeclaredField("root");
+        Field rootField = org.eclipse.daanse.olap.evaluator.EvaluatorImpl.class.getDeclaredField("root");
         rootField.setAccessible(true);
         rootField.set(evaluator,
             mock(org.eclipse.daanse.rolap.common.result.RolapResult.RolapResultEvaluatorRoot.class));

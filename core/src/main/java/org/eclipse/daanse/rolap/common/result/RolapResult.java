@@ -121,11 +121,12 @@ import org.eclipse.daanse.rolap.aggregator.DistinctCountAggregator;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.agg.AggregationManager;
 import org.eclipse.daanse.rolap.common.evaluator.RolapDependencyTestingEvaluator;
+import org.eclipse.daanse.olap.evaluator.EvaluatorImpl;
+import org.eclipse.daanse.olap.evaluator.NamedSetEvaluatorImpl;
+import org.eclipse.daanse.olap.evaluator.SetEvaluatorImpl;
 import org.eclipse.daanse.rolap.common.evaluator.RolapEvaluator;
 import org.eclipse.daanse.rolap.common.evaluator.RolapEvaluatorRoot;
 import org.eclipse.daanse.rolap.common.evaluator.RolapInterceptableEvaluator;
-import org.eclipse.daanse.rolap.common.evaluator.RolapNamedSetEvaluator;
-import org.eclipse.daanse.rolap.common.evaluator.RolapSetEvaluator;
 import org.eclipse.daanse.rolap.element.CompoundSlicerRolapMember;
 import org.eclipse.daanse.rolap.element.RolapBaseCubeMeasure;
 import org.eclipse.daanse.rolap.element.RolapCube;
@@ -570,7 +571,7 @@ public class RolapResult extends ResultBase {
           Member placeholder =
               setPlaceholderSlicerAxis( (RolapMember) tupleList.get( 0 ).get( 0 ), calc, true, tupleList, solveOrder );
 
-          Util.explain( evaluator.root.statement.getProfileHandler(), "Axis (FILTER):", query.getSlicerCalc(), evaluator
+          Util.explain( evaluator.getRoot().statement.getProfileHandler(), "Axis (FILTER):", query.getSlicerCalc(), evaluator
               .getTiming() );
 
           evaluator.setContext( placeholder );
@@ -666,7 +667,7 @@ public class RolapResult extends ResultBase {
 
               if ( !redo ) {
                 Util.explain(
-                    evaluator.root.statement.getProfileHandler(),
+                    evaluator.getRoot().statement.getProfileHandler(),
                     new StringBuilder("Axis (").append(axis.getAxisName()).append("):").toString(),
                     calc,
                     evaluator.getTiming() );
@@ -692,7 +693,7 @@ public class RolapResult extends ResultBase {
         final RolapEvaluator finalInternalSlicerEvaluator = internalSlicerEvaluator;
         ExecutionContext.where(execution.asContext(), () -> {
           executeBody( finalInternalSlicerEvaluator, query, new int[axes.length] );
-          Util.explain( evaluator.root.statement.getProfileHandler(), "QueryBody:", null, evaluator.getTiming() );
+          Util.explain( evaluator.getRoot().statement.getProfileHandler(), "QueryBody:", null, evaluator.getTiming() );
         });
       }
 
@@ -1481,7 +1482,8 @@ public Cell getCell( int[] pos ) {
    * @return Members which form the context of the given cell
  */
   public RolapMember[] getCellMembers( int[] pos ) {
-    RolapMember[] members = (RolapMember[]) evaluator.getMembers().clone();
+    final Member[] current = evaluator.getMembers();
+    RolapMember[] members = java.util.Arrays.copyOf( current, current.length, RolapMember[].class );
     for ( int i = 0; i < pos.length; i++ ) {
       Position position = axes[i].getPositions().get( pos[i] );
       for ( Member member : position ) {
@@ -1692,8 +1694,8 @@ public Cell getCell( int[] pos ) {
     /**
      * Maps the names of sets to their values. Populated on demand.
  */
-    private final Map<String, RolapSetEvaluator> setEvaluators = new HashMap<>();
-    private final Map<String, RolapNamedSetEvaluator> namedSetEvaluators =
+    private final Map<String, SetEvaluatorImpl> setEvaluators = new HashMap<>();
+    private final Map<String, NamedSetEvaluatorImpl> namedSetEvaluators =
         new HashMap<>();
 
     public final RolapResult result;
@@ -1707,15 +1709,30 @@ public Cell getCell( int[] pos ) {
     }
 
     @Override
+    public EvaluatorImpl slicerEvaluator() {
+      return result.slicerEvaluator;
+    }
+
+    @Override
+    public Object evaluateExpression( Calc<?> calc, EvaluatorImpl slicerEvaluator, Evaluator contextEvaluator ) {
+      return result.evaluateExp( calc, (RolapEvaluator) slicerEvaluator, contextEvaluator );
+    }
+
+    @Override
+    public boolean isDirty() {
+      return result.isDirty();
+    }
+
+    @Override
 	protected Evaluator.NamedSetEvaluator evaluateNamedSet( final NamedSet namedSet, boolean create ) {
       final String name = namedSet.getNameUniqueWithinQuery();
       if ( namedSet.isDynamic() && !create ) {
-          RolapNamedSetEvaluator value = new RolapNamedSetEvaluator( this, namedSet );
+          NamedSetEvaluatorImpl value = new NamedSetEvaluatorImpl( this, namedSet );
           namedSetEvaluators.put( name, value );
           return value;
 
       } else {
-        return namedSetEvaluators.computeIfAbsent(name, k -> new RolapNamedSetEvaluator( this, namedSet ));
+        return namedSetEvaluators.computeIfAbsent(name, k -> new NamedSetEvaluatorImpl( this, namedSet ));
       }
     }
 
@@ -1734,11 +1751,11 @@ public Cell getCell( int[] pos ) {
       // kind'a expecting the opposite here. But I'll maintain the same
       // logic
       if ( !create ) {
-          RolapSetEvaluator value = new RolapSetEvaluator( this, exp );
+          SetEvaluatorImpl value = new SetEvaluatorImpl( this, exp );
           setEvaluators.put( name, value );
           return value;
       } else {
-          return setEvaluators.computeIfAbsent(name, k -> new RolapSetEvaluator( this, exp ));
+          return setEvaluators.computeIfAbsent(name, k -> new SetEvaluatorImpl( this, exp ));
       }
     }
 
