@@ -1,16 +1,5 @@
 /*
- * This software is subject to the terms of the Eclipse Public License v1.0
- * Agreement, available at the following URL:
- * http://www.eclipse.org/legal/epl-v10.html.
- * You must accept the terms of that agreement to use this software.
- *
- * Copyright (c) 2002-2021 Hitachi Vantara..  All rights reserved.
- *
- * ---- All changes after Fork in 2023 ------------------------
- *
- * Project: Eclipse daanse
- *
- * Copyright (c) 2023 Contributors to the Eclipse Foundation.
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation.
  *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -18,33 +7,21 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Contributors after Fork in 2023:
+ * Contributors:
  *   SmartCity Jena - initial
+ *   Stefan Bischof (bipolis.org) - initial
  */
 package org.eclipse.daanse.rolap.common.evaluator;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.eclipse.daanse.olap.api.calc.Calc;
-import org.eclipse.daanse.olap.api.calc.ResultStyle;
-import org.eclipse.daanse.olap.api.calc.compiler.ParameterSlot;
-import org.eclipse.daanse.olap.api.catalog.CatalogReader;
-import org.eclipse.daanse.olap.api.connection.Connection;
+import org.eclipse.daanse.olap.api.element.Cube;
 import org.eclipse.daanse.olap.api.element.Hierarchy;
-import org.eclipse.daanse.olap.api.element.NamedSet;
 import org.eclipse.daanse.olap.api.evaluator.Evaluator;
 import org.eclipse.daanse.olap.api.execution.Execution;
 import org.eclipse.daanse.olap.api.execution.Statement;
-import org.eclipse.daanse.olap.api.query.component.Expression;
-import org.eclipse.daanse.olap.api.query.component.Query;
-import org.eclipse.daanse.olap.common.SolveOrderMode;
-import org.eclipse.daanse.olap.common.Util;
+import org.eclipse.daanse.olap.evaluator.CalculableMember;
+import org.eclipse.daanse.olap.evaluator.EvaluatorImpl;
+import org.eclipse.daanse.olap.evaluator.EvaluatorRoot;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.star.HierarchyUsage;
 import org.eclipse.daanse.rolap.common.writeback.ScenarioImpl;
@@ -52,270 +29,53 @@ import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.element.RolapMemberBase;
 
 /**
- * Context at the root of a tree of evaluators.
- *
- *
- * Contains the context that does not change as evaluation context is pushed/popped.
- *
- * @author jhyde
- * @since Nov 11, 2008
+ * The relational evaluator root: {@link EvaluatorRoot} with the scenario
+ * member and the hierarchy-usage naming of default members. Without a result
+ * behind it (a statement's own evaluator) it evaluates expressions directly
+ * and is never dirty; {@code RolapResult.RolapResultEvaluatorRoot} routes
+ * both through the result being built.
  */
-public class RolapEvaluatorRoot {
-  final Map<Object, Object> expResultCache = new HashMap<>();
-  final Map<Object, Object> tmpExpResultCache = new HashMap<>();
-  final RolapCube cube;
-  final Connection connection;
-  final CatalogReader schemaReader;
-  final Map<CompiledExpKey, Calc> compiledExps = new HashMap<>();
-  public final Statement statement;
-  final Query query;
-  private final LocalDateTime queryStartTime;
+public class RolapEvaluatorRoot extends EvaluatorRoot {
 
-  public int expResultCacheHitCount;
-  public int expResultCacheMissCount;
+    /** @deprecated use {@link #RolapEvaluatorRoot(Execution)} */
+    @Deprecated
+    public RolapEvaluatorRoot(Statement statement) {
+        super(statement);
+    }
 
-  /**
-   * Default members of each hierarchy, from the schema reader's perspective. Finding the default member is moderately
-   * expensive, but happens very often.
-   */
-  public final RolapMember[] defaultMembers;
-  final int[] nonAllPositions;
-  int nonAllPositionCount;
+    public RolapEvaluatorRoot(Execution execution) {
+        super(execution);
+    }
 
-  SolveOrderMode solveOrderMode;
-
-  final Set<Expression> activeNativeExpansions = new HashSet<>();
-
-  /**
-   * The size of the command stack at which we will next check for recursion.
-   */
-  int recursionCheckCommandCount;
-  public final Execution execution;
-
-  /**
-   * Creates a RolapEvaluatorRoot.
-   *
-   * @param statement
-   *          statement
-   * @deprecated
-   */
-  @Deprecated
-public RolapEvaluatorRoot( Statement statement ) {
-    this( statement, null );
-  }
-
-  public RolapEvaluatorRoot( Execution execution ) {
-    this( execution.getDaanseStatement(), execution );
-  }
-
-  private RolapEvaluatorRoot( Statement statement, Execution execution ) {
-    this.execution = execution;
-    this.statement = statement;
-    this.query = statement.getQuery();
-    this.cube = (RolapCube) query.getCube();
-    this.connection = statement.getDaanseConnection();
-    this.solveOrderMode =
-        Util.lookup( SolveOrderMode.class, connection.getContext()
-                .getConfig().solveOrderMode()
-                .toUpperCase(),
-            SolveOrderMode.ABSOLUTE );
-    this.schemaReader = query.getCatalogReader( true );
-    this.queryStartTime = LocalDateTime.now();
-    List<RolapMember> list = new ArrayList<>();
-    nonAllPositions = new int[cube.getHierarchies().size()];
-    nonAllPositionCount = 0;
-    for ( Hierarchy hierarchy : cube.getHierarchies() ) {
-      RolapMember defaultMember = (RolapMember) schemaReader.getHierarchyDefaultMember( hierarchy );
-      assert defaultMember != null;
-
-      if ( ScenarioImpl.isScenario( hierarchy ) && connection.getScenario() != null ) {
-        defaultMember = (RolapMember) ( (ScenarioImpl) connection.getScenario() ).getMember();
-      }
-
-      // This fragment is a concurrency bottleneck, so use a cache of
-      // hierarchy usages.
-      final HierarchyUsage hierarchyUsage = cube.getFirstUsage( hierarchy );
-      if ( hierarchyUsage != null ) {
-        if ( defaultMember instanceof RolapMemberBase ) {
-          ( (RolapMemberBase) defaultMember ).makeUniqueName( hierarchyUsage );
+    @Override
+    protected CalculableMember scenarioMemberFor(Hierarchy hierarchy) {
+        if (ScenarioImpl.isScenario(hierarchy) && connection.getScenario() != null) {
+            return (RolapMember) ((ScenarioImpl) connection.getScenario()).getMember();
         }
-      }
-
-      list.add( defaultMember );
-      if ( !defaultMember.isAll() ) {
-        nonAllPositions[nonAllPositionCount] = hierarchy.getOrdinalInCube();
-        nonAllPositionCount++;
-      }
-    }
-    this.defaultMembers = list.toArray( new RolapMember[list.size()] );
-
-    this.recursionCheckCommandCount = ( defaultMembers.length << 4 );
-  }
-
-  /**
-   * Implements a cheap-and-cheerful mapping from expressions to compiled expressions.
-   *
-   *
-   * TODO: Save compiled expressions somewhere better.
-   *
-   * @param exp
-   *          Expression
-   * @param scalar
-   *          Whether expression is scalar
-   * @param resultStyle
-   *          Preferred result style; if null, use query's default result style; ignored if expression is scalar
-   * @return compiled expression
-   */
-  public final Calc getCompiled( Expression exp, boolean scalar, ResultStyle resultStyle ) {
-    CompiledExpKey key = new CompiledExpKey( exp, scalar, resultStyle );
-    Calc calc = compiledExps.get( key );
-    if ( calc == null ) {
-      calc = statement.getQuery().compileExpression( exp, scalar, resultStyle );
-      compiledExps.put( key, calc );
-    }
-    return calc;
-  }
-
-  /**
-   * Just a simple key of Exp/scalar/resultStyle, used for keeping compiled expressions. Previous to the introduction of
-   * this class, the key was a list constructed as Arrays.asList(exp, scalar, resultStyle) and having poorer performance
-   * on equals, hashCode, and construction.
-   */
-  private static class CompiledExpKey {
-    private final Expression exp;
-    private final boolean scalar;
-    private final ResultStyle resultStyle;
-    private int hashCode = Integer.MIN_VALUE;
-
-    private CompiledExpKey( Expression exp, boolean scalar, ResultStyle resultStyle ) {
-      this.exp = exp;
-      this.scalar = scalar;
-      this.resultStyle = resultStyle;
+        return null;
     }
 
     @Override
-	public boolean equals( Object other ) {
-      if ( this == other ) {
-        return true;
-      }
-      if ( !( other instanceof CompiledExpKey otherKey ) ) {
+    protected void nameDefaultMember(Cube cube, Hierarchy hierarchy, CalculableMember defaultMember) {
+        // a concurrency bottleneck, hence the cube's cache of hierarchy usages
+        final HierarchyUsage hierarchyUsage = ((RolapCube) cube).getFirstUsage(hierarchy);
+        if (hierarchyUsage != null && defaultMember instanceof RolapMemberBase base) {
+            base.makeUniqueName(hierarchyUsage);
+        }
+    }
+
+    @Override
+    public EvaluatorImpl slicerEvaluator() {
+        return null;
+    }
+
+    @Override
+    public Object evaluateExpression(Calc<?> calc, EvaluatorImpl slicerEvaluator, Evaluator contextEvaluator) {
+        return calc.evaluate(contextEvaluator != null ? contextEvaluator : slicerEvaluator);
+    }
+
+    @Override
+    public boolean isDirty() {
         return false;
-      }
-      return this.scalar == otherKey.scalar && this.resultStyle == otherKey.resultStyle && this.exp.equals(
-          otherKey.exp );
     }
-
-    @Override
-	public int hashCode() {
-      if ( hashCode != Integer.MIN_VALUE ) {
-        return hashCode;
-      } else {
-        int hash = 0;
-        hash = Util.hash( hash, scalar );
-        hash = Util.hash( hash, resultStyle );
-        this.hashCode = Util.hash( hash, exp );
-      }
-      return this.hashCode;
-    }
-  }
-
-  /**
-   * Evaluates a named set.
-   *
-   *
-   * The default implementation throws {@link UnsupportedOperationException}.
-   *
-   * @param namedSet
-   *          Named set
-   * @param create
-   *          Whether to create named set evaluator if not found
-   */
-  protected Evaluator.NamedSetEvaluator evaluateNamedSet( NamedSet namedSet, boolean create ) {
-    throw new UnsupportedOperationException();
-  }
-
-  /**
-   * Evaluates a named set represented by an expression.
-   *
-   *
-   * The default implementation throws {@link UnsupportedOperationException}.
-   *
-   * @param exp
-   *          Expression
-   * @param create
-   *          Whether to create named set evaluator if not found
-   */
-  protected Evaluator.SetEvaluator evaluateSet( Expression exp, boolean create ) {
-    throw new UnsupportedOperationException();
-  }
-
-  /**
-   * Returns the value of a parameter, evaluating its default expression if necessary.
-   *
-   *
-   * The default implementation throws {@link UnsupportedOperationException}.
-   */
-  public Object getParameterValue( ParameterSlot slot ) {
-    throw new UnsupportedOperationException();
-  }
-
-  /**
-   * Puts result in cache.
-   *
-   * @param key
-   *          key
-   * @param result
-   *          value to be cached
-   * @param isValidResult
-   *          indicate if this result is valid
-   */
-  public final void putCacheResult( Object key, Object result, boolean isValidResult ) {
-    if ( isValidResult ) {
-      expResultCache.put( key, result );
-    } else {
-      tmpExpResultCache.put( key, result );
-    }
-  }
-
-  /**
-   * Gets result from cache.
-   *
-   * @param key
-   *          cache key
-   * @return cached expression
-   */
-  public final Object getCacheResult( Object key ) {
-    Object result = expResultCache.get( key );
-    if ( result == null ) {
-      result = tmpExpResultCache.get( key );
-    }
-    if ( result == null ) {
-      expResultCacheMissCount++;
-    } else {
-      expResultCacheHitCount++;
-    }
-    return result;
-  }
-
-  /**
-   * Clears the expression result cache.
-   *
-   * @param clearValidResult
-   *          whether to clear valid expression results
-   */
-  public final void clearResultCache( boolean clearValidResult ) {
-    if ( clearValidResult ) {
-      expResultCache.clear();
-    }
-    tmpExpResultCache.clear();
-  }
-
-  /**
-   * Get query start time.
-   *
-   * @return the query start time
-   */
-  public LocalDateTime getQueryStartTime() {
-    return queryStartTime;
-  }
 }

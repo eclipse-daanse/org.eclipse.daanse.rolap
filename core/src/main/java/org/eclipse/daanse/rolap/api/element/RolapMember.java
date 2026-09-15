@@ -26,7 +26,7 @@
 package org.eclipse.daanse.rolap.api.element;
 
 import org.eclipse.daanse.olap.api.element.ParentChildMember;
-import org.eclipse.daanse.rolap.common.evaluator.RolapCalculation;
+import org.eclipse.daanse.olap.evaluator.CalculableMember;
 import org.eclipse.daanse.rolap.element.RolapCalculatedMember;
 import org.eclipse.daanse.rolap.element.RolapHierarchy;
 import org.eclipse.daanse.rolap.element.RolapLevel;
@@ -39,7 +39,7 @@ import org.eclipse.daanse.rolap.element.RolapStoredMeasure;
  * @author jhyde
  * @since 10 August, 2001
  */
-public interface RolapMember extends ParentChildMember, RolapCalculation {
+public interface RolapMember extends CalculableMember {
     @Override
 	RolapMember getParentMember();
     @Override

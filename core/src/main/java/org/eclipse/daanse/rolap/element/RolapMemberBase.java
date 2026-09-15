@@ -58,8 +58,8 @@ import org.eclipse.daanse.olap.query.component.ResolvedFunCallImpl;
 import  org.eclipse.daanse.olap.util.Bug;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.RolapUtil;
-import org.eclipse.daanse.rolap.common.evaluator.RolapEvaluator;
-import org.eclipse.daanse.rolap.common.evaluator.RolapEvaluatorRoot;
+import org.eclipse.daanse.olap.evaluator.EvaluatorImpl;
+import org.eclipse.daanse.olap.evaluator.EvaluatorRoot;
 import org.eclipse.daanse.rolap.common.star.HierarchyUsage;
 import org.eclipse.daanse.rolap.common.writeback.ScenarioImpl;
 import org.slf4j.Logger;
@@ -766,7 +766,7 @@ public class RolapMemberBase
     }
 
     @Override
-	public Calc getCompiledExpression(RolapEvaluatorRoot root) {
+	public Calc getCompiledExpression(EvaluatorRoot root) {
         return root.getCompiled(getExpression(), true, null);
     }
 
@@ -776,9 +776,9 @@ public class RolapMemberBase
     }
 
     @Override
-	public void setContextIn(RolapEvaluator evaluator) {
-        final RolapMember defaultMember =
-            evaluator.root.defaultMembers[getHierarchyOrdinal()];
+	public void setContextIn(EvaluatorImpl evaluator) {
+        final Member defaultMember =
+            evaluator.getRoot().defaultMembers[getHierarchyOrdinal()];
 
         // This method does not need to call RolapEvaluator.removeCalcMember.
         // That happens implicitly in setContext.
