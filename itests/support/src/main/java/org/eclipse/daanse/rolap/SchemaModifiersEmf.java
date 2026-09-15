@@ -10525,48 +10525,50 @@ public class SchemaModifiersEmf {
          */
         private Catalog catalog;
 
-        private static final SumMeasure unitSalesMeasure = MeasureFactory.eINSTANCE.createSumMeasure();
-        private static final SumMeasure customerCountMeasure = MeasureFactory.eINSTANCE.createSumMeasure();
-        private static final SumMeasure storeSalesMeasure = MeasureFactory.eINSTANCE.createSumMeasure();
-        private static final SumMeasure storeCostMeasure = MeasureFactory.eINSTANCE.createSumMeasure();
-        private static final MeasureGroup measureGroup = CubeFactory.eINSTANCE.createMeasureGroup();
+        private final SumMeasure unitSalesMeasure = MeasureFactory.eINSTANCE.createSumMeasure();
+        private final SumMeasure customerCountMeasure = MeasureFactory.eINSTANCE.createSumMeasure();
+        private final SumMeasure storeSalesMeasure = MeasureFactory.eINSTANCE.createSumMeasure();
+        private final SumMeasure storeCostMeasure = MeasureFactory.eINSTANCE.createSumMeasure();
+        private final MeasureGroup measureGroup = CubeFactory.eINSTANCE.createMeasureGroup();
 
-        private static final AggregationExclude aggExclude1 = AggregationFactory.eINSTANCE.createAggregationExclude();
-        private static final AggregationExclude aggExclude2 = AggregationFactory.eINSTANCE.createAggregationExclude();
-        private static final AggregationExclude aggExclude3 = AggregationFactory.eINSTANCE.createAggregationExclude();
-        private static final AggregationExclude aggExclude4 = AggregationFactory.eINSTANCE.createAggregationExclude();
-        private static final AggregationExclude aggExclude5 = AggregationFactory.eINSTANCE.createAggregationExclude();
-        private static final AggregationExclude aggExclude6 = AggregationFactory.eINSTANCE.createAggregationExclude();
-        private static final AggregationExclude aggExclude7 = AggregationFactory.eINSTANCE.createAggregationExclude();
-        private static final AggregationExclude aggExclude8 = AggregationFactory.eINSTANCE.createAggregationExclude();
+        private final AggregationExclude aggExclude1 = AggregationFactory.eINSTANCE.createAggregationExclude();
+        private final AggregationExclude aggExclude2 = AggregationFactory.eINSTANCE.createAggregationExclude();
+        private final AggregationExclude aggExclude3 = AggregationFactory.eINSTANCE.createAggregationExclude();
+        private final AggregationExclude aggExclude4 = AggregationFactory.eINSTANCE.createAggregationExclude();
+        private final AggregationExclude aggExclude5 = AggregationFactory.eINSTANCE.createAggregationExclude();
+        private final AggregationExclude aggExclude6 = AggregationFactory.eINSTANCE.createAggregationExclude();
+        private final AggregationExclude aggExclude7 = AggregationFactory.eINSTANCE.createAggregationExclude();
+        private final AggregationExclude aggExclude8 = AggregationFactory.eINSTANCE.createAggregationExclude();
 
-        private static final ExplicitAggregationTable aggName = AggregationFactory.eINSTANCE.createExplicitAggregationTable();
-        private static final AggregationColumnName factCount = AggregationFactory.eINSTANCE.createAggregationColumnName();
-        private static final AggregationColumnName ignoreCustomer = AggregationFactory.eINSTANCE.createAggregationColumnName();
-        private static final AggregationColumnName ignoreStore = AggregationFactory.eINSTANCE.createAggregationColumnName();
-        private static final AggregationColumnName ignorePromotion = AggregationFactory.eINSTANCE.createAggregationColumnName();
-        private static final AggregationForeignKey aggForeignKey = AggregationFactory.eINSTANCE.createAggregationForeignKey();
-        private static final AggregationMeasure aggMeasureStoreCost = AggregationFactory.eINSTANCE.createAggregationMeasure();
-        private static final AggregationMeasure aggMeasureStoreSales = AggregationFactory.eINSTANCE.createAggregationMeasure();
-        private static final AggregationMeasure aggMeasureUnitSales = AggregationFactory.eINSTANCE.createAggregationMeasure();
+        private final ExplicitAggregationTable aggName = AggregationFactory.eINSTANCE.createExplicitAggregationTable();
+        private final AggregationColumnName factCount = AggregationFactory.eINSTANCE.createAggregationColumnName();
+        private final AggregationColumnName ignoreCustomer = AggregationFactory.eINSTANCE.createAggregationColumnName();
+        private final AggregationColumnName ignoreStore = AggregationFactory.eINSTANCE.createAggregationColumnName();
+        private final AggregationColumnName ignorePromotion = AggregationFactory.eINSTANCE.createAggregationColumnName();
+        private final AggregationForeignKey aggForeignKey = AggregationFactory.eINSTANCE.createAggregationForeignKey();
+        private final AggregationMeasure aggMeasureStoreCost = AggregationFactory.eINSTANCE.createAggregationMeasure();
+        private final AggregationMeasure aggMeasureStoreSales = AggregationFactory.eINSTANCE.createAggregationMeasure();
+        private final AggregationMeasure aggMeasureUnitSales = AggregationFactory.eINSTANCE.createAggregationMeasure();
 
-        private static final TableSource salesFactQuery = SourceFactory.eINSTANCE.createTableSource();
-        private static final TableSource productTable = SourceFactory.eINSTANCE.createTableSource();
-        private static final TableSource productClassTable = SourceFactory.eINSTANCE.createTableSource();
+        private final TableSource salesFactQuery = SourceFactory.eINSTANCE.createTableSource();
+        private final TableSource productTable = SourceFactory.eINSTANCE.createTableSource();
+        private final TableSource productClassTable = SourceFactory.eINSTANCE.createTableSource();
 
-        private static final JoinedQueryElement leftJoin = SourceFactory.eINSTANCE.createJoinedQueryElement();
-        private static final JoinedQueryElement rightJoin = SourceFactory.eINSTANCE.createJoinedQueryElement();
-        private static final JoinSource joinQuery = SourceFactory.eINSTANCE.createJoinSource();
+        private final JoinedQueryElement leftJoin = SourceFactory.eINSTANCE.createJoinedQueryElement();
+        private final JoinedQueryElement rightJoin = SourceFactory.eINSTANCE.createJoinedQueryElement();
+        private final JoinSource joinQuery = SourceFactory.eINSTANCE.createJoinSource();
 
-        private static final Level productFamilyLevel = LevelFactory.eINSTANCE.createLevel();
-        private static final ExplicitHierarchy productHierarchy = HierarchyFactory.eINSTANCE.createExplicitHierarchy();
-        private static final StandardDimension productDimension = DimensionFactory.eINSTANCE.createStandardDimension();
-        private static final DimensionConnector productConnector = DimensionFactory.eINSTANCE.createDimensionConnector();
+        private final Level productFamilyLevel = LevelFactory.eINSTANCE.createLevel();
+        private final ExplicitHierarchy productHierarchy = HierarchyFactory.eINSTANCE.createExplicitHierarchy();
+        private final StandardDimension productDimension = DimensionFactory.eINSTANCE.createStandardDimension();
+        private final DimensionConnector productConnector = DimensionFactory.eINSTANCE.createDimensionConnector();
 
-        private static final PhysicalCube fooCube = CubeFactory.eINSTANCE.createPhysicalCube();
-        private static final Catalog amcCatalog = CatalogFactory.eINSTANCE.createCatalog();
+        private final PhysicalCube fooCube = CubeFactory.eINSTANCE.createPhysicalCube();
+        private final Catalog amcCatalog = CatalogFactory.eINSTANCE.createCatalog();
 
-        static {
+
+        public TestAggregationManagerModifier(Catalog catalog) {
+            EcoreUtil.Copier copier = EmfUtil.copier((CatalogImpl) catalog);
             // Aggregation Excludes
             aggExclude1.setName("agg_g_ms_pcat_sales_fact_1997");
             aggExclude2.setName("agg_c_14_sales_fact_1997");
@@ -10578,25 +10580,25 @@ public class SchemaModifiersEmf {
             aggExclude8.setName("agg_c_10_sales_fact_1997");
 
             // Aggregation Name and related objects
-            factCount.setColumn(CatalogSupplier.COLUMN_FACT_COUNT_AGG_L_05_SALES_FACT_1997);
+            factCount.setColumn((Column) copier.get(CatalogSupplier.COLUMN_FACT_COUNT_AGG_L_05_SALES_FACT_1997));
 
-            ignoreCustomer.setColumn(CatalogSupplier.COLUMN_CUSTOMER_ID_AGG_L_05_SALES_FACT_1997);
-            ignoreStore.setColumn(CatalogSupplier.COLUMN_STORE_ID_AGG_L_05_SALES_FACT_1997);
-            ignorePromotion.setColumn(CatalogSupplier.COLUMN_PROMOTION_ID_AGG_L_05_SALES_FACT_1997);
+            ignoreCustomer.setColumn((Column) copier.get(CatalogSupplier.COLUMN_CUSTOMER_ID_AGG_L_05_SALES_FACT_1997));
+            ignoreStore.setColumn((Column) copier.get(CatalogSupplier.COLUMN_STORE_ID_AGG_L_05_SALES_FACT_1997));
+            ignorePromotion.setColumn((Column) copier.get(CatalogSupplier.COLUMN_PROMOTION_ID_AGG_L_05_SALES_FACT_1997));
 
-            aggForeignKey.setFactColumn(CatalogSupplier.COLUMN_PRODUCT_ID_SALESFACT);
-            aggForeignKey.setAggregationColumn(CatalogSupplier.COLUMN_PRODUCT_ID_AGG_L_05_SALES_FACT_1997);
+            aggForeignKey.setFactColumn((Column) copier.get(CatalogSupplier.COLUMN_PRODUCT_ID_SALESFACT));
+            aggForeignKey.setAggregationColumn((Column) copier.get(CatalogSupplier.COLUMN_PRODUCT_ID_AGG_L_05_SALES_FACT_1997));
 
             aggMeasureStoreCost.setName("[Measures].[Store Cost]");
-            aggMeasureStoreCost.setColumn(CatalogSupplier.COLUMN_STORE_COST_AGG_L_05_SALES_FACT_1997);
+            aggMeasureStoreCost.setColumn((Column) copier.get(CatalogSupplier.COLUMN_STORE_COST_AGG_L_05_SALES_FACT_1997));
 
             aggMeasureStoreSales.setName("[Measures].[Store Sales]");
-            aggMeasureStoreSales.setColumn(CatalogSupplier.COLUMN_STORE_SALES_AGG_L_05_SALES_FACT_1997);
+            aggMeasureStoreSales.setColumn((Column) copier.get(CatalogSupplier.COLUMN_STORE_SALES_AGG_L_05_SALES_FACT_1997));
 
             aggMeasureUnitSales.setName("[Measures].[Unit Sales]");
-            aggMeasureUnitSales.setColumn(CatalogSupplier.COLUMN_UNIT_SALES_AGG_L_05_SALES_FACT_1997);
+            aggMeasureUnitSales.setColumn((Column) copier.get(CatalogSupplier.COLUMN_UNIT_SALES_AGG_L_05_SALES_FACT_1997));
 
-            aggName.setTable(CatalogSupplier.TABLE_AGG_L_05_SALES_FACT);
+            aggName.setTable((Table) copier.get(CatalogSupplier.TABLE_AGG_L_05_SALES_FACT));
             aggName.setAggregationFactCount(factCount);
             aggName.getAggregationIgnoreColumns().addAll(List.of(ignoreCustomer, ignoreStore, ignorePromotion));
             aggName.getAggregationForeignKeys().add(aggForeignKey);
@@ -10604,50 +10606,50 @@ public class SchemaModifiersEmf {
                     .addAll(List.of(aggMeasureStoreCost, aggMeasureStoreSales, aggMeasureUnitSales));
 
             // Sales Fact Query
-            salesFactQuery.setTable(CatalogSupplier.TABLE_SALES_FACT);
+            salesFactQuery.setTable((Table) copier.get(CatalogSupplier.TABLE_SALES_FACT));
             salesFactQuery.getAggregationExcludes().addAll(List.of(aggExclude1, aggExclude2, aggExclude3, aggExclude4,
                     aggExclude5, aggExclude6, aggExclude7, aggExclude8));
             salesFactQuery.getAggregationTables().add(aggName);
 
             // Measures
             unitSalesMeasure.setName("Unit Sales");
-            unitSalesMeasure.setColumn(CatalogSupplier.COLUMN_UNIT_SALES_SALESFACT);
+            unitSalesMeasure.setColumn((Column) copier.get(CatalogSupplier.COLUMN_UNIT_SALES_SALESFACT));
             unitSalesMeasure.setFormatString("Standard");
 
             customerCountMeasure.setName("Customer Count");
-            customerCountMeasure.setColumn(CatalogSupplier.COLUMN_CUSTOMER_ID_SALESFACT);
+            customerCountMeasure.setColumn((Column) copier.get(CatalogSupplier.COLUMN_CUSTOMER_ID_SALESFACT));
             customerCountMeasure.setFormatString("Standard");
 
             storeSalesMeasure.setName("Store Sales");
-            storeSalesMeasure.setColumn(CatalogSupplier.COLUMN_STORE_SALES_SALESFACT);
+            storeSalesMeasure.setColumn((Column) copier.get(CatalogSupplier.COLUMN_STORE_SALES_SALESFACT));
             storeSalesMeasure.setFormatString("Standard");
 
             storeCostMeasure.setName("Store Cost");
-            storeCostMeasure.setColumn(CatalogSupplier.COLUMN_STORE_COST_SALESFACT);
+            storeCostMeasure.setColumn((Column) copier.get(CatalogSupplier.COLUMN_STORE_COST_SALESFACT));
             storeCostMeasure.setFormatString("Standard");
 
             measureGroup.getMeasures()
                     .addAll(List.of(unitSalesMeasure, customerCountMeasure, storeSalesMeasure, storeCostMeasure));
 
             // Product Dimension
-            productTable.setTable(CatalogSupplier.TABLE_PRODUCT);
-            productClassTable.setTable(CatalogSupplier.TABLE_PRODUCT_CLASS);
+            productTable.setTable((Table) copier.get(CatalogSupplier.TABLE_PRODUCT));
+            productClassTable.setTable((Table) copier.get(CatalogSupplier.TABLE_PRODUCT_CLASS));
 
-            leftJoin.setKey(CatalogSupplier.COLUMN_PRODUCT_CLASS_ID_PRODUCT);
+            leftJoin.setKey((Column) copier.get(CatalogSupplier.COLUMN_PRODUCT_CLASS_ID_PRODUCT));
             leftJoin.setSource(productTable);
 
-            rightJoin.setKey(CatalogSupplier.COLUMN_PRODUCT_CLASS_ID_PRODUCT_CLASS);
+            rightJoin.setKey((Column) copier.get(CatalogSupplier.COLUMN_PRODUCT_CLASS_ID_PRODUCT_CLASS));
             rightJoin.setSource(productClassTable);
 
             joinQuery.setLeft(leftJoin);
             joinQuery.setRight(rightJoin);
 
             productFamilyLevel.setName("Product Family");
-            productFamilyLevel.setColumn(CatalogSupplier.COLUMN_PRODUCT_FAMILY_PRODUCT_CLASS);
+            productFamilyLevel.setColumn((Column) copier.get(CatalogSupplier.COLUMN_PRODUCT_FAMILY_PRODUCT_CLASS));
             productFamilyLevel.setUniqueMembers(true);
 
             productHierarchy.setHasAll(true);
-            productHierarchy.setPrimaryKey(CatalogSupplier.COLUMN_PRODUCT_ID_PRODUCT);
+            productHierarchy.setPrimaryKey((Column) copier.get(CatalogSupplier.COLUMN_PRODUCT_ID_PRODUCT));
             productHierarchy.setSource(joinQuery);
             productHierarchy.getLevels().add(productFamilyLevel);
 
@@ -10655,7 +10657,7 @@ public class SchemaModifiersEmf {
             productDimension.getHierarchies().add(productHierarchy);
 
             productConnector.setOverrideDimensionName("Product");
-            productConnector.setForeignKey(CatalogSupplier.COLUMN_PRODUCT_ID_SALESFACT);
+            productConnector.setForeignKey((Column) copier.get(CatalogSupplier.COLUMN_PRODUCT_ID_SALESFACT));
             productConnector.setDimension(productDimension);
 
             // Foo Cube
@@ -10667,13 +10669,9 @@ public class SchemaModifiersEmf {
 
             // AMC Catalog
             amcCatalog.setName("AMC");
-            amcCatalog.getImportedElement().add(CatalogSupplier.DATABASE_SCHEMA_FOODMART);
+            amcCatalog.getImportedElement().add((Schema) copier.get(CatalogSupplier.DATABASE_SCHEMA_FOODMART));
             amcCatalog.getImportedElement().add(fooCube);
         }
-
-        public TestAggregationManagerModifier(Catalog catalog) {
-        }
-
         @Override
         public Catalog get() {
             return amcCatalog;
@@ -10697,43 +10695,45 @@ public class SchemaModifiersEmf {
          */
         private Catalog catalog;
 
-        private static final SumMeasure unitSalesMeasure = MeasureFactory.eINSTANCE.createSumMeasure();
-        private static final MeasureGroup measureGroup = CubeFactory.eINSTANCE.createMeasureGroup();
+        private final SumMeasure unitSalesMeasure = MeasureFactory.eINSTANCE.createSumMeasure();
+        private final MeasureGroup measureGroup = CubeFactory.eINSTANCE.createMeasureGroup();
 
-        private static final TableSource salesFactQuery = SourceFactory.eINSTANCE.createTableSource();
-        private static final TableSource customerQuery = SourceFactory.eINSTANCE.createTableSource();
+        private final TableSource salesFactQuery = SourceFactory.eINSTANCE.createTableSource();
+        private final TableSource customerQuery = SourceFactory.eINSTANCE.createTableSource();
 
-        private static final Level genderLevel = LevelFactory.eINSTANCE.createLevel();
-        private static final ExplicitHierarchy genderHierarchy = HierarchyFactory.eINSTANCE.createExplicitHierarchy();
-        private static final StandardDimension genderDimension = DimensionFactory.eINSTANCE.createStandardDimension();
-        private static final DimensionConnector genderConnector = DimensionFactory.eINSTANCE.createDimensionConnector();
+        private final Level genderLevel = LevelFactory.eINSTANCE.createLevel();
+        private final ExplicitHierarchy genderHierarchy = HierarchyFactory.eINSTANCE.createExplicitHierarchy();
+        private final StandardDimension genderDimension = DimensionFactory.eINSTANCE.createStandardDimension();
+        private final DimensionConnector genderConnector = DimensionFactory.eINSTANCE.createDimensionConnector();
 
-        private static final PhysicalCube salesCube = CubeFactory.eINSTANCE.createPhysicalCube();
-        private static final Catalog foodMartCatalog = CatalogFactory.eINSTANCE.createCatalog();
+        private final PhysicalCube salesCube = CubeFactory.eINSTANCE.createPhysicalCube();
+        private final Catalog foodMartCatalog = CatalogFactory.eINSTANCE.createCatalog();
 
-        static {
+
+        public TestAggregationManagerModifier3(Catalog catalog) {
+            EcoreUtil.Copier copier = EmfUtil.copier((CatalogImpl) catalog);
             // Unit Sales Measure
             unitSalesMeasure.setName("Unit Sales");
-            unitSalesMeasure.setColumn(CatalogSupplier.COLUMN_UNIT_SALES_SALESFACT);
+            unitSalesMeasure.setColumn((Column) copier.get(CatalogSupplier.COLUMN_UNIT_SALES_SALESFACT));
             unitSalesMeasure.setFormatString("Standard");
 
             measureGroup.getMeasures().add(unitSalesMeasure);
 
             // Sales Fact Query
-            salesFactQuery.setTable(CatalogSupplier.TABLE_SALES_FACT);
+            salesFactQuery.setTable((Table) copier.get(CatalogSupplier.TABLE_SALES_FACT));
 
             // Customer Table
-            customerQuery.setTable(CatalogSupplier.TABLE_CUSTOMER);
+            customerQuery.setTable((Table) copier.get(CatalogSupplier.TABLE_CUSTOMER));
 
             // Gender Level
             genderLevel.setName("Gender");
-            genderLevel.setColumn(CatalogSupplier.COLUMN_GENDER_CUSTOMER);
+            genderLevel.setColumn((Column) copier.get(CatalogSupplier.COLUMN_GENDER_CUSTOMER));
             genderLevel.setUniqueMembers(true);
 
             // Gender Hierarchy
             genderHierarchy.setHasAll(true);
             genderHierarchy.setAllMemberName("All Gender");
-            genderHierarchy.setPrimaryKey(CatalogSupplier.COLUMN_CUSTOMER_ID_CUSTOMER);
+            genderHierarchy.setPrimaryKey((Column) copier.get(CatalogSupplier.COLUMN_CUSTOMER_ID_CUSTOMER));
             genderHierarchy.setSource(customerQuery);
             genderHierarchy.getLevels().add(genderLevel);
 
@@ -10743,7 +10743,7 @@ public class SchemaModifiersEmf {
 
             // Gender Connector
             genderConnector.setOverrideDimensionName("Gender");
-            genderConnector.setForeignKey(CatalogSupplier.COLUMN_CUSTOMER_ID_SALESFACT);
+            genderConnector.setForeignKey((Column) copier.get(CatalogSupplier.COLUMN_CUSTOMER_ID_SALESFACT));
             genderConnector.setDimension(genderDimension);
 
             // Sales Cube
@@ -10755,13 +10755,9 @@ public class SchemaModifiersEmf {
 
             // FoodMart Catalog
             foodMartCatalog.setName("FoodMart");
-            foodMartCatalog.getImportedElement().add(CatalogSupplier.DATABASE_SCHEMA_FOODMART);
+            foodMartCatalog.getImportedElement().add((Schema) copier.get(CatalogSupplier.DATABASE_SCHEMA_FOODMART));
             foodMartCatalog.getImportedElement().add(salesCube);
         }
-
-        public TestAggregationManagerModifier3(Catalog catalog) {
-        }
-
         @Override
         public Catalog get() {
             return foodMartCatalog;
@@ -10801,35 +10797,37 @@ public class SchemaModifiersEmf {
          */
         private Catalog catalog;
 
-        private static final SumMeasure unitSalesMeasure = MeasureFactory.eINSTANCE.createSumMeasure();
-        private static final CountMeasure customerCountMeasure = MeasureFactory.eINSTANCE.createCountMeasure();
-        private static final MeasureGroup measureGroup = CubeFactory.eINSTANCE.createMeasureGroup();
+        private final SumMeasure unitSalesMeasure = MeasureFactory.eINSTANCE.createSumMeasure();
+        private final CountMeasure customerCountMeasure = MeasureFactory.eINSTANCE.createCountMeasure();
+        private final MeasureGroup measureGroup = CubeFactory.eINSTANCE.createMeasureGroup();
 
-        private static final AggregationExclude aggExclude1 = AggregationFactory.eINSTANCE.createAggregationExclude();
-        private static final AggregationExclude aggExclude2 = AggregationFactory.eINSTANCE.createAggregationExclude();
-        private static final AggregationExclude aggExclude3 = AggregationFactory.eINSTANCE.createAggregationExclude();
-        private static final AggregationExclude aggExclude4 = AggregationFactory.eINSTANCE.createAggregationExclude();
+        private final AggregationExclude aggExclude1 = AggregationFactory.eINSTANCE.createAggregationExclude();
+        private final AggregationExclude aggExclude2 = AggregationFactory.eINSTANCE.createAggregationExclude();
+        private final AggregationExclude aggExclude3 = AggregationFactory.eINSTANCE.createAggregationExclude();
+        private final AggregationExclude aggExclude4 = AggregationFactory.eINSTANCE.createAggregationExclude();
 
-        private static final ExplicitAggregationTable aggName = AggregationFactory.eINSTANCE.createExplicitAggregationTable();
-        private static final AggregationColumnName factCount = AggregationFactory.eINSTANCE.createAggregationColumnName();
-        private static final AggregationColumnName ignoreQuarter = AggregationFactory.eINSTANCE.createAggregationColumnName();
-        private static final AggregationColumnName ignoreMonthOfYear = AggregationFactory.eINSTANCE.createAggregationColumnName();
-        private static final AggregationMeasure aggMeasureCustomerCount = AggregationFactory.eINSTANCE.createAggregationMeasure();
-        private static final AggregationLevel aggLevelYear = AggregationFactory.eINSTANCE.createAggregationLevel();
+        private final ExplicitAggregationTable aggName = AggregationFactory.eINSTANCE.createExplicitAggregationTable();
+        private final AggregationColumnName factCount = AggregationFactory.eINSTANCE.createAggregationColumnName();
+        private final AggregationColumnName ignoreQuarter = AggregationFactory.eINSTANCE.createAggregationColumnName();
+        private final AggregationColumnName ignoreMonthOfYear = AggregationFactory.eINSTANCE.createAggregationColumnName();
+        private final AggregationMeasure aggMeasureCustomerCount = AggregationFactory.eINSTANCE.createAggregationMeasure();
+        private final AggregationLevel aggLevelYear = AggregationFactory.eINSTANCE.createAggregationLevel();
 
-        private static final TableSource salesFactQuery = SourceFactory.eINSTANCE.createTableSource();
-        private static final TableSource timeByDayTable = SourceFactory.eINSTANCE.createTableSource();
+        private final TableSource salesFactQuery = SourceFactory.eINSTANCE.createTableSource();
+        private final TableSource timeByDayTable = SourceFactory.eINSTANCE.createTableSource();
 
-        private static final Level yearLevel = LevelFactory.eINSTANCE.createLevel();
-        private static final Level quarterLevel = LevelFactory.eINSTANCE.createLevel();
-        private static final ExplicitHierarchy timeHierarchy = HierarchyFactory.eINSTANCE.createExplicitHierarchy();
-        private static final TimeDimension timeDimension = DimensionFactory.eINSTANCE.createTimeDimension();
-        private static final DimensionConnector timeConnector = DimensionFactory.eINSTANCE.createDimensionConnector();
+        private final Level yearLevel = LevelFactory.eINSTANCE.createLevel();
+        private final Level quarterLevel = LevelFactory.eINSTANCE.createLevel();
+        private final ExplicitHierarchy timeHierarchy = HierarchyFactory.eINSTANCE.createExplicitHierarchy();
+        private final TimeDimension timeDimension = DimensionFactory.eINSTANCE.createTimeDimension();
+        private final DimensionConnector timeConnector = DimensionFactory.eINSTANCE.createDimensionConnector();
 
-        private static final PhysicalCube salesCube = CubeFactory.eINSTANCE.createPhysicalCube();
-        private static final Catalog foodMartCatalog = CatalogFactory.eINSTANCE.createCatalog();
+        private final PhysicalCube salesCube = CubeFactory.eINSTANCE.createPhysicalCube();
+        private final Catalog foodMartCatalog = CatalogFactory.eINSTANCE.createCatalog();
 
-        static {
+
+        public TestAggregationManagerModifier4(Catalog catalog) {
+            EcoreUtil.Copier copier = EmfUtil.copier((CatalogImpl) catalog);
             // Aggregation Excludes
             aggExclude1.setName("agg_c_special_sales_fact_1997");
             aggExclude2.setName("agg_lc_100_sales_fact_1997");
@@ -10837,56 +10835,56 @@ public class SchemaModifiersEmf {
             aggExclude4.setName("agg_pc_10_sales_fact_1997");
 
             // Aggregation Name and related objects
-            factCount.setColumn(CatalogSupplier.COLUMN_FACT_COUNT_AGG_G_MS_PCAT_SALES_FACT_1997);
+            factCount.setColumn((Column) copier.get(CatalogSupplier.COLUMN_FACT_COUNT_AGG_G_MS_PCAT_SALES_FACT_1997));
 
-            ignoreQuarter.setColumn(CatalogSupplier.COLUMN_QUARTER_AGG_G_MS_PCAT_SALES_FACT_1997);
-            ignoreMonthOfYear.setColumn(CatalogSupplier.COLUMN_MONTH_YEAR_AGG_G_MS_PCAT_SALES_FACT_1997);
+            ignoreQuarter.setColumn((Column) copier.get(CatalogSupplier.COLUMN_QUARTER_AGG_G_MS_PCAT_SALES_FACT_1997));
+            ignoreMonthOfYear.setColumn((Column) copier.get(CatalogSupplier.COLUMN_MONTH_YEAR_AGG_G_MS_PCAT_SALES_FACT_1997));
 
             aggMeasureCustomerCount.setName("[Measures].[Customer Count]");
-            aggMeasureCustomerCount.setColumn(CatalogSupplier.COLUMN_CUSTOMER_COUNT_AGG_G_MS_PCAT_SALES_FACT_1997);
+            aggMeasureCustomerCount.setColumn((Column) copier.get(CatalogSupplier.COLUMN_CUSTOMER_COUNT_AGG_G_MS_PCAT_SALES_FACT_1997));
 
             aggLevelYear.setName("[Time].[Year]");
-            aggLevelYear.setColumn(CatalogSupplier.COLUMN_THE_YEAR_AGG_G_MS_PCAT_SALES_FACT_1997);
+            aggLevelYear.setColumn((Column) copier.get(CatalogSupplier.COLUMN_THE_YEAR_AGG_G_MS_PCAT_SALES_FACT_1997));
 
-            aggName.setTable(CatalogSupplier.TABLE_AGG_G_MS_PCAT_SALES_FACT);
+            aggName.setTable((Table) copier.get(CatalogSupplier.TABLE_AGG_G_MS_PCAT_SALES_FACT));
             aggName.setAggregationFactCount(factCount);
             aggName.getAggregationIgnoreColumns().addAll(List.of(ignoreQuarter, ignoreMonthOfYear));
             aggName.getAggregationMeasures().add(aggMeasureCustomerCount);
             aggName.getAggregationLevels().add(aggLevelYear);
 
             // Sales Fact Query
-            salesFactQuery.setTable(CatalogSupplier.TABLE_SALES_FACT);
+            salesFactQuery.setTable((Table) copier.get(CatalogSupplier.TABLE_SALES_FACT));
             salesFactQuery.getAggregationExcludes().addAll(List.of(aggExclude1, aggExclude2, aggExclude3, aggExclude4));
             salesFactQuery.getAggregationTables().add(aggName);
 
             // Measures
             unitSalesMeasure.setName("Unit Sales");
-            unitSalesMeasure.setColumn(CatalogSupplier.COLUMN_UNIT_SALES_SALESFACT);
+            unitSalesMeasure.setColumn((Column) copier.get(CatalogSupplier.COLUMN_UNIT_SALES_SALESFACT));
             unitSalesMeasure.setFormatString("Standard");
 
             customerCountMeasure.setName("Customer Count");
-            customerCountMeasure.setColumn(CatalogSupplier.COLUMN_CUSTOMER_ID_SALESFACT);
+            customerCountMeasure.setColumn((Column) copier.get(CatalogSupplier.COLUMN_CUSTOMER_ID_SALESFACT));
             customerCountMeasure.setDistinct(true);
             customerCountMeasure.setFormatString("Standard");
 
             measureGroup.getMeasures().addAll(List.of(unitSalesMeasure, customerCountMeasure));
 
             // Time Dimension
-            timeByDayTable.setTable(CatalogSupplier.TABLE_TIME_BY_DAY);
+            timeByDayTable.setTable((Table) copier.get(CatalogSupplier.TABLE_TIME_BY_DAY));
 
             yearLevel.setName("Year");
-            yearLevel.setColumn(CatalogSupplier.COLUMN_THE_YEAR_TIME_BY_DAY);
+            yearLevel.setColumn((Column) copier.get(CatalogSupplier.COLUMN_THE_YEAR_TIME_BY_DAY));
             yearLevel.setColumnType(ColumnInternalDataType.NUMERIC);
             yearLevel.setUniqueMembers(true);
             yearLevel.setType(LevelDefinition.TIME_YEARS);
 
             quarterLevel.setName("Quarter");
-            quarterLevel.setColumn(CatalogSupplier.COLUMN_QUARTER_TIME_BY_DAY);
+            quarterLevel.setColumn((Column) copier.get(CatalogSupplier.COLUMN_QUARTER_TIME_BY_DAY));
             quarterLevel.setUniqueMembers(false);
             quarterLevel.setType(LevelDefinition.TIME_QUARTERS);
 
             timeHierarchy.setHasAll(true);
-            timeHierarchy.setPrimaryKey(CatalogSupplier.COLUMN_TIME_ID_TIME_BY_DAY);
+            timeHierarchy.setPrimaryKey((Column) copier.get(CatalogSupplier.COLUMN_TIME_ID_TIME_BY_DAY));
             timeHierarchy.setSource(timeByDayTable);
             timeHierarchy.getLevels().addAll(List.of(yearLevel, quarterLevel));
 
@@ -10894,7 +10892,7 @@ public class SchemaModifiersEmf {
             timeDimension.getHierarchies().add(timeHierarchy);
 
             timeConnector.setOverrideDimensionName("Time");
-            timeConnector.setForeignKey(CatalogSupplier.COLUMN_TIME_ID_SALESFACT);
+            timeConnector.setForeignKey((Column) copier.get(CatalogSupplier.COLUMN_TIME_ID_SALESFACT));
             timeConnector.setDimension(timeDimension);
 
             // Sales Cube
@@ -10907,12 +10905,8 @@ public class SchemaModifiersEmf {
             // FoodMart Catalog
             foodMartCatalog.setName("FoodMart");
             foodMartCatalog.getImportedElement().add(salesCube);
-            foodMartCatalog.getImportedElement().add(CatalogSupplier.DATABASE_SCHEMA_FOODMART);
+            foodMartCatalog.getImportedElement().add((Schema) copier.get(CatalogSupplier.DATABASE_SCHEMA_FOODMART));
         }
-
-        public TestAggregationManagerModifier4(Catalog catalog) {
-        }
-
         @Override
         public Catalog get() {
             return foodMartCatalog;
@@ -11521,59 +11515,61 @@ public class SchemaModifiersEmf {
          * "    <Measure name=\"Store Sales\" column=\"store_sales\" aggregator=\"sum\"\n"
          * + "      formatString=\"#,###.00\"/>\n" + "  </Cube>\n" + "</Schema>\n";
          */
-        private static final SumMeasure unitSalesMeasure = MeasureFactory.eINSTANCE.createSumMeasure();
-        private static final SumMeasure storeCostMeasure = MeasureFactory.eINSTANCE.createSumMeasure();
-        private static final SumMeasure storeSalesMeasure = MeasureFactory.eINSTANCE.createSumMeasure();
-        private static final MeasureGroup measureGroup = CubeFactory.eINSTANCE.createMeasureGroup();
+        private final SumMeasure unitSalesMeasure = MeasureFactory.eINSTANCE.createSumMeasure();
+        private final SumMeasure storeCostMeasure = MeasureFactory.eINSTANCE.createSumMeasure();
+        private final SumMeasure storeSalesMeasure = MeasureFactory.eINSTANCE.createSumMeasure();
+        private final MeasureGroup measureGroup = CubeFactory.eINSTANCE.createMeasureGroup();
 
-        private static final AggregationExclude aggExclude1 = AggregationFactory.eINSTANCE.createAggregationExclude();
-        private static final AggregationExclude aggExclude2 = AggregationFactory.eINSTANCE.createAggregationExclude();
-        private static final AggregationExclude aggExclude3 = AggregationFactory.eINSTANCE.createAggregationExclude();
-        private static final AggregationExclude aggExclude4 = AggregationFactory.eINSTANCE.createAggregationExclude();
-        private static final AggregationExclude aggExclude5 = AggregationFactory.eINSTANCE.createAggregationExclude();
-        private static final AggregationExclude aggExclude6 = AggregationFactory.eINSTANCE.createAggregationExclude();
-        private static final AggregationExclude aggExclude7 = AggregationFactory.eINSTANCE.createAggregationExclude();
-        private static final AggregationExclude aggExclude8 = AggregationFactory.eINSTANCE.createAggregationExclude();
-        private static final AggregationExclude aggExclude9 = AggregationFactory.eINSTANCE.createAggregationExclude();
-        private static final AggregationExclude aggExclude10 = AggregationFactory.eINSTANCE.createAggregationExclude();
+        private final AggregationExclude aggExclude1 = AggregationFactory.eINSTANCE.createAggregationExclude();
+        private final AggregationExclude aggExclude2 = AggregationFactory.eINSTANCE.createAggregationExclude();
+        private final AggregationExclude aggExclude3 = AggregationFactory.eINSTANCE.createAggregationExclude();
+        private final AggregationExclude aggExclude4 = AggregationFactory.eINSTANCE.createAggregationExclude();
+        private final AggregationExclude aggExclude5 = AggregationFactory.eINSTANCE.createAggregationExclude();
+        private final AggregationExclude aggExclude6 = AggregationFactory.eINSTANCE.createAggregationExclude();
+        private final AggregationExclude aggExclude7 = AggregationFactory.eINSTANCE.createAggregationExclude();
+        private final AggregationExclude aggExclude8 = AggregationFactory.eINSTANCE.createAggregationExclude();
+        private final AggregationExclude aggExclude9 = AggregationFactory.eINSTANCE.createAggregationExclude();
+        private final AggregationExclude aggExclude10 = AggregationFactory.eINSTANCE.createAggregationExclude();
 
-        private static final ExplicitAggregationTable aggName = AggregationFactory.eINSTANCE.createExplicitAggregationTable();
-        private static final AggregationColumnName factCount = AggregationFactory.eINSTANCE.createAggregationColumnName();
-        private static final AggregationColumnName ignoreProductId = AggregationFactory.eINSTANCE.createAggregationColumnName();
-        private static final AggregationColumnName ignoreCustomerId = AggregationFactory.eINSTANCE.createAggregationColumnName();
-        private static final AggregationColumnName ignorePromotionId = AggregationFactory.eINSTANCE.createAggregationColumnName();
-        private static final AggregationColumnName ignoreTheYear = AggregationFactory.eINSTANCE.createAggregationColumnName();
-        private static final AggregationColumnName ignoreQuarter = AggregationFactory.eINSTANCE.createAggregationColumnName();
-        private static final AggregationForeignKey aggForeignKey = AggregationFactory.eINSTANCE.createAggregationForeignKey();
-        private static final AggregationMeasure aggMeasureUnitSales = AggregationFactory.eINSTANCE.createAggregationMeasure();
-        private static final AggregationMeasure aggMeasureStoreCost = AggregationFactory.eINSTANCE.createAggregationMeasure();
-        private static final AggregationMeasure aggMeasureStoreSales = AggregationFactory.eINSTANCE.createAggregationMeasure();
-        private static final AggregationLevel aggLevelMonth = AggregationFactory.eINSTANCE.createAggregationLevel();
+        private final ExplicitAggregationTable aggName = AggregationFactory.eINSTANCE.createExplicitAggregationTable();
+        private final AggregationColumnName factCount = AggregationFactory.eINSTANCE.createAggregationColumnName();
+        private final AggregationColumnName ignoreProductId = AggregationFactory.eINSTANCE.createAggregationColumnName();
+        private final AggregationColumnName ignoreCustomerId = AggregationFactory.eINSTANCE.createAggregationColumnName();
+        private final AggregationColumnName ignorePromotionId = AggregationFactory.eINSTANCE.createAggregationColumnName();
+        private final AggregationColumnName ignoreTheYear = AggregationFactory.eINSTANCE.createAggregationColumnName();
+        private final AggregationColumnName ignoreQuarter = AggregationFactory.eINSTANCE.createAggregationColumnName();
+        private final AggregationForeignKey aggForeignKey = AggregationFactory.eINSTANCE.createAggregationForeignKey();
+        private final AggregationMeasure aggMeasureUnitSales = AggregationFactory.eINSTANCE.createAggregationMeasure();
+        private final AggregationMeasure aggMeasureStoreCost = AggregationFactory.eINSTANCE.createAggregationMeasure();
+        private final AggregationMeasure aggMeasureStoreSales = AggregationFactory.eINSTANCE.createAggregationMeasure();
+        private final AggregationLevel aggLevelMonth = AggregationFactory.eINSTANCE.createAggregationLevel();
 
-        private static final TableSource salesFactQuery = SourceFactory.eINSTANCE.createTableSource();
-        private static final TableSource storeTable = SourceFactory.eINSTANCE.createTableSource();
-        private static final TableSource timeByDayTable = SourceFactory.eINSTANCE.createTableSource();
+        private final TableSource salesFactQuery = SourceFactory.eINSTANCE.createTableSource();
+        private final TableSource storeTable = SourceFactory.eINSTANCE.createTableSource();
+        private final TableSource timeByDayTable = SourceFactory.eINSTANCE.createTableSource();
 
-        private static final Level storeCountryLevel = LevelFactory.eINSTANCE.createLevel();
-        private static final Level storeStateLevel = LevelFactory.eINSTANCE.createLevel();
-        private static final Level storeCityLevel = LevelFactory.eINSTANCE.createLevel();
-        private static final Level storeNameLevel = LevelFactory.eINSTANCE.createLevel();
-        private static final ExplicitHierarchy storeHierarchy = HierarchyFactory.eINSTANCE.createExplicitHierarchy();
-        private static final StandardDimension storeDimension = DimensionFactory.eINSTANCE.createStandardDimension();
-        private static final DimensionConnector storeConnector = DimensionFactory.eINSTANCE.createDimensionConnector();
+        private final Level storeCountryLevel = LevelFactory.eINSTANCE.createLevel();
+        private final Level storeStateLevel = LevelFactory.eINSTANCE.createLevel();
+        private final Level storeCityLevel = LevelFactory.eINSTANCE.createLevel();
+        private final Level storeNameLevel = LevelFactory.eINSTANCE.createLevel();
+        private final ExplicitHierarchy storeHierarchy = HierarchyFactory.eINSTANCE.createExplicitHierarchy();
+        private final StandardDimension storeDimension = DimensionFactory.eINSTANCE.createStandardDimension();
+        private final DimensionConnector storeConnector = DimensionFactory.eINSTANCE.createDimensionConnector();
 
-        private static final Level yearLevel = LevelFactory.eINSTANCE.createLevel();
-        private static final Level quarterLevel = LevelFactory.eINSTANCE.createLevel();
-        private static final Level monthLevel = LevelFactory.eINSTANCE.createLevel();
-        private static final Level dayLevel = LevelFactory.eINSTANCE.createLevel();
-        private static final ExplicitHierarchy timeHierarchy = HierarchyFactory.eINSTANCE.createExplicitHierarchy();
-        private static final TimeDimension timeDimension = DimensionFactory.eINSTANCE.createTimeDimension();
-        private static final DimensionConnector timeConnector = DimensionFactory.eINSTANCE.createDimensionConnector();
+        private final Level yearLevel = LevelFactory.eINSTANCE.createLevel();
+        private final Level quarterLevel = LevelFactory.eINSTANCE.createLevel();
+        private final Level monthLevel = LevelFactory.eINSTANCE.createLevel();
+        private final Level dayLevel = LevelFactory.eINSTANCE.createLevel();
+        private final ExplicitHierarchy timeHierarchy = HierarchyFactory.eINSTANCE.createExplicitHierarchy();
+        private final TimeDimension timeDimension = DimensionFactory.eINSTANCE.createTimeDimension();
+        private final DimensionConnector timeConnector = DimensionFactory.eINSTANCE.createDimensionConnector();
 
-        private static final PhysicalCube sales1Cube = CubeFactory.eINSTANCE.createPhysicalCube();
-        private static final Catalog customCatalog = CatalogFactory.eINSTANCE.createCatalog();
+        private final PhysicalCube sales1Cube = CubeFactory.eINSTANCE.createPhysicalCube();
+        private final Catalog customCatalog = CatalogFactory.eINSTANCE.createCatalog();
 
-        static {
+
+        public TestAggregationManagerModifier6(Catalog catalog) {
+            EcoreUtil.Copier copier = EmfUtil.copier((CatalogImpl) catalog);
             // Aggregation Excludes
             aggExclude1.setName("agg_c_special_sales_fact_1997");
             aggExclude2.setName("agg_c_10_sales_fact_1997");
@@ -11587,31 +11583,31 @@ public class SchemaModifiersEmf {
             aggExclude10.setName("agg_l_05_sales_fact_1997");
 
             // Aggregation Name and related objects
-            factCount.setColumn(CatalogSupplier.COLUMN_FACT_COUNT_AGG_C_14_SALES_FACT_1997);
+            factCount.setColumn((Column) copier.get(CatalogSupplier.COLUMN_FACT_COUNT_AGG_C_14_SALES_FACT_1997));
 
-            ignoreProductId.setColumn(CatalogSupplier.COLUMN_PRODUCT_ID_AGG_C_14_SALES_FACT_1997);
-            ignoreCustomerId.setColumn(CatalogSupplier.COLUMN_CUSTOMER_ID_AGG_C_14_SALES_FACT_1997);
-            ignorePromotionId.setColumn(CatalogSupplier.COLUMN_PROMOTION_ID_AGG_C_14_SALES_FACT_1997);
-            ignoreTheYear.setColumn(CatalogSupplier.COLUMN_THE_YEAR_AGG_C_14_SALES_FACT_1997);
-            ignoreQuarter.setColumn(CatalogSupplier.COLUMN_QUARTER_AGG_C_14_SALES_FACT_1997);
+            ignoreProductId.setColumn((Column) copier.get(CatalogSupplier.COLUMN_PRODUCT_ID_AGG_C_14_SALES_FACT_1997));
+            ignoreCustomerId.setColumn((Column) copier.get(CatalogSupplier.COLUMN_CUSTOMER_ID_AGG_C_14_SALES_FACT_1997));
+            ignorePromotionId.setColumn((Column) copier.get(CatalogSupplier.COLUMN_PROMOTION_ID_AGG_C_14_SALES_FACT_1997));
+            ignoreTheYear.setColumn((Column) copier.get(CatalogSupplier.COLUMN_THE_YEAR_AGG_C_14_SALES_FACT_1997));
+            ignoreQuarter.setColumn((Column) copier.get(CatalogSupplier.COLUMN_QUARTER_AGG_C_14_SALES_FACT_1997));
 
-            aggForeignKey.setFactColumn(CatalogSupplier.COLUMN_STORE_ID_SALESFACT);
-            aggForeignKey.setAggregationColumn(CatalogSupplier.COLUMN_STORE_ID_AGG_C_14_SALES_FACT_1997);
+            aggForeignKey.setFactColumn((Column) copier.get(CatalogSupplier.COLUMN_STORE_ID_SALESFACT));
+            aggForeignKey.setAggregationColumn((Column) copier.get(CatalogSupplier.COLUMN_STORE_ID_AGG_C_14_SALES_FACT_1997));
 
             aggMeasureUnitSales.setName("[Measures].[Unit Sales]");
-            aggMeasureUnitSales.setColumn(CatalogSupplier.COLUMN_UNIT_SALES_AGG_C_14_SALES_FACT_1997);
+            aggMeasureUnitSales.setColumn((Column) copier.get(CatalogSupplier.COLUMN_UNIT_SALES_AGG_C_14_SALES_FACT_1997));
 
             aggMeasureStoreCost.setName("[Measures].[Store Cost]");
-            aggMeasureStoreCost.setColumn(CatalogSupplier.COLUMN_STORE_COST_AGG_C_14_SALES_FACT_1997);
+            aggMeasureStoreCost.setColumn((Column) copier.get(CatalogSupplier.COLUMN_STORE_COST_AGG_C_14_SALES_FACT_1997));
 
             aggMeasureStoreSales.setName("[Measures].[Store Sales]");
-            aggMeasureStoreSales.setColumn(CatalogSupplier.COLUMN_STORE_SALES_AGG_C_14_SALES_FACT_1997);
+            aggMeasureStoreSales.setColumn((Column) copier.get(CatalogSupplier.COLUMN_STORE_SALES_AGG_C_14_SALES_FACT_1997));
 
             aggLevelMonth.setName("[Time].[Time].[Month]");
-            aggLevelMonth.setColumn(CatalogSupplier.COLUMN_MONTH_YEAR_AGG_C_14_SALES_FACT_1997);
+            aggLevelMonth.setColumn((Column) copier.get(CatalogSupplier.COLUMN_MONTH_YEAR_AGG_C_14_SALES_FACT_1997));
             aggLevelMonth.setCollapsed(false);
 
-            aggName.setTable(CatalogSupplier.TABLE_AGG_C_14_SALES_FACT);
+            aggName.setTable((Table) copier.get(CatalogSupplier.TABLE_AGG_C_14_SALES_FACT));
             aggName.setAggregationFactCount(factCount);
             aggName.getAggregationIgnoreColumns().addAll(
                     List.of(ignoreProductId, ignoreCustomerId, ignorePromotionId, ignoreTheYear, ignoreQuarter));
@@ -11621,47 +11617,47 @@ public class SchemaModifiersEmf {
             aggName.getAggregationLevels().add(aggLevelMonth);
 
             // Sales Fact Query
-            salesFactQuery.setTable(CatalogSupplier.TABLE_SALES_FACT);
+            salesFactQuery.setTable((Table) copier.get(CatalogSupplier.TABLE_SALES_FACT));
             salesFactQuery.getAggregationExcludes().addAll(List.of(aggExclude1, aggExclude2, aggExclude3, aggExclude4,
                     aggExclude5, aggExclude6, aggExclude7, aggExclude8, aggExclude9, aggExclude10));
             salesFactQuery.getAggregationTables().add(aggName);
 
             // Measures
             unitSalesMeasure.setName("Unit Sales");
-            unitSalesMeasure.setColumn(CatalogSupplier.COLUMN_UNIT_SALES_SALESFACT);
+            unitSalesMeasure.setColumn((Column) copier.get(CatalogSupplier.COLUMN_UNIT_SALES_SALESFACT));
             unitSalesMeasure.setFormatString("Standard");
 
             storeCostMeasure.setName("Store Cost");
-            storeCostMeasure.setColumn(CatalogSupplier.COLUMN_STORE_COST_SALESFACT);
+            storeCostMeasure.setColumn((Column) copier.get(CatalogSupplier.COLUMN_STORE_COST_SALESFACT));
             storeCostMeasure.setFormatString("#,###.00");
 
             storeSalesMeasure.setName("Store Sales");
-            storeSalesMeasure.setColumn(CatalogSupplier.COLUMN_STORE_SALES_SALESFACT);
+            storeSalesMeasure.setColumn((Column) copier.get(CatalogSupplier.COLUMN_STORE_SALES_SALESFACT));
             storeSalesMeasure.setFormatString("#,###.00");
 
             measureGroup.getMeasures().addAll(List.of(unitSalesMeasure, storeCostMeasure, storeSalesMeasure));
 
             // Store Dimension
-            storeTable.setTable(CatalogSupplier.TABLE_STORE);
+            storeTable.setTable((Table) copier.get(CatalogSupplier.TABLE_STORE));
 
             storeCountryLevel.setName("Store Country");
-            storeCountryLevel.setColumn(CatalogSupplier.COLUMN_STORE_COUNTRY_STORE);
+            storeCountryLevel.setColumn((Column) copier.get(CatalogSupplier.COLUMN_STORE_COUNTRY_STORE));
             storeCountryLevel.setUniqueMembers(true);
 
             storeStateLevel.setName("Store State");
-            storeStateLevel.setColumn(CatalogSupplier.COLUMN_STORE_STATE_STORE);
+            storeStateLevel.setColumn((Column) copier.get(CatalogSupplier.COLUMN_STORE_STATE_STORE));
             storeStateLevel.setUniqueMembers(true);
 
             storeCityLevel.setName("Store City");
-            storeCityLevel.setColumn(CatalogSupplier.COLUMN_STORE_CITY_STORE);
+            storeCityLevel.setColumn((Column) copier.get(CatalogSupplier.COLUMN_STORE_CITY_STORE));
             storeCityLevel.setUniqueMembers(false);
 
             storeNameLevel.setName("Store Name");
-            storeNameLevel.setColumn(CatalogSupplier.COLUMN_STORE_NAME_STORE);
+            storeNameLevel.setColumn((Column) copier.get(CatalogSupplier.COLUMN_STORE_NAME_STORE));
             storeNameLevel.setUniqueMembers(true);
 
             storeHierarchy.setHasAll(true);
-            storeHierarchy.setPrimaryKey(CatalogSupplier.COLUMN_STORE_ID_STORE);
+            storeHierarchy.setPrimaryKey((Column) copier.get(CatalogSupplier.COLUMN_STORE_ID_STORE));
             storeHierarchy.setSource(storeTable);
             storeHierarchy.getLevels()
                     .addAll(List.of(storeCountryLevel, storeStateLevel, storeCityLevel, storeNameLevel));
@@ -11670,37 +11666,37 @@ public class SchemaModifiersEmf {
             storeDimension.getHierarchies().add(storeHierarchy);
 
             storeConnector.setOverrideDimensionName("Store");
-            storeConnector.setForeignKey(CatalogSupplier.COLUMN_STORE_ID_SALESFACT);
+            storeConnector.setForeignKey((Column) copier.get(CatalogSupplier.COLUMN_STORE_ID_SALESFACT));
             storeConnector.setDimension(storeDimension);
 
             // Time Dimension
-            timeByDayTable.setTable(CatalogSupplier.TABLE_TIME_BY_DAY);
+            timeByDayTable.setTable((Table) copier.get(CatalogSupplier.TABLE_TIME_BY_DAY));
 
             yearLevel.setName("Year");
-            yearLevel.setColumn(CatalogSupplier.COLUMN_THE_YEAR_TIME_BY_DAY);
+            yearLevel.setColumn((Column) copier.get(CatalogSupplier.COLUMN_THE_YEAR_TIME_BY_DAY));
             yearLevel.setColumnType(ColumnInternalDataType.NUMERIC);
             yearLevel.setUniqueMembers(true);
             yearLevel.setType(LevelDefinition.TIME_YEARS);
 
             quarterLevel.setName("Quarter");
-            quarterLevel.setColumn(CatalogSupplier.COLUMN_QUARTER_TIME_BY_DAY);
+            quarterLevel.setColumn((Column) copier.get(CatalogSupplier.COLUMN_QUARTER_TIME_BY_DAY));
             quarterLevel.setUniqueMembers(false);
             quarterLevel.setType(LevelDefinition.TIME_QUARTERS);
 
             monthLevel.setName("Month");
-            monthLevel.setColumn(CatalogSupplier.COLUMN_MONTH_OF_YEAR_TIME_BY_DAY);
+            monthLevel.setColumn((Column) copier.get(CatalogSupplier.COLUMN_MONTH_OF_YEAR_TIME_BY_DAY));
             monthLevel.setUniqueMembers(true);
             monthLevel.setColumnType(ColumnInternalDataType.NUMERIC);
             monthLevel.setType(LevelDefinition.TIME_MONTHS);
 
             dayLevel.setName("Day");
-            dayLevel.setColumn(CatalogSupplier.COLUMN_DAY_OF_MONTH_TIME_BY_DAY);
+            dayLevel.setColumn((Column) copier.get(CatalogSupplier.COLUMN_DAY_OF_MONTH_TIME_BY_DAY));
             dayLevel.setUniqueMembers(false);
             dayLevel.setColumnType(ColumnInternalDataType.NUMERIC);
             dayLevel.setType(LevelDefinition.TIME_DAYS);
 
             timeHierarchy.setHasAll(false);
-            timeHierarchy.setPrimaryKey(CatalogSupplier.COLUMN_TIME_ID_TIME_BY_DAY);
+            timeHierarchy.setPrimaryKey((Column) copier.get(CatalogSupplier.COLUMN_TIME_ID_TIME_BY_DAY));
             timeHierarchy.setSource(timeByDayTable);
             timeHierarchy.getLevels().addAll(List.of(yearLevel, quarterLevel, monthLevel, dayLevel));
 
@@ -11708,7 +11704,7 @@ public class SchemaModifiersEmf {
             timeDimension.getHierarchies().add(timeHierarchy);
 
             timeConnector.setOverrideDimensionName("Time");
-            timeConnector.setForeignKey(CatalogSupplier.COLUMN_TIME_ID_SALESFACT);
+            timeConnector.setForeignKey((Column) copier.get(CatalogSupplier.COLUMN_TIME_ID_SALESFACT));
             timeConnector.setDimension(timeDimension);
 
             // Sales1 Cube
@@ -11721,12 +11717,8 @@ public class SchemaModifiersEmf {
             // Custom Catalog
             customCatalog.setName("custom");
             customCatalog.getImportedElement().add(sales1Cube);
-            customCatalog.getImportedElement().add(CatalogSupplier.DATABASE_SCHEMA_FOODMART);
+            customCatalog.getImportedElement().add((Schema) copier.get(CatalogSupplier.DATABASE_SCHEMA_FOODMART));
         }
-
-        public TestAggregationManagerModifier6(Catalog catalog) {
-        }
-
         @Override
         public Catalog get() {
             return customCatalog;
@@ -11764,34 +11756,36 @@ public class SchemaModifiersEmf {
          *
          */
 
-        private static final SumMeasure unitSalesMeasure = MeasureFactory.eINSTANCE.createSumMeasure();
-        private static final MeasureGroup measureGroup = CubeFactory.eINSTANCE.createMeasureGroup();
+        private final SumMeasure unitSalesMeasure = MeasureFactory.eINSTANCE.createSumMeasure();
+        private final MeasureGroup measureGroup = CubeFactory.eINSTANCE.createMeasureGroup();
 
-        private static final AggregationExclude aggExclude1 = AggregationFactory.eINSTANCE.createAggregationExclude();
-        private static final AggregationExclude aggExclude2 = AggregationFactory.eINSTANCE.createAggregationExclude();
-        private static final AggregationExclude aggExclude3 = AggregationFactory.eINSTANCE.createAggregationExclude();
-        private static final AggregationExclude aggExclude4 = AggregationFactory.eINSTANCE.createAggregationExclude();
+        private final AggregationExclude aggExclude1 = AggregationFactory.eINSTANCE.createAggregationExclude();
+        private final AggregationExclude aggExclude2 = AggregationFactory.eINSTANCE.createAggregationExclude();
+        private final AggregationExclude aggExclude3 = AggregationFactory.eINSTANCE.createAggregationExclude();
+        private final AggregationExclude aggExclude4 = AggregationFactory.eINSTANCE.createAggregationExclude();
 
-        private static final ExplicitAggregationTable aggName = AggregationFactory.eINSTANCE.createExplicitAggregationTable();
-        private static final AggregationColumnName factCount = AggregationFactory.eINSTANCE.createAggregationColumnName();
-        private static final AggregationColumnName ignoreQuarter = AggregationFactory.eINSTANCE.createAggregationColumnName();
-        private static final AggregationColumnName ignoreMonthOfYear = AggregationFactory.eINSTANCE.createAggregationColumnName();
-        private static final AggregationMeasure aggMeasureUnitSales = AggregationFactory.eINSTANCE.createAggregationMeasure();
-        private static final AggregationLevel aggLevelYear = AggregationFactory.eINSTANCE.createAggregationLevel();
+        private final ExplicitAggregationTable aggName = AggregationFactory.eINSTANCE.createExplicitAggregationTable();
+        private final AggregationColumnName factCount = AggregationFactory.eINSTANCE.createAggregationColumnName();
+        private final AggregationColumnName ignoreQuarter = AggregationFactory.eINSTANCE.createAggregationColumnName();
+        private final AggregationColumnName ignoreMonthOfYear = AggregationFactory.eINSTANCE.createAggregationColumnName();
+        private final AggregationMeasure aggMeasureUnitSales = AggregationFactory.eINSTANCE.createAggregationMeasure();
+        private final AggregationLevel aggLevelYear = AggregationFactory.eINSTANCE.createAggregationLevel();
 
-        private static final TableSource salesFactQuery = SourceFactory.eINSTANCE.createTableSource();
-        private static final TableSource timeByDayTable = SourceFactory.eINSTANCE.createTableSource();
+        private final TableSource salesFactQuery = SourceFactory.eINSTANCE.createTableSource();
+        private final TableSource timeByDayTable = SourceFactory.eINSTANCE.createTableSource();
 
-        private static final Level yearLevel = LevelFactory.eINSTANCE.createLevel();
-        private static final Level quarterLevel = LevelFactory.eINSTANCE.createLevel();
-        private static final ExplicitHierarchy timeHierarchy = HierarchyFactory.eINSTANCE.createExplicitHierarchy();
-        private static final TimeDimension timeDimension = DimensionFactory.eINSTANCE.createTimeDimension();
-        private static final DimensionConnector timeConnector = DimensionFactory.eINSTANCE.createDimensionConnector();
+        private final Level yearLevel = LevelFactory.eINSTANCE.createLevel();
+        private final Level quarterLevel = LevelFactory.eINSTANCE.createLevel();
+        private final ExplicitHierarchy timeHierarchy = HierarchyFactory.eINSTANCE.createExplicitHierarchy();
+        private final TimeDimension timeDimension = DimensionFactory.eINSTANCE.createTimeDimension();
+        private final DimensionConnector timeConnector = DimensionFactory.eINSTANCE.createDimensionConnector();
 
-        private static final PhysicalCube salesCube = CubeFactory.eINSTANCE.createPhysicalCube();
-        private static final Catalog foodMartCatalog = CatalogFactory.eINSTANCE.createCatalog();
+        private final PhysicalCube salesCube = CubeFactory.eINSTANCE.createPhysicalCube();
+        private final Catalog foodMartCatalog = CatalogFactory.eINSTANCE.createCatalog();
 
-        static {
+
+        public TestAggregationManagerModifier7(Catalog catalog) {
+            EcoreUtil.Copier copier = EmfUtil.copier((CatalogImpl) catalog);
             // Aggregation Excludes
             aggExclude1.setName("agg_c_special_sales_fact_1997");
             aggExclude2.setName("agg_lc_100_sales_fact_1997");
@@ -11799,51 +11793,51 @@ public class SchemaModifiersEmf {
             aggExclude4.setName("agg_pc_10_sales_fact_1997");
 
             // Aggregation Name and related objects
-            factCount.setColumn(CatalogSupplier.COLUMN_FACT_COUNT_AGG_C_10_SALES_FACT_1997);
+            factCount.setColumn((Column) copier.get(CatalogSupplier.COLUMN_FACT_COUNT_AGG_C_10_SALES_FACT_1997));
 
-            ignoreQuarter.setColumn(CatalogSupplier.COLUMN_QUARTER_AGG_C_10_SALES_FACT_1997);
-            ignoreMonthOfYear.setColumn(CatalogSupplier.COLUMN_MONTH_YEAR_AGG_C_10_SALES_FACT_1997);
+            ignoreQuarter.setColumn((Column) copier.get(CatalogSupplier.COLUMN_QUARTER_AGG_C_10_SALES_FACT_1997));
+            ignoreMonthOfYear.setColumn((Column) copier.get(CatalogSupplier.COLUMN_MONTH_YEAR_AGG_C_10_SALES_FACT_1997));
 
             aggMeasureUnitSales.setName("[Measures].[Unit Sales]");
-            aggMeasureUnitSales.setColumn(CatalogSupplier.COLUMN_UNIT_SALES_AGG_C_10_SALES_FACT_1997);
+            aggMeasureUnitSales.setColumn((Column) copier.get(CatalogSupplier.COLUMN_UNIT_SALES_AGG_C_10_SALES_FACT_1997));
 
             aggLevelYear.setName("[Time].[Time].[Year]");
-            aggLevelYear.setColumn(CatalogSupplier.COLUMN_THE_YEAR_AGG_C_10_SALES_FACT_1997);
+            aggLevelYear.setColumn((Column) copier.get(CatalogSupplier.COLUMN_THE_YEAR_AGG_C_10_SALES_FACT_1997));
 
-            aggName.setTable(CatalogSupplier.TABLE_AGG_C_10_SALES_FACT_1997);
+            aggName.setTable((Table) copier.get(CatalogSupplier.TABLE_AGG_C_10_SALES_FACT_1997));
             aggName.setAggregationFactCount(factCount);
             aggName.getAggregationIgnoreColumns().addAll(List.of(ignoreQuarter, ignoreMonthOfYear));
             aggName.getAggregationMeasures().add(aggMeasureUnitSales);
             aggName.getAggregationLevels().add(aggLevelYear);
 
             // Sales Fact Query
-            salesFactQuery.setTable(CatalogSupplier.TABLE_SALES_FACT);
+            salesFactQuery.setTable((Table) copier.get(CatalogSupplier.TABLE_SALES_FACT));
             salesFactQuery.getAggregationExcludes().addAll(List.of(aggExclude1, aggExclude2, aggExclude3, aggExclude4));
             salesFactQuery.getAggregationTables().add(aggName);
 
             // Measure
             unitSalesMeasure.setName("Unit Sales");
-            unitSalesMeasure.setColumn(CatalogSupplier.COLUMN_UNIT_SALES_SALESFACT);
+            unitSalesMeasure.setColumn((Column) copier.get(CatalogSupplier.COLUMN_UNIT_SALES_SALESFACT));
             unitSalesMeasure.setFormatString("Standard");
 
             measureGroup.getMeasures().add(unitSalesMeasure);
 
             // Time Dimension
-            timeByDayTable.setTable(CatalogSupplier.TABLE_TIME_BY_DAY);
+            timeByDayTable.setTable((Table) copier.get(CatalogSupplier.TABLE_TIME_BY_DAY));
 
             yearLevel.setName("Year");
-            yearLevel.setColumn(CatalogSupplier.COLUMN_THE_YEAR_TIME_BY_DAY);
+            yearLevel.setColumn((Column) copier.get(CatalogSupplier.COLUMN_THE_YEAR_TIME_BY_DAY));
             yearLevel.setColumnType(ColumnInternalDataType.NUMERIC);
             yearLevel.setUniqueMembers(true);
             yearLevel.setType(LevelDefinition.TIME_YEARS);
 
             quarterLevel.setName("Quarter");
-            quarterLevel.setColumn(CatalogSupplier.COLUMN_QUARTER_TIME_BY_DAY);
+            quarterLevel.setColumn((Column) copier.get(CatalogSupplier.COLUMN_QUARTER_TIME_BY_DAY));
             quarterLevel.setUniqueMembers(false);
             quarterLevel.setType(LevelDefinition.TIME_QUARTERS);
 
             timeHierarchy.setHasAll(false);
-            timeHierarchy.setPrimaryKey(CatalogSupplier.COLUMN_TIME_ID_TIME_BY_DAY);
+            timeHierarchy.setPrimaryKey((Column) copier.get(CatalogSupplier.COLUMN_TIME_ID_TIME_BY_DAY));
             timeHierarchy.setSource(timeByDayTable);
             timeHierarchy.getLevels().addAll(List.of(yearLevel, quarterLevel));
 
@@ -11851,7 +11845,7 @@ public class SchemaModifiersEmf {
             timeDimension.getHierarchies().add(timeHierarchy);
 
             timeConnector.setOverrideDimensionName("Time");
-            timeConnector.setForeignKey(CatalogSupplier.COLUMN_TIME_ID_SALESFACT);
+            timeConnector.setForeignKey((Column) copier.get(CatalogSupplier.COLUMN_TIME_ID_SALESFACT));
             timeConnector.setDimension(timeDimension);
 
             // Sales Cube
@@ -11863,13 +11857,9 @@ public class SchemaModifiersEmf {
 
             // FoodMart Catalog
             foodMartCatalog.setName("FoodMart");
-            foodMartCatalog.getImportedElement().add(CatalogSupplier.DATABASE_SCHEMA_FOODMART);
+            foodMartCatalog.getImportedElement().add((Schema) copier.get(CatalogSupplier.DATABASE_SCHEMA_FOODMART));
             foodMartCatalog.getImportedElement().add(salesCube);
         }
-
-        public TestAggregationManagerModifier7(Catalog catalog) {
-        }
-
         @Override
         public Catalog get() {
             return foodMartCatalog;
@@ -11917,43 +11907,45 @@ public class SchemaModifiersEmf {
          * "      formatString=\"Standard\"/>\n" + "</Cube></Schema>\n";
          */
 
-        private static final SumMeasure unitSalesMeasure = MeasureFactory.eINSTANCE.createSumMeasure();
-        private static final SumMeasure customerCountMeasure = MeasureFactory.eINSTANCE.createSumMeasure();
-        private static final SumMeasure storeSalesMeasure = MeasureFactory.eINSTANCE.createSumMeasure();
-        private static final SumMeasure storeCostMeasure = MeasureFactory.eINSTANCE.createSumMeasure();
-        private static final MeasureGroup measureGroup = CubeFactory.eINSTANCE.createMeasureGroup();
+        private final SumMeasure unitSalesMeasure = MeasureFactory.eINSTANCE.createSumMeasure();
+        private final SumMeasure customerCountMeasure = MeasureFactory.eINSTANCE.createSumMeasure();
+        private final SumMeasure storeSalesMeasure = MeasureFactory.eINSTANCE.createSumMeasure();
+        private final SumMeasure storeCostMeasure = MeasureFactory.eINSTANCE.createSumMeasure();
+        private final MeasureGroup measureGroup = CubeFactory.eINSTANCE.createMeasureGroup();
 
-        private static final AggregationExclude aggExclude1 = AggregationFactory.eINSTANCE.createAggregationExclude();
-        private static final AggregationExclude aggExclude2 = AggregationFactory.eINSTANCE.createAggregationExclude();
-        private static final AggregationExclude aggExclude3 = AggregationFactory.eINSTANCE.createAggregationExclude();
-        private static final AggregationExclude aggExclude4 = AggregationFactory.eINSTANCE.createAggregationExclude();
-        private static final AggregationExclude aggExclude5 = AggregationFactory.eINSTANCE.createAggregationExclude();
-        private static final AggregationExclude aggExclude6 = AggregationFactory.eINSTANCE.createAggregationExclude();
-        private static final AggregationExclude aggExclude7 = AggregationFactory.eINSTANCE.createAggregationExclude();
-        private static final AggregationExclude aggExclude8 = AggregationFactory.eINSTANCE.createAggregationExclude();
+        private final AggregationExclude aggExclude1 = AggregationFactory.eINSTANCE.createAggregationExclude();
+        private final AggregationExclude aggExclude2 = AggregationFactory.eINSTANCE.createAggregationExclude();
+        private final AggregationExclude aggExclude3 = AggregationFactory.eINSTANCE.createAggregationExclude();
+        private final AggregationExclude aggExclude4 = AggregationFactory.eINSTANCE.createAggregationExclude();
+        private final AggregationExclude aggExclude5 = AggregationFactory.eINSTANCE.createAggregationExclude();
+        private final AggregationExclude aggExclude6 = AggregationFactory.eINSTANCE.createAggregationExclude();
+        private final AggregationExclude aggExclude7 = AggregationFactory.eINSTANCE.createAggregationExclude();
+        private final AggregationExclude aggExclude8 = AggregationFactory.eINSTANCE.createAggregationExclude();
 
-        private static final ExplicitAggregationTable aggName = AggregationFactory.eINSTANCE.createExplicitAggregationTable();
-        private static final AggregationColumnName factCount = AggregationFactory.eINSTANCE.createAggregationColumnName();
-        private static final AggregationColumnName ignoreCustomer = AggregationFactory.eINSTANCE.createAggregationColumnName();
-        private static final AggregationColumnName ignoreStore = AggregationFactory.eINSTANCE.createAggregationColumnName();
-        private static final AggregationColumnName ignorePromotion = AggregationFactory.eINSTANCE.createAggregationColumnName();
-        private static final AggregationForeignKey aggForeignKey = AggregationFactory.eINSTANCE.createAggregationForeignKey();
-        private static final AggregationMeasure aggMeasureStoreCost = AggregationFactory.eINSTANCE.createAggregationMeasure();
-        private static final AggregationMeasure aggMeasureStoreSales = AggregationFactory.eINSTANCE.createAggregationMeasure();
-        private static final AggregationMeasure aggMeasureUnitSales = AggregationFactory.eINSTANCE.createAggregationMeasure();
+        private final ExplicitAggregationTable aggName = AggregationFactory.eINSTANCE.createExplicitAggregationTable();
+        private final AggregationColumnName factCount = AggregationFactory.eINSTANCE.createAggregationColumnName();
+        private final AggregationColumnName ignoreCustomer = AggregationFactory.eINSTANCE.createAggregationColumnName();
+        private final AggregationColumnName ignoreStore = AggregationFactory.eINSTANCE.createAggregationColumnName();
+        private final AggregationColumnName ignorePromotion = AggregationFactory.eINSTANCE.createAggregationColumnName();
+        private final AggregationForeignKey aggForeignKey = AggregationFactory.eINSTANCE.createAggregationForeignKey();
+        private final AggregationMeasure aggMeasureStoreCost = AggregationFactory.eINSTANCE.createAggregationMeasure();
+        private final AggregationMeasure aggMeasureStoreSales = AggregationFactory.eINSTANCE.createAggregationMeasure();
+        private final AggregationMeasure aggMeasureUnitSales = AggregationFactory.eINSTANCE.createAggregationMeasure();
 
-        private static final TableSource salesFactQuery = SourceFactory.eINSTANCE.createTableSource();
-        private static final TableSource promotionTable = SourceFactory.eINSTANCE.createTableSource();
+        private final TableSource salesFactQuery = SourceFactory.eINSTANCE.createTableSource();
+        private final TableSource promotionTable = SourceFactory.eINSTANCE.createTableSource();
 
-        private static final Level mediaTypeLevel = LevelFactory.eINSTANCE.createLevel();
-        private static final ExplicitHierarchy promotionHierarchy = HierarchyFactory.eINSTANCE.createExplicitHierarchy();
-        private static final StandardDimension promotionDimension = DimensionFactory.eINSTANCE.createStandardDimension();
-        private static final DimensionConnector promotionConnector = DimensionFactory.eINSTANCE.createDimensionConnector();
+        private final Level mediaTypeLevel = LevelFactory.eINSTANCE.createLevel();
+        private final ExplicitHierarchy promotionHierarchy = HierarchyFactory.eINSTANCE.createExplicitHierarchy();
+        private final StandardDimension promotionDimension = DimensionFactory.eINSTANCE.createStandardDimension();
+        private final DimensionConnector promotionConnector = DimensionFactory.eINSTANCE.createDimensionConnector();
 
-        private static final PhysicalCube fooCube = CubeFactory.eINSTANCE.createPhysicalCube();
-        private static final Catalog amcCatalog = CatalogFactory.eINSTANCE.createCatalog();
+        private final PhysicalCube fooCube = CubeFactory.eINSTANCE.createPhysicalCube();
+        private final Catalog amcCatalog = CatalogFactory.eINSTANCE.createCatalog();
 
-        static {
+
+        public TestAggregationManagerModifier8(Catalog catalog) {
+            EcoreUtil.Copier copier = EmfUtil.copier((CatalogImpl) catalog);
             // Aggregation Excludes
             aggExclude1.setName("agg_g_ms_pcat_sales_fact_1997");
             aggExclude2.setName("agg_c_14_sales_fact_1997");
@@ -11965,25 +11957,25 @@ public class SchemaModifiersEmf {
             aggExclude8.setName("agg_c_10_sales_fact_1997");
 
             // Aggregation Name and related objects
-            factCount.setColumn(CatalogSupplier.COLUMN_FACT_COUNT_AGG_L_05_SALES_FACT_1997);
+            factCount.setColumn((Column) copier.get(CatalogSupplier.COLUMN_FACT_COUNT_AGG_L_05_SALES_FACT_1997));
 
-            ignoreCustomer.setColumn(CatalogSupplier.COLUMN_CUSTOMER_ID_AGG_L_05_SALES_FACT_1997);
-            ignoreStore.setColumn(CatalogSupplier.COLUMN_STORE_ID_AGG_L_05_SALES_FACT_1997);
-            ignorePromotion.setColumn(CatalogSupplier.COLUMN_PROMOTION_ID_AGG_L_05_SALES_FACT_1997);
+            ignoreCustomer.setColumn((Column) copier.get(CatalogSupplier.COLUMN_CUSTOMER_ID_AGG_L_05_SALES_FACT_1997));
+            ignoreStore.setColumn((Column) copier.get(CatalogSupplier.COLUMN_STORE_ID_AGG_L_05_SALES_FACT_1997));
+            ignorePromotion.setColumn((Column) copier.get(CatalogSupplier.COLUMN_PROMOTION_ID_AGG_L_05_SALES_FACT_1997));
 
-            aggForeignKey.setFactColumn(CatalogSupplier.COLUMN_PROMOTION_ID_SALESFACT);
-            aggForeignKey.setAggregationColumn(CatalogSupplier.COLUMN_PROMOTION_ID_AGG_L_05_SALES_FACT_1997);
+            aggForeignKey.setFactColumn((Column) copier.get(CatalogSupplier.COLUMN_PROMOTION_ID_SALESFACT));
+            aggForeignKey.setAggregationColumn((Column) copier.get(CatalogSupplier.COLUMN_PROMOTION_ID_AGG_L_05_SALES_FACT_1997));
 
             aggMeasureStoreCost.setName("[Measures].[Store Cost]");
-            aggMeasureStoreCost.setColumn(CatalogSupplier.COLUMN_STORE_COST_AGG_L_05_SALES_FACT_1997);
+            aggMeasureStoreCost.setColumn((Column) copier.get(CatalogSupplier.COLUMN_STORE_COST_AGG_L_05_SALES_FACT_1997));
 
             aggMeasureStoreSales.setName("[Measures].[Store Sales]");
-            aggMeasureStoreSales.setColumn(CatalogSupplier.COLUMN_STORE_SALES_AGG_L_05_SALES_FACT_1997);
+            aggMeasureStoreSales.setColumn((Column) copier.get(CatalogSupplier.COLUMN_STORE_SALES_AGG_L_05_SALES_FACT_1997));
 
             aggMeasureUnitSales.setName("[Measures].[Unit Sales]");
-            aggMeasureUnitSales.setColumn(CatalogSupplier.COLUMN_UNIT_SALES_AGG_L_05_SALES_FACT_1997);
+            aggMeasureUnitSales.setColumn((Column) copier.get(CatalogSupplier.COLUMN_UNIT_SALES_AGG_L_05_SALES_FACT_1997));
 
-            aggName.setTable(CatalogSupplier.TABLE_AGG_L_05_SALES_FACT);
+            aggName.setTable((Table) copier.get(CatalogSupplier.TABLE_AGG_L_05_SALES_FACT));
             aggName.setAggregationFactCount(factCount);
             aggName.getAggregationIgnoreColumns().addAll(List.of(ignoreCustomer, ignoreStore, ignorePromotion));
             aggName.getAggregationForeignKeys().add(aggForeignKey);
@@ -11991,41 +11983,41 @@ public class SchemaModifiersEmf {
                     .addAll(List.of(aggMeasureStoreCost, aggMeasureStoreSales, aggMeasureUnitSales));
 
             // Sales Fact Query
-            salesFactQuery.setTable(CatalogSupplier.TABLE_SALES_FACT);
+            salesFactQuery.setTable((Table) copier.get(CatalogSupplier.TABLE_SALES_FACT));
             salesFactQuery.getAggregationExcludes().addAll(List.of(aggExclude1, aggExclude2, aggExclude3, aggExclude4,
                     aggExclude5, aggExclude6, aggExclude7, aggExclude8));
             salesFactQuery.getAggregationTables().add(aggName);
 
             // Measures
             unitSalesMeasure.setName("Unit Sales");
-            unitSalesMeasure.setColumn(CatalogSupplier.COLUMN_UNIT_SALES_SALESFACT);
+            unitSalesMeasure.setColumn((Column) copier.get(CatalogSupplier.COLUMN_UNIT_SALES_SALESFACT));
             unitSalesMeasure.setFormatString("Standard");
 
             customerCountMeasure.setName("Customer Count");
-            customerCountMeasure.setColumn(CatalogSupplier.COLUMN_CUSTOMER_ID_SALESFACT);
+            customerCountMeasure.setColumn((Column) copier.get(CatalogSupplier.COLUMN_CUSTOMER_ID_SALESFACT));
             customerCountMeasure.setFormatString("Standard");
 
             storeSalesMeasure.setName("Store Sales");
-            storeSalesMeasure.setColumn(CatalogSupplier.COLUMN_STORE_SALES_SALESFACT);
+            storeSalesMeasure.setColumn((Column) copier.get(CatalogSupplier.COLUMN_STORE_SALES_SALESFACT));
             storeSalesMeasure.setFormatString("Standard");
 
             storeCostMeasure.setName("Store Cost");
-            storeCostMeasure.setColumn(CatalogSupplier.COLUMN_STORE_COST_SALESFACT);
+            storeCostMeasure.setColumn((Column) copier.get(CatalogSupplier.COLUMN_STORE_COST_SALESFACT));
             storeCostMeasure.setFormatString("Standard");
 
             measureGroup.getMeasures()
                     .addAll(List.of(unitSalesMeasure, customerCountMeasure, storeSalesMeasure, storeCostMeasure));
 
             // Promotion Dimension
-            promotionTable.setTable(CatalogSupplier.TABLE_PROMOTION);
+            promotionTable.setTable((Table) copier.get(CatalogSupplier.TABLE_PROMOTION));
 
             mediaTypeLevel.setName("Media Type");
-            mediaTypeLevel.setColumn(CatalogSupplier.COLUMN_MEDIA_TYPE_PROMOTION);
+            mediaTypeLevel.setColumn((Column) copier.get(CatalogSupplier.COLUMN_MEDIA_TYPE_PROMOTION));
             mediaTypeLevel.setUniqueMembers(true);
 
             promotionHierarchy.setHasAll(true);
             promotionHierarchy.setAllMemberName("All Promotions");
-            promotionHierarchy.setPrimaryKey(CatalogSupplier.COLUMN_PROMOTION_ID_PROMOTION);
+            promotionHierarchy.setPrimaryKey((Column) copier.get(CatalogSupplier.COLUMN_PROMOTION_ID_PROMOTION));
             promotionHierarchy.setDefaultMember("[All Promotions]");
             promotionHierarchy.setSource(promotionTable);
             promotionHierarchy.getLevels().add(mediaTypeLevel);
@@ -12034,7 +12026,7 @@ public class SchemaModifiersEmf {
             promotionDimension.getHierarchies().add(promotionHierarchy);
 
             promotionConnector.setOverrideDimensionName("Promotions");
-            promotionConnector.setForeignKey(CatalogSupplier.COLUMN_PROMOTION_ID_SALESFACT);
+            promotionConnector.setForeignKey((Column) copier.get(CatalogSupplier.COLUMN_PROMOTION_ID_SALESFACT));
             promotionConnector.setDimension(promotionDimension);
 
             // Foo Cube
@@ -12046,13 +12038,9 @@ public class SchemaModifiersEmf {
 
             // AMC Catalog
             amcCatalog.setName("AMC");
-            amcCatalog.getImportedElement().add(CatalogSupplier.DATABASE_SCHEMA_FOODMART);
+            amcCatalog.getImportedElement().add((Schema) copier.get(CatalogSupplier.DATABASE_SCHEMA_FOODMART));
             amcCatalog.getImportedElement().add(fooCube);
         }
-
-        public TestAggregationManagerModifier8(Catalog catalog) {
-        }
-
         @Override
         public Catalog get() {
             return amcCatalog;
