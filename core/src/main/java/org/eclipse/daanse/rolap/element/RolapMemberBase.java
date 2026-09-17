@@ -53,7 +53,7 @@ import org.eclipse.daanse.olap.element.MemberBase;
 import org.eclipse.daanse.olap.element.OlapMetaDataBase;
 import org.eclipse.daanse.olap.execution.ExecutionImpl;
 import org.eclipse.daanse.olap.function.def.aggregate.AggregateFunDef;
-import org.eclipse.daanse.olap.impl.StatementImpl;
+import org.eclipse.daanse.olap.execution.StatementImpl;
 import org.eclipse.daanse.olap.query.component.ResolvedFunCallImpl;
 import  org.eclipse.daanse.olap.util.Bug;
 import org.eclipse.daanse.rolap.api.element.RolapMember;

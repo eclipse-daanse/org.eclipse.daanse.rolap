@@ -35,7 +35,7 @@ import org.eclipse.daanse.olap.api.query.IdentifierSegment;
 import org.eclipse.daanse.olap.api.query.component.Formula;
 import org.eclipse.daanse.olap.common.NameResolverImpl;
 import org.eclipse.daanse.olap.common.Util;
-import org.eclipse.daanse.olap.impl.IdentifierNode;
+import org.eclipse.daanse.olap.query.IdentifierNode;
 import org.eclipse.daanse.rolap.element.RolapCube;
 
 /**

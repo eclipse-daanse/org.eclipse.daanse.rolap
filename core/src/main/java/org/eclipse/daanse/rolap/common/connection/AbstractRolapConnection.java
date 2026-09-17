@@ -587,6 +587,6 @@ public Context<?> getContext() {
   //TODO: Extract a statement between connection and Resuolt without the query
   @Override
   public org.eclipse.daanse.olap.api.execution.Statement createStatement() {
-    return new org.eclipse.daanse.olap.impl.StatementImpl(this);
+    return new org.eclipse.daanse.olap.execution.StatementImpl(this);
   }
 }
