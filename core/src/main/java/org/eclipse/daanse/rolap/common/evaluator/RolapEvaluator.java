@@ -23,6 +23,7 @@ import org.eclipse.daanse.olap.api.element.Level;
 import org.eclipse.daanse.olap.api.element.Measure;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.evaluator.EvaluatorImpl;
+import org.eclipse.daanse.olap.evaluator.EvaluatorRoot;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.agg.CompoundPredicateInfo;
 import org.eclipse.daanse.rolap.common.constraint.SlicerAnalyzer;
@@ -38,11 +39,11 @@ import org.eclipse.daanse.rolap.element.RolapMeasure;
  */
 public class RolapEvaluator extends EvaluatorImpl {
 
-    public RolapEvaluator(RolapEvaluatorRoot root) {
+    public RolapEvaluator(EvaluatorRoot root) {
         super(root);
     }
 
-    protected RolapEvaluator(RolapEvaluatorRoot root, RolapEvaluator parent, List<List<Member>> aggregationList) {
+    protected RolapEvaluator(EvaluatorRoot root, RolapEvaluator parent, List<List<Member>> aggregationList) {
         super(root, parent, aggregationList);
     }
 
@@ -54,11 +55,6 @@ public class RolapEvaluator extends EvaluatorImpl {
     @Override
     public RolapEvaluator push() {
         return (RolapEvaluator) super.push();
-    }
-
-    @Override
-    public RolapEvaluatorRoot getRoot() {
-        return (RolapEvaluatorRoot) super.getRoot();
     }
 
     @Override

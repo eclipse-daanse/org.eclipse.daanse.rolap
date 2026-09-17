@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import org.eclipse.daanse.olap.evaluator.EvaluatorRoot;
 import org.eclipse.daanse.olap.api.calc.Calc;
 import org.eclipse.daanse.olap.api.calc.ResultStyle;
 import org.eclipse.daanse.olap.api.calc.compiler.ExpressionCompiler;
@@ -86,7 +87,7 @@ public class RolapDependencyTestingEvaluator extends RolapEvaluator {
      * @param evaluator Parent evaluator
      */
     private RolapDependencyTestingEvaluator(
-        RolapEvaluatorRoot root,
+        EvaluatorRoot root,
         RolapDependencyTestingEvaluator evaluator,
         List<List<Member>> aggregationList)
     {

@@ -14,6 +14,7 @@
 package org.eclipse.daanse.rolap.common.evaluator;
 
 import org.eclipse.daanse.olap.api.calc.Calc;
+import org.eclipse.daanse.olap.api.connection.Connection;
 import org.eclipse.daanse.olap.api.element.Cube;
 import org.eclipse.daanse.olap.api.element.Hierarchy;
 import org.eclipse.daanse.olap.api.evaluator.Evaluator;
@@ -49,14 +50,24 @@ public class RolapEvaluatorRoot extends EvaluatorRoot {
 
     @Override
     protected CalculableMember scenarioMemberFor(Hierarchy hierarchy) {
+        return scenarioMember(connection, hierarchy);
+    }
+
+    @Override
+    protected void nameDefaultMember(Cube cube, Hierarchy hierarchy, CalculableMember defaultMember) {
+        nameByUsage(cube, hierarchy, defaultMember);
+    }
+
+    /** The member of the active writeback scenario on {@code hierarchy}, or null. */
+    public static CalculableMember scenarioMember(Connection connection, Hierarchy hierarchy) {
         if (ScenarioImpl.isScenario(hierarchy) && connection.getScenario() != null) {
             return (RolapMember) ((ScenarioImpl) connection.getScenario()).getMember();
         }
         return null;
     }
 
-    @Override
-    protected void nameDefaultMember(Cube cube, Hierarchy hierarchy, CalculableMember defaultMember) {
+    /** Names a default member after the usage that joins its hierarchy into the cube. */
+    public static void nameByUsage(Cube cube, Hierarchy hierarchy, CalculableMember defaultMember) {
         // a concurrency bottleneck, hence the cube's cache of hierarchy usages
         final HierarchyUsage hierarchyUsage = ((RolapCube) cube).getFirstUsage(hierarchy);
         if (hierarchyUsage != null && defaultMember instanceof RolapMemberBase base) {

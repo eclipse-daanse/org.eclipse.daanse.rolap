@@ -26,6 +26,7 @@ package org.eclipse.daanse.rolap.common.evaluator;
 
 import java.util.List;
 
+import org.eclipse.daanse.olap.evaluator.EvaluatorRoot;
 import org.eclipse.daanse.olap.api.calc.Calc;
 import org.eclipse.daanse.olap.api.calc.compiler.ExpressionCompiler;
 import org.eclipse.daanse.olap.api.element.Member;
@@ -69,7 +70,7 @@ public class RolapInterceptableEvaluator extends RolapEvaluator {
      *
      * @param root Shared context between this evaluator and its children
      */
-    public RolapInterceptableEvaluator(RolapEvaluatorRoot root) {
+    public RolapInterceptableEvaluator(EvaluatorRoot root) {
         super(root);
     }
 
@@ -79,7 +80,7 @@ public class RolapInterceptableEvaluator extends RolapEvaluator {
      * @param root      Root evaluation context
      * @param evaluator Parent evaluator
      */
-    private RolapInterceptableEvaluator(RolapEvaluatorRoot root, RolapInterceptableEvaluator evaluator,
+    private RolapInterceptableEvaluator(EvaluatorRoot root, RolapInterceptableEvaluator evaluator,
             List<List<Member>> aggregationList) {
         super(root, evaluator, aggregationList);
     }
