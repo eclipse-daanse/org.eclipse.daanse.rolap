@@ -107,7 +107,7 @@ import org.eclipse.daanse.olap.exceptions.CalcMemberNotUniqueException;
 import org.eclipse.daanse.olap.execution.ExecutionImpl;
 import org.eclipse.daanse.olap.function.core.FunctionMetaDataR;
 import org.eclipse.daanse.olap.function.core.FunctionParameterR;
-import org.eclipse.daanse.olap.function.def.AbstractFunctionDefinition;
+import org.eclipse.daanse.olap.function.core.AbstractFunctionDefinition;
 import org.eclipse.daanse.olap.execution.StatementImpl;
 import org.eclipse.daanse.olap.key.BitKey;
 import org.eclipse.daanse.olap.query.component.FormulaImpl;

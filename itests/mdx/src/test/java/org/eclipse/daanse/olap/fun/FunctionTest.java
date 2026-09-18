@@ -440,7 +440,7 @@ org.eclipse.daanse.olap.calc.base.type.tuplebase.MemberArrayValueCalc(type=SCALA
     org.eclipse.daanse.olap.calc.base.constant.ConstantMemberCalc(type=MemberType<member=[Gender].[Gender].[M]>, resultStyle=VALUE_NOT_NULL, callCount=0, callMillis=0)
     org.eclipse.daanse.olap.function.def.set.setitem.SetItemFunDef$3(type=MemberType<hierarchy=[Time].[Time]>, resultStyle=VALUE, callCount=0, callMillis=0)
         org.eclipse.daanse.olap.function.def.set.children.ChildrenCalc(type=SetType<MemberType<hierarchy=[Time].[Time]>>, resultStyle=LIST, callCount=0, callMillis=0)
-            org.eclipse.daanse.olap.function.def.hierarchy.member.HierarchyCurrentMemberFixedCalc(type=MemberType<hierarchy=[Time].[Time]>, resultStyle=VALUE, callCount=0, callMillis=0)
+            org.eclipse.daanse.olap.calc.base.type.hierarchy.HierarchyCurrentMemberFixedCalc(type=MemberType<hierarchy=[Time].[Time]>, resultStyle=VALUE, callCount=0, callMillis=0)
         org.eclipse.daanse.olap.calc.base.constant.ConstantIntegerCalc(type=DecimalType(0), resultStyle=VALUE_NOT_NULL, callCount=0, callMillis=0)
     org.eclipse.daanse.olap.calc.base.constant.ConstantMemberCalc(type=MemberType<member=[Measures].[Unit Sales]>, resultStyle=VALUE_NOT_NULL, callCount=0, callMillis=0)
 							""";

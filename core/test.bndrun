@@ -80,6 +80,7 @@
 	org.eclipse.daanse.olap.api;version='[0.0.1,0.0.2)',\
 	org.eclipse.daanse.olap.common;version='[0.0.1,0.0.2)',\
 	org.eclipse.daanse.olap.format;version='[0.0.1,0.0.2)',\
+	org.eclipse.daanse.olap.function;version='[0.0.1,0.0.2)',\
 	org.eclipse.daanse.olap.spi;version='[0.0.1,0.0.2)',\
 	org.eclipse.daanse.olap.util.format;version='[0.0.1,0.0.2)',\
 	org.eclipse.daanse.rolap.core;version='[0.0.1,0.0.2)',\

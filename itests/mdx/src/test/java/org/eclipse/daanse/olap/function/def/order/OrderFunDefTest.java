@@ -126,7 +126,7 @@ org.eclipse.daanse.olap.function.def.order.OrderContextCalc(type=SetType<MemberT
     org.eclipse.daanse.olap.calc.base.constant.ConstantMemberCalc(type=MemberType<member=[Measures].[Unit Sales]>, resultStyle=VALUE_NOT_NULL, callCount=0, callMillis=0)
     org.eclipse.daanse.olap.function.def.order.OrderCurrentMemberCalc(type=SetType<MemberType<hierarchy=[Product].[Product]>>, resultStyle=MUTABLE_LIST, callCount=0, callMillis=0, direction=ASC)
         org.eclipse.daanse.olap.function.def.set.children.ChildrenCalc(type=SetType<MemberType<hierarchy=[Product].[Product]>>, resultStyle=LIST, callCount=0, callMillis=0)
-            org.eclipse.daanse.olap.function.def.hierarchy.member.HierarchyCurrentMemberFixedCalc(type=MemberType<hierarchy=[Product].[Product]>, resultStyle=VALUE, callCount=0, callMillis=0)
+            org.eclipse.daanse.olap.calc.base.type.hierarchy.HierarchyCurrentMemberFixedCalc(type=MemberType<hierarchy=[Product].[Product]>, resultStyle=VALUE, callCount=0, callMillis=0)
         org.eclipse.daanse.olap.calc.base.value.CurrentValueUnknownCalc(type=SCALAR, resultStyle=VALUE, callCount=0, callMillis=0)
 					""";
         assertAxisCompilesTo(connection, expr, expected);
@@ -142,10 +142,10 @@ org.eclipse.daanse.olap.function.def.order.OrderContextCalc(type=SetType<MemberT
     org.eclipse.daanse.olap.calc.base.constant.ConstantMemberCalc(type=MemberType<member=[Time].[Time].[1997]>, resultStyle=VALUE_NOT_NULL, callCount=0, callMillis=0)
     org.eclipse.daanse.olap.function.def.order.OrderCurrentMemberCalc(type=SetType<MemberType<hierarchy=[Product].[Product]>>, resultStyle=MUTABLE_LIST, callCount=0, callMillis=0, direction=ASC)
         org.eclipse.daanse.olap.function.def.set.children.ChildrenCalc(type=SetType<MemberType<hierarchy=[Product].[Product]>>, resultStyle=LIST, callCount=0, callMillis=0)
-            org.eclipse.daanse.olap.function.def.hierarchy.member.HierarchyCurrentMemberFixedCalc(type=MemberType<hierarchy=[Product].[Product]>, resultStyle=VALUE, callCount=0, callMillis=0)
+            org.eclipse.daanse.olap.calc.base.type.hierarchy.HierarchyCurrentMemberFixedCalc(type=MemberType<hierarchy=[Product].[Product]>, resultStyle=VALUE, callCount=0, callMillis=0)
         org.eclipse.daanse.olap.calc.base.type.tuplebase.MemberValueCalc(type=SCALAR, resultStyle=VALUE, callCount=0, callMillis=0)
             org.eclipse.daanse.olap.function.def.member.parentcalc.ParentFunDef$1(type=MemberType<hierarchy=[Product].[Product]>, resultStyle=VALUE, callCount=0, callMillis=0)
-                org.eclipse.daanse.olap.function.def.hierarchy.member.HierarchyCurrentMemberFixedCalc(type=MemberType<hierarchy=[Product].[Product]>, resultStyle=VALUE, callCount=0, callMillis=0)
+                org.eclipse.daanse.olap.calc.base.type.hierarchy.HierarchyCurrentMemberFixedCalc(type=MemberType<hierarchy=[Product].[Product]>, resultStyle=VALUE, callCount=0, callMillis=0)
 				""";
         // [Time].[1997] is constant, and is evaluated in a ContextCalc.
         // [Product].Parent is variable, and is evaluated inside the loop.
@@ -160,10 +160,10 @@ org.eclipse.daanse.olap.function.def.order.OrderContextCalc(type=SetType<MemberT
         String expected = """
 org.eclipse.daanse.olap.function.def.order.OrderCurrentMemberCalc(type=SetType<MemberType<hierarchy=[Product].[Product]>>, resultStyle=MUTABLE_LIST, callCount=0, callMillis=0, direction=ASC)
     org.eclipse.daanse.olap.function.def.set.children.ChildrenCalc(type=SetType<MemberType<hierarchy=[Product].[Product]>>, resultStyle=LIST, callCount=0, callMillis=0)
-        org.eclipse.daanse.olap.function.def.hierarchy.member.HierarchyCurrentMemberFixedCalc(type=MemberType<hierarchy=[Product].[Product]>, resultStyle=VALUE, callCount=0, callMillis=0)
+        org.eclipse.daanse.olap.calc.base.type.hierarchy.HierarchyCurrentMemberFixedCalc(type=MemberType<hierarchy=[Product].[Product]>, resultStyle=VALUE, callCount=0, callMillis=0)
     org.eclipse.daanse.olap.calc.base.type.tuplebase.MemberValueCalc(type=SCALAR, resultStyle=VALUE, callCount=0, callMillis=0)
         org.eclipse.daanse.olap.function.def.member.parentcalc.ParentFunDef$1(type=MemberType<hierarchy=[Product].[Product]>, resultStyle=VALUE, callCount=0, callMillis=0)
-            org.eclipse.daanse.olap.function.def.hierarchy.member.HierarchyCurrentMemberFixedCalc(type=MemberType<hierarchy=[Product].[Product]>, resultStyle=VALUE, callCount=0, callMillis=0)
+            org.eclipse.daanse.olap.calc.base.type.hierarchy.HierarchyCurrentMemberFixedCalc(type=MemberType<hierarchy=[Product].[Product]>, resultStyle=VALUE, callCount=0, callMillis=0)
 						""";
         assertAxisCompilesTo(connection, expr, expected);
     }
@@ -178,7 +178,7 @@ org.eclipse.daanse.olap.function.def.order.OrderContextCalc(type=SetType<MemberT
     org.eclipse.daanse.olap.function.def.order.OrderCurrentMemberCalc(type=SetType<MemberType<hierarchy=[Product].[Product]>>, resultStyle=MUTABLE_LIST, callCount=0, callMillis=0, direction=ASC)
         org.eclipse.daanse.olap.function.def.set.filter.ImmutableIterFilterCalc(type=SetType<MemberType<hierarchy=[Product].[Product]>>, resultStyle=ITERABLE, callCount=0, callMillis=0)
             org.eclipse.daanse.olap.function.def.set.children.ChildrenCalc(type=SetType<MemberType<hierarchy=[Product].[Product]>>, resultStyle=LIST, callCount=0, callMillis=0)
-                org.eclipse.daanse.olap.function.def.hierarchy.member.HierarchyCurrentMemberFixedCalc(type=MemberType<hierarchy=[Product].[Product]>, resultStyle=VALUE, callCount=0, callMillis=0)
+                org.eclipse.daanse.olap.calc.base.type.hierarchy.HierarchyCurrentMemberFixedCalc(type=MemberType<hierarchy=[Product].[Product]>, resultStyle=VALUE, callCount=0, callMillis=0)
             org.eclipse.daanse.olap.function.def.operators.greater.GreaterCalc(type=BOOLEAN, resultStyle=VALUE, callCount=0, callMillis=0)
                 org.eclipse.daanse.olap.calc.base.type.doublex.UnknownToDoubleCalc(type=NUMERIC, resultStyle=VALUE, callCount=0, callMillis=0)
                     org.eclipse.daanse.olap.calc.base.type.tuplebase.MemberValueCalc(type=SCALAR, resultStyle=VALUE, callCount=0, callMillis=0)

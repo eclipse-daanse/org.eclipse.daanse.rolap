@@ -60,7 +60,7 @@ import org.eclipse.daanse.olap.common.ConfigConstants;
 import org.eclipse.daanse.olap.result.ResultBase;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.execution.ExecutionImpl;
-import org.eclipse.daanse.olap.function.def.aggregate.AggregateCalc;
+import org.eclipse.daanse.olap.calc.base.aggregate.AggregateCalc;
 import org.eclipse.daanse.olap.function.def.crossjoin.CrossJoinFunDef;
 import org.eclipse.daanse.olap.query.component.IdImpl;
 import org.eclipse.daanse.rolap.element.RolapCube;
