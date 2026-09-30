@@ -54,12 +54,17 @@ import org.eclipse.daanse.rolap.mapping.instance.emf.complex.steelwheels.SteelWh
 import org.eclipse.daanse.rolap.testkit.junit.api.DbScope;
 import org.eclipse.daanse.rolap.testkit.junit.api.RolapConfig;
 import org.eclipse.daanse.rolap.testkit.junit.api.RolapContextTest;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import org.eclipse.daanse.rolap.SchemaModifiersEmf;
 
+// Serialised: running these concurrently produced wrong cell values (missing and
+// incorrect rows in testMondrian2411_1/_2), roughly one run in five.
+@Execution(ExecutionMode.SAME_THREAD)
 @RolapContextTest(SteelWheelsTestInstance.class)
 class SteelWheelsSchemaTest {
 
