@@ -556,11 +556,11 @@ import org.eclipse.daanse.test.FoodmartData;
             + "1 + 2");
 
         // single-quote inside double-quoted string literal
-        // MSAS does not allow this
+        // MSAS does not allow this: the single quote ends the formula
         assertThatQuery(context.getConnectionWithDefaultRole(), "with member [Measures].[Foo] as ' \"quoted string with 'apostrophe' in it\" ' "
             + "select {[Measures].[Foo]} on columns "
             + "from [Sales]")
-            .throwsMessage("Found string \"\\\"\" of type INVALID");
+            .throwsMessage("Found string \"apostrophe\" of type ID");
 
         // Escaped single quote in double-quoted string literal inside
         // single-quoted member declaration.
