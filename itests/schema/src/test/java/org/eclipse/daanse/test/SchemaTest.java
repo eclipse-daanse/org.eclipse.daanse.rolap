@@ -9076,60 +9076,54 @@ class SchemaTest {
         database = FoodmartDatabaseSupplier.class, data = FoodmartData.class)
     void testCalcMemberInCubeNoFormula(Context<?> context) {
         // test where calc member has no formula (formula attribute or
-        //   embedded element); should fail
-        try {
-            /*
-            class TestCalcMemberInCubeModifier7 extends PojoMappingModifier {
-                public TestCalcMemberInCubeModifier7(org.eclipse.daanse.rolap.mapping.model.catalog.Catalog catalogMapping) {
-                    super(catalogMapping);
-                }
-
-                @Override
-                protected List<? extends CalculatedMemberMapping> cubeCalculatedMembers(CubeMapping cube) {
-                    List<CalculatedMemberMapping> result = new ArrayList<>();
-                    result.addAll(super.cubeCalculatedMembers(cube).stream().filter(cm -> !"SF and LA".equals(cm.getName())).toList());
-                    if ("Sales".equals(cube.getName())) {
-                    	CalculatedMemberMappingImpl calculatedMember = CalculatedMemberMappingImpl
-                            .builder()
-                            .withName("SF and LA")
-                            .withHierarchy((HierarchyMappingImpl) look(FoodmartMappingSupplier.storeHierarchy))
-                            .withParent("[Store].[Store].[USA].[CA]")
-                            .withFormula("")
-                            .build();
-                        result.add(calculatedMember);
-                    }
-                    return result;
-                }
-
+        //   embedded element): an empty formula is the empty string, see
+        //   https://github.com/eclipse-daanse/org.eclipse.daanse.mdx/issues/42
+        /*
+        class TestCalcMemberInCubeModifier7 extends PojoMappingModifier {
+            public TestCalcMemberInCubeModifier7(org.eclipse.daanse.rolap.mapping.model.catalog.Catalog catalogMapping) {
+                super(catalogMapping);
             }
-            */
-            /*
-            ((BaseTestContext)context).update(SchemaUpdater.createSubstitutingCube(
-                    "Sales",
-                    null,
-                    null,
-                    "<CalculatedMember\n"
-                    + "      name='SF and LA'\n"
-                    + "      hierarchy='[Store]'\n"
-                    + "      parent='[Store].[USA].[CA]'>\n"
-                    + "  <Formula>\n"
-                    + "  </Formula>\n"
-                    + "</CalculatedMember>",
-                    null, false));
-             */
-            assertThatQuery(context.getConnectionWithDefaultRole(),
-                "select {[Store].[Store].[All Stores].[USA].[CA].[SF and LA]} on columns from [Sales]").returnsGrid(
-                "Axis #0:\n"
-                + "{}\n"
-                + "Axis #1:\n"
-                + "{[Store].[Store].[USA].[CA].[SF and LA]}\n"
-                + "Row #0: 27,780\n");
-            fail();
-        } catch (OlapRuntimeException e) {
-            assertTrue(
-                e.getMessage().contains(
-                    "Named set in cube 'Sales' has bad formula"));
+
+            @Override
+            protected List<? extends CalculatedMemberMapping> cubeCalculatedMembers(CubeMapping cube) {
+                List<CalculatedMemberMapping> result = new ArrayList<>();
+                result.addAll(super.cubeCalculatedMembers(cube).stream().filter(cm -> !"SF and LA".equals(cm.getName())).toList());
+                if ("Sales".equals(cube.getName())) {
+                	CalculatedMemberMappingImpl calculatedMember = CalculatedMemberMappingImpl
+                        .builder()
+                        .withName("SF and LA")
+                        .withHierarchy((HierarchyMappingImpl) look(FoodmartMappingSupplier.storeHierarchy))
+                        .withParent("[Store].[Store].[USA].[CA]")
+                        .withFormula("")
+                        .build();
+                    result.add(calculatedMember);
+                }
+                return result;
+            }
+
         }
+        */
+        /*
+        ((BaseTestContext)context).update(SchemaUpdater.createSubstitutingCube(
+                "Sales",
+                null,
+                null,
+                "<CalculatedMember\n"
+                + "      name='SF and LA'\n"
+                + "      hierarchy='[Store]'\n"
+                + "      parent='[Store].[USA].[CA]'>\n"
+                + "  <Formula>\n"
+                + "  </Formula>\n"
+                + "</CalculatedMember>",
+                null, false));
+         */
+        assertThatQuery(context.getConnectionWithDefaultRole(),
+            "select {[Store].[Store].[All Stores].[USA].[CA].[SF and LA]} on columns from [Sales]").returnsGrid(
+            "Axis #0:\n"
+            + "{}\n"
+            + "Axis #1:\n"
+            + "{[Store].[Store].[USA].[CA].[SF and LA]}\n"
+            + "Row #0: \n");
     }
 
     public static class TestCalcMemberInCubeModifier1Emf implements CatalogMappingSupplier {
