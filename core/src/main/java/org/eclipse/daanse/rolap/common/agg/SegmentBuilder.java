@@ -51,6 +51,7 @@ import java.util.TreeSet;
 
 import org.eclipse.daanse.sql.model.type.Datatype;
 import org.eclipse.daanse.olap.api.aggregator.Aggregator;
+import org.eclipse.daanse.olap.api.result.NullValue;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.key.BitKey;
 import org.eclipse.daanse.olap.key.CellKey;
@@ -474,7 +475,7 @@ public class SegmentBuilder {
                     cellValues.computeIfAbsent(ck, k -> new ArrayList<>());
                 if (!dedupe) {
                     // no de-duping needed when rolling up only 1 segment
-                    cellList.add(vEntry.getValue());
+                    cellList.add(rollupValue(vEntry.getValue()));
                 } else {
                     // the same origin cell may live in several overlapping
                     // segments and must be summed once: identify it by its
@@ -489,7 +490,7 @@ public class SegmentBuilder {
                     }
                     if (seenSourceCells.add(
                             CellKey.Generator.newCellKey(origin))) {
-                        cellList.add(vEntry.getValue());
+                        cellList.add(rollupValue(vEntry.getValue()));
                     }
                 }
             }
@@ -730,6 +731,15 @@ public class SegmentBuilder {
             LOGGER.debug(builder.toString());
         }
         return Pair.of(header, body);
+    }
+
+    /**
+     * Value of a source cell as the rollup aggregators take it: a NULL stored
+     * as the {@link NullValue#INSTANCE} placeholder (object datasets) is Java
+     * {@code null}, which the aggregators skip.
+     */
+    private static Object rollupValue(Object value) {
+        return value == NullValue.INSTANCE ? null : value;
     }
 
     private static boolean allHeadersHaveSameDimensionality(

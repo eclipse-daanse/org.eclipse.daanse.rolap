@@ -45,6 +45,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 import org.eclipse.daanse.sql.model.type.Datatype;
+import org.eclipse.daanse.olap.api.result.NullValue;
 import org.eclipse.daanse.olap.key.BitKey;
 import org.eclipse.daanse.olap.spi.SegmentBody;
 import org.eclipse.daanse.olap.spi.SegmentColumn;
@@ -446,6 +447,24 @@ class SegmentBuilderTest {
                 "dummyFactTable",
                 BitKey.Factory.makeBitKey(3),
                 Collections.<SegmentRegion>emptyList());
+    }
+
+    @Test
+    void rollupSkipsNullPlaceholdersOfObjectDatasets() {
+        // an object dataset stores a NULL measure as NullValue.INSTANCE
+        Pair<SegmentHeader, SegmentBody> source = makeDummyHeaderBodyPair(
+                new String[]{"col1", "col2"}, dummyColumnValues(2, 3), 9, true, null);
+        Object[] cells = (Object[]) source.right.getValueArray();
+        cells[0] = NullValue.INSTANCE;
+        cells[4] = NullValue.INSTANCE;
+        Pair<SegmentHeader, SegmentBody> rollup = SegmentBuilder.rollup(
+                singletonMap(source.left, source.right), singleton("col2"),
+                null, SumAggregator.INSTANCE, Datatype.NUMERIC, 1000, 0.5);
+        double total = 0;
+        for (double value : (double[]) rollup.getValue().getValueArray()) {
+            total += value;
+        }
+        assertThat(total).isCloseTo(7 * MOCK_CELL_VALUE, org.assertj.core.data.Offset.offset(1e-9));
     }
 
     @Test
