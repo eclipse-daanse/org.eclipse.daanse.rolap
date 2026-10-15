@@ -48,12 +48,12 @@ public class AsAliasFunDefTest {
 
 	@Test
 	void testAsWithColon(Context<?> context) {
-		// 'AS' and the ':' operator have similar precedence, so it's worth
-		// checking that they play nice.
+		// 'AS' binds more tightly than ':' (as in SSAS): without the parentheses
+		// the alias would name only the end of the range.
 		assertThatQuery(context.getConnectionWithDefaultRole(), """
 				select
 				  filter(
-				    [Time].[1997].[Q1].[2] : [Time].[1997].[Q3].[9] as t,\
+				    ([Time].[1997].[Q1].[2] : [Time].[1997].[Q3].[9]) as t,\
 				    mod(t.CurrentOrdinal, 2) = 0) on 0
 				from [Sales]""").returnsGrid("""
 				Axis #0:
