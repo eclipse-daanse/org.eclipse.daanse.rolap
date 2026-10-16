@@ -57,6 +57,16 @@ public class EmfUtil {
         return copier;
     }
 
+    /**
+     * A copy of one EMF object and what it contains, made one at a time like the catalog copies: for a test that adds
+     * to a part of the shared FoodMart catalog (a database schema), which it must never change in place.
+     */
+    public static <T extends EObject> T copyOf(T object) {
+        synchronized (COPYING) {
+            return EcoreUtil.copy(object);
+        }
+    }
+
     public static CatalogImpl copy(CatalogImpl catalog) {
         synchronized (COPYING) {
             return copyAlone(catalog);

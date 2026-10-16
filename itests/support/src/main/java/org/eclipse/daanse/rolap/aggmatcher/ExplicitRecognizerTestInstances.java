@@ -145,8 +145,11 @@ final class ExplicitRecognizerTestInstances {
      * the FoodMart tables in one pass.
      */
     private static Schema databaseSchema() {
-        Schema schema = org.eclipse.daanse.cwm.model.cwm.objectmodel.core.util.Packages
-                .available(new CatalogSupplier().get(), Schema.class).get(0);
+        // a copy: the FoodMart supplier hands out one catalog for the whole JVM, so adding to its schema in place
+        // grew it by two tables per call -- duplicate tables, and a concurrent modification under the catalog
+        // fingerprint of a test class running beside (chain 333)
+        Schema schema = EmfUtil.copyOf(org.eclipse.daanse.cwm.model.cwm.objectmodel.core.util.Packages
+                .available(new CatalogSupplier().get(), Schema.class).get(0));
         schema.getOwnedElement().add(freshExpAggTestTable());
         schema.getOwnedElement().add(freshExpAggTestDistinctCountTable());
         return schema;
