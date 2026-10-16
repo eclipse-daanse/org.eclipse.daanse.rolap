@@ -30,7 +30,21 @@ import org.eclipse.emf.ecore.util.EcoreUtil;
 
 public class EmfUtil {
 
+    /**
+     * Copies of a catalog are made one at a time. The itests run classes and methods in parallel, and many of them
+     * copy the one shared FoodMart catalog: walking it with {@code eGet(ref, true)} fills and resolves lists of the
+     * source, so a second copy running at the same time met a list in change ({@code ConcurrentModificationException}
+     * in {@code copyReferences}, chain 300; the EMF cross-reference null of chain 178 is the same family).
+     */
+    private static final Object COPYING = new Object();
+
     public static EcoreUtil.Copier copier(CatalogImpl catalog) {
+        synchronized (COPYING) {
+            return copierAlone(catalog);
+        }
+    }
+
+    private static EcoreUtil.Copier copierAlone(CatalogImpl catalog) {
         Set<EObject> allRefs = collectAllReachableRecursive(catalog);
         EcoreUtil.Copier copier = new EcoreUtil.Copier(true, false);
 
@@ -44,6 +58,12 @@ public class EmfUtil {
     }
 
     public static CatalogImpl copy(CatalogImpl catalog) {
+        synchronized (COPYING) {
+            return copyAlone(catalog);
+        }
+    }
+
+    private static CatalogImpl copyAlone(CatalogImpl catalog) {
         Set<EObject> allRefs = collectAllReachableRecursive(catalog);
         EcoreUtil.Copier copier = new EcoreUtil.Copier(true, false);
 
