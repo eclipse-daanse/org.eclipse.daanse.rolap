@@ -1675,20 +1675,21 @@ class DrillThroughTest {
                 + "    (((time_by_day.the_year, time_by_day.quarter) in ((1997, 'Q1'), (1997, 'Q2'))))";
             break;
         case ORACLE:
-            // Oracle does not allow JOIN ... ON: tables are comma-listed and the
-            // join equalities appended at the end of WHERE, after the filters.
+            // Oracle writes JOIN ... ON (sql 837279b) and the compound slicer as OR of the tuples, no row-value IN
+            // (database run 20.10.)
             expectedSql =
                 "select\n"
                 + "    time_by_day.the_year as Year,\n"
                 + "    time_by_day.quarter as Quarter,\n"
                 + "    sales_fact_1997.unit_sales as Unit Sales\n"
                 + "from\n"
-                + "    sales_fact_1997 sales_fact_1997,\n"
+                + "    sales_fact_1997 sales_fact_1997\n"
+                + "join\n"
                 + "    time_by_day time_by_day\n"
+                + "on\n"
+                + "    sales_fact_1997.time_id = time_by_day.time_id\n"
                 + "where\n"
-                + "    ((((time_by_day.the_year = 1997 and time_by_day.quarter = 'Q1') or (time_by_day.the_year = 1997 and time_by_day.quarter = 'Q2'))))\n"
-                + "and\n"
-                + "    sales_fact_1997.time_id = time_by_day.time_id";
+                + "    (((time_by_day.quarter = 'Q1' and time_by_day.the_year = 1997) or (time_by_day.quarter = 'Q2' and time_by_day.the_year = 1997)))";
             break;
         default:
                 return;
@@ -1766,7 +1767,7 @@ class DrillThroughTest {
                 + "and\n"
                 + "    customer.marital_status = 'M'\n"
                 + "and\n"
-                + "    ((time_by_day.quarter = 'Q1' and time_by_day.the_year = 1997) or (time_by_day.quarter = 'Q2' and time_by_day.the_year = 1997))\n"
+                + "    (((time_by_day.quarter = 'Q1' and time_by_day.the_year = 1997) or (time_by_day.quarter = 'Q2' and time_by_day.the_year = 1997)))\n"
                 + "order by\n"
                 + "    customer.gender ASC,\n"
                 + "    customer.marital_status ASC";
@@ -1831,7 +1832,7 @@ class DrillThroughTest {
                 + "on\n"
                 + "    sales_fact_1997.customer_id = customer.customer_id\n"
                 + "where\n"
-                + "    ((customer.gender = 'F' and time_by_day.quarter = 'Q1' and time_by_day.the_year = 1997) or (customer.gender = 'M' and time_by_day.quarter = 'Q2' and time_by_day.the_year = 1997))";
+                + "    (((customer.gender = 'F' and time_by_day.quarter = 'Q1' and time_by_day.the_year = 1997) or (customer.gender = 'M' and time_by_day.quarter = 'Q2' and time_by_day.the_year = 1997)))";
             break;
         default:
             return;
