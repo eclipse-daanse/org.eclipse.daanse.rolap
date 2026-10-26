@@ -621,6 +621,11 @@ public class RolapCatalogReader
 
     @Override
 	public Member getLeadMember(Member member, int n) {
+        // a calculated member, as one aggregating the members of a slicer,
+        // is not among the members of its level, so it has no siblings
+        if (n != 0 && member.isCalculated() && !member.isMeasure()) {
+            return member.getHierarchy().getNullMember();
+        }
         final MemberReader memberReader =
             getMemberReader(member.getHierarchy());
         return memberReader.getLeadMember((RolapMember) member, n);
