@@ -59,4 +59,32 @@ class PrevMemberFunDefTest {
         assertEquals( 0, result.getAxes()[ 0 ].getPositions().size() );
     }
 
+    @Test
+    void testCalculatedMember(Context<?> context) {
+        // a calculated member is not among the members of its level, so it has no siblings
+        Result result =
+            executeQuery(context.getConnectionWithDefaultRole(),
+                "with member [Time].[Time].[X] as Aggregate({[Time].[1997].[Q1], [Time].[1997].[Q2]})\n"
+                    + "select {[Time].[Time].[X].PrevMember, [Time].[Time].[X].NextMember,\n"
+                    + " [Time].[Time].[X].Lag(2), [Time].[Time].[X].Lag(0)} ON COLUMNS from Sales" );
+        assertEquals( 1, result.getAxes()[ 0 ].getPositions().size() );
+        assertEquals( "X", result.getAxes()[ 0 ].getPositions().get( 0 ).get( 0 ).getName() );
+    }
+
+    @Test
+    void testCalculatedMemberInTheSlicer(Context<?> context) {
+        // Profit last Period of no previous period is the Profit of the months aggregated
+        Result result =
+            executeQuery(context.getConnectionWithDefaultRole(),
+                "with member [Time].[Time].[X] as Aggregate({[Time].[1997].[Q1].[2], [Time].[1997].[Q1].[3]}),"
+                    + " SOLVE_ORDER = -100\n"
+                    + "member [Measures].[P] as ([Measures].[Profit], [Time].[1997].[Q1].[2])"
+                    + " + ([Measures].[Profit], [Time].[1997].[Q1].[3])\n"
+                    + "select {[Measures].[Profit last Period], [Measures].[P]} ON COLUMNS from Sales\n"
+                    + "where [Time].[Time].[X]" );
+        assertEquals(
+            result.getCell( new int[] { 1 } ).getValue(),
+            result.getCell( new int[] { 0 } ).getValue() );
+    }
+
 }
