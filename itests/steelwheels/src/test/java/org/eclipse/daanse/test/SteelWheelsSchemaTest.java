@@ -29,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.eclipse.daanse.rolap.testkit.assertions.MdxAssert.assertThatAxis;
 import static org.eclipse.daanse.rolap.testkit.assertions.MdxAssert.assertThatQuery;
+import static org.eclipse.daanse.rolap.testkit.assertions.NativeVerify.assertSameNativeAndNot;
 
 import java.net.URL;
 import java.util.Arrays;
@@ -99,6 +100,33 @@ class SteelWheelsSchemaTest {
     /**
      * Sanity check, that enumerates the Measures dimension.
      */
+    /**
+     * The MDX the DAX engine generates for GENERATE of the customers, the
+     * territories, countries, states and cities of each, and the order status
+     * types where Quantity or Sales is not BLANK: the native Filter of the
+     * types within a customer and a city, both of the table customer_w_ter,
+     * gives the same rows as the calc engine.
+     */
+    @Test
+    void testGenerateOfCustomersMarketsAndOrderStatusFromDax(Context<?> context) {
+        String quantityAndSales = "{[Measures].[Quantity], [Measures].[Sales]}";
+        String customer = "Crossjoin({[Customers].[Customers].CurrentMember}, ";
+        assertSameNativeAndNot(context,
+            "select " + quantityAndSales + " ON COLUMNS,\n"
+            + "  Generate(Generate(Generate(Generate(Generate([Customers].[Customers].[Customer].Members, "
+            + customer + "NonEmpty([Markets].[Markets].[Territory].Members, " + quantityAndSales + "))), "
+            + customer + "NonEmpty(Descendants([Markets].[Markets].CurrentMember, [Markets].[Markets].[Country]), "
+            + quantityAndSales + "))), "
+            + customer + "NonEmpty(Descendants([Markets].[Markets].CurrentMember, "
+            + "[Markets].[Markets].[State Province]), " + quantityAndSales + "))), "
+            + customer + "NonEmpty(Descendants([Markets].[Markets].CurrentMember, [Markets].[Markets].[City]), "
+            + quantityAndSales + "))), "
+            + "Crossjoin({([Customers].[Customers].CurrentMember, [Markets].[Markets].CurrentMember)}, "
+            + "Filter([Order Status].[Order Status].[Type].Members, "
+            + "((NOT IsEmpty([Measures].[Quantity])) OR (NOT IsEmpty([Measures].[Sales])))))) ON ROWS\n"
+            + "from [SteelWheelsSales]", null);
+    }
+
     @Test
     void testMeasures(Context<?> context) {
         if (!databaseIsValid(context.getConnectionWithDefaultRole(), "Sales")) {
