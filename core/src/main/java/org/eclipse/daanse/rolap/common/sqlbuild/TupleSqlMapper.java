@@ -374,20 +374,14 @@ public final class TupleSqlMapper {
         if (!dimAliases.contains(fact.getAlias())) {
             items.add(starTableFrom(fact));
         }
-        java.util.Set<RolapStar.Table> referenced = new java.util.LinkedHashSet<>();
-        // Dedup the FROM by alias: the same context table can appear in joinTables via several join
-        // paths (e.g. one per slicer member); adding it more than once would cartesian-explode the
-        // result.
-        java.util.Set<String> addedAliases = new java.util.HashSet<>();
-        addedAliases.add(fact.getAlias());
-        for (RolapStar.Table t : joinTables) {
-            referenced.add(t);
-            if (!dimAliases.contains(t.getAlias()) && addedAliases.add(t.getAlias())) {
-                items.add(starTableFrom(t));
-            }
-        }
-        // A degenerate dimension (fact == relation) with no extra context tables leaves one item —
-        // that item IS the FROM (FromProduct requires two).
+        // The context tables enter the FROM by their join steps only, each once: the same one can
+        // appear in joinTables via several join paths (e.g. one per slicer member), and also as a
+        // comma-join item it would be there twice under one alias (Order Status on the fact within
+        // a customer and a city, both of customer_w_ter: `orderfact, customer_w_ter join
+        // customer_w_ter on …`).
+        java.util.Set<RolapStar.Table> referenced = new java.util.LinkedHashSet<>(joinTables);
+        // A degenerate dimension (fact == relation) leaves one item — that item IS the FROM
+        // (FromProduct requires two).
         org.eclipse.daanse.sql.statement.api.model.FromClause from = items.size() == 1 ? items.get(0)
                 : new org.eclipse.daanse.sql.statement.api.model.FromClause.FromProduct(items);
         // The constrained level-members query is dimension-rooted: the target relation is the FROM
