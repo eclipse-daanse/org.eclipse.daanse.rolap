@@ -252,7 +252,7 @@ public String toString() {
       return new SparseSegmentDataset();
     } else {
       return switch (type) {
-      case OBJECT, LONG, STRING -> new DenseObjectSegmentDataset( axes, size );
+      case OBJECT, LONG, STRING, DATE, TIMESTAMP -> new DenseObjectSegmentDataset( axes, size );
       case INT -> new DenseIntSegmentDataset( axes, size );
       case DOUBLE, DECIMAL -> new DenseDoubleSegmentDataset( axes, size );
       default -> throw Util.unexpected( type );

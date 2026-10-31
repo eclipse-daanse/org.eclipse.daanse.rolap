@@ -290,6 +290,8 @@ public class SegmentLoader {
           // TODO: different treatment for INT, LONG, DOUBLE
           case OBJECT:
           case STRING:
+          case DATE:
+          case TIMESTAMP:
           case INT:
           case LONG:
           case DOUBLE:
@@ -632,7 +634,10 @@ public class SegmentLoader {
         switch ( type ) {
           case OBJECT:
           case STRING:
-            Object o = rawRows.getObject( columnIndex + 1 );
+          case DATE:
+          case TIMESTAMP:
+            Object o = type == BestFitColumnType.DATE || type == BestFitColumnType.TIMESTAMP
+                ? SqlStatement.temporal( rawRows, columnIndex + 1, type ) : rawRows.getObject( columnIndex + 1 );
             if ( o == null ) {
               o = Util.sqlNullValue;
               if ( !groupingSetsList.useGroupingSets() || !isAggregateNull( rawRows, groupingColumnStartIndex,
@@ -724,7 +729,10 @@ public class SegmentLoader {
         switch ( type ) {
           case OBJECT:
           case STRING:
-            Object o = rawRows.getObject( columnIndex + 1 );
+          case DATE:
+          case TIMESTAMP:
+            Object o = type == BestFitColumnType.DATE || type == BestFitColumnType.TIMESTAMP
+                ? SqlStatement.temporal( rawRows, columnIndex + 1, type ) : rawRows.getObject( columnIndex + 1 );
             if ( o == null ) {
               o = NullValue.INSTANCE; // convert to placeholder
             } else if ( numeric[i] ) {
@@ -1041,6 +1049,8 @@ public class SegmentLoader {
         switch ( type ) {
           case OBJECT:
           case STRING:
+          case DATE:
+          case TIMESTAMP:
             return new ObjectColumn( ordinal, type, capacity );
           case INT:
             return new IntColumn( ordinal, type, capacity );
