@@ -245,7 +245,7 @@ public class SqlStatement implements SqlStatementI {
       // (does, on the Oracle JDBC driver).
       accessors.clear();
       for ( BestFitColumnType type : guessTypes() ) {
-        accessors.add( createAccessor( accessors.size(), type ) );
+        accessors.add( accessor( resultSet, accessors.size(), type ) );
       }
 
       // skip to first row specified in request
@@ -439,9 +439,15 @@ public class SqlStatement implements SqlStatementI {
 
   // warning suppressed because breaking this method up would reduce readability
   @SuppressWarnings( "squid:S3776" )
-  private Accessor createAccessor( int column, BestFitColumnType type ) {
+  static Accessor accessor( ResultSet resultSet, int column, BestFitColumnType type ) {
     final int columnPlusOne = column + 1;
     return switch (type) {
+    case DATE, TIMESTAMP -> new Accessor() {
+              @Override
+        public Object get() throws SQLException {
+                return temporal( resultSet, columnPlusOne, type );
+              }
+            };
     case OBJECT -> new Accessor() {
               @Override
         public Object get() throws SQLException {
@@ -504,6 +510,17 @@ public class SqlStatement implements SqlStatementI {
             };
     default -> throw Util.unexpected( type );
     };
+  }
+
+  /**
+   * The value of a date or timestamp column, read with its own getter. {@code getObject} hands over the class the
+   * driver picks: Oracle gives its TIMESTAMP as {@code oracle.sql.TIMESTAMP}, which neither a format nor a comparison of
+   * the engine knows. A member key and the segment axis of the same column read it here alike, so the key finds its
+   * segment.
+   */
+  public static Object temporal( ResultSet resultSet, int oneBasedColumn, BestFitColumnType type ) throws SQLException {
+    return type == BestFitColumnType.DATE ? resultSet.getDate( oneBasedColumn )
+        : resultSet.getTimestamp( oneBasedColumn );
   }
 
   public List<BestFitColumnType> guessTypes() throws SQLException {
