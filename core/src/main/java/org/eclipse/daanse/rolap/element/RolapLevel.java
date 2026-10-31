@@ -551,14 +551,29 @@ public class RolapLevel extends LevelBase {
             }
             return Datatype.fromValue(mappingLevel.getColumnType().getLiteral());
         }
+        // A key column of unknown type holds string keys, as with the pre-CWM
+        // column type and Mondrian's String level type. Taking it for NUMERIC
+        // renders a key such as G100 unquoted, i.e. as an identifier.
+        Datatype keyColumnDatatype = keyColumnDatatype(mappingLevel);
+        return keyColumnDatatype != null ? keyColumnDatatype : Datatype.VARCHAR;
+    }
+
+    /**
+     * Datatype of the key column's CWM SQLSimpleType, or {@code null} when the
+     * column has no type or one that classifies as neither text, number,
+     * boolean nor temporal.
+     */
+    private static Datatype keyColumnDatatype(
+            org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.Level mappingLevel) {
         // Classify by JDBC type code from CWM SQLSimpleType. Names vary
         // (SQL-99 "CHARACTER VARYING" vs RDBMS "VARCHAR") but the JDBC code
-        // is stable, so we map through java.sql.Types.
-        if (mappingLevel.getColumn() != null
+        // is stable, so we map through java.sql.Types; a type without a
+        // typeNumber is classified by its name.
+        if (mappingLevel != null && mappingLevel.getColumn() != null
                 && mappingLevel.getColumn().getType() instanceof SQLSimpleType st) {
-            return jdbcTypeToDatatype(SQLSimpleTypes.jdbcType(st));
+            return jdbcTypeToDatatype(SQLSimpleTypes.toJdbcType(st).getVendorTypeNumber());
         }
-        return Datatype.NUMERIC;
+        return null;
     }
 
     private static Datatype jdbcTypeToDatatype(int jdbcType) {
@@ -578,7 +593,7 @@ public class RolapLevel extends LevelBase {
             case Types.DATE -> Datatype.DATE;
             case Types.TIME, Types.TIME_WITH_TIMEZONE -> Datatype.TIME;
             case Types.TIMESTAMP, Types.TIMESTAMP_WITH_TIMEZONE -> Datatype.TIMESTAMP;
-            default -> Datatype.NUMERIC;
+            default -> null;
         };
     }
 
@@ -753,11 +768,7 @@ public class RolapLevel extends LevelBase {
      * level declared {@code type="String"} over an {@code INTEGER} key column).
      */
     public Datatype getKeyColumnPhysicalDatatype() {
-        if (levelMapping != null && levelMapping.getColumn() != null
-                && levelMapping.getColumn().getType() instanceof SQLSimpleType st) {
-            return jdbcTypeToDatatype(SQLSimpleTypes.jdbcType(st));
-        }
-        return null;
+        return keyColumnDatatype(levelMapping);
     }
 
     private static final Map<String, BestFitColumnType> VALUES =
