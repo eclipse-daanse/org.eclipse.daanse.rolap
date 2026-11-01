@@ -45,6 +45,7 @@ import org.eclipse.daanse.olap.api.element.Level;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.evaluator.Evaluator;
 import org.eclipse.daanse.olap.api.query.Quoting;
+import org.eclipse.daanse.olap.api.relational.RelationalContext;
 import org.eclipse.daanse.olap.api.result.Axis;
 import org.eclipse.daanse.olap.api.result.Cell;
 import org.eclipse.daanse.olap.api.result.Result;
@@ -5902,7 +5903,7 @@ class NonEmptyTest extends BatchTestCase {
    * must be put back afterwards.
    */
   private static void withDuckDbColumnLifetimeDisabled(Context<?> context, Runnable body) {
-    if (!"DUCKDB".equalsIgnoreCase(context.getDialect().name())) {
+    if (!"DUCKDB".equalsIgnoreCase(RelationalContext.of(context).getDialect().name())) {
       body.run();
       return;
     }
@@ -5915,7 +5916,7 @@ class NonEmptyTest extends BatchTestCase {
   }
 
   private static void setDuckDbDisabledOptimizers(Context<?> context, String value) {
-    try (java.sql.Connection connection = context.getDataSource().getConnection();
+    try (java.sql.Connection connection = RelationalContext.of(context).getDataSource().getConnection();
         java.sql.Statement statement = connection.createStatement()) {
       statement.execute("SET GLOBAL disabled_optimizers='" + value + "'");
     } catch (java.sql.SQLException e) {

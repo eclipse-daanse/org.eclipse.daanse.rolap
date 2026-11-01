@@ -20,6 +20,7 @@ import java.util.Set;
 
 import org.eclipse.daanse.sql.dialect.api.Dialect;
 import org.eclipse.daanse.olap.api.aggregator.Aggregator;
+import org.eclipse.daanse.rolap.aggregator.SqlNodeAggregator;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.star.RolapStar.Condition.JoinColumn;
 import org.eclipse.daanse.rolap.common.util.SqlExpressionResolver;
@@ -97,7 +98,7 @@ public final class JoinPlanner {
         }
         // Bail: a custom aggregator without node support renders via its string form, kept raw.
         String inner = measure.getExpression() == null ? "*" : columnSql(dialect, measure.getExpression());
-        return Expressions.raw(aggregator.getExpression(inner).toString());
+        return Expressions.raw(SqlNodeAggregator.expression(aggregator, inner).toString());
     }
 
     /**

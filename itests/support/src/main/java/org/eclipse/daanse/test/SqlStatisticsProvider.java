@@ -31,9 +31,10 @@ import java.util.Optional;
 
 import org.eclipse.daanse.sql.dialect.api.Dialect;
 import org.eclipse.daanse.olap.api.Context;
+import org.eclipse.daanse.olap.api.execution.Execution;
 import org.eclipse.daanse.olap.api.execution.ExecutionContext;
 import org.eclipse.daanse.olap.api.execution.ExecutionMetadata;
-import org.eclipse.daanse.olap.execution.ExecutionImpl;
+import org.eclipse.daanse.olap.api.relational.RelationalContext;
 import org.eclipse.daanse.rolap.common.RolapUtil;
 import org.eclipse.daanse.rolap.common.SqlStatement;
 
@@ -51,10 +52,10 @@ public class SqlStatisticsProvider implements StatisticsProvider {
         String catalog,
         String schema,
         String table,
-        ExecutionImpl execution)
+        Execution execution)
     {
         StringBuilder buf = new StringBuilder("select count(*) from ");
-        context.getDialect().quoteIdentifier(buf, catalog, schema, table);
+        RelationalContext.of(context).getDialect().quoteIdentifier(buf, catalog, schema, table);
         final String sql = buf.toString();
         ExecutionMetadata metadata = ExecutionMetadata.of(
             "SqlStatisticsProvider.getTableCardinality",
@@ -85,9 +86,9 @@ public class SqlStatisticsProvider implements StatisticsProvider {
 	public long getQueryCardinality(
         Context context,
         String sql,
-        ExecutionImpl execution)
+        Execution execution)
     {
-        Dialect dialect=context.getDialect();
+        Dialect dialect=RelationalContext.of(context).getDialect();
         final StringBuilder buf = new StringBuilder();
         buf.append(
             "select count(*) from (").append(sql).append(")");
@@ -132,11 +133,11 @@ public class SqlStatisticsProvider implements StatisticsProvider {
         String schema,
         String table,
         String column,
-        ExecutionImpl execution)
+        Execution execution)
     {
         final String sql =
             generateColumnCardinalitySql(
-                context.getDialect(), schema, table, column);
+                RelationalContext.of(context).getDialect(), schema, table, column);
         if (sql == null) {
             return -1;
         }

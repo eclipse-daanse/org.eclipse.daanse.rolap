@@ -41,6 +41,7 @@ import org.eclipse.daanse.cwm.model.cwm.objectmodel.core.util.Packages;
 import org.eclipse.daanse.cwm.model.cwm.resource.relational.Schema;
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.query.component.Query;
+import org.eclipse.daanse.olap.api.relational.RelationalContext;
 import org.eclipse.daanse.olap.common.ConfigConstants;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.rolap.api.RolapContext;
@@ -94,7 +95,7 @@ class AggGenTest {
 
         //Util.removeAppender(appender, logger);
 
-        final DataSource dataSource = rolapConn.getDataSource();
+        final DataSource dataSource = RelationalContext.of(rolapConn.getContext()).getDataSource();
         Connection sqlConnection = null;
         try {
             sqlConnection = dataSource.getConnection();

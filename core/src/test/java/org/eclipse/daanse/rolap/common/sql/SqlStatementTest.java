@@ -36,11 +36,11 @@ import static org.mockito.Mockito.when;
 import java.time.Duration;
 import java.util.Optional;
 
-import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.connection.Connection;
 import org.eclipse.daanse.olap.api.execution.ExecutionContext;
 import org.eclipse.daanse.olap.api.execution.QueryCanceledException;
 import org.eclipse.daanse.olap.api.monitor.EventBus;
+import org.eclipse.daanse.olap.api.relational.RelationalContext;
 import org.eclipse.daanse.olap.execution.ExecutionImpl;
 import org.eclipse.daanse.olap.execution.AbstractStatement;
 import org.eclipse.daanse.rolap.common.SqlStatement;
@@ -54,7 +54,7 @@ import org.junit.jupiter.api.Test;
 class SqlStatementTest {
 
   private EventBus monitor;
-  private Context context;
+  private RelationalContext context;
   private Connection rolapConnection;
   private AbstractStatement statMock;
   private ExecutionImpl execution;
@@ -64,7 +64,7 @@ class SqlStatementTest {
     @BeforeEach void beforeEach() {
     monitor = mock(EventBus.class);
 
-    context = mock(Context.class);
+    context = mock(RelationalContext.class);
     when(context.getMonitor()).thenReturn(monitor);
     when(context.getDataSource()).thenReturn(null);
 

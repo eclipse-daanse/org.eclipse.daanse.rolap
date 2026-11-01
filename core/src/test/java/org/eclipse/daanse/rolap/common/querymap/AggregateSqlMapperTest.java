@@ -24,7 +24,7 @@ import org.eclipse.daanse.sql.model.type.BestFitColumnType;
 import org.eclipse.daanse.sql.model.type.Datatype;
 import org.eclipse.daanse.sql.dialect.api.Dialect;
 import org.eclipse.daanse.sql.dialect.db.common.AnsiDialect;
-import org.eclipse.daanse.olap.api.aggregator.Aggregator;
+import org.eclipse.daanse.rolap.aggregator.SqlNodeAggregator;
 import org.eclipse.daanse.rolap.common.sqlbuild.AggregateSqlMapper;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.star.RolapStar.Condition.JoinColumn;
@@ -79,7 +79,7 @@ class AggregateSqlMapperTest {
         when(idCol.getExpression()).thenReturn(new RolapColumn("schul_jahr", "id"));
         when(idCol.getInternalType()).thenReturn(BestFitColumnType.INT);
 
-        Aggregator sum = mock(Aggregator.class);
+        SqlNodeAggregator sum = mock(SqlNodeAggregator.class);
         when(sum.getExpression(org.mockito.ArgumentMatchers.any()))
                 .thenAnswer(inv -> new StringBuilder("sum(" + inv.getArgument(0) + ")"));
         RolapStar.Measure measure = mock(RolapStar.Measure.class);

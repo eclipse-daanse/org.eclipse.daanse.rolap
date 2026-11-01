@@ -24,6 +24,7 @@ import static org.eclipse.daanse.rolap.testkit.assertions.MdxAssert.assertThatEx
 import javax.sql.DataSource;
 
 import org.eclipse.daanse.olap.api.Context;
+import org.eclipse.daanse.olap.api.relational.RelationalContext;
 import  org.eclipse.daanse.olap.util.Bug;
 import org.eclipse.daanse.rolap.mapping.instance.emf.complex.foodmart.FoodmartTestInstance;
 import org.eclipse.daanse.rolap.testkit.junit.api.RolapContextTest;
@@ -300,8 +301,8 @@ class DescendantsByLevelFunDefTest {
     @Test
     void testDescendantsParentChildLeaves(Context<?> context) {
         //final TestContext<?> testContext<?> = getTestContext().withCube( "HR" );
-        DataSource dataSource = context.getConnectionWithDefaultRole().getDataSource();
-        if (Bug.avoidSlowTestOnLucidDB( context.getDialect())) {
+        DataSource dataSource = RelationalContext.of(context).getDataSource();
+        if (Bug.avoidSlowTestOnLucidDB( RelationalContext.of(context).getDialect())) {
             return;
         }
 

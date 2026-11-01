@@ -38,6 +38,7 @@ import org.eclipse.daanse.olap.api.function.FunctionDefinition;
 import org.eclipse.daanse.olap.api.query.component.Expression;
 import org.eclipse.daanse.olap.api.query.component.MemberExpression;
 import org.eclipse.daanse.olap.api.query.component.NumericLiteral;
+import org.eclipse.daanse.olap.api.relational.RelationalContext;
 import org.eclipse.daanse.olap.api.sql.SortingDirection;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.rolap.aggregator.DistinctCountAggregator;
@@ -223,7 +224,7 @@ public class RolapNativeTopCount extends RolapNativeSet {
                 RolapNativeSql sql = new RolapNativeSql(
                     NativeSqlContext.scratch(
                         org.eclipse.daanse.rolap.common.sql.SqlQueryCapabilities.of(
-                            getEvaluator().getCatalogReader().getContext().getDialect())),
+                            RelationalContext.of(getEvaluator().getCatalogReader().getContext()).getDialect())),
                     aggStar, getEvaluator(), null);
                 orderByNode = sql.generateTopCountOrderByNode(orderByExpr);
             } catch (RuntimeException e) {
@@ -260,7 +261,7 @@ public class RolapNativeTopCount extends RolapNativeSet {
           try {
             RolapNativeSql sql = new RolapNativeSql(
                 NativeSqlContext.scratch( org.eclipse.daanse.rolap.common.sql.SqlQueryCapabilities.of(
-                    getEvaluator().getCatalogReader().getContext().getDialect() ) ),
+                    RelationalContext.of(getEvaluator().getCatalogReader().getContext()).getDialect() ) ),
                 aggStar, getEvaluator(), null );
             org.eclipse.daanse.sql.statement.api.expression.SqlExpression node =
                 sql.generateTopCountOrderByNode( orderByExpr );
@@ -453,7 +454,7 @@ public class RolapNativeTopCount extends RolapNativeSet {
         // TopCountConstraint.toContribution).
         RolapNativeSql sql =
             new RolapNativeSql(
-                NativeSqlContext.scratch(org.eclipse.daanse.rolap.common.sql.SqlQueryCapabilities.of(context.getDialect())),
+                NativeSqlContext.scratch(org.eclipse.daanse.rolap.common.sql.SqlQueryCapabilities.of(RelationalContext.of(context).getDialect())),
                 null, evaluator, null);
         Expression orderByExpr = null;
         if (args.length == 3) {

@@ -58,6 +58,7 @@ import org.eclipse.daanse.olap.spi.SegmentHeader;
 import org.eclipse.daanse.olap.spi.SegmentIdentity;
 import  org.eclipse.daanse.olap.util.Pair;
 import org.eclipse.daanse.olap.api.evaluator.Evaluator;
+import org.eclipse.daanse.olap.api.relational.RelationalContext;
 import org.eclipse.daanse.olap.api.result.CellReader;
 import org.eclipse.daanse.rolap.common.RolapAggregationManager;
 import org.eclipse.daanse.rolap.common.agg.AggregationManager;
@@ -693,7 +694,7 @@ public class BatchingCellReader implements CellReader {
         if (star != null) {
             return star.getDialect();
         } else {
-            return execution.getDaanseStatement().getDaanseConnection().getContext().getDialect();
+            return RelationalContext.of(execution.getDaanseStatement().getDaanseConnection().getContext()).getDialect();
         }
     }
 

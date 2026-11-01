@@ -59,6 +59,7 @@ import org.eclipse.daanse.olap.api.element.Hierarchy;
 import org.eclipse.daanse.olap.api.element.Level;
 import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
 import org.eclipse.daanse.olap.api.query.Quoting;
+import org.eclipse.daanse.olap.api.relational.RelationalContext;
 import org.eclipse.daanse.olap.api.result.Cell;
 import org.eclipse.daanse.olap.api.result.Result;
 import org.eclipse.daanse.olap.api.sql.SqlExpression;
@@ -80,6 +81,7 @@ import org.junit.jupiter.api.Test;
 import org.eclipse.daanse.rolap.testkit.assertions.DatabaseProduct;
 import org.eclipse.daanse.rolap.testkit.assertions.SqlAssert;
 import org.eclipse.daanse.rolap.SchemaModifiersEmf;
+import org.eclipse.daanse.rolap.testkit.assertions.Cells;
 import org.eclipse.daanse.test.FoodmartData;
 
 /**
@@ -194,12 +196,12 @@ class DrillThroughTest {
         // can drill through [Unit Sales Percentage]
         assertTrue(result.getCell(new int[]{5, 0}).canDrillThrough());
         assertNotNull(
-            result.getCell(
+            Cells.drillThroughSql(result.getCell(
                 new int[]{
                     5, 0
-                }).getDrillThroughSQL(false));
+                }), false));
 
-        String sql = cell.getDrillThroughSQL(false);
+        String sql = Cells.drillThroughSql(cell, false);
         String expectedSql =
             "select `time_by_day`.`the_year` as `Year`,"
             + " `product_class`.`product_family` as `Product Family`,"
@@ -235,7 +237,7 @@ class DrillThroughTest {
         // Can drill through a trivial calc member.
         final Cell calcCell = result.getCell(new int[]{1, 0});
         assertTrue(calcCell.canDrillThrough());
-        sql = calcCell.getDrillThroughSQL(false);
+        sql = Cells.drillThroughSql(calcCell, false);
         assertNotNull(sql);
         expectedSql =
             "select `time_by_day`.`the_year` as `Year`,"
@@ -390,7 +392,7 @@ class DrillThroughTest {
             + (getDialect(context.getConnectionWithDefaultRole()).requiresOrderByAlias()
                 ? "    Year ASC"
                 : "    time_by_day.the_year ASC"),
-            cell.getDrillThroughSQL(false), 3584);
+            Cells.drillThroughSql(cell, false), 3584);
     }
 
     @Test
@@ -402,7 +404,7 @@ class DrillThroughTest {
             + "from Sales");
         final Cell cell = result.getCell(new int[]{0, 0});
         assertTrue(cell.canDrillThrough());
-        String sql = cell.getDrillThroughSQL(false);
+        String sql = Cells.drillThroughSql(cell, false);
 
         String expectedSql =
             "select `time_by_day`.`the_year` as `Year`,"
@@ -438,7 +440,7 @@ class DrillThroughTest {
         // Cannot drill through a calc member.
         final Cell calcCell = result.getCell(new int[]{1, 1});
         assertFalse(calcCell.canDrillThrough());
-        sql = calcCell.getDrillThroughSQL(false);
+        sql = Cells.drillThroughSql(calcCell, false);
         assertNull(sql);
     }
 
@@ -491,7 +493,7 @@ class DrillThroughTest {
             + "SELECT {[Measures].[Unit Sales], [Measures].[Price]} on columns,\n"
             + " {[Product].Children} on rows\n"
             + "from Sales");
-        String sql = result.getCell(new int[]{0, 0}).getDrillThroughSQL(true);
+        String sql = Cells.drillThroughSql(result.getCell(new int[]{0, 0}), true);
 
         String nameExpStr = getNameExp(result, "Customers", "Name");
         String expectedSql =
@@ -619,7 +621,7 @@ class DrillThroughTest {
         SqlAssert.assertSqlEquals(context.getConnectionWithDefaultRole(), expectedSql, sql, 7978);
 
         // Drillthrough SQL is null for cell based on calc member
-        sql = result.getCell(new int[]{1, 1}).getDrillThroughSQL(true);
+        sql = Cells.drillThroughSql(result.getCell(new int[]{1, 1}), true);
         assertNull(sql);
     }
 
@@ -635,7 +637,7 @@ class DrillThroughTest {
         // Products].[Drink].[Dairy], [Measures].[Store Cost]
         Cell cell = result.getCell(new int[]{0, 4});
 
-        String sql = cell.getDrillThroughSQL(true);
+        String sql = Cells.drillThroughSql(cell, true);
 
         String nameExpStr = getNameExp(result, "Customers", "Name");
 
@@ -795,7 +797,7 @@ class DrillThroughTest {
 
         // For backwards compatibility, generate drill-through SQL (ignoring
         // calculated members) even though we said we could not drill through.
-        String sql = cell.getDrillThroughSQL(true);
+        String sql = Cells.drillThroughSql(cell, true);
 
         String nameExpStr = getNameExp(result, "Customers", "Name");
 
@@ -932,7 +934,7 @@ class DrillThroughTest {
             "SELECT {[Measures].[Promotion Sales]} on columns,\n"
             + " {[Product].Children} on rows\n"
             + "from Sales");
-        String sql = result.getCell(new int[] {0, 0}).getDrillThroughSQL(false);
+        String sql = Cells.drillThroughSql(result.getCell(new int[] {0, 0}), false);
 
         String expectedSql =
             "select"
@@ -1030,7 +1032,7 @@ class DrillThroughTest {
             "SELECT {[Store2].[Store Id].Members} on columns,\n"
             + " NON EMPTY([Store3].[Store Id].Members) on rows\n"
             + "from Sales");
-        String sql = result.getCell(new int[] {0, 0}).getDrillThroughSQL(false);
+        String sql = Cells.drillThroughSql(result.getCell(new int[] {0, 0}), false);
 
         String expectedSql =
             "select `time_by_day`.`the_year` as `Year`,"
@@ -1090,7 +1092,7 @@ class DrillThroughTest {
            + "FROM [dsad]");
 
        final String sql =
-           result.getCell(new int[]{0, 0}).getDrillThroughSQL(true);
+           Cells.drillThroughSql(result.getCell(new int[]{0, 0}), true);
 
        SqlAssert.assertSqlEquals(context.getConnectionWithDefaultRole(),
            "select store.frozen_sqft as Frozen sqft, store.grocery_sqft as Grocery sqft, store.meat_sqft as Meat sqft, store.store_sqft as Store sqft, store.store_sqft as Store sqft_0 from store as store where store.frozen_sqft = 2452 order by Frozen sqft ASC, Grocery sqft ASC, Meat sqft ASC, Store sqft ASC",
@@ -1143,7 +1145,7 @@ class DrillThroughTest {
             + " from [Warehouse and Sales]"
             + " where [Time].[1997].[Q4].[12]");
 
-        String sql = result.getCell(new int[]{0, 0}).getDrillThroughSQL(false);
+        String sql = Cells.drillThroughSql(result.getCell(new int[]{0, 0}), false);
 
         String expectedSql =
             "select `time_by_day`.`the_year` as `Year`,"
@@ -1231,7 +1233,7 @@ class DrillThroughTest {
 
         // Prior to fix the request for the drill through SQL would result in
         // an assertion error
-        String sql = result.getCell(new int[] {0, 0}).getDrillThroughSQL(true);
+        String sql = Cells.drillThroughSql(result.getCell(new int[] {0, 0}), true);
         String nameExpStr = getNameExp(result, "Customers", "Name");
         String expectedSql =
             "select "
@@ -1395,12 +1397,12 @@ class DrillThroughTest {
             + "FROM [Sales]\n"
             + "WHERE ([Time].[1997].[Q1].[1], [Product].[Non-Consumable].[Carousel].[Specialty].[Sunglasses].[ADJ].[ADJ Rosy Sunglasses]) ");
 
-        String sql = result.getCell(new int[] {0, 0}).getDrillThroughSQL(false);
+        String sql = Cells.drillThroughSql(result.getCell(new int[] {0, 0}), false);
 
         // Check that SQL is valid.
         java.sql.Connection connection = null;
         try {
-            DataSource dataSource = context.getConnectionWithDefaultRole().getDataSource();
+            DataSource dataSource = RelationalContext.of(context).getDataSource();
             connection = dataSource.getConnection();
             final Statement statement = connection.createStatement();
             final ResultSet resultSet = statement.executeQuery(sql);
@@ -1596,7 +1598,7 @@ class DrillThroughTest {
             + "from [" + cubeName + "]");
         final Cell cell = result.getCell(new int[] {0, 0});
         assertEquals(canDrillThrough, cell.canDrillThrough());
-        final String sql = cell.getDrillThroughSQL(false);
+        final String sql = Cells.drillThroughSql(cell, false);
         if (canDrillThrough) {
             assertNotNull(sql);
         } else {
@@ -1655,7 +1657,7 @@ class DrillThroughTest {
                 + "WHERE {[Time].[1997].[Q1], [Time].[1997].[Q2]}");
         Cell cell = result.getCell(new int[]{0, 0});
         assertTrue(cell.canDrillThrough());
-        String sql = cell.getDrillThroughSQL(false);
+        String sql = Cells.drillThroughSql(cell, false);
         String expectedSql;
         switch (getDatabaseProduct(getDialect(context.getConnectionWithDefaultRole()).name())) {
         case MARIADB:
@@ -1707,7 +1709,7 @@ class DrillThroughTest {
                 + "                {[Time].[1997].[Q1], [Time].[1997].[Q2]})");
         cell = result.getCell(new int[]{0, 0});
         assertTrue(cell.canDrillThrough());
-        sql = cell.getDrillThroughSQL(false);
+        sql = Cells.drillThroughSql(cell, false);
 
         // Note that gender and marital status get their own predicates,
         // independent of the time portion of the slicer
@@ -1788,7 +1790,7 @@ class DrillThroughTest {
                 + "            Crossjoin({[Gender].[M]}, {[Time].[1997].[Q2]}))");
         cell = result.getCell(new int[]{0, 0});
         assertTrue(cell.canDrillThrough());
-        sql = cell.getDrillThroughSQL(false);
+        sql = Cells.drillThroughSql(cell, false);
 
         // Note that gender and marital status get their own predicates,
         // independent of the time portion of the slicer
@@ -1849,7 +1851,7 @@ class DrillThroughTest {
                 + "WHERE {[Time].[1997].[Q1], [Time].[1997].[Q1].[1]}");
         cell = result.getCell(new int[]{0, 0});
         assertTrue(cell.canDrillThrough());
-        sql = cell.getDrillThroughSQL(false);
+        sql = Cells.drillThroughSql(cell, false);
 
         // With overlapping slicer members, the first slicer predicate is
         // redundant, but does not affect the query's results
@@ -1902,7 +1904,7 @@ class DrillThroughTest {
                 + "WHERE {[Time].[1997].[Q1].[1], [Time].[1997].[Q2]}");
         cell = result.getCell(new int[]{0, 0});
         assertTrue(cell.canDrillThrough());
-        sql = cell.getDrillThroughSQL(false);
+        sql = Cells.drillThroughSql(cell, false);
         switch (getDatabaseProduct(getDialect(context.getConnectionWithDefaultRole()).name())) {
         case MARIADB:
         case MYSQL:
@@ -1968,7 +1970,7 @@ class DrillThroughTest {
         Cell cell = result.getCell(new int[]{0, 0});
         assertFalse(cell.canDrillThrough());
         try {
-            cell.getDrillThroughSQL(false);
+            Cells.drillThroughSql(cell, false);
             fail();
         } catch (OlapRuntimeException e) {
             assertTrue(
@@ -1999,7 +2001,7 @@ class DrillThroughTest {
             + ",FILTER([*SORTED_ROW_AXIS],([Customers].CurrentMember Is [Customers].[USA].[CA].[San Gabriel].[A. Joyce Jarvis])) ON ROWS\n"
             + "FROM [Sales]");
         Cell cell = result.getCell(new int[]{0, 0});
-        String sql = cell.getDrillThroughSQL(true);
+        String sql = Cells.drillThroughSql(cell, true);
         String expectedSql;
         switch (getDatabaseProduct(getDialect(context.getConnectionWithDefaultRole()).name())) {
         case VECTORWISE:

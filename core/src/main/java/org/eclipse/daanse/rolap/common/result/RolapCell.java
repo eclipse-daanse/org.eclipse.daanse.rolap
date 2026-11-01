@@ -68,6 +68,9 @@ import org.eclipse.daanse.olap.api.query.component.Query;
 import org.eclipse.daanse.olap.api.query.component.QueryAxis;
 import org.eclipse.daanse.olap.api.query.component.ResolvedFunCall;
 import org.eclipse.daanse.olap.api.query.component.UnresolvedFunCall;
+import org.eclipse.daanse.olap.api.relational.RelationalCell;
+import org.eclipse.daanse.olap.api.relational.RelationalContext;
+import org.eclipse.daanse.olap.api.relational.SqlStatementI;
 import org.eclipse.daanse.olap.api.result.Axis;
 import org.eclipse.daanse.olap.api.result.Cell;
 import org.eclipse.daanse.olap.api.result.ErrorValue;
@@ -75,7 +78,6 @@ import org.eclipse.daanse.olap.api.result.NotLoaded;
 import org.eclipse.daanse.olap.api.result.NullValue;
 import org.eclipse.daanse.olap.api.result.ObjectValue;
 import org.eclipse.daanse.olap.api.result.Position;
-import org.eclipse.daanse.olap.api.sql.SqlStatementI;
 import org.eclipse.daanse.olap.common.ExecuteDurationUtil;
 import org.eclipse.daanse.olap.common.StandardProperty;
 import org.eclipse.daanse.olap.common.Util;
@@ -111,7 +113,7 @@ import org.slf4j.Logger;
  * RolapCell implements {@link org.eclipse.daanse.olap.api.result.Cell} within a
  * {@link RolapResult}.
  */
-public class RolapCell implements Cell {
+public class RolapCell implements RelationalCell {
     /**
  */
     private static final int MDACTION_TYPE_DRILLTHROUGH = 0x100;
@@ -605,7 +607,7 @@ public class RolapCell implements Cell {
         int resultSetType = ResultSet.TYPE_SCROLL_INSENSITIVE;
         int resultSetConcurrency = ResultSet.CONCUR_READ_ONLY;
 
-        Dialect dialect = execution.getDaanseStatement().getDaanseConnection().getContext().getDialect();
+        Dialect dialect = RelationalContext.of(execution.getDaanseStatement().getDaanseConnection().getContext()).getDialect();
         if (!dialect.supportsResultSetConcurrency(
                 resultSetType, resultSetConcurrency)
             || firstRowOrdinal <= 1)

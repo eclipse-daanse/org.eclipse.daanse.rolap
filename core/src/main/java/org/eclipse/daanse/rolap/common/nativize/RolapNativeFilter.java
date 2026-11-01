@@ -41,6 +41,7 @@ import org.eclipse.daanse.olap.api.evaluator.NativeEvaluator;
 import org.eclipse.daanse.olap.api.function.FunctionDefinition;
 import org.eclipse.daanse.olap.api.query.component.Expression;
 import org.eclipse.daanse.olap.api.query.component.MemberExpression;
+import org.eclipse.daanse.olap.api.relational.RelationalContext;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.query.component.MdxVisitorImpl;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
@@ -137,7 +138,7 @@ public class RolapNativeFilter extends RolapNativeSet {
         // effects are owned by the contribution (joinTables / factJoinRequired below).
         RolapNativeSql sql = new RolapNativeSql(
             NativeSqlContext.scratch( org.eclipse.daanse.rolap.common.sql.SqlQueryCapabilities.of(
-                getEvaluator().getCatalogReader().getContext().getDialect() ) ),
+                RelationalContext.of(getEvaluator().getCatalogReader().getContext()).getDialect() ) ),
             aggStar, getEvaluator(), args[0].getLevel() );
         having = java.util.Optional.ofNullable( sql.generateFilterPredicate( filterExpr ) );
       } catch ( RuntimeException e ) {
@@ -212,7 +213,7 @@ public class RolapNativeFilter extends RolapNativeSet {
         RolapNativeSql sql = new RolapNativeSql(
             NativeSqlContext.scratchCollecting(
                 org.eclipse.daanse.rolap.common.sql.SqlQueryCapabilities.of(
-                    getEvaluator().getCatalogReader().getContext().getDialect() ),
+                    RelationalContext.of(getEvaluator().getCatalogReader().getContext()).getDialect() ),
                 ( hierarchy, expression ) -> joins.add(
                     new org.eclipse.daanse.rolap.common.sqlbuild.AggTupleQueries.HavingJoin(
                         hierarchy, expression ) ) ),
@@ -246,7 +247,7 @@ public class RolapNativeFilter extends RolapNativeSet {
      * </p>
      */
     public boolean isSupported( Context<?> context ) {
-      if ( org.eclipse.daanse.rolap.common.sql.SqlQueryCapabilities.of( context.getDialect() ).unlimitedValueList() ) {
+      if ( org.eclipse.daanse.rolap.common.sql.SqlQueryCapabilities.of( RelationalContext.of(context).getDialect() ).unlimitedValueList() ) {
         // The single limit producer cannot fire on an unlimited-value-list dialect.
         return true;
       }
@@ -407,7 +408,7 @@ protected NativeEvaluator createEvaluator( RolapEvaluator evaluator, FunctionDef
     // convertibility; the node is discarded (the real HAVING is regenerated in
     // FilterConstraint.toContribution).
     RolapNativeSql sql = new RolapNativeSql(
-        NativeSqlContext.scratch( org.eclipse.daanse.rolap.common.sql.SqlQueryCapabilities.of( context.getDialect() ) ),
+        NativeSqlContext.scratch( org.eclipse.daanse.rolap.common.sql.SqlQueryCapabilities.of( RelationalContext.of(context).getDialect() ) ),
         null, evaluator, cjArgs[0].getLevel() );
     final Expression filterExpr = args[1];
     if ( sql.generateFilterPredicate( filterExpr ) == null ) {

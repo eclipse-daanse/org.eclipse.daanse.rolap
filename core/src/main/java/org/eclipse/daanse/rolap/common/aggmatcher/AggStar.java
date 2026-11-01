@@ -60,6 +60,7 @@ import org.eclipse.daanse.olap.common.ExecuteDurationUtil;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.execution.ExecutionImpl;
 import org.eclipse.daanse.olap.key.BitKey;
+import org.eclipse.daanse.rolap.aggregator.SqlNodeAggregator;
 import org.eclipse.daanse.rolap.aggregator.countbased.AbstractFactCountBasedAggregator;
 import org.eclipse.daanse.rolap.common.RolapUtil;
 import org.eclipse.daanse.rolap.common.SqlStatement;
@@ -1106,7 +1107,7 @@ public class AggStar {
                 String expr = super.generateExprString(dialect);
                 Aggregator rollup = getRollupAggregator();
 
-                return rollup.getExpression(expr).toString();
+                return SqlNodeAggregator.expression(rollup, expr).toString();
             }
 
             /** Dialect-free node form of {@link #generateRollupString(Dialect)}, or {@code null} when the plain

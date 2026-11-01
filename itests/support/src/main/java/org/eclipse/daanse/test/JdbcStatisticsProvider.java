@@ -30,11 +30,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.eclipse.daanse.olap.api.Context;
+import org.eclipse.daanse.olap.api.execution.Execution;
+import org.eclipse.daanse.olap.api.relational.RelationalContext;
 import org.eclipse.daanse.olap.common.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.eclipse.daanse.olap.execution.ExecutionImpl;
 import org.eclipse.daanse.olap.spi.StatisticsProvider;
 
 /**
@@ -50,12 +51,12 @@ public class JdbcStatisticsProvider implements StatisticsProvider {
         String catalog,
         String schema,
         String table,
-        ExecutionImpl execution)
+        Execution execution)
     {
         Connection connection = null;
         ResultSet resultSet = null;
         try {
-            connection = context.getDataSource().getConnection();
+            connection = RelationalContext.of(context).getDataSource().getConnection();
             resultSet =
                 connection
                     .getMetaData()
@@ -97,7 +98,7 @@ public class JdbcStatisticsProvider implements StatisticsProvider {
 	public long getQueryCardinality(
         Context context,
         String sql,
-        ExecutionImpl execution)
+        Execution execution)
     {
         // JDBC cannot help with this. Defer to another statistics provider.
         return -1;
@@ -110,12 +111,12 @@ public class JdbcStatisticsProvider implements StatisticsProvider {
         String schema,
         String table,
         String column,
-        ExecutionImpl execution)
+        Execution execution)
     {
         Connection connection = null;
         ResultSet resultSet = null;
         try {
-            connection = context.getDataSource().getConnection();
+            connection = RelationalContext.of(context).getDataSource().getConnection();
             resultSet =
                 connection
                     .getMetaData()

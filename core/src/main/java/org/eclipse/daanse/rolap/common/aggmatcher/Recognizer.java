@@ -43,7 +43,6 @@ import org.eclipse.daanse.olap.api.element.Dimension;
 import org.eclipse.daanse.olap.api.element.Hierarchy;
 import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
 import org.eclipse.daanse.olap.api.sql.SqlExpression;
-import org.eclipse.daanse.rolap.aggregator.AbstractAggregator;
 import org.eclipse.daanse.rolap.aggregator.AvgAggregator;
 import org.eclipse.daanse.rolap.aggregator.DistinctCountAggregator;
 import org.eclipse.daanse.rolap.aggregator.SumAggregator;
@@ -933,7 +932,7 @@ public abstract class Recognizer {
         }
 
         if (rollupAgg == null && factAgg != null) {
-            rollupAgg = (AbstractAggregator) factAgg.getRollup();
+            rollupAgg = factAgg.getRollup();
         }
 
         if (rollupAgg == null && factAgg != null) {

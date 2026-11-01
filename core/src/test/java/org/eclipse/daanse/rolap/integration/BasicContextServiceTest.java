@@ -157,8 +157,8 @@ class BasicContextServiceTest {
         assertThat(saContext).isNotNull().extracting(ServiceAware::size).isEqualTo(1);
         assertThat(ctx.getConnectionWithDefaultRole()).isNotNull();
         assertThat(ctx).satisfies(x -> {
-            assertThat(x.getDataSource()).isEqualTo(dataSource);
-            assertThat(x.getDialect()).isEqualTo(dialect);
+            assertThat(((RolapContext) x).getDataSource()).isEqualTo(dataSource);
+            assertThat(((RolapContext) x).getDialect()).isEqualTo(dialect);
             assertThat(x.getExpressionCompilerFactory()).isEqualTo(expressionCompilerFactory);
             assertThat(((RolapContext) x).getCatalogMapping()).isEqualTo(catalogMapping);
         });

@@ -62,6 +62,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import org.eclipse.daanse.rolap.SchemaModifiersEmf;
+import org.eclipse.daanse.rolap.testkit.assertions.Cells;
 
 /**
  * Tests for parent-child hierarchies.
@@ -3220,7 +3221,7 @@ expected);
         // drill through member
         final Cell cell = result.getCell(new int[]{0, row});
         assertEquals(expectedCell, cell.getFormattedValue());
-        String sql = cell.getDrillThroughSQL(extendedContext);
+        String sql = Cells.drillThroughSql(cell, extendedContext);
 
         SqlAssert.assertSqlEquals(connection, expectedSql, sql, expectedRows);
     }

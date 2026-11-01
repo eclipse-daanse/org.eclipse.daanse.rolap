@@ -29,7 +29,7 @@ import org.eclipse.daanse.olap.common.ExecutionConfig;
 import org.eclipse.daanse.sql.dialect.api.Dialect;
 import org.eclipse.daanse.sql.model.type.BestFitColumnType;
 import org.eclipse.daanse.sql.dialect.db.common.AnsiDialect;
-import org.eclipse.daanse.olap.api.Context;
+import org.eclipse.daanse.olap.api.relational.RelationalContext;
 import org.eclipse.daanse.rolap.aggregator.DistinctCountAggregator;
 import org.eclipse.daanse.rolap.common.sql.QueryRecorder;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
@@ -111,7 +111,7 @@ class DistinctCountRewriteOracleTest {
         RolapStar.Measure m1 = distinctCountMeasure(fact, "fact_personal", "anzahl_personen", "AnzahlDistinct");
         RolapStar.Measure m2 = distinctCountMeasure(fact, "fact_personal", "anzahl_klassen", "KlassenDistinct");
 
-        Context<?> context = mock(Context.class);
+        RelationalContext<?> context = mock(RelationalContext.class);
         doReturn(ExecutionConfig.DEFAULTS).when(context).getConfig();
 
         RolapStar star = mock(RolapStar.class);

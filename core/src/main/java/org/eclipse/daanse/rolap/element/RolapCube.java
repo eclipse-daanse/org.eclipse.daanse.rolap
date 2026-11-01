@@ -148,6 +148,7 @@ import org.eclipse.daanse.cwm.model.cwm.resource.relational.util.RowSets;
 import org.eclipse.daanse.cwm.model.cwm.resource.relational.util.Rows;
 import org.eclipse.daanse.rolap.mapping.model.provider.util.CwmHelper;
 import org.eclipse.daanse.cwm.model.cwm.foundation.businessinformation.util.Descriptions;
+import org.eclipse.daanse.olap.api.relational.RelationalContext;
 import org.eclipse.daanse.olap.element.KPIImpl;
 /**
  * RolapCube implements {@link Cube} for a ROLAP database.
@@ -2663,7 +2664,7 @@ public abstract class RolapCube extends CubeBase {
             RelationalSource fact = getFact();
             restoreFact = fact;
             Optional<RolapWritebackTable> oWritebackTable = getWritebackTable();
-            Dialect dialect = getContext().getDialect();
+            Dialect dialect = RelationalContext.of(getContext()).getDialect();
             if (oWritebackTable.isPresent()) {
                 RolapWritebackTable writebackTable = oWritebackTable.get();
                 if (getWritebackTable() != null && getWritebackTable().isPresent()) {
@@ -2698,7 +2699,7 @@ public abstract class RolapCube extends CubeBase {
                     }
                     if (fact instanceof InlineTableSource mappingInlineTable) {
                     	List<String> columns =  writebackTable.getColumns().stream().map(c -> c.getColumn().getName()).toList();
-                    	RelationalSource mappingRelation = convertInlineTableToRelation(mappingInlineTable, getContext().getDialect(), columns);
+                    	RelationalSource mappingRelation = convertInlineTableToRelation(mappingInlineTable, RelationalContext.of(getContext()).getDialect(), columns);
                         if (mappingRelation instanceof SqlSelectSource mappingView) {
                             changeFact(mappingView, dialect, writebackTable, rolapSessionValues);
                         }

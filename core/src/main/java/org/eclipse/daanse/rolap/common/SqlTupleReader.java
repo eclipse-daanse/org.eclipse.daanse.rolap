@@ -59,6 +59,7 @@ import org.eclipse.daanse.olap.api.execution.ExecutionContext;
 import org.eclipse.daanse.olap.api.execution.ExecutionMetadata;
 import org.eclipse.daanse.olap.api.execution.Statement;
 import org.eclipse.daanse.olap.api.query.component.Query;
+import org.eclipse.daanse.olap.api.relational.RelationalContext;
 import org.eclipse.daanse.olap.api.sql.SortingDirection;
 import org.eclipse.daanse.olap.api.sql.SqlExpression;
 import org.eclipse.daanse.olap.calc.base.type.tuplebase.ArrayTupleList;
@@ -1145,7 +1146,7 @@ public TupleList readTuples(
               org.eclipse.daanse.sql.statement.api.model.NullOrder.FIRST, false ) );
         }
         org.eclipse.daanse.sql.statement.api.model.SelectStatement wrapperStatement = wrapper.build();
-        String sql = SqlRender.render( wrapperStatement, context.getDialect() ).sql();
+        String sql = SqlRender.render( wrapperStatement, RelationalContext.of(context).getDialect() ).sql();
         return new BuiltSql( wrapperStatement, RenderedSql.of( sql, types ) );
       }
 
@@ -1245,7 +1246,7 @@ public TupleList readTuples(
     b.from( org.eclipse.daanse.rolap.common.sqlbuild.RelationFromMapper.from(baseCubes.iterator().next().getFact() ) );
     b.where( org.eclipse.daanse.sql.statement.api.Predicates.alwaysFalse() );
     org.eclipse.daanse.sql.statement.api.model.SelectStatement statement = b.build();
-    return new BuiltSql( statement, SqlRender.render( statement, context.getDialect() ) );
+    return new BuiltSql( statement, SqlRender.render( statement, RelationalContext.of(context).getDialect() ) );
   }
 
   /**

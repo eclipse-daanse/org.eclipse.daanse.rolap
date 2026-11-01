@@ -62,11 +62,13 @@ import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
+import org.eclipse.daanse.olap.api.relational.RelationalContext;
 import org.eclipse.daanse.olap.api.sql.SqlExpression;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.element.PropertyBase;
 import org.eclipse.daanse.olap.key.BitKey;
 import org.eclipse.daanse.olap.spi.SegmentIdentity;
+import org.eclipse.daanse.rolap.aggregator.SqlNodeAggregator;
 import org.eclipse.daanse.rolap.common.RolapAggregationManager;
 import org.eclipse.daanse.rolap.common.RolapStatisticsCache;
 import org.eclipse.daanse.rolap.common.Utils;
@@ -103,7 +105,7 @@ public class RolapStar {
 
     private final RolapCatalog catalog;
 
-    private final Context<?> context;
+    private final RelationalContext<?> context;
 
     private final Table factTable;
 
@@ -150,7 +152,7 @@ public class RolapStar {
         final RelationalSource fact)
     {
         this.catalog = catalog;
-        this.context = context;
+        this.context = RelationalContext.of(context);
         this.factTable = new RolapStar.Table(this, fact, null, null);
 
         // phase out and replace with Table, Column network
@@ -580,7 +582,7 @@ public class RolapStar {
      *
      * @return Context
  */
-    public Context<?> getContext() {
+    public RelationalContext<?> getContext() {
         return context;
     }
 
@@ -1023,12 +1025,10 @@ public class RolapStar {
             pw.print(getBitPosition());
             pw.print("): ");
             // computed expressions have no dialect string; a printer must never throw
-            pw.print(
-                aggregator.getExpression(
-                    getExpression() == null
-                        ? null
-                        : SqlExpressionResolver.describe(
-                            getExpression(), getTable().getStar().getDialect())));
+            String operand = getExpression() == null
+                ? null
+                : SqlExpressionResolver.describe(getExpression(), getTable().getStar().getDialect());
+            pw.print(SqlNodeAggregator.describe(aggregator, operand));
         }
 
         public String getCubeName() {

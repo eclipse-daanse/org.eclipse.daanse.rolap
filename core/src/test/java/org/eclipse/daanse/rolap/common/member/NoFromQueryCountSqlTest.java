@@ -22,10 +22,10 @@ import static org.mockito.Mockito.when;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.element.Dimension;
 import org.eclipse.daanse.olap.api.element.HideMemberCondition;
 import org.eclipse.daanse.olap.api.element.LevelType;
+import org.eclipse.daanse.olap.api.relational.RelationalContext;
 import org.eclipse.daanse.olap.api.sql.SqlExpression;
 import org.eclipse.daanse.olap.common.ExecutionConfig;
 import org.eclipse.daanse.olap.element.OlapMetaDataBase;
@@ -102,7 +102,7 @@ class NoFromQueryCountSqlTest {
     private static String countSql(boolean compound, boolean[] mustCount) {
         List<RolapLevel> levels = customerLevels();
         RolapHierarchy hierarchy = levels.get(0).getHierarchy();
-        Context<?> context = mock(Context.class);
+        RelationalContext<?> context = mock(RelationalContext.class);
         doReturn(new NoFromQueryDialect(compound)).when(context).getDialect();
         // generateFormattedSql is read through getConfig(); false is the default.
         doReturn(ExecutionConfig.DEFAULTS).when(context).getConfig();

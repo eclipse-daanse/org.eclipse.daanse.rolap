@@ -39,7 +39,6 @@ import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLong;
 
-import javax.sql.DataSource;
 
 import org.eclipse.daanse.mdx.model.api.expression.MdxExpression;
 import org.eclipse.daanse.mdx.parser.api.MdxParser;
@@ -437,12 +436,6 @@ public Statement getInternalStatement() {
     return statement;
   }
 
-
-  @Deprecated() //finf a better way for agg manager.
-  @Override
-public DataSource getDataSource() {
-      return getContext().getDataSource();
-    }
   @Override
 public Context<?> getContext() {
       return context;

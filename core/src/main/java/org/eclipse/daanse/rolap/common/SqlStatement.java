@@ -54,7 +54,8 @@ import org.eclipse.daanse.olap.api.monitor.event.SqlStatementEndEvent;
 import org.eclipse.daanse.olap.api.monitor.event.SqlStatementEventCommon;
 import org.eclipse.daanse.olap.api.monitor.event.SqlStatementExecuteEvent;
 import org.eclipse.daanse.olap.api.monitor.event.SqlStatementStartEvent;
-import org.eclipse.daanse.olap.api.sql.SqlStatementI;
+import org.eclipse.daanse.olap.api.relational.RelationalContext;
+import org.eclipse.daanse.olap.api.relational.SqlStatementI;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.util.Counters;
 import org.eclipse.daanse.olap.util.DelegatingInvocationHandler;
@@ -176,7 +177,7 @@ public class SqlStatement implements SqlStatementI {
         executionContext.getExecution().checkCancelOrTimeout();
       }
       haveSemaphore = true;
-      this.jdbcConnection = context.getDataSource().getConnection();
+      this.jdbcConnection = RelationalContext.of(context).getDataSource().getConnection();
       // Trace start of execution.
       if ( RolapUtil.SQL_LOGGER.isDebugEnabled() ) {
         StringBuilder sqllog = new StringBuilder();
@@ -535,7 +536,7 @@ public class SqlStatement implements SqlStatementI {
       // There might not be a schema constructed yet,
       // so watch out here for NPEs.
 
-      Dialect dialect = context.getDialect();
+      Dialect dialect = RelationalContext.of(context).getDialect();
 
       if ( suggestedType != null ) {
         typeList.add( suggestedType );

@@ -38,6 +38,7 @@ import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.key.BitKey;
 import org.eclipse.daanse.olap.spi.SegmentHeader;
 import org.eclipse.daanse.olap.spi.SegmentIdentity;
+import org.eclipse.daanse.rolap.aggregator.SqlNodeAggregator;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.star.StarColumnPredicate;
 import org.eclipse.daanse.rolap.common.star.StarPredicate;
@@ -212,8 +213,8 @@ public class Segment {
     buf.append( " {" );
     buf.append( sep );
     buf.append( "measure=" );
-    buf.append( measure.getExpression() == null ? measure.getAggregator().getExpression( "*" ) : measure
-        .getAggregator().getExpression( genericSql(measure.getExpression())) );
+    buf.append( SqlNodeAggregator.describe( measure.getAggregator(),
+        measure.getExpression() == null ? "*" : genericSql( measure.getExpression() ) ) );
     return buf.toString();
   }
 

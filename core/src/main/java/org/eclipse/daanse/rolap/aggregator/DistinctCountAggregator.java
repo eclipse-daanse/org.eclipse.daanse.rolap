@@ -12,55 +12,33 @@
 */
 package org.eclipse.daanse.rolap.aggregator;
 
-import org.eclipse.daanse.olap.api.DataTypeJdbc;
 import org.eclipse.daanse.olap.api.aggregator.Aggregator;
-import org.eclipse.daanse.olap.api.calc.Calc;
-import org.eclipse.daanse.olap.api.calc.tuple.TupleList;
-import org.eclipse.daanse.olap.api.evaluator.Evaluator;
+import org.eclipse.daanse.sql.statement.api.Expressions;
+import org.eclipse.daanse.sql.statement.api.expression.SqlExpression;
 
-public class DistinctCountAggregator extends AbstractAggregator {
+/** The OLAP distinct count, rendered as SQL {@code count(distinct operand)}. */
+public class DistinctCountAggregator extends org.eclipse.daanse.olap.aggregator.DistinctCountAggregator implements SqlNodeAggregator {
 
-    public static DistinctCountAggregator INSTANCE = new DistinctCountAggregator();
-
-    public DistinctCountAggregator() {
-        super("distinct-count", true);
-    }
+    public static final DistinctCountAggregator INSTANCE = new DistinctCountAggregator();
 
     @Override
     public Aggregator getRollup() {
-      // Distinct counts cannot always be rolled up, when they can,
-      // it's using Sum.
-      return SumAggregator.INSTANCE;
+        return SumAggregator.INSTANCE;
     }
 
     @Override
-    public AbstractAggregator getNonDistinctAggregator() {
-      return CountAggregator.INSTANCE;
+    public Aggregator getNonDistinctAggregator() {
+        return CountAggregator.INSTANCE;
     }
 
     @Override
-    public Object aggregate( Evaluator evaluator, TupleList members, Calc<?> exp ) {
-      throw new UnsupportedOperationException();
+    public StringBuilder getExpression(CharSequence operand) {
+        return new StringBuilder("count(distinct ").append(operand).append(")");
     }
 
     @Override
-    public StringBuilder getExpression( CharSequence operand ) {
-      return new StringBuilder("count(distinct ").append(operand).append(")");
-    }
-
-    @Override
-    public org.eclipse.daanse.sql.statement.api.expression.SqlExpression toNode(
-            org.eclipse.daanse.sql.statement.api.expression.SqlExpression inner) {
-        org.eclipse.daanse.sql.statement.api.expression.SqlExpression operand = nodeOperand(inner);
+    public SqlExpression toNode(SqlExpression inner) {
         // renders "count(distinct <operand>)" (NOT "distinct-count(...)") — use the literal "count".
-        return org.eclipse.daanse.sql.statement.api.Expressions.aggregateDistinct("count", operand);
+        return Expressions.aggregateDistinct("count", SqlNodeAggregator.nodeOperand(inner));
     }
-
-    @Override
-    public boolean supportsFastAggregates( DataTypeJdbc dataType ) {
-      // We can't rollup using the raw data, because this is
-      // a distinct-count operation.
-      return false;
-    };
-
 }

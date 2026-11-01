@@ -47,6 +47,7 @@ import org.eclipse.daanse.rolap.common.sqlbuild.StarPredicateTranslator;
 import org.eclipse.daanse.sql.statement.api.expression.Predicate;
 import org.eclipse.daanse.sql.statement.api.expression.SqlExpression;
 import java.util.ArrayList;
+import org.eclipse.daanse.rolap.aggregator.SqlNodeAggregator;
 
 /**
  * Base class for the query specifications that build a star query:
@@ -128,7 +129,7 @@ public abstract class AbstractQuerySpec {
                 operandNode == null
                     ? org.eclipse.daanse.sql.statement.api.Expressions.star() : operandNode,
                 getStar().getDialect());
-            StringBuilder exprOuter = measure.getAggregator().getExpression(exprInner);
+            StringBuilder exprOuter = SqlNodeAggregator.expression(measure.getAggregator(), exprInner);
             query.addSelect(
                 exprOuter,
                 measure.getInternalType(),
@@ -631,8 +632,8 @@ public abstract class AbstractQuerySpec {
                 outerQuery.addSelectNode(reAgg, measure.getInternalType());
             } else {
                 outerQuery.addSelect(
-                    measure.getAggregator().getNonDistinctAggregator()
-                        .getExpression(dialect.quoteIdentifier(alias)),
+                    SqlNodeAggregator.expression(measure.getAggregator().getNonDistinctAggregator(),
+                        dialect.quoteIdentifier(alias)),
                     measure.getInternalType());
             }
         }

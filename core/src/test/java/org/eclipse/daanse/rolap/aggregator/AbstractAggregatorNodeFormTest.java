@@ -42,7 +42,7 @@ class AbstractAggregatorNodeFormTest {
     }
 
     private static String stringForm(Aggregator agg) {
-        return agg.getExpression(OPERAND).toString();
+        return SqlNodeAggregator.expression(agg, OPERAND).toString();
     }
 
     @Test
