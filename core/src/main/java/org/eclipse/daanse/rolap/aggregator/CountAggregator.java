@@ -13,34 +13,14 @@
 package org.eclipse.daanse.rolap.aggregator;
 
 import org.eclipse.daanse.olap.api.aggregator.Aggregator;
-import org.eclipse.daanse.olap.api.calc.Calc;
-import org.eclipse.daanse.olap.api.calc.tuple.TupleList;
-import org.eclipse.daanse.olap.api.evaluator.Evaluator;
-import org.eclipse.daanse.olap.fun.FunUtil;
 
-public class CountAggregator extends AbstractAggregator {
+/** The OLAP count, rendered as SQL {@code count(operand)}; rolls up as the SQL-rendering sum. */
+public class CountAggregator extends org.eclipse.daanse.olap.aggregator.CountAggregator implements SqlNodeAggregator {
 
-    public static CountAggregator INSTANCE = new CountAggregator();
-
-    public CountAggregator() {
-        super("count", false);
-    }
-
-    @Override
-    public org.eclipse.daanse.sql.statement.api.expression.SqlExpression toNode(
-            org.eclipse.daanse.sql.statement.api.expression.SqlExpression inner) {
-        org.eclipse.daanse.sql.statement.api.expression.SqlExpression operand = nodeOperand(inner);
-        return org.eclipse.daanse.sql.statement.api.Expressions.aggregate(getName(), operand);
-    }
+    public static final CountAggregator INSTANCE = new CountAggregator();
 
     @Override
     public Aggregator getRollup() {
         return SumAggregator.INSTANCE;
     }
-
-    @Override
-    public Object aggregate(Evaluator evaluator, TupleList members, Calc<?> exp) {
-        return FunUtil.count(evaluator, members, false);
-    }
-
 }

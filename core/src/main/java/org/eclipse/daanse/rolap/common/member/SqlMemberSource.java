@@ -55,6 +55,7 @@ import org.eclipse.daanse.olap.api.execution.Execution;
 import org.eclipse.daanse.olap.api.execution.Execution.Purpose;
 import org.eclipse.daanse.olap.api.execution.ExecutionContext;
 import org.eclipse.daanse.olap.api.execution.ExecutionMetadata;
+import org.eclipse.daanse.olap.api.relational.RelationalContext;
 import org.eclipse.daanse.olap.api.sql.SortingDirection;
 import org.eclipse.daanse.olap.api.sql.SqlExpression;
 import org.eclipse.daanse.olap.common.Util;
@@ -320,7 +321,7 @@ public class SqlMemberSource
                 level.getUniqueName());
             sqlQuery.addSelect("count(*)", null);
             hierarchy.addToFrom(sqlQuery, level.getKeyExp());
-            return SqlRender.render(sqlQuery.buildStatement(), context.getDialect(), sqlQuery.renderOptions()).sql();
+            return SqlRender.render(sqlQuery.buildStatement(), RelationalContext.of(context).getDialect(), sqlQuery.renderOptions()).sql();
         }
         if (!buildCtx.capabilities().fromQuery()) {
             // count(DISTINCT …) / manual-count shape for dialects without SELECT-in-FROM. Common
@@ -366,7 +367,7 @@ public class SqlMemberSource
                             .toArray(org.eclipse.daanse.sql.statement.api.expression.SqlExpression[]::new)),
                     null);
             }
-            return SqlRender.render(sqlQuery.buildStatement(), context.getDialect(), sqlQuery.renderOptions()).sql();
+            return SqlRender.render(sqlQuery.buildStatement(), RelationalContext.of(context).getDialect(), sqlQuery.renderOptions()).sql();
 
         } else {
             // FROM-subquery count where the builder declines: a relation the FROM mapper cannot
@@ -401,7 +402,7 @@ public class SqlMemberSource
             // FROM-queries to have an alias
             boolean failIfExists = true;
             outerQuery.addFrom(sqlQuery, "init", failIfExists);
-            return SqlRender.render(outerQuery.buildStatement(), context.getDialect(), outerQuery.renderOptions()).sql();
+            return SqlRender.render(outerQuery.buildStatement(), RelationalContext.of(context).getDialect(), outerQuery.renderOptions()).sql();
         }
     }
 
@@ -568,7 +569,7 @@ RME is this right
         // handles every relation (tables/joins/views/inline via from) and parent-child
         // levels (emitting the level key, no parent column).
         return SqlRender.render(org.eclipse.daanse.rolap.common.sqlbuild.TupleSqlMapper.keysSql(
-                hierarchy, true), context.getDialect());
+                hierarchy, true), RelationalContext.of(context).getDialect());
     }
 
     // implement MemberReader
@@ -1132,7 +1133,7 @@ RME is this right
         // Roots of a parent-child hierarchy are rendered by the builder
         // (WHERE parentExp IS NULL / = nullParentValue), no QueryRecorder needed.
         return SqlRender.render(org.eclipse.daanse.rolap.common.sqlbuild.ParentChildQueries.parentChildRootSql(
-                member, true), context.getDialect());
+                member, true), RelationalContext.of(context).getDialect());
     }
 
     /**
@@ -1159,7 +1160,7 @@ RME is this right
         // Children of a parent-child member are rendered entirely by the builder; parentChildChildrenSql
         // handles every renderable PC hierarchy. No QueryRecorder fallback needed.
         return SqlRender.render(org.eclipse.daanse.rolap.common.sqlbuild.ParentChildQueries.parentChildChildrenSql(
-                member, true), context.getDialect());
+                member, true), RelationalContext.of(context).getDialect());
     }
 
     private RenderedSql makeChildMemberSqlPCForLevel(
@@ -1172,7 +1173,7 @@ RME is this right
                 new StringBuilder("parent-child level '").append(level).append("' must be ").append("unique").toString());
             // Builder renders children at an intermediate PC level (WHERE parentChildLevel.parentExp = key).
             return SqlRender.render(org.eclipse.daanse.rolap.common.sqlbuild.ParentChildQueries.parentChildChildrenForLevelSql(
-                    member, (RolapLevel) parentChildLevel, true), context.getDialect());
+                    member, (RolapLevel) parentChildLevel, true), RelationalContext.of(context).getDialect());
         }
 
     // implement MemberReader

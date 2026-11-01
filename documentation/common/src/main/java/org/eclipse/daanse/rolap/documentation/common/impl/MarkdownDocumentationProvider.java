@@ -120,7 +120,7 @@ public class MarkdownDocumentationProvider extends AbstractContextDocumentationP
         Files.createDirectories(outputFolder);
 
         RolapContext context = (RolapContext) ctx;
-        metaInfo = databaseService.createMetaInfo(context.getConnectionWithDefaultRole().getDataSource());
+        metaInfo = databaseService.createMetaInfo(context.getDataSource());
         List<String> roles = ctx.getAccessRoles();
         if (roles != null) {
             for (String role : roles) {

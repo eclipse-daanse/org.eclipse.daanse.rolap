@@ -12,66 +12,8 @@
 */
 package org.eclipse.daanse.rolap.aggregator;
 
-import java.util.List;
+/** The OLAP minimum, rendered as SQL {@code min(operand)}. */
+public class MinAggregator extends org.eclipse.daanse.olap.aggregator.MinAggregator implements SqlNodeAggregator {
 
-import org.eclipse.daanse.olap.api.DataTypeJdbc;
-import org.eclipse.daanse.olap.api.calc.Calc;
-import org.eclipse.daanse.olap.api.calc.tuple.TupleList;
-import org.eclipse.daanse.olap.api.evaluator.Evaluator;
-import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
-import org.eclipse.daanse.olap.fun.FunUtil;
-
-public class MinAggregator extends AbstractAggregator {
-
-    public static MinAggregator INSTANCE = new MinAggregator();
-
-    public MinAggregator() {
-        super("min", false);
-    }
-
-    @Override
-    public org.eclipse.daanse.sql.statement.api.expression.SqlExpression toNode(
-            org.eclipse.daanse.sql.statement.api.expression.SqlExpression inner) {
-        org.eclipse.daanse.sql.statement.api.expression.SqlExpression operand = nodeOperand(inner);
-        return org.eclipse.daanse.sql.statement.api.Expressions.aggregate(getName(), operand);
-    }
-
-    @Override
-    public Object aggregate(Evaluator evaluator, TupleList members, Calc<?> exp) {
-        return FunUtil.min(evaluator, members, exp);
-    }
-
-    @Override
-    public boolean supportsFastAggregates(DataTypeJdbc dataType) {
-        return switch (dataType) {
-        case INTEGER, NUMERIC -> true;
-        default -> false;
-        };
-    };
-
-    @Override
-    public Object aggregate(List<Object> rawData, DataTypeJdbc datatype) {
-        assert !rawData.isEmpty();
-        switch (datatype) {
-        case INTEGER:
-            int minInt = Integer.MAX_VALUE;
-            for (Object data : rawData) {
-                if (data != null) {
-                    minInt = Math.min(minInt, (Integer) data);
-                }
-            }
-            return minInt == Integer.MAX_VALUE ? null : minInt;
-        case NUMERIC:
-            double minDouble = Double.MAX_VALUE;
-            for (Object data : rawData) {
-                if (data != null) {
-                    minDouble = Math.min(minDouble, ((Number) data).doubleValue());
-                }
-            }
-            return minDouble == Double.MAX_VALUE ? null : minDouble;
-        default:
-            throw new OlapRuntimeException(new StringBuilder("Aggregator ").append(name)
-                    .append(" does not support datatype").append(datatype.getValue()).toString());
-        }
-    }
+    public static final MinAggregator INSTANCE = new MinAggregator();
 }

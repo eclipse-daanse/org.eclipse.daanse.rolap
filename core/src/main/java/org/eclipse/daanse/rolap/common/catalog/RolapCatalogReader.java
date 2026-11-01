@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import javax.sql.DataSource;
 
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.DataType;
@@ -832,11 +831,6 @@ public class RolapCatalogReader
         }
 
         return null;
-    }
-
-    @Override
-	public DataSource getDataSource() {
-        return catalog.getInternalConnection().getDataSource();
     }
 
     @Override

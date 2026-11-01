@@ -31,10 +31,11 @@ import java.util.Optional;
 
 import org.eclipse.daanse.sql.model.type.BestFitColumnType;
 import org.eclipse.daanse.olap.api.Context;
+import org.eclipse.daanse.olap.api.execution.Execution;
 import org.eclipse.daanse.olap.api.execution.Execution.Purpose;
 import org.eclipse.daanse.olap.api.execution.ExecutionContext;
 import org.eclipse.daanse.olap.api.execution.ExecutionMetadata;
-import org.eclipse.daanse.olap.execution.ExecutionImpl;
+import org.eclipse.daanse.olap.api.relational.RelationalContext;
 import org.eclipse.daanse.rolap.common.RolapUtil;
 import org.eclipse.daanse.rolap.common.SqlRender;
 import org.eclipse.daanse.rolap.common.SqlStatement;
@@ -60,7 +61,7 @@ public class SqlStatisticsProviderNew  {
         Context context,
         String schema,
         String table,
-        ExecutionImpl execution)
+        Execution execution)
     {
         return executeCountQuery(context, tableCardinalityStatement(schema, table), execution,
             "SqlStatisticsProviderNew.getTableCardinality",
@@ -70,7 +71,7 @@ public class SqlStatisticsProviderNew  {
     public long getQueryCardinality(
         Context context,
         String sql,
-        ExecutionImpl execution)
+        Execution execution)
     {
         return executeCountQuery(context, queryCardinalityStatement(sql), execution,
             "SqlStatisticsProviderNew.getQueryCardinality",
@@ -82,12 +83,12 @@ public class SqlStatisticsProviderNew  {
         String schema,
         String table,
         String column,
-        ExecutionImpl execution)
+        Execution execution)
     {
         // A dialect that supports neither count(distinct) nor a SELECT in the FROM clause cannot
         // express the probe at all (the renderer's degradation needs the derived-table form) —
         // the historic -1 contract: no query is issued.
-        if (!context.getDialect().allowsCountDistinct() && !context.getDialect().allowsFromQuery()) {
+        if (!RelationalContext.of(context).getDialect().allowsCountDistinct() && !RelationalContext.of(context).getDialect().allowsFromQuery()) {
             return -1;
         }
         return executeCountQuery(context, columnCardinalityStatement(schema, table, column), execution,
@@ -121,11 +122,11 @@ public class SqlStatisticsProviderNew  {
     private static long executeCountQuery(
         Context context,
         SelectStatement statement,
-        ExecutionImpl execution,
+        Execution execution,
         String component,
         String message)
     {
-        final String sql = SqlRender.render(statement, context.getDialect()).sql();
+        final String sql = SqlRender.render(statement, RelationalContext.of(context).getDialect()).sql();
         ExecutionMetadata metadata = ExecutionMetadata.of(component, message, Purpose.OTHER, 0);
         ExecutionContext execContext = execution.asContext().createChild(metadata, Optional.empty());
         SqlStatement stmt = RolapUtil.executeQuery(context, sql, execContext);

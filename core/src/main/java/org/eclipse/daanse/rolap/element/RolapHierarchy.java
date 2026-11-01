@@ -125,6 +125,7 @@ import org.slf4j.LoggerFactory;
 import org.eclipse.daanse.rolap.mapping.model.database.source.SourceFactory;
 import org.eclipse.daanse.rolap.mapping.model.provider.util.CwmHelper;
 import org.eclipse.daanse.cwm.model.cwm.foundation.businessinformation.util.Descriptions;
+import org.eclipse.daanse.olap.api.relational.RelationalContext;
 import org.eclipse.daanse.olap.result.CellFormatterValueFormatter;
 import org.eclipse.daanse.olap.result.ValueFormatter;
 /**
@@ -322,7 +323,7 @@ public class RolapHierarchy extends HierarchyBase {
             this.relation =
                 RolapCube.convertInlineTableToRelation(
                     inlineTable,
-                    getRolapCatalog().getInternalConnection().getContext().getDialect());
+                    RelationalContext.of(getRolapCatalog().getInternalConnection().getContext()).getDialect());
         }
         this.memberReaderClass = xmlHierarchy.getMemberReaderClass();
         this.uniqueKeyLevelName = xmlHierarchy.getUniqueKeyLevelName();

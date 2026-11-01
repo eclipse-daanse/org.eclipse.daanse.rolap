@@ -26,6 +26,7 @@ import org.eclipse.daanse.olap.api.connection.Connection;
 import org.eclipse.daanse.olap.api.element.Cube;
 import org.eclipse.daanse.olap.api.query.Quoting;
 import org.eclipse.daanse.olap.api.query.component.Query;
+import org.eclipse.daanse.olap.api.relational.RelationalContext;
 import org.eclipse.daanse.olap.common.ConfigConstants;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.query.component.IdImpl;
@@ -138,7 +139,7 @@ public final class SqlAssert {
      */
     private static String dialectize(Connection connection, String sql) {
         final String search = "fname \\+ ' ' \\+ lname";
-        final Dialect dialect = connection.getContext().getDialect();
+        final Dialect dialect = RelationalContext.of(connection.getContext()).getDialect();
         final DatabaseProduct databaseProduct = getDatabaseProduct(dialect.name());
         switch (databaseProduct) {
             case MYSQL:
@@ -201,7 +202,7 @@ public final class SqlAssert {
         java.sql.ResultSet rs = null;
 
         try {
-            jdbcConn = connection.getDataSource().getConnection();
+            jdbcConn = RelationalContext.of(connection.getContext()).getDataSource().getConnection();
             stmt = jdbcConn.createStatement();
 
             if (RolapUtil.SQL_LOGGER.isDebugEnabled()) {
@@ -344,7 +345,7 @@ public final class SqlAssert {
                 throw new IllegalStateException("call expectSql(...) or expectNoSql(...) before verify()");
             }
 
-            Dialect dialect = connection.getContext().getDialect();
+            Dialect dialect = RelationalContext.of(connection.getContext()).getDialect();
             DatabaseProduct databaseProduct = getDatabaseProduct(dialect.name());
             boolean patternFound = false;
 

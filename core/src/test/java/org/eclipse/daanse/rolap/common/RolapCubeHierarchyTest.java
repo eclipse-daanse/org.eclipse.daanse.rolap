@@ -34,11 +34,11 @@ import java.util.List;
 
 import javax.sql.DataSource;
 
-import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.catalog.CatalogReader;
 import org.eclipse.daanse.olap.api.connection.Connection;
 import org.eclipse.daanse.olap.api.element.Hierarchy;
 import org.eclipse.daanse.olap.api.element.Level;
+import org.eclipse.daanse.olap.api.relational.RelationalContext;
 import org.eclipse.daanse.olap.common.ConfigConstants;
 import org.eclipse.daanse.olap.common.ExecutionConfig;
 import org.eclipse.daanse.rolap.element.RolapCatalog;
@@ -62,7 +62,7 @@ class RolapCubeHierarchyTest {
         mock(Connection.class);
     DataSource cubeDimension_schema_connection_DS = mock(DataSource.class);
     CatalogReader schemaReader = mock(CatalogReader.class);
-    Context<?> context = mock(Context.class);
+    RelationalContext<?> context = mock(RelationalContext.class);
     // RolapCubeHierarchy reads enableRolapCubeMemberCache through getConfig();
     // the defaults are what this test wants. (The previous stub named
     // memoryMonitor, which this path never reads.)
@@ -95,8 +95,7 @@ class RolapCubeHierarchyTest {
     // RolapCubeHierarchy reads enableRolapCubeMemberCache off the internal
     // connection's context, not off the catalog reader's.
     doReturn(context).when(cubeDimension_schema_connection).getContext();
-    doReturn(cubeDimension_schema_connection_DS)
-      .when(cubeDimension_schema_connection).getDataSource();
+    doReturn(cubeDimension_schema_connection_DS).when(context).getDataSource();
     doReturn(cubeDimension_uniqueName).when(cubeDimension).getUniqueName();
     doReturn(rolapHierarchy_hierarchy).when(rolapHierarchy).getHierarchy();
     doReturn(rolapHierarchy_levels).when(rolapHierarchy).getLevels();
@@ -122,7 +121,7 @@ class RolapCubeHierarchyTest {
         mock(Connection.class);
     DataSource cubeDimension_schema_connection_DS = mock(DataSource.class);
     CatalogReader schemaReader = mock(CatalogReader.class);
-    Context<?> context = mock(Context.class);
+    RelationalContext<?> context = mock(RelationalContext.class);
     // RolapCubeHierarchy reads enableRolapCubeMemberCache through getConfig();
     // the defaults are what this test wants. (The previous stub named
     // memoryMonitor, which this path never reads.)
@@ -156,8 +155,7 @@ class RolapCubeHierarchyTest {
     doReturn(context).when(cubeDimension_schema_connection).getContext();
     doReturn(schemaReader).when(cubeDimension_schema)
     .getCatalogReaderWithDefaultRole();
-    doReturn(cubeDimension_schema_connection_DS)
-      .when(cubeDimension_schema_connection).getDataSource();
+    doReturn(cubeDimension_schema_connection_DS).when(context).getDataSource();
     doReturn(cubeDimension_uniqueName).when(cubeDimension).getUniqueName();
     doReturn(rolapHierarchy_hierarchy).when(rolapHierarchy).getHierarchy();
     doReturn(rolapHierarchy_levels).when(rolapHierarchy).getLevels();
@@ -188,7 +186,7 @@ class RolapCubeHierarchyTest {
     List<? extends Level> rolapHierarchy_levels = new ArrayList<>();
     org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource rolapHierarchy_relation = mock(org.eclipse.daanse.rolap.mapping.model.database.source.TableSource.class);
     CatalogReader schemaReader = mock(CatalogReader.class);
-    Context<?> context = mock(Context.class);
+    RelationalContext<?> context = mock(RelationalContext.class);
     // RolapCubeHierarchy reads enableRolapCubeMemberCache through getConfig();
     // the defaults are what this test wants. (The previous stub named
     // memoryMonitor, which this path never reads.)
@@ -219,8 +217,7 @@ class RolapCubeHierarchyTest {
     doReturn(context).when(cubeDimension_schema_connection).getContext();
     doReturn(schemaReader).when(cubeDimension_schema)
     .getCatalogReaderWithDefaultRole();
-    doReturn(cubeDimension_schema_connection_DS)
-      .when(cubeDimension_schema_connection).getDataSource();
+    doReturn(cubeDimension_schema_connection_DS).when(context).getDataSource();
     doReturn(cubeDimension_uniqueName).when(cubeDimension).getUniqueName();
     doReturn(rolapHierarchy_hierarchy).when(rolapHierarchy).getHierarchy();
     doReturn(rolapHierarchy_levels).when(rolapHierarchy).getLevels();
@@ -244,7 +241,7 @@ class RolapCubeHierarchyTest {
         mock(Connection.class);
     DataSource cubeDimension_schema_connection_DS = mock(DataSource.class);
     CatalogReader schemaReader = mock(CatalogReader.class);
-    Context<?> context = mock(Context.class);
+    RelationalContext<?> context = mock(RelationalContext.class);
     // RolapCubeHierarchy reads enableRolapCubeMemberCache through getConfig();
     // the defaults are what this test wants. (The previous stub named
     // memoryMonitor, which this path never reads.)
@@ -285,8 +282,7 @@ class RolapCubeHierarchyTest {
     doReturn(context).when(cubeDimension_schema_connection).getContext();
     doReturn(schemaReader).when(cubeDimension_schema)
     .getCatalogReaderWithDefaultRole();
-    doReturn(cubeDimension_schema_connection_DS)
-      .when(cubeDimension_schema_connection).getDataSource();
+    doReturn(cubeDimension_schema_connection_DS).when(context).getDataSource();
     doReturn(cubeDimension_uniqueName).when(cubeDimension).getUniqueName();
     doReturn(rolapHierarchy_hierarchy).when(rolapHierarchy).getHierarchy();
     doReturn(rolapHierarchy_levels).when(rolapHierarchy).getLevels();

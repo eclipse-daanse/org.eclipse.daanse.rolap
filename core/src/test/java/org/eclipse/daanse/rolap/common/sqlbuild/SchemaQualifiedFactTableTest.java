@@ -22,7 +22,7 @@ import java.util.Optional;
 
 import org.eclipse.daanse.cwm.model.cwm.resource.relational.NamedColumnSet;
 import org.eclipse.daanse.cwm.model.cwm.resource.relational.Schema;
-import org.eclipse.daanse.olap.api.aggregator.Aggregator;
+import org.eclipse.daanse.rolap.aggregator.SqlNodeAggregator;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.star.RolapStar.Condition.JoinColumn;
 import org.eclipse.daanse.rolap.element.RolapColumn;
@@ -92,7 +92,7 @@ class SchemaQualifiedFactTableTest {
         when(idCol.getExpression()).thenReturn(new RolapColumn("dim_time", "id"));
         when(idCol.getInternalType()).thenReturn(BestFitColumnType.INT);
 
-        Aggregator sum = mock(Aggregator.class);
+        SqlNodeAggregator sum = mock(SqlNodeAggregator.class);
         when(sum.getExpression(org.mockito.ArgumentMatchers.any()))
                 .thenAnswer(inv -> new StringBuilder("sum(" + inv.getArgument(0) + ")"));
         RolapStar.Measure measure = mock(RolapStar.Measure.class);

@@ -13,6 +13,7 @@
 package org.eclipse.daanse.rolap.testkit.assertions;
 
 import org.eclipse.daanse.olap.api.connection.Connection;
+import org.eclipse.daanse.olap.api.relational.RelationalContext;
 
 /**
  * SQL dialect lookup for a connection - replaces the legacy {@code TestUtil.getDialect}.
@@ -30,6 +31,6 @@ public final class Dialect {
 
     /** The SQL dialect {@code connection}'s context is configured with. */
     public static org.eclipse.daanse.sql.dialect.api.Dialect getDialect(Connection connection) {
-        return connection.getContext().getDialect();
+        return RelationalContext.of(connection.getContext()).getDialect();
     }
 }

@@ -12,35 +12,8 @@
 */
 package org.eclipse.daanse.rolap.aggregator;
 
-import org.eclipse.daanse.olap.api.aggregator.Aggregator;
-import org.eclipse.daanse.olap.api.calc.Calc;
-import org.eclipse.daanse.olap.api.calc.tuple.TupleList;
-import org.eclipse.daanse.olap.api.evaluator.Evaluator;
-import org.eclipse.daanse.olap.fun.FunUtil;
+/** The OLAP average, rendered as SQL {@code avg(operand)}. */
+public class AvgAggregator extends org.eclipse.daanse.olap.aggregator.AvgAggregator implements SqlNodeAggregator {
 
-public class AvgAggregator extends AbstractAggregator {
-
-    public static AvgAggregator INSTANCE = new AvgAggregator();
-
-    public AvgAggregator() {
-        super("avg", false);
-    }
-
-    @Override
-    public org.eclipse.daanse.sql.statement.api.expression.SqlExpression toNode(
-            org.eclipse.daanse.sql.statement.api.expression.SqlExpression inner) {
-        org.eclipse.daanse.sql.statement.api.expression.SqlExpression operand = nodeOperand(inner);
-        return org.eclipse.daanse.sql.statement.api.Expressions.aggregate(getName(), operand);
-    }
-
-    @Override
-    public Aggregator getRollup() {
-        return INSTANCE;
-    }
-
-    @Override
-    public Object aggregate(Evaluator evaluator, TupleList members, Calc<?> exp) {
-        return FunUtil.avg(evaluator, members, exp);
-    }
-
+    public static final AvgAggregator INSTANCE = new AvgAggregator();
 }

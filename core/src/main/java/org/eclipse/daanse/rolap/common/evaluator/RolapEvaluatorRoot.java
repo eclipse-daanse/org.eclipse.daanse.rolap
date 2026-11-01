@@ -84,9 +84,4 @@ public class RolapEvaluatorRoot extends EvaluatorRoot {
     public Object evaluateExpression(Calc<?> calc, EvaluatorImpl slicerEvaluator, Evaluator contextEvaluator) {
         return calc.evaluate(contextEvaluator != null ? contextEvaluator : slicerEvaluator);
     }
-
-    @Override
-    public boolean isDirty() {
-        return false;
-    }
 }

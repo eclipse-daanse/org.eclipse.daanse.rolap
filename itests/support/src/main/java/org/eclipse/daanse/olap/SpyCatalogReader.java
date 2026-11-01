@@ -22,7 +22,6 @@ package org.eclipse.daanse.olap;
 import java.util.List;
 import java.util.Map;
 
-import javax.sql.DataSource;
 
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.DataType;
@@ -266,12 +265,6 @@ public class SpyCatalogReader implements CatalogReader {
 	@Override
 	public Parameter getParameter(String name) {
 		return delegate.getParameter(name);
-	}
-
-	@Override
-    @Deprecated
-	public DataSource getDataSource() {
-		return delegate.getDataSource();
 	}
 
 	@Override

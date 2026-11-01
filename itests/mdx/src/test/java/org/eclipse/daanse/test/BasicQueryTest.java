@@ -100,6 +100,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.eclipse.daanse.cwm.testkit.api.DataSupplier;
+import org.eclipse.daanse.olap.api.relational.RelationalContext;
 import org.eclipse.daanse.rolap.mapping.instance.emf.complex.foodmart.CatalogSupplier;
 import org.eclipse.daanse.rolap.mapping.instance.emf.complex.foodmart.FoodmartDatabaseSupplier;
 import org.eclipse.daanse.rolap.mapping.instance.emf.complex.foodmart.FoodmartTestInstance;
@@ -111,6 +112,7 @@ import org.slf4j.Logger;
 
 import org.eclipse.daanse.rolap.testkit.assertions.DatabaseProduct;
 import org.eclipse.daanse.rolap.SchemaModifiersEmf;
+import org.eclipse.daanse.rolap.testkit.assertions.Cells;
 
 /**
  * <code>BasicQueryTest</code> is a test case which tests simple queries against the FoodMart database.
@@ -3841,7 +3843,7 @@ public class BasicQueryTest {
 
     Result result = executeQuery(connection, q2);
     final Cell cell = result.getCell( new int[] { 0, 0 } );
-    String sql = cell.getDrillThroughSQL( false );
+    String sql = Cells.drillThroughSql( cell, false );
     // the following replacement is for databases in ANSI mode
     // using '"' to quote identifiers
     sql = sql.replace( '"', '`' );
@@ -5370,7 +5372,7 @@ public class BasicQueryTest {
           .returnsGrid( "Axis #0:\n{}\n266,773" );
       // bypass dialect cache and always get a fresh dialect instance
       // with our custom providers
-      Dialect dialect = context.getDialect();
+      Dialect dialect = RelationalContext.of(context).getDialect();
       //Dialect dialect =
         //DialectManager.createDialect( connection.getDataSource(), null, dialectClassName );
       //final List<StatisticsProvider> statisticsProviders = dialect.getStatisticsProviders();

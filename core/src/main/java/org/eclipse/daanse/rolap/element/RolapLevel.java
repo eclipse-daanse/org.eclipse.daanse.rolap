@@ -80,13 +80,14 @@ import org.slf4j.LoggerFactory;
 
 import org.eclipse.daanse.rolap.mapping.model.provider.util.CwmHelper;
 import org.eclipse.daanse.cwm.model.cwm.foundation.businessinformation.util.Descriptions;
+import org.eclipse.daanse.olap.api.relational.RelationalLevel;
 /**
  * RolapLevel implements {@link Level} for a ROLAP database.
  *
  * @author jhyde
  * @since 10 August, 2001
  */
-public class RolapLevel extends LevelBase {
+public class RolapLevel extends LevelBase implements RelationalLevel {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RolapLevel.class);
 
@@ -399,6 +400,11 @@ public class RolapLevel extends LevelBase {
 
     public boolean hasCaptionColumn() {
         return captionExp != null;
+    }
+
+    @Override
+    public boolean hasOrderKey() {
+        return getOrdinalExps() != null;
     }
 
     public boolean hasOrdinalExp() {

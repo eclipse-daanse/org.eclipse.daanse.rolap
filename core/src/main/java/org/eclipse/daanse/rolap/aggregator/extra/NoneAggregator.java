@@ -12,28 +12,10 @@
 */
 package org.eclipse.daanse.rolap.aggregator.extra;
 
-import org.eclipse.daanse.olap.api.DataTypeJdbc;
-import org.eclipse.daanse.olap.api.calc.Calc;
-import org.eclipse.daanse.olap.api.calc.tuple.TupleList;
-import org.eclipse.daanse.olap.api.evaluator.Evaluator;
-import org.eclipse.daanse.rolap.aggregator.AbstractAggregator;
+import org.eclipse.daanse.rolap.aggregator.SqlNodeAggregator;
 
-public class NoneAggregator extends AbstractAggregator {
+/** The OLAP none-aggregator with the SQL rendering of rolap. */
+public class NoneAggregator extends org.eclipse.daanse.olap.aggregator.NoneAggregator implements SqlNodeAggregator {
 
-    public static NoneAggregator INSTANCE = new NoneAggregator();
-
-    public NoneAggregator() {
-        super("None", false);
-    }
-
-    public Object aggregate(Evaluator evaluator, TupleList members, Calc<?> calc) {
-
-        final Evaluator eval = evaluator.pushAggregation(members);
-        eval.setNonEmpty(false);
-        return eval.evaluateCurrent(); // never calc and cache always value from db.
-    }
-
-    public boolean supportsFastAggregates(DataTypeJdbc dataType) {
-        return false;
-    }
+    public static final NoneAggregator INSTANCE = new NoneAggregator();
 }

@@ -47,6 +47,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import org.eclipse.daanse.cwm.model.cwm.objectmodel.core.util.Packages;
+import org.eclipse.daanse.olap.api.relational.RelationalContext;
 /**
   * Test if AggSchemaScan and AggCatalogScan properties are used in JdbcSchema loadTablesOfType
   *
@@ -58,7 +59,7 @@ class AggSchemaScanTest {
   @Test
   void testAggScanPropertiesEmptySchema(Context<?> context) throws Exception {
     final org.eclipse.daanse.olap.api.connection.Connection rolapConn = (org.eclipse.daanse.olap.api.connection.Connection) context.getConnectionWithDefaultRole();
-    final DataSource dataSource = rolapConn.getDataSource();
+    final DataSource dataSource = RelationalContext.of(rolapConn.getContext()).getDataSource();
     Connection sqlConnection = null;
     try {
       sqlConnection = dataSource.getConnection();
@@ -90,7 +91,7 @@ class AggSchemaScanTest {
   @Test
   void testAggScanPropertiesPopulatedSchema(Context<?> context) throws Exception {
     final org.eclipse.daanse.olap.api.connection.Connection rolapConn = (org.eclipse.daanse.olap.api.connection.Connection) context.getConnectionWithDefaultRole();
-    final DataSource dataSource = rolapConn.getDataSource();
+    final DataSource dataSource = RelationalContext.of(rolapConn.getContext()).getDataSource();
     Connection sqlConnection = null;
     try {
       sqlConnection = dataSource.getConnection();

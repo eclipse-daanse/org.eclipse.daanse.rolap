@@ -40,6 +40,7 @@ import java.util.Set;
 import org.eclipse.daanse.olap.api.aggregator.Aggregator;
 import org.eclipse.daanse.olap.api.sql.SqlExpression;
 import org.eclipse.daanse.olap.common.Util;
+import org.eclipse.daanse.rolap.aggregator.SqlNodeAggregator;
 import org.eclipse.daanse.rolap.api.RolapContext;
 import org.eclipse.daanse.sql.dialect.api.Dialect;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
@@ -616,7 +617,7 @@ public class AggGen {
 
             pw.print(prefix);
             pw.print(
-                agg.getExpression(dialect.quoteIdentifier(
+                SqlNodeAggregator.expression(agg, dialect.quoteIdentifier(
                     factTableName, c.getName())));
             pw.print(" AS ");
             pw.print(dialect.quoteIdentifier(c.getName()));
@@ -760,7 +761,7 @@ public class AggGen {
 
             pw.print(prefix);
             pw.print(
-                agg.getExpression(dialect.quoteIdentifier(
+                SqlNodeAggregator.expression(agg, dialect.quoteIdentifier(
                     t.getName(), c.getName())));
             pw.print(" AS ");
             pw.print(dialect.quoteIdentifier(c.getName()));
