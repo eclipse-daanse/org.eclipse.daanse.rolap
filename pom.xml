@@ -40,6 +40,10 @@
     <revision>0.0.1-SNAPSHOT</revision>
     <caffeine.version>3.1.8</caffeine.version>
     <slf4j.version>2.0.9</slf4j.version>
+    <!-- the EMF the CWM models are built with: their bundles import it from these versions on -->
+    <emf.common.version>2.46.0</emf.common.version>
+    <emf.ecore.version>2.43.0</emf.ecore.version>
+    <emf.xmi.version>2.41.0</emf.xmi.version>
 
     <!-- JUnit pool size: availableProcessors() * factor. Override per build,
          e.g. -Ddaanse.test.parallel.factor=2 or -Ddaanse.test.parallel.enabled=false -->
