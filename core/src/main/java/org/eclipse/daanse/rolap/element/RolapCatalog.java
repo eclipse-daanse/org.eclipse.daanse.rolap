@@ -31,6 +31,7 @@ package org.eclipse.daanse.rolap.element;
 
 
 
+import org.eclipse.daanse.olap.cache.CachePolicy;
 import java.text.MessageFormat;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -64,7 +65,7 @@ import org.eclipse.daanse.olap.api.access.RollupPolicy;
 import org.eclipse.daanse.olap.api.access.db.AccessDatabaseColumn;
 import org.eclipse.daanse.olap.api.access.db.AccessDatabaseSchema;
 import org.eclipse.daanse.olap.api.access.db.AccessDatabaseTable;
-import org.eclipse.daanse.olap.api.agg.Segment;
+import org.eclipse.daanse.olap.api.query.Segment;
 import org.eclipse.daanse.olap.api.cache.CacheControl;
 import org.eclipse.daanse.olap.api.catalog.CatalogReader;
 import org.eclipse.daanse.olap.api.connection.Connection;
@@ -1046,7 +1047,7 @@ public class RolapCatalog implements Catalog {
 		}
 		for (RolapHierarchy underlying : underlyingHierarchies) {
 			boolean anyCubeCaches = getCubeList().stream().anyMatch(
-					cube -> org.eclipse.daanse.rolap.common.CachePolicy
+					cube -> org.eclipse.daanse.olap.cache.CachePolicy
 							.membersFor(underlying.getMetaData(), cube.getCachePolicy())
 							&& cube.usesSharedHierarchy(underlying));
 			if (!anyCubeCaches && underlying.getMemberReader() instanceof CachingMemberReader caching) {

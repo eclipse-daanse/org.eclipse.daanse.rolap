@@ -55,7 +55,7 @@ import org.eclipse.daanse.rolap.mapping.model.database.source.RelationalSource;
 import org.eclipse.daanse.rolap.mapping.model.database.source.TableSource;
 import org.eclipse.daanse.sql.model.type.BestFitColumnType;
 import org.eclipse.daanse.olap.api.Context;
-import org.eclipse.daanse.olap.api.agg.Segment;
+import org.eclipse.daanse.olap.api.query.Segment;
 import org.eclipse.daanse.olap.api.element.MatchType;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.evaluator.Evaluator;
@@ -192,28 +192,6 @@ public class RolapUtil {
         }
     }
 
-    /**
-     * A comparator singleton instance which can handle the presence of
-     * RolapUtilComparable instances in a collection.
-     */
-    public static final Comparator<Comparable> ROLAP_COMPARATOR =
-        new RolapUtilComparator<>();
-
-    private static final class RolapUtilComparator<T extends Comparable<T>>
-        implements Comparator<T>
-    {
-        @Override
-		public int compare(T o1, T o2) {
-            try {
-                return o1.compareTo(o2);
-            } catch (ClassCastException cce) {
-                if (o2 == Util.sqlNullValue) {
-                    return 1;
-                }
-                throw new OlapRuntimeException(cce);
-            }
-        }
-    }
 
     /**
      * How a null member renders in MDX.

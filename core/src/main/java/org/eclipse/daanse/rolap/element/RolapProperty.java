@@ -31,7 +31,7 @@ import static org.eclipse.daanse.olap.common.Util.makeFqName;
 import java.text.MessageFormat;
 import java.util.Locale;
 
-import org.eclipse.daanse.olap.api.agg.Segment;
+import org.eclipse.daanse.olap.api.query.Segment;
 import org.eclipse.daanse.olap.api.catalog.CatalogReader;
 import org.eclipse.daanse.olap.api.element.Dimension;
 import org.eclipse.daanse.olap.api.element.Hierarchy;

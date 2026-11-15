@@ -76,12 +76,6 @@ public class RolapCalculatedMember extends RolapMemberBase implements Calculated
 
     // override RolapMember
     @Override
-	public int getSolveOrder() {
-        final Number solveOrder = formula.getSolveOrder();
-        return solveOrder == null ? 0 : solveOrder.intValue();
-    }
-
-    @Override
 	public Object getPropertyValue(String propertyName, boolean matchCase) {
         if (Util.equalWithMatchCaseOption(propertyName, StandardProperty.FORMULA.getName(), matchCase)) {
             return formula;
@@ -101,17 +95,10 @@ public class RolapCalculatedMember extends RolapMemberBase implements Calculated
         return true;
     }
 
+    /** {@inheritDoc} Where this art keeps it: final, from the constructor. */
     @Override
-	public boolean isCalculatedInQuery() {
-        final String memberScope =
-            (String) getPropertyValue(StandardProperty.MEMBER_SCOPE.getName());
-        return memberScope == null
-            || memberScope.equals("QUERY");
-    }
-
-    @Override
-	public Expression getExpression() {
-        return formula.getExpression();
+    protected Formula formula() {
+        return formula;
     }
 
     public Formula getFormula() {

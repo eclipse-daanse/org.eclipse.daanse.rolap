@@ -31,7 +31,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.eclipse.daanse.olap.api.calc.Calc;
 import org.eclipse.daanse.sql.model.type.Datatype;
 import org.eclipse.daanse.olap.api.connection.Connection;
 import org.eclipse.daanse.olap.api.element.Catalog;
@@ -49,17 +48,15 @@ import org.eclipse.daanse.olap.api.query.component.Expression;
 import org.eclipse.daanse.olap.common.ExecuteDurationUtil;
 import org.eclipse.daanse.olap.common.StandardProperty;
 import org.eclipse.daanse.olap.common.Util;
+import org.eclipse.daanse.olap.element.CalculableMemberBase;
 import org.eclipse.daanse.olap.element.MemberBase;
 import org.eclipse.daanse.olap.element.OlapMetaDataBase;
 import org.eclipse.daanse.olap.execution.ExecutionImpl;
-import org.eclipse.daanse.olap.function.def.aggregate.AggregateFunDef;
 import org.eclipse.daanse.olap.execution.StatementImpl;
 import org.eclipse.daanse.olap.query.component.ResolvedFunCallImpl;
 import  org.eclipse.daanse.olap.util.Bug;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.RolapUtil;
-import org.eclipse.daanse.olap.evaluator.EvaluatorImpl;
-import org.eclipse.daanse.olap.evaluator.EvaluatorRoot;
 import org.eclipse.daanse.rolap.common.star.HierarchyUsage;
 import org.eclipse.daanse.rolap.common.writeback.ScenarioImpl;
 import org.slf4j.Logger;
@@ -72,7 +69,7 @@ import org.slf4j.LoggerFactory;
  * @since 10 August, 2001
  */
 public class RolapMemberBase
-    extends MemberBase
+    extends CalculableMemberBase
     implements RolapMember
 {
     /**
@@ -121,7 +118,6 @@ public class RolapMemberBase
      */
     private Map<String, Object> mapPropertyNameToValue;
 
-    private Boolean containsAggregateFunction = null;
 
     private Object captionValue;
 
@@ -145,8 +141,7 @@ public class RolapMemberBase
         assert key != null;
         assert !(parentMember instanceof RolapCubeMember)
             || parentMember instanceof RolapAllCubeMember
-            || this instanceof RolapCalculatedMember
-            || this instanceof VisualTotalMember;
+            || this instanceof RolapCalculatedMember;
         if (key instanceof byte[]) {
             // Some drivers (e.g. Derby) return byte arrays for binary columns
             // but byte arrays do not implement Comparable
@@ -224,11 +219,6 @@ public class RolapMemberBase
     // Regular members do not have annotations. Measures and calculated members
     // do, so they override this method.
     @Override
-	public MetaData getMetaData() {
-        return OlapMetaDataBase.empty();
-    }
-
-    @Override
 	public int hashCode() {
         return  super.hashCode();
     }
@@ -285,12 +275,12 @@ public class RolapMemberBase
         // Drop the '[All Xxxx]' segment in regular members.
         // Keep the '[All Xxxx]' segment in the 'all' member.
         // Keep the '[All Xxxx]' segment in calc members.
-        // Drop it in visual-totals and parent-child members (which are flagged
-        // as calculated, but do have a data member).
+        // Drop it in parent-child members (which are flagged as calculated, but do
+        // have a data member). A visual total takes the unique name of the member it
+        // stands for and never reaches here.
         if (parentMember == null
             || (parentMember.isAll()
                 && (!isCalculated()
-                    || this instanceof VisualTotalMember
                     || getDataMember() != null)))
         {
             final RolapHierarchy hierarchy = getHierarchy();
@@ -321,11 +311,6 @@ public class RolapMemberBase
         } else {
             this.uniqueName = Util.makeFqName(parentMember, name);
         }
-    }
-
-    @Override
-	public boolean isCalculatedInQuery() {
-        return false;
     }
 
     @Override
@@ -386,116 +371,44 @@ public class RolapMemberBase
     @Override
 	public Object getPropertyValue(String propertyName, boolean matchCase) {
         StandardProperty property = StandardProperty.lookup(propertyName, matchCase);
-        if (property != null) {
-            Catalog schema;
-            Member parentMember;
-            List<RolapMember> list;
-            if(property== StandardProperty.NAME) {
-                // Do NOT call getName() here. This property is internal,
-                // and must fall through to look in the property list.
-
-            }else if(property==  StandardProperty.CAPTION){
-                return getCaption();
-
-            }else if(property==  StandardProperty.CATALOG_NAME){
-                // TODO: can't go from member to connection thence to
-                // Connection.getCatalogName()
-
-            }else if(property==  StandardProperty.SCHEMA_NAME){
-                schema = getHierarchy().getDimension().getCatalog();
-                return schema.getName();
-
-            }else if(property==  StandardProperty.CUBE_NAME){
-                // TODO: can't go from member to cube cube yet
-
-            }else if(property==  StandardProperty.DIMENSION_UNIQUE_NAME){
-                return getHierarchy().getDimension().getUniqueName();
-
-            }else if(property==  StandardProperty.HIERARCHY_UNIQUE_NAME){
-                return getHierarchy().getUniqueName();
-
-            }else if(property==  StandardProperty.LEVEL_UNIQUE_NAME){
-                return getLevel().getUniqueName();
-
-            }else if(property==  StandardProperty.LEVEL_NUMBER){
-                return getLevel().getDepth();
-
-            }else if(property==  StandardProperty.MEMBER_UNIQUE_NAME){
-                return getUniqueName();
-
-            }else if(property==  StandardProperty.MEMBER_NAME){
-                return getName();
-
-            }else if(property==  StandardProperty.MEMBER_TYPE){
-                return getMemberType().ordinal();
-
-            }else if(property==  StandardProperty.MEMBER_GUID){
-                return null;
-
-            }else if(property==  StandardProperty.MEMBER_CAPTION){
-                return getCaption();
-
-            }else if(property==  StandardProperty.MEMBER_ORDINAL){
-                return getOrdinal();
-
-            }else if(property==  StandardProperty.CHILDREN_CARDINALITY){
-                Connection conn = ((RolapCatalog) level.getDimension().getCatalog())
-                        .getInternalConnection();
-                StatementImpl statement = (StatementImpl) conn.getInternalStatement();
-                ExecutionImpl execution = new ExecutionImpl(statement,
-                        ExecuteDurationUtil.executeDurationValue(conn.getContext()));
-                return ExecutionContext.where(execution.asContext(), () -> {
-                    if (isAll() && childLevelHasApproxRowCount()) {
-                        return getLevel().getChildLevel()
-                            .getApproxRowCount();
-                    } else {
-                        ArrayList<RolapMember> memberList =
-                            new ArrayList<>();
-                        getHierarchy().getMemberReader()
-                            .getMemberChildren(
-                                RolapMemberBase.this, memberList);
-                        return memberList.size();
-                    }
-                });
-
-            }else if(property==  StandardProperty.PARENT_LEVEL){
-                parentMember = getParentMember();
-                return parentMember == null
-                    ? 0
-                    : parentMember.getLevel().getDepth();
-
-            }else if(property==  StandardProperty.PARENT_UNIQUE_NAME){
-                parentMember = getParentMember();
-                return parentMember == null
-                    ? null
-                    : parentMember.getUniqueName();
-
-            }else if(property==  StandardProperty.PARENT_COUNT){
-                parentMember = getParentMember();
-                return parentMember == null ? 0 : 1;
-
-            }else if(property==  StandardProperty.VISIBLE){
-                final Object visProp =
-                    getPropertyFromMap(propertyName, matchCase);
-                if (visProp != null) {
-                    // There was a visibility property specified for this
-                    // member. Return that.
-                    return visProp;
-                }
-                // Default behavior is to return isVisible.
-                return isVisible();
-
-            }else if(property==  StandardProperty.MEMBER_KEY){
-            }else if(property==  StandardProperty.KEY){
-                return this == this.getHierarchy().getAllMember()
-                    ? 0
-                    : getKey();
-
-            }else if(property==  StandardProperty.SCENARIO){
-                return ScenarioImpl.forMember(this);
-                }
-    }
+        if (property == StandardProperty.VISIBLE) {
+            // A member may say so itself; only then does the level decide.
+            final Object declared = getPropertyFromMap(propertyName, matchCase);
+            return declared != null ? declared : isVisible();
+        }
+        if (property == StandardProperty.SCENARIO) {
+            return ScenarioImpl.forMember(this);
+        }
+        // Everything a member answers from its place in the hierarchy is answered once, for every art;
+        // NAME is internal here and falls through to what this member was told.
+        if (property != StandardProperty.NAME) {
+            final Object shared = super.getPropertyValue(propertyName, matchCase);
+            if (shared != null) {
+                return shared;
+            }
+        }
         return getPropertyFromMap(propertyName, matchCase);
+    }
+
+    /**
+     * How many children this member has. Counting them means reading them, in a context of its own so
+     * that a client asking the member outside a query does not run without one; at the All member an
+     * estimate of the level below may stand in.
+     */
+    @Override
+    protected Integer childCount() {
+        Connection conn = ((RolapCatalog) level.getDimension().getCatalog()).getInternalConnection();
+        StatementImpl statement = (StatementImpl) conn.getInternalStatement();
+        ExecutionImpl execution = new ExecutionImpl(statement,
+                ExecuteDurationUtil.executeDurationValue(conn.getContext()));
+        return ExecutionContext.where(execution.asContext(), () -> {
+            if (isAll() && childLevelHasApproxRowCount()) {
+                return getLevel().getChildLevel().getApproxRowCount();
+            }
+            ArrayList<RolapMember> memberList = new ArrayList<>();
+            getHierarchy().getMemberReader().getMemberChildren(RolapMemberBase.this, memberList);
+            return memberList.size();
+        });
     }
 
     /**
@@ -529,14 +442,43 @@ public class RolapMemberBase
     }
 
     @Override
-	public boolean isAllMember() {
-        return getLevel().getHierarchy().hasAll()
-                && getLevel().getDepth() == 0;
+	public boolean isHidden() {
+        final RolapLevel rolapLevel = getLevel();
+        switch (rolapLevel.getHideMemberCondition()) {
+        case NEVER:
+            return false;
+
+        case IF_BLANK_NAME:
+        {
+            // If the key value in the database is null, then we use
+            // a special key value whose toString() is "null".
+            final String name = getName();
+            return name.equals(RolapUtil.mdxNullLiteral())
+                || name.isBlank();
+        }
+
+        //TODO:: IfParentsProperty and additional attribute that is by default the name, or a property that is switch
+        case IF_PARENTS_NAME:
+        {
+            final Member parentMember = getParentMember();
+            if (parentMember == null) {
+                return false;
+            }
+            final String parentName = parentMember.getName();
+            final String name = getName();
+            return (parentName == null ? "" : parentName).equals(
+                name == null ? "" : name);
+        }
+
+        default:
+            throw Util.badValue(rolapLevel.getHideMemberCondition());
+        }
     }
 
     @Override
-	public Property[] getProperties() {
-        return getLevel().getInheritedProperties();
+	public boolean isAllMember() {
+        return getLevel().getHierarchy().hasAll()
+                && getLevel().getDepth() == 0;
     }
 
     @Override
@@ -621,44 +563,7 @@ public class RolapMemberBase
         return this.getUniqueName().compareTo(other.getUniqueName());
     }
 
-    @Override
-	public boolean isHidden() {
-        final RolapLevel rolapLevel = getLevel();
-        switch (rolapLevel.getHideMemberCondition()) {
-        case NEVER:
-            return false;
 
-        case IF_BLANK_NAME:
-        {
-            // If the key value in the database is null, then we use
-            // a special key value whose toString() is "null".
-            final String name = getName();
-            return name.equals(RolapUtil.mdxNullLiteral())
-                || name.isBlank();
-        }
-
-        //TODO:: IfParentsProperty and additional attribute that is by default the name, or a property that is switch
-        case IF_PARENTS_NAME:
-        {
-            final Member parentMember = getParentMember();
-            if (parentMember == null) {
-                return false;
-            }
-            final String parentName = parentMember.getName();
-            final String name = getName();
-            return (parentName == null ? "" : parentName).equals(
-                name == null ? "" : name);
-        }
-
-        default:
-            throw Util.badValue(rolapLevel.getHideMemberCondition());
-        }
-    }
-
-    @Override
-	public int getDepth() {
-        return getLevel().getDepth();
-    }
 
     @Override
 	public String getPropertyFormattedValue(String propertyName) {
@@ -733,58 +638,6 @@ public class RolapMemberBase
         return keyToString(k);
     }
 
-    @Override
-	public boolean containsAggregateFunction() {
-        // searching for agg functions is expensive, so cache result
-        if (containsAggregateFunction == null) {
-            containsAggregateFunction =
-                foundAggregateFunction(getExpression());
-        }
-        return containsAggregateFunction;
-    }
-
-    /**
-     * Returns whether an expression contains a call to an aggregate
-     * function such as "Aggregate" or "Sum".
-     *
-     * @param exp Expression
-     * @return Whether expression contains a call to an aggregate function.
-     */
-    private static boolean foundAggregateFunction(Expression exp) {
-        if (exp instanceof ResolvedFunCallImpl resolvedFunCall) {
-            if (resolvedFunCall.getFunDef() instanceof AggregateFunDef) {
-                return true;
-            } else {
-                for (Expression argExp : resolvedFunCall.getArgs()) {
-                    if (foundAggregateFunction(argExp)) {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    @Override
-	public Calc getCompiledExpression(EvaluatorRoot root) {
-        return root.getCompiled(getExpression(), true, null);
-    }
-
-    @Override
-	public int getHierarchyOrdinal() {
-        return getHierarchy().getOrdinalInCube();
-    }
-
-    @Override
-	public void setContextIn(EvaluatorImpl evaluator) {
-        final Member defaultMember =
-            evaluator.getRoot().defaultMembers[getHierarchyOrdinal()];
-
-        // This method does not need to call RolapEvaluator.removeCalcMember.
-        // That happens implicitly in setContext.
-        evaluator.setContext(defaultMember);
-        evaluator.setExpanding(this);
-    }
 
     @Override
     public Member createPseudoLeafMember(Member child, String name) {

@@ -41,7 +41,7 @@ import org.eclipse.daanse.cwm.model.cwm.resource.relational.SQLSimpleType;
 import org.eclipse.daanse.cwm.model.cwm.resource.relational.util.SQLSimpleTypes;
 import org.eclipse.daanse.sql.model.type.BestFitColumnType;
 import org.eclipse.daanse.sql.model.type.Datatype;
-import org.eclipse.daanse.olap.api.agg.Segment;
+import org.eclipse.daanse.olap.api.query.Segment;
 import org.eclipse.daanse.olap.api.catalog.CatalogReader;
 import org.eclipse.daanse.olap.api.element.Dimension;
 import org.eclipse.daanse.olap.api.element.DimensionType;
@@ -761,6 +761,32 @@ public class RolapLevel extends LevelBase implements RelationalLevel {
     public List<Member> getMembers() {
         //TODO need to set members in level
         return members != null ? members: List.of();
+    }
+
+    /**
+     * The kind of value the keys of this level hold, said neutrally. The SQL type of the key column is the
+     * precise answer and stays available at {@link #getDatatype()}; this one is what every art can say.
+     */
+    @Override
+    public org.eclipse.daanse.olap.api.element.Property.Datatype getKeyType() {
+        org.eclipse.daanse.sql.model.type.Datatype sql = getDatatype();
+        if (sql == null) {
+            return org.eclipse.daanse.olap.api.element.Property.Datatype.TYPE_OTHER;
+        }
+        return switch (sql) {
+        case INTEGER, BIGINT, SMALLINT -> org.eclipse.daanse.olap.api.element.Property.Datatype.TYPE_INTEGER;
+        case BOOLEAN -> org.eclipse.daanse.olap.api.element.Property.Datatype.TYPE_BOOLEAN;
+        case DATE -> org.eclipse.daanse.olap.api.element.Property.Datatype.TYPE_DATE;
+        case TIME -> org.eclipse.daanse.olap.api.element.Property.Datatype.TYPE_TIME;
+        case TIMESTAMP -> org.eclipse.daanse.olap.api.element.Property.Datatype.TYPE_TIMESTAMP;
+        default -> {
+            if (sql.isNumeric()) {
+                yield org.eclipse.daanse.olap.api.element.Property.Datatype.TYPE_NUMERIC;
+            }
+            yield sql.isText() ? org.eclipse.daanse.olap.api.element.Property.Datatype.TYPE_STRING
+                    : org.eclipse.daanse.olap.api.element.Property.Datatype.TYPE_OTHER;
+        }
+        };
     }
 
     public org.eclipse.daanse.rolap.mapping.model.olap.dimension.hierarchy.level.Level getLevelMapping() {

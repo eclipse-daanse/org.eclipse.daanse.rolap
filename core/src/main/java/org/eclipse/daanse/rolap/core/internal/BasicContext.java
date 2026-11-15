@@ -70,10 +70,10 @@ import org.eclipse.daanse.olap.catalog.ContentIdentity;
 import org.eclipse.daanse.rolap.common.catalog.RolapCatalogCache;
 import org.eclipse.daanse.rolap.common.connection.ExternalRolapConnection;
 import org.eclipse.daanse.rolap.common.connection.InternalRolapConnection;
-import org.eclipse.daanse.rolap.common.evaluator.RolapDependencyTestingEvaluator;
+import org.eclipse.daanse.olap.evaluator.DependencyTestingEvaluator;
+import org.eclipse.daanse.olap.evaluator.InterceptableEvaluator;
 import org.eclipse.daanse.rolap.common.evaluator.RolapEvaluator;
 import org.eclipse.daanse.rolap.common.evaluator.RolapEvaluatorRoot;
-import org.eclipse.daanse.rolap.common.evaluator.RolapInterceptableEvaluator;
 import org.eclipse.daanse.rolap.common.result.RolapResult;
 import org.eclipse.daanse.olap.result.ResultShepherdImpl;
 import org.eclipse.daanse.rolap.core.api.BasicContextOCD;
@@ -539,7 +539,7 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
     }
 
     @Override
-    public AggregationFactory getAggragationFactory() {
+    public AggregationFactory getAggregationFactory() {
         return this.aggregationFactory;
     }
 
@@ -564,16 +564,16 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
 
     @Override
     public ExpressionCompiler createProfilingCompiler(ExpressionCompiler compiler) {
-        return new RolapInterceptableEvaluator.InterceptableEvaluatorCompiler(compiler);
+        return new InterceptableEvaluator.InterceptableEvaluatorCompiler(compiler);
     }
 
     /**
-     * Creates a compiler which will generate programs which will test whether the dependencies declared
-     * via mondrian.calc.Calc#dependsOn(MappingHierarchy) are accurate.
+     * Creates a compiler whose programs put every claimed independence to the test: a calc that says it
+     * does not depend on a hierarchy has to answer the same in every member of it.
      */
     @Override
     public ExpressionCompiler createDependencyTestingCompiler(ExpressionCompiler compiler) {
-        return new RolapDependencyTestingEvaluator.DteCompiler(compiler);
+        return new DependencyTestingEvaluator.DteCompiler(compiler);
     }
 
 }

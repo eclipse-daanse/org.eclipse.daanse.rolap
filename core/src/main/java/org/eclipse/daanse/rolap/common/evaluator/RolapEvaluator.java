@@ -14,12 +14,9 @@
 package org.eclipse.daanse.rolap.common.evaluator;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.eclipse.daanse.olap.api.calc.tuple.TupleList;
-import org.eclipse.daanse.olap.api.element.Cube;
 import org.eclipse.daanse.olap.api.element.Hierarchy;
-import org.eclipse.daanse.olap.api.element.Level;
 import org.eclipse.daanse.olap.api.element.Measure;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.evaluator.EvaluatorImpl;
@@ -28,7 +25,6 @@ import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.agg.CompoundPredicateInfo;
 import org.eclipse.daanse.rolap.common.constraint.SlicerAnalyzer;
 import org.eclipse.daanse.rolap.element.RolapCube;
-import org.eclipse.daanse.rolap.element.RolapLevel;
 import org.eclipse.daanse.rolap.element.RolapMeasure;
 
 /**
@@ -92,13 +88,4 @@ public class RolapEvaluator extends EvaluatorImpl {
         return new CompoundPredicateInfo(tuples, (RolapMeasure) measure, this);
     }
 
-    @Override
-    protected Optional<Member> emptinessProbe(Cube cube) {
-        return Optional.ofNullable(((RolapCube) cube).getFactCountMeasure());
-    }
-
-    @Override
-    protected Level baseCubeLevel(Cube baseCube, Level level) {
-        return ((RolapCube) baseCube).findBaseCubeLevel((RolapLevel) level);
-    }
 }

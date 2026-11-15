@@ -27,6 +27,7 @@
 
 package org.eclipse.daanse.rolap.element;
 
+import org.eclipse.daanse.olap.cache.CachePolicy;
 import static java.util.Collections.EMPTY_LIST;
 import static org.eclipse.daanse.rolap.common.util.JoinUtil.left;
 import static org.eclipse.daanse.rolap.common.util.JoinUtil.right;
@@ -174,9 +175,9 @@ public class RolapCubeHierarchy extends RolapHierarchy {
         // RolapCatalog.applySharedMemberCachePolicy - the three sites agree
         // today only because a null hierarchy mapping (which would make
         // usesSharedHierarchy diverge) is unreachable for dimension hierarchies
-        this.cachingEnabled = org.eclipse.daanse.rolap.common.CachePolicy
+        this.cachingEnabled = org.eclipse.daanse.olap.cache.CachePolicy
             .membersFor(rolapHierarchy.getMetaData(), cubeDimension.getCube().getCachePolicy());
-        this.levelPreCacheThresholdOverride = org.eclipse.daanse.rolap.common.CachePolicy
+        this.levelPreCacheThresholdOverride = org.eclipse.daanse.olap.cache.CachePolicy
             .levelPreCacheThresholdFor(rolapHierarchy.getMetaData(), cubeDimension.getCube().getCachePolicy());
         this.hierarchyMapping = rolapHierarchy.getHierarchyMapping();
         // this relation should equal the name of the new dimension table

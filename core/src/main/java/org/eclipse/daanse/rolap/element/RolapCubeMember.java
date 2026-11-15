@@ -25,7 +25,7 @@
  */
 package org.eclipse.daanse.rolap.element;
 
-import org.eclipse.daanse.olap.api.agg.Segment;
+import org.eclipse.daanse.olap.api.query.Segment;
 import org.eclipse.daanse.olap.api.catalog.CatalogReader;
 import org.eclipse.daanse.olap.api.element.CubeMember;
 import org.eclipse.daanse.olap.api.element.Level;
@@ -213,47 +213,16 @@ public class RolapCubeMember
         }
     }
 
+    /**
+     * What a cube member says about itself. The shared answer works from this member's own dimension,
+     * hierarchy, level and names - and those are the ones of the cube here, because this member
+     * overrides them. Only what the shared answer does not know goes to the member being wrapped, which
+     * keeps the properties a client set on it.
+     */
     @Override
-	public Object getPropertyValue(String propertyName, boolean matchCase) {
-        // we need to wrap these children as rolap cube members
-        StandardProperty property = StandardProperty.lookup(propertyName, matchCase);
-        if (property != null) {
-             if( property == StandardProperty.DIMENSION_UNIQUE_NAME) {
-                return getDimension().getUniqueName();
-
-            } else if( property == StandardProperty.HIERARCHY_UNIQUE_NAME){
-                return getHierarchy().getUniqueName();
-
-            } else if( property == StandardProperty.LEVEL_UNIQUE_NAME){
-                return getLevel().getUniqueName();
-
-            } else if( property == StandardProperty.MEMBER_UNIQUE_NAME){
-                return getUniqueName();
-
-            } else if( property == StandardProperty.MEMBER_NAME){
-                return getName();
-
-            } else if( property == StandardProperty.MEMBER_CAPTION){
-                return getCaption();
-
-            } else if( property == StandardProperty.PARENT_UNIQUE_NAME){
-                return parentCubeMember == null
-                    ? null
-                    : parentCubeMember.getUniqueName();
-
-            } else if( property == StandardProperty.MEMBER_KEY|| property== StandardProperty.KEY){
-                return this == this.getHierarchy().getAllMember() ? 0
-                    : getKey();}
-            else {
-            	StandardProperty p = StandardProperty.lookup(propertyName, matchCase);
-                if (member instanceof RolapParentChildMemberNoClosure && p != null && StandardProperty.LEVEL_NUMBER.equals(property)) {
-                    return getLevel().getDepth();
-                }
-                return member.getPropertyValue(propertyName, matchCase);
-            }
-        }
-        // fall through to rolap member
-        return member.getPropertyValue(propertyName, matchCase);
+    public Object getPropertyValue(String propertyName, boolean matchCase) {
+        final Object shared = super.getPropertyValue(propertyName, matchCase);
+        return shared != null ? shared : member.getPropertyValue(propertyName, matchCase);
     }
 
     @Override

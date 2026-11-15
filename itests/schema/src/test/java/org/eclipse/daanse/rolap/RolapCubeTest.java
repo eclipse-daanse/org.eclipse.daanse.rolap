@@ -40,7 +40,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.daanse.olap.api.Context;
-import org.eclipse.daanse.olap.api.agg.Segment;
+import org.eclipse.daanse.olap.api.query.Segment;
 import org.eclipse.daanse.olap.api.calc.tuple.TupleList;
 import org.eclipse.daanse.olap.api.catalog.CatalogReader;
 import org.eclipse.daanse.olap.api.connection.Connection;

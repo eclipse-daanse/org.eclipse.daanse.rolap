@@ -758,7 +758,7 @@ public class SqlContextConstraint
             // Slicer tuples (disjoint / multi-level) and their per-column IN factoring are NOT reproduced
             // in this collapsed twin — bail if any are present.
             org.eclipse.daanse.olap.api.calc.tuple.TupleList slicerTuples =
-                ev.getOptimizedSlicerTuples(cube);
+                ev.getOptimizedSlicerTuples(cube != null);
             if (slicerTuples != null && !slicerTuples.isEmpty()) {
                 return null;
             }
@@ -951,7 +951,7 @@ public class SqlContextConstraint
         }
         // Tuple / disjoint slicers and role-based access are out of the simple scope.
         org.eclipse.daanse.olap.api.calc.tuple.TupleList slicerTuples =
-            evaluator.getOptimizedSlicerTuples(cube);
+            evaluator.getOptimizedSlicerTuples(cube != null);
         // A slicer tuple list — single OR multi-level — is reproduced below as the
         // addContextConstraintTuples Or(And(...)) predicate, which StarPredicateTranslator collapses to a
         // single-column IN or a multi-column tuple-IN (Predicates.inTuple). A shape the dialect can't

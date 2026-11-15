@@ -13,165 +13,47 @@
  */
 package org.eclipse.daanse.rolap.element;
 
-import java.util.List;
-
-import org.eclipse.daanse.mdx.model.api.expression.operation.BracesOperationAtom;
-import org.eclipse.daanse.mdx.model.api.expression.operation.FunctionOperationAtom;
 import org.eclipse.daanse.olap.api.element.Member;
-import org.eclipse.daanse.olap.api.evaluator.Evaluator;
-import org.eclipse.daanse.olap.api.query.Validator;
 import org.eclipse.daanse.olap.api.query.component.Expression;
-import org.eclipse.daanse.olap.common.StandardProperty;
-import org.eclipse.daanse.olap.common.Util;
-import org.eclipse.daanse.olap.element.PropertyBase;
-import org.eclipse.daanse.olap.query.component.MemberExpressionImpl;
-import org.eclipse.daanse.olap.query.component.UnresolvedFunCallImpl;
+import org.eclipse.daanse.olap.element.VisualTotalMemberImpl;
+import org.eclipse.daanse.rolap.api.element.RolapMember;
 
 /**
- * Calculated member for VisualTotals function.
- *
- * It corresponds to a real member, and most of its properties are
- * similar. The main differences are:
- * its name is derived from the VisualTotals pattern, e.g.
- *     "*Subtotal - Dairy" as opposed to "Dairy"
- * its value is a calculation computed by aggregating all of the
- *     members which occur following it in the list
+ * The relational {@link VisualTotalMemberImpl}: the total itself is provider-neutral, what a
+ * relational catalog adds is that it is a {@link RolapMember}.
+ * <p>
+ * Everything a relational member is asked for comes from the member the total stands for, so the
+ * total answers with that member's hierarchy, level, parent and all-ness. That is also what the
+ * relational paths do with it: a predicate over a visual total is built from the member behind it,
+ * never from the total.
  */
-public class VisualTotalMember extends RolapMemberBase
-        implements org.eclipse.daanse.olap.api.element.VisualTotalMember {
-    final Member member;
-    private Expression exp;
+public class VisualTotalMember extends VisualTotalMemberImpl implements RolapMember {
 
+    public VisualTotalMember(Member member, String name, String caption, Expression exp) {
+        super(member, name, caption, exp);
+    }
 
-    public VisualTotalMember(
-        Member member,
-        String name,
-        String caption,
-        final Expression exp)
-    {
-        super(
-            member.getParentMember(),
-            member.getLevel(),
-            Util.sqlNullValue, name, member.getMemberType() ==  MemberType.ALL ? MemberType.ALL : MemberType.FORMULA);
-        this.member = member;
-        this.caption = caption;
-        this.exp = exp;
+    private RolapMember wrapped() {
+        return (RolapMember) getMember();
     }
 
     @Override
-    public boolean equals(Object o) {
-        // A visual total member must compare equal to the member it wraps
-        // (for purposes of the MDX Intersect function, for instance).
-        return o instanceof VisualTotalMember
-            && this.member.equals(((VisualTotalMember) o).member)
-            && this.exp.equals(((VisualTotalMember) o).exp)
-            || o instanceof Member
-            && this.member.equals(o);
+    public RolapMember getParentMember() {
+        return wrapped().getParentMember();
     }
 
     @Override
-    public int compareTo(Object o) {
-        if (o instanceof VisualTotalMember) {
-            // VisualTotals members are a special case. We have
-            // to compare the delegate member.
-            return this.getMember().compareTo(
-                ((VisualTotalMember) o).getMember());
-        } else {
-            return super.compareTo(o);
-        }
+    public RolapHierarchy getHierarchy() {
+        return wrapped().getHierarchy();
     }
 
     @Override
-    public int hashCode() {
-        return member.hashCode();
+    public RolapLevel getLevel() {
+        return wrapped().getLevel();
     }
 
     @Override
-    public String getCaption() {
-        return caption;
-    }
-
-    @Override
-    protected boolean computeCalculated(final MemberType memberType) {
-        return true;
-    }
-
-    @Override
-    public int getSolveOrder() {
-        // high solve order, so it is expanded after other calculations
-        // REVIEW: 99...really?? I've seen many queries with higher SO.
-        // I don't think we should be abusing arbitrary constants
-        // like this.
-        return 99;
-    }
-
-    @Override
-    public Expression getExpression() {
-        return exp;
-    }
-
-    @Override
-    public void setExpression(Expression exp) {
-        this.exp = exp;
-    }
-
-    @Override
-    public void setExpression(
-        Evaluator evaluator,
-        List<Member> childMembers)
-    {
-        final Expression exp = makeExpr(childMembers);
-        final Validator validator = evaluator.getQuery().createValidator();
-        final Expression validatedExp = exp.accept(validator);
-        setExpression(validatedExp);
-    }
-
-    private Expression makeExpr(final List childMemberList) {
-        Expression[] memberExprs = new Expression[childMemberList.size()];
-        for (int i = 0; i < childMemberList.size(); i++) {
-            final Member childMember = (Member) childMemberList.get(i);
-            memberExprs[i] = new MemberExpressionImpl(childMember);
-        }
-        return new UnresolvedFunCallImpl(
-                 new FunctionOperationAtom(  "Aggregate"),
-            new Expression[] {
-                new UnresolvedFunCallImpl(
-                    new BracesOperationAtom(),
-                    memberExprs)
-            });
-    }
-
-    @Override
-    public int getOrdinal() {
-        return member.getOrdinal();
-    }
-
-    @Override
-    public Member getDataMember() {
-        return member;
-    }
-
-    @Override
-    public String getQualifiedName() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Member getMember() {
-        return member;
-    }
-
-    @Override
-    public Object getPropertyValue(String propertyName, boolean matchCase) {
-        PropertyBase property = StandardProperty.lookup(propertyName, matchCase);
-        if (property == null) {
-            return null;
-        }
-
-        if(property == StandardProperty.CHILDREN_CARDINALITY) {
-            return member.getPropertyValue(propertyName, matchCase);}
-        else {
-        	return super.getPropertyValue(propertyName, matchCase);
-        }
+    public boolean isAllMember() {
+        return wrapped().isAllMember();
     }
 }

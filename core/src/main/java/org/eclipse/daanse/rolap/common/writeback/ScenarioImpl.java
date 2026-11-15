@@ -454,8 +454,12 @@ public class ScenarioImpl implements Scenario {
      * @param hierarchy Hierarchy
      * @return Whether hierarchy is the scenario hierarchy
  */
+    /**
+     * Whether a write chooses its scenario from this hierarchy. The hierarchy answers it now; this stays
+     * as the name the relational code has always called it by.
+     */
     public static boolean isScenario(Hierarchy hierarchy) {
-        return hierarchy.getName().equals("Scenario");
+        return hierarchy.isScenario();
     }
 
     /**

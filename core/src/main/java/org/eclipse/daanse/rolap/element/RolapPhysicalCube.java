@@ -378,7 +378,8 @@ public class RolapPhysicalCube extends RolapCube implements PhysicalCube {
         }
         // Validate aggregator name. Substitute deprecated "distinct count"
         // with modern "distinct-count".
-        Aggregator aggregator = this.getContext().getAggragationFactory().getAggregator(measureMapping);
+        Aggregator aggregator = org.eclipse.daanse.olap.api.relational.RelationalContext
+                .of(this.getContext()).getAggregationFactory().getAggregator(measureMapping);
         final RolapBaseCubeMeasure measure = new RolapBaseCubeMeasure(this, null, measuresLevel,
                 measureMapping.getName(), measureMapping.getName(), Descriptions.localizedBody(measureMapping, CwmHelper.TYPE_DOCUMENTATION, null).orElse(null),
                 measureMapping.getFormatString(), measureExp, aggregator, measureMapping.getDataType(),

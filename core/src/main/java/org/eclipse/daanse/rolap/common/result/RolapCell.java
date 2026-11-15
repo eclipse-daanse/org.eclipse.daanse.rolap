@@ -30,63 +30,36 @@ package org.eclipse.daanse.rolap.common.result;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.MessageFormat;
-import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import org.eclipse.daanse.olap.common.ExecutionConfig;
 import org.eclipse.daanse.sql.dialect.api.Dialect;
 import org.eclipse.daanse.olap.api.Context;
-import org.eclipse.daanse.olap.api.access.Role;
 import org.eclipse.daanse.olap.api.connection.Connection;
-import org.eclipse.daanse.olap.api.element.Cube;
-import org.eclipse.daanse.olap.api.element.Hierarchy;
 import org.eclipse.daanse.olap.api.element.Level;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.element.OlapElement;
-import org.eclipse.daanse.olap.api.evaluator.Evaluator;
 import org.eclipse.daanse.olap.api.exception.OlapRuntimeException;
 import org.eclipse.daanse.olap.api.execution.Execution.Purpose;
 import org.eclipse.daanse.olap.api.execution.ExecutionContext;
 import org.eclipse.daanse.olap.api.execution.ExecutionMetadata;
 import org.eclipse.daanse.olap.api.execution.Statement;
-import org.eclipse.daanse.olap.api.function.FunctionDefinition;
-import org.eclipse.daanse.olap.api.query.component.DimensionExpression;
-import org.eclipse.daanse.olap.api.query.component.Expression;
-import org.eclipse.daanse.olap.api.query.component.Formula;
-import org.eclipse.daanse.olap.api.query.component.HierarchyExpression;
-import org.eclipse.daanse.olap.api.query.component.Id;
-import org.eclipse.daanse.olap.api.query.component.LevelExpression;
 import org.eclipse.daanse.olap.api.query.component.Literal;
-import org.eclipse.daanse.olap.api.query.component.MemberExpression;
-import org.eclipse.daanse.olap.api.query.component.NamedSetExpression;
-import org.eclipse.daanse.olap.api.query.component.ParameterExpression;
-import org.eclipse.daanse.olap.api.query.component.Query;
-import org.eclipse.daanse.olap.api.query.component.QueryAxis;
-import org.eclipse.daanse.olap.api.query.component.ResolvedFunCall;
-import org.eclipse.daanse.olap.api.query.component.UnresolvedFunCall;
 import org.eclipse.daanse.olap.api.relational.RelationalCell;
 import org.eclipse.daanse.olap.api.relational.RelationalContext;
 import org.eclipse.daanse.olap.api.relational.SqlStatementI;
 import org.eclipse.daanse.olap.api.result.Axis;
 import org.eclipse.daanse.olap.api.result.Cell;
-import org.eclipse.daanse.olap.api.result.ErrorValue;
-import org.eclipse.daanse.olap.api.result.NotLoaded;
-import org.eclipse.daanse.olap.api.result.NullValue;
-import org.eclipse.daanse.olap.api.result.ObjectValue;
 import org.eclipse.daanse.olap.api.result.Position;
 import org.eclipse.daanse.olap.common.ExecuteDurationUtil;
-import org.eclipse.daanse.olap.common.StandardProperty;
+import org.eclipse.daanse.olap.result.DrillThroughExpressionCheck;
+import org.eclipse.daanse.olap.result.ResultCell;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.core.AbstractBasicContext;
 import org.eclipse.daanse.olap.execution.ExecutionImpl;
-import org.eclipse.daanse.olap.function.def.aggregate.AggregateFunDef;
-import org.eclipse.daanse.olap.function.def.set.SetFunDef;
-import org.eclipse.daanse.olap.query.component.MdxVisitorImpl;
-import org.eclipse.daanse.olap.query.component.ResolvedFunCallImpl;
 import org.eclipse.daanse.olap.result.CellInfo;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.RolapAggregationManager;
@@ -98,7 +71,6 @@ import org.eclipse.daanse.rolap.common.agg.MemberColumnPredicate;
 import org.eclipse.daanse.rolap.common.agg.OrPredicate;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.star.StarPredicate;
-import org.eclipse.daanse.rolap.common.updateable.UpdateabilityResolver;
 import org.eclipse.daanse.rolap.common.writeback.ScenarioImpl;
 import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.element.RolapCubeMember;
@@ -113,14 +85,13 @@ import org.slf4j.Logger;
  * RolapCell implements {@link org.eclipse.daanse.olap.api.result.Cell} within a
  * {@link RolapResult}.
  */
-public class RolapCell implements RelationalCell {
+public class RolapCell extends ResultCell implements RelationalCell {
     /**
  */
     private static final int MDACTION_TYPE_DRILLTHROUGH = 0x100;
 
-    private final RolapResult result;
-    protected final int[] pos;
-    protected CellInfo ci;
+    /** The result the base holds, narrowed to what the relational parts ask of it. */
+    private final RolapResult rolapResult;
     private final static String drillthroughDisabled =
         "Can''t perform drillthrough operations because ''{0}'' is set to false.";
 
@@ -132,63 +103,10 @@ public class RolapCell implements RelationalCell {
      * @param ci Cell information, containing value et cetera
  */
     RolapCell(RolapResult result, int[] pos, CellInfo ci) {
-        this.result = result;
-        this.pos = pos;
-        this.ci = ci;
+        super(result, pos, ci);
+        this.rolapResult = result;
     }
 
-    @Override
-	public List<Integer> getCoordinateList() {
-        return new AbstractList<>() {
-            @Override
-			public Integer get(int index) {
-                return pos[index];
-            }
-
-            @Override
-			public int size() {
-                return pos.length;
-            }
-        };
-    }
-
-    @Override
-	public Object getValue() {
-        // Exhaustive unwrap of the cell state (seam B). Contract of the
-        // public Cell API: NULL cells yield Java null, error cells yield
-        // the Throwable that caused the failure (pinned by an XMLA
-        // characterization test), regular cells the raw value.
-        return switch (ci.value) {
-            case null -> null;
-            case NullValue v -> null;
-            case NotLoaded n -> n;
-            case ErrorValue e -> e.cause();
-            case ObjectValue o -> o.value();
-        };
-    }
-
-    @Override
-	public String getCachedFormatString() {
-        return ci.formatString;
-    }
-
-    @Override
-	public String getFormattedValue() {
-        return ci.getFormatValue();
-    }
-
-    @Override
-	public boolean isNull() {
-        // State check: NULL-ness is carried by the CellValue
-        // state, no sentinel or value comparison involved (a Java null means
-        // the cell was never evaluated, which renders as NULL as well).
-        return ci.value == null || ci.value instanceof NullValue;
-    }
-
-    @Override
-	public boolean isError() {
-        return (ci.value instanceof ErrorValue);
-    }
 
     @Override
 	public String getDrillThroughSQL(
@@ -210,14 +128,12 @@ public class RolapCell implements RelationalCell {
         boolean extendedContext,
         int maxRowCount)
     {
-        if (!result.getExecution().getDaanseStatement().getDaanseConnection().getContext()
-                .getConfig().enableDrillThrough())
-        {
+        if (!drillThroughAllowed()) {
             throw new OlapRuntimeException(MessageFormat.format(
                 drillthroughDisabled,
                         "enableDrillThrough"));
         }
-        final Member[] currentMembers = getMembersForDrillThrough();
+        final Member[] currentMembers = drillThroughCoordinates();
         // Create a StarPredicate to represent the compound slicer
         // (if necessary)
         // NOTE: the method buildDrillthroughSlicerPredicate modifies
@@ -226,18 +142,16 @@ public class RolapCell implements RelationalCell {
         StarPredicate starPredicateSlicer =
             buildDrillthroughSlicerPredicate(
                 currentMembers,
-                result.getSlicerAxis());
+                rolapResult.getSlicerAxis());
         DrillThroughCellRequest cellRequest =
             RolapAggregationManager.makeDrillThroughRequest(
-                currentMembers, extendedContext, result.getCube(),
+                currentMembers, extendedContext, rolapResult.getCube(),
                 fields);
         if (cellRequest == null) {
             return null;
         }
         cellRequest.setMaxRowCount(maxRowCount);
-        final Connection connection =
-            result.getExecution().getDaanseStatement()
-                .getDaanseConnection();
+        final Connection connection = connection();
         AbstractBasicContext abc = (AbstractBasicContext) connection.getContext();
         final RolapAggregationManager aggMgr =
             (RolapAggregationManager)abc.getAggregationManager();
@@ -250,7 +164,7 @@ public class RolapCell implements RelationalCell {
 
     @Override
 	public int getDrillThroughCount() {
-        final Member[] currentMembers = getMembersForDrillThrough();
+        final Member[] currentMembers = drillThroughCoordinates();
         // Create a StarPredicate to represent the compound
         // slicer (if necessary)
         // NOTE: the method buildDrillthroughSlicerPredicate modifies
@@ -259,17 +173,15 @@ public class RolapCell implements RelationalCell {
         StarPredicate starPredicateSlicer =
             buildDrillthroughSlicerPredicate(
                 currentMembers,
-                result.getSlicerAxis());
+                rolapResult.getSlicerAxis());
         DrillThroughCellRequest cellRequest =
             RolapAggregationManager.makeDrillThroughRequest(
-                currentMembers, false, result.getCube(),
+                currentMembers, false, rolapResult.getCube(),
                 Collections.<OlapElement>emptyList());
         if (cellRequest == null) {
             return -1;
         }
-        final Connection connection =
-            result.getExecution().getDaanseStatement()
-                .getDaanseConnection();
+        final Connection connection = connection();
         AbstractBasicContext abc = (AbstractBasicContext)  connection.getContext();
         final RolapAggregationManager aggMgr =
                 (RolapAggregationManager)abc.getAggregationManager();
@@ -324,7 +236,7 @@ public class RolapCell implements RelationalCell {
      * </ol>
      *
      * @param membersForDrillthrough the array of Members returned by
-     * {@link #getMembersForDrillThrough()}
+     * {@link #drillThroughCoordinates()}
      * @param slicerAxis the slicer {@link Axis}
      * @return an instance of StarPredicate representing all
      * of the the positions from the slicer if it has more than one,
@@ -335,31 +247,12 @@ public class RolapCell implements RelationalCell {
         Axis slicerAxis)
     {
         List<Position> listOfPositions = slicerAxis.getPositions();
-        // If the slicer has zero or one position(s),
-        // then there is no need to do
-        // anything; the array of Members is correct as-is
+        // With zero or one position the array of Members already says everything the
+        // slicer says, so there is no predicate to build
         if (listOfPositions.size() <= 1) {
             return null;
         }
-        // First, iterate through the positions' members, un-constraining the
-        // "membersForDrillthrough" array if any position member is not
-        // in the array
-        for (Position position : listOfPositions) {
-            for (Member member : position) {
-                RolapHierarchy rolapHierarchy =
-                    (RolapHierarchy) member.getHierarchy();
-                // Check if the membersForDrillthrough constraint is identical
-                // to that of the position member
-                if (!membersForDrillthrough[rolapHierarchy.getOrdinalInCube()]
-                    .equals(member))
-                {
-                    // There is a discrepancy, so un-constrain the
-                    // membersForDrillthrough array
-                    membersForDrillthrough[rolapHierarchy.getOrdinalInCube()] =
-                        rolapHierarchy.getAllMember();
-                }
-            }
-        }
+        loosenForCompoundSlicer(membersForDrillthrough, slicerAxis);
         // This is a list containing an AndPredicate for each position in the
         // slicer axis
         List<StarPredicate> listOfStarPredicatesForSlicerPositions =
@@ -428,15 +321,15 @@ public class RolapCell implements RelationalCell {
      * for retrieving base star key column.
  */
     private RolapCube getDrillThroughBaseCube() {
-        if (result.getCube() instanceof RolapVirtualCube) {
-            Member[] membersForDrillThrough = this.getMembersForDrillThrough();
+        if (rolapResult.getCube() instanceof RolapVirtualCube) {
+            Member[] membersForDrillThrough = this.drillThroughCoordinates();
             for (Member m : membersForDrillThrough) {
                 if (m instanceof RolapVirtualCubeMeasure) {
                     return ((RolapVirtualCubeMeasure) m).getCube();
                 }
             }
         }
-        return result.getCube();
+        return rolapResult.getCube();
     }
 
     /**
@@ -446,35 +339,15 @@ public class RolapCell implements RelationalCell {
      *
      * @return true if can drill through
  */
-    @Override
-	public boolean canDrillThrough() {
-        if (!((Context<?>)(result.getExecution().getDaanseStatement().getDaanseConnection().getContext()))
-                .getConfig().enableDrillThrough())
-        {
-            return false;
-        }
-        // get current members
-        final Member[] currentMembers = getMembersForDrillThrough();
-        if (containsCalcMembers(currentMembers)) {
-            return false;
-        }
-        Cube x = chooseDrillThroughCube(currentMembers, result.getCube());
-        return x != null;
+    /** The connection this cell was worked out for. */
+    private Connection connection() {
+        return rolapResult.getExecution().getDaanseStatement().getDaanseConnection();
     }
 
-    private boolean containsCalcMembers(Member[] currentMembers) {
-        // Any calculated members which are not measures, we can't drill
-        // through. Trivial calculated members should have been converted
-        // already. We allow simple calculated measures such as
-        // [Measures].[Unit Sales] / [Measures].[Store Sales] provided that both
-        // are from the same cube.
-        for (int i = 1; i < currentMembers.length; i++) {
-            final Member currentMember = currentMembers[i];
-            if (currentMember.isCalculated()) {
-                return true;
-            }
-        }
-        return false;
+    /** A drill-through reaches rows when a cube can be named for the measure behind the cell. */
+    @Override
+    protected boolean rowsLieBehind(Member[] coordinates) {
+        return chooseDrillThroughCube(coordinates, rolapResult.getCube()) != null;
     }
 
     public static RolapCube chooseDrillThroughCube(
@@ -498,7 +371,7 @@ public class RolapCell implements RelationalCell {
                 visitor.handleMember(member);
             }
         } catch (RuntimeException e) {
-            if (e == DrillThroughVisitor.bomb) {
+            if (DrillThroughExpressionCheck.isTooComplex(e)) {
                 // No cubes left
                 return null;
             } else {
@@ -510,10 +383,10 @@ public class RolapCell implements RelationalCell {
              : visitor.cube;
     }
 
-    private Member[] getMembersForDrillThrough() {
-        final Member[] currentMembers = result.getCellMembers(pos);
-
-        // replace member if we're dealing with a trivial formula
+    /** A formula that only names another member stands for that member when rows are looked for. */
+    @Override
+    protected Member[] drillThroughCoordinates() {
+        final Member[] currentMembers = rolapResult.getCellMembers(pos);
         List<Member> memberList = Arrays.asList(currentMembers);
         for (int i = 0; i < currentMembers.length; i++) {
             replaceTrivialCalcMember(i, memberList);
@@ -521,39 +394,17 @@ public class RolapCell implements RelationalCell {
         return currentMembers;
     }
 
+    /**
+     * Replaces a coordinate that is only another name for a member by that member. A cube member is
+     * stripped first, because what the formula names is the member of the shared hierarchy behind it.
+     */
     private void replaceTrivialCalcMember(int i, List<Member> members) {
         Member member = members.get(i);
         if (!member.isCalculated()) {
             return;
         }
-        member = RolapUtil.strip((RolapMember) member);
-        // if "cm" is a calc member defined by
-        // "with member cm as m" then
-        // "cm" is equivalent to "m"
-        final Expression expr = member.getExpression();
-        if (expr instanceof MemberExpression) {
-            members.set(
-                i,
-                ((MemberExpression) expr).getMember());
-            return;
-        }
-        // "Aggregate({m})" is equivalent to "m"
-        if (expr instanceof ResolvedFunCallImpl call) {
-            if (call.getFunDef() instanceof AggregateFunDef) {
-                final Expression[] args = call.getArgs();
-                if (args[0] instanceof ResolvedFunCallImpl arg0) {
-                    if (arg0.getFunDef() instanceof SetFunDef) {
-                        if (arg0.getArgCount() == 1
-                            && arg0.getArg(0) instanceof MemberExpression)
-                        {
-                            final MemberExpression memberExpr =
-                                (MemberExpression) arg0.getArg(0);
-                            members.set(i, memberExpr.getMember());
-                        }
-                    }
-                }
-            }
-        }
+        memberBehindTrivialFormula(RolapUtil.strip((RolapMember) member))
+                .ifPresent(named -> members.set(i, named));
     }
 
     /**
@@ -600,7 +451,7 @@ public class RolapCell implements RelationalCell {
         // offset row, it is useful that the cursor is scrollable, but not
         // essential.
         final Statement statement =
-            result.getExecution().getDaanseStatement();
+            rolapResult.getExecution().getDaanseStatement();
         final ExecutionImpl execution = new ExecutionImpl(statement, ExecuteDurationUtil.executeDurationValue(statement.getConnection().getContext()));
 
         final Connection connection = statement.getDaanseConnection();
@@ -638,99 +489,6 @@ public class RolapCell implements RelationalCell {
     }
 
     @Override
-	public Object getPropertyValue(String propertyName) {
-        final boolean matchCase = ExecutionConfig.current().caseSensitive();
-        StandardProperty property = StandardProperty.lookup(propertyName, matchCase);
-        Object defaultValue = null;
-        String formatString = null;
-        if (property != null) {
-            if(property == StandardProperty.CELL_ORDINAL) {
-            	                return result.getCellOrdinal(pos);
-
-            }else if(property == StandardProperty.VALUE) {
-                return getValue();
-            }else if(property == StandardProperty.FORMAT_STRING) {
-                if (ci.formatString == null) {
-                    final Evaluator evaluator = result.getRootEvaluator();
-                    final int savepoint = evaluator.savepoint();
-                    try {
-                        result.populateEvaluator(evaluator, pos);
-                        ci.formatString = evaluator.getFormatString();
-                    } finally {
-                        evaluator.restore(savepoint);
-                    }
-                }
-                return ci.formatString;
-            }else if(property == StandardProperty.UPDATEABLE) {
-                return UpdateabilityResolver.resolve(this, getConnectionRoleOrNull(), result.getCube()).getUpdateable();
-            }else if(property == StandardProperty.FORMATTED_VALUE) {
-                return getFormattedValue();
-            }else if(property == StandardProperty.FONT_FLAGS) {
-                defaultValue = 0;
-            }else if(property == StandardProperty.SOLVE_ORDER) {
-                defaultValue = 0;
-            }else if(property == StandardProperty.ACTION_TYPE) {
-                return canDrillThrough() ? MDACTION_TYPE_DRILLTHROUGH : 0;
-            }else if(property == StandardProperty.DRILLTHROUGH_COUNT) {
-                return canDrillThrough() ? getDrillThroughCount() : -1;
-            }else if(property == StandardProperty.BACK_COLOR) {
-                formatString = (String)getPropertyValue(StandardProperty.FORMAT_STRING.getName());
-                if(formatString == null) {
-                    return null;
-                }
-                for(String part: formatString.split(";")) {
-                    String[] pair = part.split("=");
-                    if(pair.length == 2
-                            && pair[0] != null
-                            && pair[0].toUpperCase().equals(StandardProperty.BACK_COLOR.getName())) {
-                        return pair[1];
-                    }
-                }
-                return null;
-            }else if(property == StandardProperty.FORE_COLOR) {
-                formatString = (String)getPropertyValue(StandardProperty.FORMAT_STRING.getName());
-                if(formatString == null) {
-                    return null;
-                }
-                for(String part: formatString.split(";")) {
-                    String[] pair = part.split("=");
-                    if(pair.length == 2
-                            && pair[0] != null
-                            && pair[0].toUpperCase().equals(StandardProperty.FORE_COLOR.getName())) {
-                        return pair[1];
-                    }
-                }
-                return null;
-                }
-                else {
-                	// fall through
-                }
-
-        }
-        final Evaluator evaluator = result.getRootEvaluator();
-        final int savepoint = evaluator.savepoint();
-        try {
-            result.populateEvaluator(evaluator, pos);
-            return evaluator.getProperty(propertyName, defaultValue);
-        } finally {
-            evaluator.restore(savepoint);
-        }
-    }
-
-    private Optional<Role> getConnectionRoleOrNull() {
-        if (result.getExecution() != null
-             && result.getExecution().getDaanseStatement() != null && result.getExecution().getDaanseStatement().getDaanseConnection() != null) {
-            return Optional.of(result.getExecution().getDaanseStatement().getDaanseConnection().getRole());
-        }
-		return Optional.empty();
-	}
-
-	@Override
-	public Member getContextMember(Hierarchy hierarchy) {
-        return result.getMember(pos, hierarchy);
-    }
-
-    @Override
     public void setValue(
         org.eclipse.daanse.olap.api.result.Scenario scenario,
         Object newValue,
@@ -742,19 +500,10 @@ public class RolapCell implements RelationalCell {
             throw Util.newError(
                 "Allocation policy must not be null");
         }
-        final RolapMember[] members = result.getCellMembers(pos);
-        for (int i = 0; i < members.length; i++) {
-            Member member = members[i];
-            if (ScenarioImpl.isScenario(member.getHierarchy())) {
-                scenario =
-                    (org.eclipse.daanse.olap.api.result.Scenario) member.getPropertyValue(StandardProperty.SCENARIO.getName());
-                members[i] = (RolapMember) member.getHierarchy().getAllMember();
-            } else if (member.isCalculated()) {
-                throw Util.newError(
-                    new StringBuilder("Cannot write to cell: one of the coordinates (")
-                        .append(member.getUniqueName())
-                        .append(") is a calculated member").toString());
-            }
+        final Member[] members = rolapResult.getCellMembers(pos);
+        org.eclipse.daanse.olap.api.result.Scenario named = prepareForWriteback(members);
+        if (named != null) {
+            scenario = named;
         }
         if (scenario == null) {
             throw Util.newError("No active scenario");
@@ -769,7 +518,7 @@ public class RolapCell implements RelationalCell {
         // ignores currentValue entirely, so leaving it null/String here is
         // the right shape.
         scenario.setCellValue(
-            result.getExecution().getDaanseStatement()
+            rolapResult.getExecution().getDaanseStatement()
                 .getDaanseConnection(),
             Arrays.asList(members),
             newValue,
@@ -793,124 +542,35 @@ public class RolapCell implements RelationalCell {
      *     ([Measures].[Unit Sales], [Time].PrevMember) is not drillable
      *
  */
-    private static class DrillThroughVisitor extends MdxVisitorImpl {
-        static final RuntimeException bomb = new RuntimeException();
+    /**
+     * What a member means when the rows behind a cell are looked for: a stored measure names the cube
+     * the rows live in, a cube member stands for the member of the shared hierarchy behind it, and a
+     * calculated measure is followed into its formula. Anything else is not something this catalog can
+     * name rows for.
+     */
+    private static class DrillThroughVisitor extends DrillThroughExpressionCheck {
         RolapCube cube = null;
 
-        DrillThroughVisitor() {
-        }
-
         @Override
-		public Object visitMemberExpression(MemberExpression memberExpr) {
-            handleMember(memberExpr.getMember());
-            return null;
-        }
-
-        @Override
-		public Object visitResolvedFunCall(ResolvedFunCall call) {
-            final FunctionDefinition def = call.getFunDef();
-            final Expression[] args = call.getArgs();
-            final String name = def.getFunctionMetaData().operationAtom().name();
-            if (name.equals("+")
-                || name.equals("-")
-                || name.equals("/")
-                || name.equals("*")
-                || name.equals("CoalesceEmpty")
-                // Allow parentheses but don't allow tuple
-                || name.equals("()") && args.length == 1)
-            {
-                return null;
-            }
-            throw bomb;
-        }
-
-        public void handleMember(Member member) {
+        protected void handleMember(Member member) {
             switch (member) {
                 case RolapStoredMeasure storedMeasure -> {
-                    // If this member is in a different cube that previous members
+                    // If this member is in a different cube than previous members
                     // we've seen, we cannot drill through.
                     final RolapCube memberCube = storedMeasure.getCube();
                     if (this.cube == null) {
                         this.cube = memberCube;
                     } else if (this.cube != memberCube) {
-                        // this measure lives in a different cube than previous
-                        // measures we have seen
-                        throw bomb;
+                        throw tooComplex();
                     }
                 }
                 case RolapCubeMember cubeMember -> handleMember(cubeMember.member);
                 case RolapHierarchy.RolapCalculatedMeasure measure ->
                     measure.getFormula().getExpression().accept(this);
                 case RolapMember ignored -> { } // regular RolapMember - fine
-                default -> throw bomb; // don't know what this is!
+                default -> throw tooComplex(); // don't know what this is!
             }
-        }
-
-        @Override
-		public Object visitNamedSetExpression(NamedSetExpression namedSetExpr) {
-            throw Util.newInternal("not valid here: " + namedSetExpr);
-        }
-
-        @Override
-		public Object visitLiteral(Literal literal) {
-            return null; // literals are drillable
-        }
-
-        @Override
-		public Object visitQuery(Query query) {
-            throw Util.newInternal("not valid here: " + query);
-        }
-
-        @Override
-		public Object visitQueryAxis(QueryAxis queryAxis) {
-            throw Util.newInternal("not valid here: " + queryAxis);
-        }
-
-        @Override
-		public Object visitFormula(Formula formula) {
-            throw Util.newInternal("not valid here: " + formula);
-        }
-
-        @Override
-		public Object visitUnresolvedFunCall(UnresolvedFunCall call) {
-            throw Util.newInternal("expected resolved expression");
-        }
-
-        @Override
-		public Object visitId(Id id) {
-            throw Util.newInternal("expected resolved expression");
-        }
-
-        @Override
-		public Object visitParameterExpression(ParameterExpression parameterExpr) {
-            // Not valid in general; might contain complex expression
-            throw bomb;
-        }
-
-        @Override
-		public Object visitDimensionExpression(DimensionExpression dimensionExpr) {
-            // Not valid in general; might be part of complex expression
-            throw bomb;
-        }
-
-        @Override
-		public Object visitHierarchyExpression(HierarchyExpression hierarchyExpr) {
-            // Not valid in general; might be part of complex expression
-            throw bomb;
-        }
-
-        @Override
-		public Object visitLevelExpression(LevelExpression levelExpr) {
-            // Not valid in general; might be part of complex expression
-            throw bomb;
         }
     }
 
-    public List<Member> getMembersInCell() {
-        Member[] arr = result.getCellMembers(pos);
-        if (arr != null) {
-            return Collections.unmodifiableList(Arrays.asList(arr));
-        }
-        return List.of();
-	}
 }

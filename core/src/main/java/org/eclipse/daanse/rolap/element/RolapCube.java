@@ -66,7 +66,7 @@ import org.eclipse.daanse.olap.api.DataTypeJdbc;
 import org.eclipse.daanse.olap.api.Parameter;
 import org.eclipse.daanse.olap.api.access.Role;
 import org.eclipse.daanse.olap.api.action.OlapAction;
-import org.eclipse.daanse.olap.api.agg.Segment;
+import org.eclipse.daanse.olap.api.query.Segment;
 import org.eclipse.daanse.olap.api.cache.CacheControl;
 import org.eclipse.daanse.olap.api.calc.Calc;
 import org.eclipse.daanse.olap.api.calc.compiler.ExpressionCompiler;
@@ -117,7 +117,7 @@ import org.eclipse.daanse.olap.query.component.QueryImpl;
 import org.eclipse.daanse.olap.query.component.ResolvedFunCallImpl;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.AbstractRolapAction;
-import org.eclipse.daanse.rolap.common.CachePolicy;
+import org.eclipse.daanse.olap.cache.CachePolicy;
 import org.eclipse.daanse.rolap.common.EnumConvertor;
 import org.eclipse.daanse.rolap.common.RolapUtil;
 import org.eclipse.daanse.rolap.common.Utils;
@@ -1676,6 +1676,12 @@ public abstract class RolapCube extends CubeBase {
     @Override
     public List<Hierarchy> getHierarchies() {
         return hierarchyList.stream().map(Hierarchy.class::cast).toList();
+    }
+
+    /** A relational cube takes writes when the catalog gave it somewhere to put them. */
+    @Override
+    public boolean takesWrites() {
+        return getWritebackTable().isPresent();
     }
 
     public boolean isLoadInProgress() {

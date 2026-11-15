@@ -35,8 +35,9 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.daanse.olap.cache.region.CellRegionShape;
 import org.eclipse.daanse.olap.api.Context;
-import org.eclipse.daanse.olap.api.agg.Segment;
+import org.eclipse.daanse.olap.api.query.Segment;
 import org.eclipse.daanse.olap.api.cache.CacheControl;
 import org.eclipse.daanse.olap.api.cache.CacheControl.CellRegion;
 import org.eclipse.daanse.olap.api.catalog.CatalogReader;
@@ -283,7 +284,7 @@ class CacheControlTest {
 
         CellRegion normalizedRegion =
             ((CacheControlImpl) cacheControl).normalize(
-                (CacheControlImpl.CellRegionImpl) region);
+                (CellRegionShape) region);
         assertEquals(
             "Union("
             + "Crossjoin("
@@ -1172,7 +1173,7 @@ class CacheControlTest {
 
         final CellRegion normalizedRegion =
             ((CacheControlImpl) cacheControl).normalize(
-                (CacheControlImpl.CellRegionImpl) region);
+                (CellRegionShape) region);
         assertEquals(
             "Union("
             + "Crossjoin(Member([Marital Status].[Marital Status].[S]), Member([Gender].[Gender].[F]), Member([Time].[Time].[1997].[Q1])), "

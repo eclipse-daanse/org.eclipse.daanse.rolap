@@ -184,7 +184,7 @@ class SqlContextConstraintSlicerTupleLiftTest {
         RolapStar.Table marketTable = mock(RolapStar.Table.class);
         TupleList disjoined = tupleList(cube, timeTable, 3);
         TupleList optimized = tupleList(cube, marketTable, 4);
-        when(evaluator.getOptimizedSlicerTuples(any())).thenReturn(optimized);
+        when(evaluator.getOptimizedSlicerTuples(anyBoolean())).thenReturn(optimized);
         when(optimized.isEmpty()).thenReturn(false);
         SqlContextConstraint scc = constraintWith(evaluator);
 

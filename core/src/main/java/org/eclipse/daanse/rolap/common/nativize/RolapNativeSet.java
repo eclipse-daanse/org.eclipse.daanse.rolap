@@ -27,6 +27,7 @@
 
 package org.eclipse.daanse.rolap.common.nativize;
 
+import org.eclipse.daanse.olap.cache.CachePolicy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;

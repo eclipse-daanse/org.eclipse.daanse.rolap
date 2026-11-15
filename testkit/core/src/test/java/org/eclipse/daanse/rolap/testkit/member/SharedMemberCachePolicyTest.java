@@ -12,6 +12,7 @@
  */
 package org.eclipse.daanse.rolap.testkit.member;
 
+import org.eclipse.daanse.olap.cache.CachePolicy;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 

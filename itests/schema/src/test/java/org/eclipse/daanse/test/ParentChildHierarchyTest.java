@@ -2813,9 +2813,6 @@ class ParentChildHierarchyTest {
      */
     @Test
     void testParentChildDescendantsLeavesTop(Context<?> context) {
-        if (Bug.avoidSlowTestOnLucidDB(getDialect(context.getConnectionWithDefaultRole()))) {
-            return;
-        }
         MdxAssert.assertThatQuery(context.getConnectionWithDefaultRole(),
 "with set [Leaves] as 'Descendants([Employees].[All Employees], 15, LEAVES)'\n"
             + " set [Parents] as 'Generate([Leaves], {[Employees].CurrentMember.Parent})'\n"
@@ -2930,9 +2927,6 @@ expected);
      */
     @Test
     void testHierarchyFalseCycle(Context<?> context) {
-        if (Bug.avoidSlowTestOnLucidDB(getDialect(context.getConnectionWithDefaultRole()))) {
-            return;
-        }
         // On the regular HR cube, this has always worked.
         MdxAssert.assertThatQuery(context.getConnectionWithDefaultRole(),
 "SELECT {[Employees].[All Employees].Children} on columns,\n"
@@ -2959,9 +2953,6 @@ expected);
     @RolapContextTest(catalog = { CatalogSupplier.class, SchemaModifiersEmf.ParentChildHierarchyTestModifier6.class },
             database = FoodmartDatabaseSupplier.class, data = FoodmartData.class)
     void testHierarchyFalseCycleFewerDimensions(Context<?> context) {
-        if (Bug.avoidSlowTestOnLucidDB(getDialect(context.getConnectionWithDefaultRole()))) {
-            return;
-        }
         MdxAssert.assertThatQuery(context.getConnectionWithDefaultRole(),
 "SELECT {[Employees].[All Employees].Children} on columns,\n"
             + " {[Measures].[Org Salary]} on rows\n"
@@ -3271,9 +3262,6 @@ expected);
     @RolapContextTest(catalog = { CatalogSupplier.class, SchemaModifiersEmf.ParentChildHierarchyTestModifier7.class },
             database = FoodmartDatabaseSupplier.class, data = FoodmartData.class)
     void testParentChildOrdinal(Context<?> context) {
-        if (Bug.avoidSlowTestOnLucidDB(getDialect(context.getConnectionWithDefaultRole()))) {
-            return;
-        }
 
         // Make sure <Member>.CHILDREN is sorted.
         MdxAssert.assertThatQuery(context.getConnectionWithDefaultRole(),
@@ -3371,9 +3359,6 @@ expected);
     @RolapContextTest(catalog = { CatalogSupplier.class, SchemaModifiersEmf.ParentChildHierarchyTestModifier9.class },
             database = FoodmartDatabaseSupplier.class, data = FoodmartData.class)
     void testClosureVsNoClosure(Context<?> context) {
-        if (Bug.avoidSlowTestOnLucidDB(getDialect(context.getConnectionWithDefaultRole()))) {
-            return;
-        }
 
         String mdx;
         String expected;
@@ -3435,9 +3420,6 @@ expected);
     @RolapContextTest(catalog = { CatalogSupplier.class, SchemaModifiersEmf.ParentChildHierarchyTestModifier10.class },
             database = FoodmartDatabaseSupplier.class, data = FoodmartData.class)
     void testClosureVsNoClosureNoClosureTable(Context<?> context) {
-        if (Bug.avoidSlowTestOnLucidDB(getDialect(context.getConnectionWithDefaultRole()))) {
-            return;
-        }
         final String mdx =
                 "select {[Measures].[Count]} ON COLUMNS,\n"
                         + " Descendants([Employees], 2, SELF_AND_BEFORE) ON ROWS\n"

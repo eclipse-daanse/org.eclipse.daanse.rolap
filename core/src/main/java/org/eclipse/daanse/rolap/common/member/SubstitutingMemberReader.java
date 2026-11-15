@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.daanse.olap.api.access.AccessMember;
-import org.eclipse.daanse.olap.api.agg.Segment;
+import org.eclipse.daanse.olap.api.query.Segment;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.SqlStatement;

@@ -52,7 +52,7 @@ import org.eclipse.daanse.olap.api.access.AccessMember;
 import org.eclipse.daanse.olap.api.access.HierarchyAccess;
 import org.eclipse.daanse.olap.api.access.Role;
 import org.eclipse.daanse.olap.api.access.RollupPolicy;
-import org.eclipse.daanse.olap.api.agg.Segment;
+import org.eclipse.daanse.olap.api.query.Segment;
 import org.eclipse.daanse.olap.api.calc.Calc;
 import org.eclipse.daanse.olap.api.calc.compiler.ExpressionCompiler;
 import org.eclipse.daanse.olap.api.calc.tuple.TupleList;
@@ -86,7 +86,6 @@ import org.eclipse.daanse.olap.api.type.Type;
 import org.eclipse.daanse.olap.calc.base.constant.ConstantCalcs;
 import org.eclipse.daanse.olap.calc.base.type.tuplebase.AbstractProfilingNestedTupleListCalc;
 import org.eclipse.daanse.olap.calc.base.type.tuplebase.UnaryTupleList;
-import org.eclipse.daanse.olap.calc.base.value.CurrentValueUnknownCalc;
 import org.eclipse.daanse.olap.common.StandardProperty;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.element.HierarchyBase;
@@ -98,7 +97,7 @@ import org.eclipse.daanse.olap.fun.FunUtil;
 import org.eclipse.daanse.olap.function.core.FunctionMetaDataR;
 import org.eclipse.daanse.olap.function.core.FunctionParameterR;
 import org.eclipse.daanse.olap.function.core.AbstractFunctionDefinition;
-import org.eclipse.daanse.olap.calc.base.aggregate.AggregateCalc;
+import org.eclipse.daanse.olap.calc.base.aggregate.LimitedRollupCalc;
 import org.eclipse.daanse.olap.query.component.HierarchyExpressionImpl;
 import org.eclipse.daanse.olap.query.component.IdImpl;
 import org.eclipse.daanse.olap.query.component.ResolvedFunCallImpl;
@@ -1129,7 +1128,7 @@ public class RolapHierarchy extends HierarchyBase {
                         }
                     };
                 final Calc partialCalc =
-                    new LimitedRollupAggregateCalc(returnType, tupleListCalc);
+                    new LimitedRollupCalc(returnType, tupleListCalc);
                 final Expression partialExp =
                     new ResolvedFunCallImpl(
                         new AbstractFunctionDefinition(functionMetaData) {
@@ -1735,23 +1734,6 @@ public class RolapHierarchy extends HierarchyBase {
         }
     }
 
-    /**
-     * Compiled expression that computes rollup over a set of visible children.
-     * The {@code listCalc} expression determines that list of children.
-     */
-    public static class LimitedRollupAggregateCalc
-        extends AggregateCalc
-    {
-        public LimitedRollupAggregateCalc(
-            Type returnType,
-            TupleListCalc tupleListCalc)
-        {
-            super(
-                returnType,
-                tupleListCalc,
-                new CurrentValueUnknownCalc(returnType));
-        }
-    }
 
     /**
      * Dummy element that acts as a namespace for resolving member names within

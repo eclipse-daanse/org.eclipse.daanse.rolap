@@ -26,6 +26,7 @@
 
 package org.eclipse.daanse.rolap.common;
 
+import org.eclipse.daanse.olap.cache.CachePolicy;
 import org.eclipse.daanse.olap.api.execution.Statement;
 import static org.eclipse.daanse.rolap.common.util.SqlExpressionResolver.genericSql;
 
@@ -49,6 +50,12 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 
 import org.eclipse.daanse.olap.api.cache.CacheControl;
+import org.eclipse.daanse.olap.cache.region.CellRegionShape;
+import org.eclipse.daanse.olap.cache.region.CellRegionVisitor;
+import org.eclipse.daanse.olap.cache.region.CrossjoinRegion;
+import org.eclipse.daanse.olap.cache.region.EmptyRegion;
+import org.eclipse.daanse.olap.cache.region.MemberRegion;
+import org.eclipse.daanse.olap.cache.region.UnionRegion;
 import org.eclipse.daanse.olap.api.cache.OlapSegmentCacheManager;
 import org.eclipse.daanse.olap.api.connection.Connection;
 import org.eclipse.daanse.olap.api.element.Cube;
@@ -145,7 +152,7 @@ public class CacheControlImpl implements CacheControl {
         }
         final ArrayList<Member> list = new ArrayList<>();
         list.add(member);
-        return new MemberCellRegion(list, descendants);
+        return new MemberRegion(list, descendants);
     }
 
     @Override
@@ -174,7 +181,7 @@ public class CacheControlImpl implements CacheControl {
             throw new IllegalArgumentException("regions should be not null and regions.length should be >=2");
         }
         final HashSet<Dimension> set = new HashSet<>();
-        final List<CellRegionImpl> list = new ArrayList<>();
+        final List<CellRegionShape> list = new ArrayList<>();
         for (CellRegion region : regions) {
             int prevSize = set.size();
             List<Dimension> dimensionality = region.getDimensionality();
@@ -184,9 +191,9 @@ public class CacheControlImpl implements CacheControl {
                     MessageFormat.format(cacheFlushCrossjoinDimensionsInCommon, getDimensionalityList(regions)));
             }
 
-            flattenCrossjoin((CellRegionImpl) region, list);
+            flattenCrossjoin((CellRegionShape) region, list);
         }
-        return new CrossjoinCellRegion(list);
+        return new CrossjoinRegion(list);
     }
 
     // Returns e.g. "'[[Product]]', '[[Time], [Product]]'"
@@ -213,7 +220,7 @@ public class CacheControlImpl implements CacheControl {
         if (regions.length < 2) {
             throw new IllegalArgumentException();
         }
-        final List<CellRegionImpl> list = new ArrayList<>();
+        final List<CellRegionShape> list = new ArrayList<>();
         for (CellRegion region : regions) {
             if (!region.getDimensionality().equals(
                     regions[0].getDimensionality()))
@@ -223,9 +230,9 @@ public class CacheControlImpl implements CacheControl {
                         regions[0].getDimensionality().toString(),
                         region.getDimensionality().toString()));
             }
-            list.add((CellRegionImpl) region);
+            list.add((CellRegionShape) region);
         }
-        return new UnionCellRegion(list);
+        return new UnionRegion(list);
     }
 
     @Override
@@ -247,9 +254,9 @@ public class CacheControlImpl implements CacheControl {
                 measuresDimension.getHierarchy().getLevels().getFirst(),
                 false);
         if (measures.isEmpty()) {
-            return new EmptyCellRegion();
+            return new EmptyRegion();
         }
-        return new MemberCellRegion(measures, false);
+        return new MemberRegion(measures, false);
     }
 
     /**
@@ -300,7 +307,7 @@ public class CacheControlImpl implements CacheControl {
     }
 
     private void flushInternal(CellRegion region, FlushDeadline deadline) {
-        if (region instanceof EmptyCellRegion) {
+        if (region instanceof EmptyRegion) {
             return;
         }
         final List<Dimension> dimensionality = region.getDimensionality();
@@ -314,8 +321,8 @@ public class CacheControlImpl implements CacheControl {
         if (!found) {
             throw new OlapRuntimeException(cacheFlushRegionMustContainMembers);
         }
-        final UnionCellRegion union = normalize((CellRegionImpl) region);
-        for (CellRegionImpl cellRegion : union.regions) {
+        final UnionRegion union = normalize((CellRegionShape) region);
+        for (CellRegionShape cellRegion : union.getRegions()) {
             // Figure out the bits.
             flushNonUnion(cellRegion, deadline);
         }
@@ -414,7 +421,7 @@ public class CacheControlImpl implements CacheControl {
      * @param region Region
      * @return normalized region
      */
-    public UnionCellRegion normalize(CellRegionImpl region) {
+    public UnionRegion normalize(CellRegionShape region) {
         // Search for Union within a Crossjoin.
         //   Crossjoin(a1, a2, Union(r1, r2, r3), a4)
         // becomes
@@ -424,21 +431,21 @@ public class CacheControlImpl implements CacheControl {
         //     Crossjoin(a1, a2, r3, a4))
 
         // First, decompose into a flat list of non-union regions.
-        List<CellRegionImpl> nonUnionList = new LinkedList<>();
+        List<CellRegionShape> nonUnionList = new LinkedList<>();
         flattenUnion(region, nonUnionList);
 
         for (int i = 0; i < nonUnionList.size(); i++) {
             while (true) {
-                CellRegionImpl nonUnionRegion = nonUnionList.get(i);
-                UnionCellRegion firstUnion = findFirstUnion(nonUnionRegion);
+                CellRegionShape nonUnionRegion = nonUnionList.get(i);
+                UnionRegion firstUnion = findFirstUnion(nonUnionRegion);
                 if (firstUnion == null) {
                     break;
                 }
-                List<CellRegionImpl> list = new ArrayList<>();
-                for (CellRegionImpl unionComponent : firstUnion.regions) {
+                List<CellRegionShape> list = new ArrayList<>();
+                for (CellRegionShape unionComponent : firstUnion.getRegions()) {
                     // For each unionComponent in (r1, r2, r3),
                     // create Crossjoin(a1, a2, r1, a4).
-                    CellRegionImpl cj =
+                    CellRegionShape cj =
                         copyReplacing(
                             nonUnionRegion,
                             firstUnion,
@@ -452,30 +459,30 @@ public class CacheControlImpl implements CacheControl {
                 nonUnionList.addAll(i, list);
             }
         }
-        return new UnionCellRegion(nonUnionList);
+        return new UnionRegion(nonUnionList);
     }
 
-    private CellRegionImpl copyReplacing(
-        CellRegionImpl region,
-        CellRegionImpl seek,
-        CellRegionImpl replacement)
+    private CellRegionShape copyReplacing(
+        CellRegionShape region,
+        CellRegionShape seek,
+        CellRegionShape replacement)
     {
         if (region == seek) {
             return replacement;
         }
-        if (region instanceof UnionCellRegion union) {
-            List<CellRegionImpl> list = new ArrayList<>();
-            for (CellRegionImpl child : union.regions) {
+        if (region instanceof UnionRegion union) {
+            List<CellRegionShape> list = new ArrayList<>();
+            for (CellRegionShape child : union.getRegions()) {
                 list.add(copyReplacing(child, seek, replacement));
             }
-            return new UnionCellRegion(list);
+            return new UnionRegion(list);
         }
-        if (region instanceof CrossjoinCellRegion crossjoin) {
-            List<CellRegionImpl> list = new ArrayList<>();
-            for (CellRegionImpl child : crossjoin.components) {
+        if (region instanceof CrossjoinRegion crossjoin) {
+            List<CellRegionShape> list = new ArrayList<>();
+            for (CellRegionShape child : crossjoin.getComponents()) {
                 list.add(copyReplacing(child, seek, replacement));
             }
-            return new CrossjoinCellRegion(list);
+            return new CrossjoinRegion(list);
         }
         // This region is atomic, and since regions are immutable we don't need
         // to clone.
@@ -489,11 +496,11 @@ public class CacheControlImpl implements CacheControl {
      * @param list Target list
      */
     private void flattenUnion(
-        CellRegionImpl region,
-        List<CellRegionImpl> list)
+        CellRegionShape region,
+        List<CellRegionShape> list)
     {
-        if (region instanceof UnionCellRegion union) {
-            for (CellRegionImpl region1 : union.regions) {
+        if (region instanceof UnionRegion union) {
+            for (CellRegionShape region1 : union.getRegions()) {
                 flattenUnion(region1, list);
             }
         } else {
@@ -508,11 +515,11 @@ public class CacheControlImpl implements CacheControl {
      * @param list Target list
      */
     private void flattenCrossjoin(
-        CellRegionImpl region,
-        List<CellRegionImpl> list)
+        CellRegionShape region,
+        List<CellRegionShape> list)
     {
-        if (region instanceof CrossjoinCellRegion crossjoin) {
-            for (CellRegionImpl component : crossjoin.components) {
+        if (region instanceof CrossjoinRegion crossjoin) {
+            for (CellRegionShape component : crossjoin.getComponents()) {
                 flattenCrossjoin(component, list);
             }
         } else {
@@ -520,16 +527,16 @@ public class CacheControlImpl implements CacheControl {
         }
     }
 
-    private UnionCellRegion findFirstUnion(CellRegion region) {
+    private UnionRegion findFirstUnion(CellRegion region) {
         final CellRegionVisitor visitor =
             new CellRegionVisitorImpl() {
                 @Override
-				public void visit(UnionCellRegion region) {
+				public void visit(UnionRegion region) {
                     throw new FoundOne(region);
                 }
             };
         try {
-            ((CellRegionImpl) region).accept(visitor);
+            ((CellRegionShape) region).accept(visitor);
             return null;
         } catch (FoundOne foundOne) {
             return foundOne.region;
@@ -548,9 +555,9 @@ public class CacheControlImpl implements CacheControl {
         final CellRegionVisitor visitor =
             new CellRegionVisitorImpl() {
                 @Override
-				public void visit(MemberCellRegion region) {
-                    if (region.dimension.isMeasures()) {
-                        list.addAll(region.memberList);
+				public void visit(MemberRegion region) {
+                    if (region.getDimensionality().getFirst().isMeasures()) {
+                        list.addAll(region.getMembers());
                     }
                 }
 
@@ -565,7 +572,7 @@ public class CacheControlImpl implements CacheControl {
                     }
                 }
             };
-        ((CellRegionImpl) region).accept(visitor);
+        ((CellRegionShape) region).accept(visitor);
         return list;
     }
 
@@ -575,13 +582,13 @@ public class CacheControlImpl implements CacheControl {
         final CellRegionVisitor visitor =
             new CellRegionVisitorImpl() {
                 @Override
-				public void visit(MemberCellRegion region) {
-                    if (region.dimension.isMeasures()) {
+				public void visit(MemberRegion region) {
+                    if (region.getDimensionality().getFirst().isMeasures()) {
                         return;
                     }
                     final Map<String, Set<Comparable>> levels =
                         new HashMap<>();
-                    for (Member member : region.memberList) {
+                    for (Member member : region.getMembers()) {
                         while (true) {
                             if (member == null || member.isAll()) {
                                 break;
@@ -636,7 +643,7 @@ public class CacheControlImpl implements CacheControl {
                             null));
                 }
             };
-        ((CellRegionImpl) region).accept(visitor);
+        ((CellRegionShape) region).accept(visitor);
         // A union region visits each part separately; merge same-column
         // entries into one (value union, wildcard wins), otherwise a
         // two-part flush on one level intersects with neither part.
@@ -1002,14 +1009,14 @@ public class CacheControlImpl implements CacheControl {
                             : dimensions.getFirst() .getCatalog().getCubes())
                         {
                             try {
-                                final List<CellRegionImpl> crossList =
+                                final List<CellRegionShape> crossList =
                                     new ArrayList<>();
                                 crossList.add(
-                                    (CellRegionImpl)
+                                    (CellRegionShape)
                                         createMeasuresRegion(cube));
-                                crossList.add((CellRegionImpl) memberRegion);
+                                crossList.add((CellRegionShape) memberRegion);
                                 final CellRegion crossRegion =
-                                    new CrossjoinCellRegion(crossList);
+                                    new CrossjoinRegion(crossList);
                                 flushWithDeadline(crossRegion, editDeadline);
                             } catch (UndeclaredThrowableException e) {
                                 if (e.getCause()
@@ -1068,57 +1075,9 @@ public class CacheControlImpl implements CacheControl {
     // cell cache control implementation
 
     /**
-     * Cell region formed by a list of members.
-     *
-     * @see MemberRangeCellRegion
-     */
-    public static class MemberCellRegion implements CellRegionImpl {
-        private final List<Member> memberList;
-        private final Dimension dimension;
-
-        // descendants is accepted but not represented: a member cell
-        // region constrains on the listed members only (inherited gap)
-        MemberCellRegion(List<Member> memberList, boolean descendants) {
-            assert !memberList.isEmpty();
-            this.memberList = memberList;
-            this.dimension = (memberList.getFirst()).getDimension();
-        }
-
-        @Override
-		public List<Dimension> getDimensionality() {
-            return Collections.singletonList(dimension);
-        }
-
-        @Override
-		public String toString() {
-            return Util.commaList("Member", memberList);
-        }
-
-        @Override
-		public void accept(CellRegionVisitor visitor) {
-            visitor.visit(this);
-        }
-
-    }
-
-    /**
-     * An empty cell region.
-     */
-    static class EmptyCellRegion implements CellRegionImpl {
-        @Override
-		public void accept(CellRegionVisitor visitor) {
-            visitor.visit(this);
-        }
-        @Override
-		public List<Dimension> getDimensionality() {
-            return Collections.emptyList();
-        }
-    }
-
-    /**
      * Cell region formed a range of members between a lower and upper bound.
      */
-    public static class MemberRangeCellRegion implements CellRegionImpl {
+    public static class MemberRangeCellRegion implements CellRegionShape {
         private final RolapMember lowerMember;
         private final boolean lowerInclusive;
         private final RolapMember upperMember;
@@ -1187,9 +1146,19 @@ public class CacheControlImpl implements CacheControl {
             return sb.toString();
         }
 
+        /**
+         * A range says which members lie in it through the level it is on; whether one single cell lies
+         * in it is a question this art answers by turning the range into a predicate, not cell by cell.
+         */
         @Override
-		public void accept(CellRegionVisitor visitor) {
-            visitor.visit(this);
+        public boolean covers(List<? extends Member> coordinate) {
+            throw new UnsupportedOperationException(
+                "A range of members is read as a predicate, not cell by cell");
+        }
+
+        @Override
+        public void accept(CellRegionVisitor visitor) {
+            visitor.visitOther(this);
         }
 
         public boolean getLowerInclusive() {
@@ -1209,160 +1178,52 @@ public class CacheControlImpl implements CacheControl {
         }
     }
 
-    /**
-     * Cell region formed by a cartesian product of two or more CellRegions.
-     */
-    public static class CrossjoinCellRegion implements CellRegionImpl {
-        final List<Dimension> dimensions;
-        private List<CellRegionImpl> components =
-            new ArrayList<>();
-
-        CrossjoinCellRegion(List<CellRegionImpl> regions) {
-            final List<Dimension> dimensionality = new ArrayList<>();
-            compute(regions, components, dimensionality);
-            dimensions = Collections.unmodifiableList(dimensionality);
-        }
-
-        private static void compute(
-            List<CellRegionImpl> regions,
-            List<CellRegionImpl> components,
-            List<Dimension> dimensionality)
-        {
-            final Set<Dimension> dimensionSet = new HashSet<>();
-            for (CellRegionImpl region : regions) {
-                addComponents(region, components);
-
-                final List<Dimension> regionDimensionality =
-                    region.getDimensionality();
-                dimensionality.addAll(regionDimensionality);
-                dimensionSet.addAll(regionDimensionality);
-                assert dimensionSet.size() == dimensionality.size()
-                    : "dimensions in common";
-            }
-        }
-
-        @Override
-		public void accept(CellRegionVisitor visitor) {
-            visitor.visit(this);
-            for (CellRegionImpl component : components) {
-                CellRegionImpl cellRegion = component;
-                cellRegion.accept(visitor);
-            }
-        }
-
-        private static void addComponents(
-            CellRegionImpl region,
-            List<CellRegionImpl> list)
-        {
-            if (region instanceof CrossjoinCellRegion crossjoinRegion) {
-                for (CellRegionImpl component : crossjoinRegion.components) {
-                    list.add(component);
-                }
-            } else {
-                list.add(region);
-            }
-        }
-
-        @Override
-		public List<Dimension> getDimensionality() {
-            return dimensions;
-        }
-
-        @Override
-		public String toString() {
-            return Util.commaList("Crossjoin", components);
-        }
-
-    }
-
-    private static class UnionCellRegion implements CellRegionImpl {
-        private final List<CellRegionImpl> regions;
-
-        UnionCellRegion(List<CellRegionImpl> regions) {
-            this.regions = regions;
-            assert !regions.isEmpty();
-
-            // All regions must have same dimensionality.
-            for (int i = 1; i < regions.size(); i++) {
-                final CellRegion region0 = regions.getFirst();
-                final CellRegion region = regions.get(i);
-                assert region0.getDimensionality().equals(
-                    region.getDimensionality());
-            }
-        }
-
-        @Override
-		public List<Dimension> getDimensionality() {
-            return regions.getFirst().getDimensionality();
-        }
-
-        @Override
-		public String toString() {
-            return Util.commaList("Union", regions);
-        }
-
-        @Override
-		public void accept(CellRegionVisitor visitor) {
-            visitor.visit(this);
-            for (CellRegionImpl cellRegion : regions) {
-                cellRegion.accept(visitor);
-            }
-        }
-    }
-
-    public interface CellRegionImpl extends CellRegion {
-        void accept(CellRegionVisitor visitor);
-    }
-
-    /**
-     * Visitor that visits various sub-types of
-     * {@link org.eclipse.daanse.olap.api.CacheControl.CellRegion}.
-     */
-    interface CellRegionVisitor {
-        void visit(MemberCellRegion region);
-        void visit(MemberRangeCellRegion region);
-        void visit(UnionCellRegion region);
-        void visit(CrossjoinCellRegion region);
-        void visit(EmptyCellRegion region);
-    }
-
     private static class FoundOne extends RuntimeException {
-        private final transient UnionCellRegion region;
+        private final transient UnionRegion region;
 
-        public FoundOne(UnionCellRegion region) {
+        public FoundOne(UnionRegion region) {
             this.region = region;
         }
     }
 
     /**
-     * Default implementation of {@link CellRegionVisitor}.
+     * Reads a region shape by shape and does nothing with any of them; a caller overrides the shapes it
+     * cares about. The range of members is this art's own shape, so it arrives through
+     * {@link CellRegionVisitor#visitOther}.
      */
     private static class CellRegionVisitorImpl implements CellRegionVisitor {
         @Override
-		public void visit(MemberCellRegion region) {
-            // nothing
+        public void visit(MemberRegion region) {
+            // nothing to do
+        }
+
+        public void visit(MemberRangeCellRegion region) {
+            // nothing to do
         }
 
         @Override
-		public void visit(MemberRangeCellRegion region) {
-            // nothing
+        public void visit(UnionRegion region) {
+            // nothing to do
         }
 
         @Override
-		public void visit(UnionCellRegion region) {
-            // nothing
+        public void visit(CrossjoinRegion region) {
+            // nothing to do
         }
 
         @Override
-		public void visit(CrossjoinCellRegion region) {
-            // nothing
+        public void visit(EmptyRegion region) {
+            // nothing to do
         }
 
         @Override
-		public void visit(EmptyCellRegion region) {
-            // nothing
+        public void visitOther(CellRegion region) {
+            if (region instanceof MemberRangeCellRegion range) {
+                visit(range);
+            }
         }
     }
+
 
 
     // ~ member cache control implementation ----------------------------------

@@ -943,7 +943,7 @@ public class SegmentCacheIndexImpl implements SegmentCacheIndex {
         for (SegmentColumn column : columnList) {
             // For each value, which equivalence class it belongs to.
             final SortedMap<Comparable, BitSet> valueMap =
-                new TreeMap<>(RolapUtil.ROLAP_COMPARATOR);
+                new TreeMap<>(org.eclipse.daanse.olap.common.Util.OLAP_COMPARATOR);
 
             // Two passes: listed values first (they create the entries),
             // then wildcard headers mark THEIR bit on every value — a

@@ -45,7 +45,7 @@ import org.eclipse.daanse.olap.api.access.Role;
 import org.eclipse.daanse.olap.api.access.db.AccessDatabaseColumn;
 import org.eclipse.daanse.olap.api.access.db.AccessDatabaseSchema;
 import org.eclipse.daanse.olap.api.access.db.AccessDatabaseTable;
-import org.eclipse.daanse.olap.api.agg.Segment;
+import org.eclipse.daanse.olap.api.query.Segment;
 import org.eclipse.daanse.olap.api.calc.Calc;
 import org.eclipse.daanse.olap.api.calc.compiler.ExpressionCompiler;
 import org.eclipse.daanse.olap.api.catalog.CatalogReader;
@@ -93,6 +93,7 @@ import org.eclipse.daanse.rolap.element.RolapHierarchy;
 import org.eclipse.daanse.rolap.element.RolapLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.eclipse.daanse.olap.catalog.CatalogReaderBase;
 
 /**
  * A RolapCatalogReader allows you to read schema objects while
@@ -102,7 +103,8 @@ import org.slf4j.LoggerFactory;
  * @since Feb 24, 2003
  */
 public class RolapCatalogReader
-    implements CatalogReader,
+    extends CatalogReaderBase
+    implements
         RolapNativeSet.CatalogReaderWithMemberReaderAvailable,
         NameResolver.Namespace
 {
@@ -450,16 +452,6 @@ public class RolapCatalogReader
         return null;
     }
 
-    @Override
-	public OlapElement lookupCompound(
-        OlapElement parent,
-        List<Segment> names,
-        boolean failIfNotFound,
-        DataType category)
-    {
-        return lookupCompound(
-            parent, names, failIfNotFound, category, MatchType.EXACT);
-    }
 
     @Override
 	public final OlapElement lookupCompound(
@@ -469,13 +461,7 @@ public class RolapCatalogReader
         DataType category,
         MatchType matchType)
     {
-            return new NameResolverImpl().resolve(
-                parent,
-                Util.toOlap4j(names),
-                failIfNotFound,
-                category,
-                matchType,
-                getNamespaces());
+        return NameResolverImpl.lookupCompound(this, parent, names, failIfNotFound, category, matchType);
     }
 
     public final OlapElement lookupCompoundInternal(
@@ -660,56 +646,9 @@ public class RolapCatalogReader
         return Util.cast(membersInLevel);
     }
 
-    @Override
-	public List<Dimension> getCubeDimensions(Cube cube) {
-        assert cube != null;
-        final List<Dimension> dimensions = new ArrayList<>();
-        for (Dimension dimension : cube.getDimensions()) {
-            switch (role.getAccess(dimension)) {
-            case NONE:
-                continue;
-            default:
-                dimensions.add(dimension);
-                break;
-            }
-        }
-        return dimensions;
-    }
-
-    @Override
-	public List<Hierarchy> getDimensionHierarchies(Dimension dimension) {
-        assert dimension != null;
-        final List<Hierarchy> hierarchies = new ArrayList<>();
-        for (Hierarchy hierarchy : dimension.getHierarchies()) {
-            switch (role.getAccess(hierarchy)) {
-            case NONE:
-                continue;
-            default:
-                hierarchies.add(hierarchy);
-                break;
-            }
-        }
-        return hierarchies;
-    }
-
-    @Override
-	public List<Level> getHierarchyLevels(Hierarchy hierarchy) {
-        assert hierarchy != null;
-        final HierarchyAccess hierarchyAccess =
-            role.getAccessDetails(hierarchy);
-        final List<Level> levels = (List<Level>) hierarchy.getLevels();
-        if (hierarchyAccess == null) {
-            return  levels;
-        }
-        Level topLevel = levels.get(hierarchyAccess.getTopLevelDepth());
-        Level bottomLevel = levels.get(hierarchyAccess.getBottomLevelDepth());
-        List<Level> restrictedLevels =
-            levels.subList(
-                topLevel.getDepth(), bottomLevel.getDepth() + 1);
-        assert restrictedLevels.size() >= 1 : "postcondition";
-        return restrictedLevels;
-    }
-
+    
+    
+    
     @Override
 	public Member getHierarchyDefaultMember(Hierarchy hierarchy) {
         assert hierarchy != null;

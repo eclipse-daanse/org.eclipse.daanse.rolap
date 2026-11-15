@@ -21,6 +21,7 @@ import java.util.Map;
 import org.eclipse.daanse.olap.api.DataTypeJdbc;
 import org.eclipse.daanse.olap.api.element.Member;
 import org.eclipse.daanse.olap.api.result.AllocationPolicy;
+import org.eclipse.daanse.olap.writeback.AllocationShares;
 
 /**
  * Turns "set this aggregate to {@code value}" into per-cell delta rows:
@@ -48,68 +49,11 @@ public final class AllocationPolicyApplier {
             AllocationPolicy allocation,
             RolapWritebackTable writebackTable
         ) {
-            if (data.isEmpty()) {
-                throw new IllegalArgumentException(
-                    "writeback allocation found no target cells for " + measureName);
-            }
-            Map<List<Member>, Double> d = new HashMap<>();
-            Map<List<Member>, Double> dMinus = new HashMap<>();
-            int size = data.size();
-            double target = num(value);
-            double sum = data.values().stream().mapToDouble(AllocationPolicyApplier::num).sum();
-
-            AllocationPolicy effective = allocation;
-            if (sum == 0d && allocation == AllocationPolicy.WEIGHTED_ALLOCATION) {
-                effective = AllocationPolicy.EQUAL_ALLOCATION;
-            } else if (sum == 0d && allocation == AllocationPolicy.WEIGHTED_INCREMENT) {
-                effective = AllocationPolicy.EQUAL_INCREMENT;
-            }
-
-            switch (effective) {
-                case WEIGHTED_ALLOCATION:
-                    for (Map.Entry<List<Member>, Object> entry : data.entrySet()) {
-                        double old = num(entry.getValue());
-                        dMinus.put(entry.getKey(), -old);
-                        d.put(entry.getKey(), target / sum * old);
-                    }
-                    break;
-                case EQUAL_INCREMENT:
-                    double offset = target - sum;
-                    for (Map.Entry<List<Member>, Object> entry : data.entrySet()) {
-                        double old = num(entry.getValue());
-                        dMinus.put(entry.getKey(), -old);
-                        d.put(entry.getKey(), old + offset / size);
-                    }
-                    break;
-                case WEIGHTED_INCREMENT:
-                    offset = target - sum;
-                    for (Map.Entry<List<Member>, Object> entry : data.entrySet()) {
-                        double old = num(entry.getValue());
-                        dMinus.put(entry.getKey(), -old);
-                        d.put(entry.getKey(), old + offset / sum * old);
-                    }
-                    break;
-                case EQUAL_ALLOCATION:
-                default:
-                    double val = target / size;
-                    for (Map.Entry<List<Member>, Object> entry : data.entrySet()) {
-                        dMinus.put(entry.getKey(), -num(entry.getValue()));
-                        d.put(entry.getKey(), val);
-                    }
-            }
-
-            if (isIntegerColumn(measureName, writebackTable)) {
-                // per-row rounding drifted: round(-0.5)+round(3.33) per cell
-                // summed to 9 where the target was 10. The old-value side is
-                // rounded per cell (integral in an integer fact anyway); the
-                // shares get largest-remainder so their sum is the target.
-                dMinus.replaceAll((k, v) -> (double) Math.round(v));
-                largestRemainder(d, Math.round(target));
-            }
-
+            AllocationShares.Shares shares = AllocationShares.of(data, num(value), allocation,
+                    isIntegerColumn(measureName, writebackTable));
             List<Map<List<Member>, Double>> res = new ArrayList<>();
-            res.add(dMinus);
-            res.add(d);
+            res.add(shares.removals());
+            res.add(shares.additions());
             return WritebackRowBuilder.allocateData(res, measureName, writebackTable);
         }
 
@@ -129,39 +73,4 @@ public final class AllocationPolicyApplier {
         return false;
     }
 
-    /**
-     * Floors every share and hands the missing units to the largest
-     * fractional remainders, so the rounded shares sum exactly to
-     * {@code targetTotal}. Mathematically sum(d) == target for every
-     * policy above, which makes the remainder count 0..size-1.
-     */
-    private static void largestRemainder(Map<List<Member>, Double> d, long targetTotal) {
-        List<Map.Entry<List<Member>, Double>> entries = new ArrayList<>(d.entrySet());
-        long floorSum = 0;
-        double[] remainders = new double[entries.size()];
-        for (int i = 0; i < entries.size(); i++) {
-            double share = entries.get(i).getValue();
-            long floor = (long) Math.floor(share);
-            remainders[i] = share - floor;
-            d.put(entries.get(i).getKey(), (double) floor);
-            floorSum += floor;
-        }
-        long missing = targetTotal - floorSum;
-        // hand out one unit per pass to the largest remainder not yet topped up
-        boolean[] used = new boolean[entries.size()];
-        while (missing > 0) {
-            int best = -1;
-            for (int i = 0; i < entries.size(); i++) {
-                if (!used[i] && (best < 0 || remainders[i] > remainders[best])) {
-                    best = i;
-                }
-            }
-            if (best < 0) {
-                break; // more units than cells: numeric edge, leave the rest
-            }
-            used[best] = true;
-            d.put(entries.get(best).getKey(), d.get(entries.get(best).getKey()) + 1d);
-            missing--;
-        }
-    }
 }

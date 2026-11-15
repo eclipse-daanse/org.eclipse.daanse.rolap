@@ -37,10 +37,8 @@ import org.eclipse.daanse.olap.result.ValueFormatter;
 import org.eclipse.daanse.rolap.aggregator.DistinctCountAggregator;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.agg.AggregationManager;
-import org.eclipse.daanse.rolap.common.evaluator.RolapDependencyTestingEvaluator;
 import org.eclipse.daanse.rolap.common.evaluator.RolapEvaluator;
 import org.eclipse.daanse.rolap.common.evaluator.RolapEvaluatorRoot;
-import org.eclipse.daanse.rolap.common.evaluator.RolapInterceptableEvaluator;
 import org.eclipse.daanse.rolap.element.CompoundSlicerRolapMember;
 import org.eclipse.daanse.rolap.element.RolapBaseCubeMeasure;
 import org.eclipse.daanse.rolap.element.RolapCube;
@@ -68,18 +66,13 @@ public class RolapResult extends ResultImpl {
         return abc.getAggregationManager();
     }
 
+    /**
+     * The evaluator of this art; whether dependencies are checked is decided above, for every catalog
+     * alike.
+     */
     @Override
-    protected EvaluatorImpl createEvaluator() {
-        final int expDeps = execution.getDaanseStatement().getDaanseConnection().getContext().getConfig()
-                .testExpDependencies();
-        if ( expDeps > 0 ) {
-            return new RolapDependencyTestingEvaluator( this, expDeps );
-        }
-        final RolapResultEvaluatorRoot root = new RolapResultEvaluatorRoot( this );
-        if ( statement.getProfileHandler() != null ) {
-            return new RolapInterceptableEvaluator( root );
-        }
-        return new RolapEvaluator( root );
+    protected EvaluatorImpl plainEvaluator() {
+        return new RolapEvaluator( new RolapResultEvaluatorRoot( this ) );
     }
 
     @Override
@@ -158,17 +151,6 @@ public class RolapResult extends ResultImpl {
         placeholder.setProperty( StandardProperty.FORMAT_EXP_PARSED.getName(),
                 member.getPropertyValue( StandardProperty.FORMAT_EXP_PARSED.getName() ) );
         return placeholder;
-    }
-
-    @Override
-    protected boolean onEvalDepthExceeded( EvaluatorImpl evaluator, int count ) {
-        if ( evaluator instanceof RolapDependencyTestingEvaluator ) {
-            // The dependency testing evaluator can trigger new requests every
-            // cycle: run it as normal for the first N times, then disabled.
-            ( (RolapDependencyTestingEvaluator.DteRoot) evaluator.getRoot() ).disabled = true;
-            return count <= maxEvalDepth() * 2;
-        }
-        return false;
     }
 
     @Override

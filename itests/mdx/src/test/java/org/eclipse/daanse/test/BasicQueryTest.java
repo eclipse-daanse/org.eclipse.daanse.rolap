@@ -89,7 +89,6 @@ import org.eclipse.daanse.olap.exceptions.QueryCanceledException;
 import org.eclipse.daanse.olap.execution.ExecutionImpl;
 import org.eclipse.daanse.olap.query.component.IdImpl;
 import org.eclipse.daanse.olap.spi.StatisticsProvider;
-import  org.eclipse.daanse.olap.util.Bug;
 import org.eclipse.daanse.rolap.api.RolapContext;
 import org.eclipse.daanse.rolap.common.RolapUtil;
 import org.eclipse.daanse.rolap.element.RolapCatalog;
@@ -2384,11 +2383,6 @@ public class BasicQueryTest {
     @Test
   void testMembersOfLargeDimensionTheHardWay(Context<?> context) {
     final Connection connection = context.getConnectionWithDefaultRole();
-    // Avoid this test if memory is scarce.
-    if ( Bug.avoidMemoryOverflow( getDialect(connection), context.getConfigValue(ConfigConstants.MEMORY_MONITOR, ConfigConstants.MEMORY_MONITOR_DEFAULT_VALUE, Boolean.class) ) ) {
-      return;
-    }
-
     String queryString =
         "select {[Measures].[Unit Sales]} on columns,\n" + "{[Customers].members} on rows\n" + "from Sales";
     Query query = connection.parseQuery( queryString );

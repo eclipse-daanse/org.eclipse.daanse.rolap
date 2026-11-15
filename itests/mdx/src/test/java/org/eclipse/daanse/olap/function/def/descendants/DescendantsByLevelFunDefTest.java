@@ -25,7 +25,6 @@ import javax.sql.DataSource;
 
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.relational.RelationalContext;
-import  org.eclipse.daanse.olap.util.Bug;
 import org.eclipse.daanse.rolap.mapping.instance.emf.complex.foodmart.FoodmartTestInstance;
 import org.eclipse.daanse.rolap.testkit.junit.api.RolapContextTest;
 import org.junit.jupiter.api.Disabled;
@@ -302,9 +301,6 @@ class DescendantsByLevelFunDefTest {
     void testDescendantsParentChildLeaves(Context<?> context) {
         //final TestContext<?> testContext<?> = getTestContext().withCube( "HR" );
         DataSource dataSource = RelationalContext.of(context).getDataSource();
-        if (Bug.avoidSlowTestOnLucidDB( RelationalContext.of(context).getDialect())) {
-            return;
-        }
 
         // leaves, restricted by level
         assertThatAxis(context.getConnectionWithDefaultRole(), "HR",
