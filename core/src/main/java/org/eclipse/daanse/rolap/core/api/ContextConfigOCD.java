@@ -367,14 +367,6 @@ public interface ContextConfigOCD {
             required = false)
     boolean enableGroupingSets();
 
-    /** @see org.eclipse.daanse.olap.api.ContextConfig#enableTotalCount() */
-    @AttributeDefinition(
-            name = BasicContextOCD.L10N_PREFIX + ConfigConstants.ENABLE_TOTAL_COUNT + BasicContextOCD.L10N_POSTFIX_NAME,
-            description = BasicContextOCD.L10N_PREFIX + ConfigConstants.ENABLE_TOTAL_COUNT + BasicContextOCD.L10N_POSTFIX_DESCRIPTION,
-            defaultValue = "" + ConfigConstants.ENABLE_TOTAL_COUNT_DEFAULT_VALUE,
-            required = false)
-    boolean enableTotalCount();
-
     // ------------------------------------------------------------------
     // Concurrency
     // ------------------------------------------------------------------

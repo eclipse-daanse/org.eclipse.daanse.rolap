@@ -25,7 +25,7 @@ import java.util.Map;
 
 import org.eclipse.daanse.sql.model.type.Datatype;
 import org.eclipse.daanse.olap.api.element.Member;
-import org.eclipse.daanse.olap.calc.base.util.TupleConstraintStruct;
+import org.eclipse.daanse.rolap.common.constraint.TupleConstraintStruct;
 import org.eclipse.daanse.rolap.common.RolapAggregationManager;
 import org.eclipse.daanse.rolap.common.agg.CellRequest;
 import org.eclipse.daanse.rolap.common.evaluator.RolapEvaluator;

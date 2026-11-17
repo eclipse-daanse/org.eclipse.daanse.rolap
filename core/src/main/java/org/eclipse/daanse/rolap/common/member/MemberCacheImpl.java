@@ -44,7 +44,7 @@ import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.olap.common.ConfigConstants;
 import org.eclipse.daanse.olap.cache.BoundedCache;
 import org.eclipse.daanse.olap.cache.SimpleCache;
-import org.eclipse.daanse.olap.cache.SoftValueCache;
+import org.eclipse.daanse.rolap.common.cache.SoftValueCache;
 import org.eclipse.daanse.rolap.common.constraint.ChildByNameConstraint;
 import org.eclipse.daanse.rolap.common.constraint.DefaultMemberChildrenConstraint;
 import org.eclipse.daanse.rolap.common.sql.SqlConstraintFactory;

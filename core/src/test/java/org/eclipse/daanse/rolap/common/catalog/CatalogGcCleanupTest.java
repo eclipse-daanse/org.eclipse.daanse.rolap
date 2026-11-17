@@ -20,7 +20,7 @@ import static org.mockito.Mockito.withSettings;
 
 import java.lang.ref.WeakReference;
 import java.util.UUID;
-import org.eclipse.daanse.olap.catalog.CatalogContentKey;
+import org.eclipse.daanse.rolap.common.catalog.CatalogContentKey;
 
 import org.eclipse.daanse.olap.core.AbstractBasicContext;
 import org.eclipse.daanse.rolap.api.RolapContext;

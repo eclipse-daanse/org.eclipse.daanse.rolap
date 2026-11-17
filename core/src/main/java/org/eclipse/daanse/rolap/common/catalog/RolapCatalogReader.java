@@ -47,7 +47,6 @@ import org.eclipse.daanse.olap.api.access.db.AccessDatabaseSchema;
 import org.eclipse.daanse.olap.api.access.db.AccessDatabaseTable;
 import org.eclipse.daanse.olap.api.query.Segment;
 import org.eclipse.daanse.olap.api.calc.Calc;
-import org.eclipse.daanse.olap.api.calc.compiler.ExpressionCompiler;
 import org.eclipse.daanse.olap.api.catalog.CatalogReader;
 import org.eclipse.daanse.olap.api.element.Cube;
 import org.eclipse.daanse.olap.api.element.Dimension;
@@ -66,14 +65,10 @@ import org.eclipse.daanse.olap.api.function.FunctionDefinition;
 import org.eclipse.daanse.olap.api.query.IdentifierSegment;
 import org.eclipse.daanse.olap.api.query.NameSegment;
 import org.eclipse.daanse.olap.api.query.component.Expression;
-import org.eclipse.daanse.olap.api.type.StringType;
 import org.eclipse.daanse.olap.calc.base.compiler.EvaluatorSimplifier;
-import org.eclipse.daanse.olap.calc.base.nested.AbstractProfilingNestedUnknownCalc;
 import org.eclipse.daanse.olap.common.ConfigConstants;
 import org.eclipse.daanse.olap.common.NameResolverImpl;
-import org.eclipse.daanse.olap.common.ParameterImpl;
 import org.eclipse.daanse.olap.common.Util;
-import org.eclipse.daanse.olap.query.component.NullLiteralImpl;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.RolapUtil;
 import org.eclipse.daanse.rolap.common.sql.SqlConstraintFactory;
@@ -762,14 +757,8 @@ public class RolapCatalogReader
             }
         }
 
-        // Scan through this context's configuration. It used to be the JVM-wide
-        // property registry, which meant every catalog in the server exposed one
-        // shared set of values; the context knows its own.
-        if (context.getConfigValue(name, null, Object.class) != null) {
-            return new SystemPropertyParameter(context, name, false);
-        }
-
-        return null;
+        // The last step, shared with every other art: a key this context's configuration sets.
+        return org.eclipse.daanse.olap.common.ConfigurationParameter.of(context, name).orElse(null);
     }
 
     @Override
@@ -800,68 +789,6 @@ public class RolapCatalogReader
             (RolapMember) member,
             memberChildren,
             constraint);
-    }
-
-    /**
-     * Implementation of {@link Parameter} sourced from the context's
-     * configuration (see {@link ConfigConstants}), or from a Java system property.
-     *
-     * The name of the parameter is the configuration key; for example
-     * "caseSensitive".
-     */
-    private static class SystemPropertyParameter
-        extends ParameterImpl
-    {
-        /**
-         * true if source is a Java system property;
-         * false if source is the context configuration.
-         */
-        private final boolean system;
-        /**
-         * The context to read the value from, or null for a system property.
-         */
-        private final Context<?> context;
-
-        public SystemPropertyParameter(Context<?> context, String name, boolean system) {
-            super(
-                name,
-                NullLiteralImpl.nullValue,
-                new StringBuilder("System property '").append(name).append("'").toString(),
-                StringType.INSTANCE);
-            this.system = system;
-            this.context = system ? null : context;
-        }
-
-        @Override
-		public Scope getScope() {
-            return Scope.System;
-        }
-
-        @Override
-		public boolean isModifiable() {
-            return false;
-        }
-
-        @Override
-		public Calc compile(ExpressionCompiler compiler) {
-            return new AbstractProfilingNestedUnknownCalc(getType()) {
-            	//"SystemPropertyCalc"
-                @Override
-				public Calc[] getChildCalcs() {
-                    return new Calc[0];
-                }
-
-                @Override
-				public Object evaluateInternal(Evaluator evaluator) {
-                    final String name = SystemPropertyParameter.this.getName();
-                    if (system) {
-                        return System.getProperty(name);
-                    }
-                    Object value = context.getConfigValue(name, null, Object.class);
-                    return value == null ? null : String.valueOf(value);
-                }
-            };
-        }
     }
 
     @Override

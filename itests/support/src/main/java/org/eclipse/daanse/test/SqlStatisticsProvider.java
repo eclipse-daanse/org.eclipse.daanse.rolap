@@ -38,7 +38,6 @@ import org.eclipse.daanse.olap.api.relational.RelationalContext;
 import org.eclipse.daanse.rolap.common.RolapUtil;
 import org.eclipse.daanse.rolap.common.SqlStatement;
 
-import org.eclipse.daanse.olap.spi.StatisticsProvider;
 
 /**
  * Implementation of {@link mondrian.spi.StatisticsProvider} that generates
@@ -63,23 +62,7 @@ public class SqlStatisticsProvider implements StatisticsProvider {
             null,
             0
         );
-        SqlStatement stmt =
-            RolapUtil.executeQuery(
-                context,
-                sql,
-                execution.asContext().createChild(metadata, Optional.empty()));
-        try {
-            ResultSet resultSet = stmt.getResultSet();
-            if (resultSet.next()) {
-                ++stmt.rowCount;
-                return resultSet.getInt(1);
-            }
-            return -1; // huh?
-        } catch (SQLException e) {
-            throw stmt.handle(e);
-        } finally {
-            stmt.close();
-        }
+        return count(context, sql, execution, metadata);
     }
 
     @Override
@@ -107,23 +90,7 @@ public class SqlStatisticsProvider implements StatisticsProvider {
             null,
             0
         );
-        SqlStatement stmt =
-            RolapUtil.executeQuery(
-                context,
-                countSql,
-                execution.asContext().createChild(metadata, Optional.empty()));
-        try {
-            ResultSet resultSet = stmt.getResultSet();
-            if (resultSet.next()) {
-                ++stmt.rowCount;
-                return resultSet.getInt(1);
-            }
-            return -1; // huh?
-        } catch (SQLException e) {
-            throw stmt.handle(e);
-        } finally {
-            stmt.close();
-        }
+        return count(context, countSql, execution, metadata);
     }
 
     @Override
@@ -147,23 +114,7 @@ public class SqlStatisticsProvider implements StatisticsProvider {
             null,
             0
         );
-        SqlStatement stmt =
-            RolapUtil.executeQuery(
-                context,
-                sql,
-                execution.asContext().createChild(metadata, Optional.empty()));
-        try {
-            ResultSet resultSet = stmt.getResultSet();
-            if (resultSet.next()) {
-                ++stmt.rowCount;
-                return resultSet.getInt(1);
-            }
-            return -1; // huh?
-        } catch (SQLException e) {
-            throw stmt.handle(e);
-        } finally {
-            stmt.close();
-        }
+        return count(context, sql, execution, metadata);
     }
 
     private static String generateColumnCardinalitySql(
@@ -203,6 +154,32 @@ public class SqlStatisticsProvider implements StatisticsProvider {
             // Cannot compute cardinality: this database neither supports COUNT
             // DISTINCT nor SELECT in the FROM clause.
             return null;
+        }
+    }
+
+    /**
+     * The first column of the first row, or -1 when there is no row or the statement fails: an unknown table, query
+     * or column has no estimate, it is no error.
+     */
+    private static long count(Context context, String sql, Execution execution, ExecutionMetadata metadata) {
+        SqlStatement stmt;
+        try {
+            stmt = RolapUtil.executeQuery(context, sql,
+                    execution.asContext().createChild(metadata, Optional.empty()));
+        } catch (RuntimeException e) {
+            return -1;
+        }
+        try {
+            ResultSet resultSet = stmt.getResultSet();
+            if (resultSet.next()) {
+                ++stmt.rowCount;
+                return resultSet.getInt(1);
+            }
+            return -1;
+        } catch (SQLException e) {
+            return -1;
+        } finally {
+            stmt.close();
         }
     }
 }

@@ -42,9 +42,9 @@ import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.util.PojoUtil;
 import org.eclipse.daanse.rolap.element.RolapCatalog;
 import org.eclipse.daanse.rolap.element.RolapCube;
-import org.eclipse.daanse.olap.recorder.ListRecorder;
-import org.eclipse.daanse.olap.recorder.MessageRecorder;
-import org.eclipse.daanse.olap.recorder.RecorderException;
+import org.eclipse.daanse.rolap.common.aggmatcher.ListRecorder;
+import org.eclipse.daanse.rolap.common.aggmatcher.MessageRecorder;
+import org.eclipse.daanse.rolap.common.aggmatcher.RecorderException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

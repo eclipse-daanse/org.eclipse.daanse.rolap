@@ -57,8 +57,8 @@ import org.eclipse.daanse.olap.api.monitor.event.SqlStatementStartEvent;
 import org.eclipse.daanse.olap.api.relational.RelationalContext;
 import org.eclipse.daanse.olap.api.relational.SqlStatementI;
 import org.eclipse.daanse.olap.common.Util;
-import org.eclipse.daanse.olap.util.Counters;
-import org.eclipse.daanse.olap.util.DelegatingInvocationHandler;
+import org.eclipse.daanse.rolap.common.util.Counters;
+import org.eclipse.daanse.rolap.common.util.DelegatingInvocationHandler;
 
 /**
  * SqlStatement contains a SQL statement and associated resources throughout its lifetime.

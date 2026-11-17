@@ -48,7 +48,7 @@ import org.eclipse.daanse.rolap.common.star.HierarchyUsage;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.element.RolapLevel;
-import org.eclipse.daanse.olap.recorder.MessageRecorder;
+import org.eclipse.daanse.rolap.common.aggmatcher.MessageRecorder;
 
 /**
  * This is the Recognizer for the aggregate table descriptions that appear in

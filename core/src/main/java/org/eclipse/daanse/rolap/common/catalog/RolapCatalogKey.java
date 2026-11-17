@@ -14,7 +14,7 @@
 package org.eclipse.daanse.rolap.common.catalog;
 
 import org.eclipse.daanse.rolap.common.ConnectionKey;
-import org.eclipse.daanse.olap.catalog.CatalogContentKey;
+import org.eclipse.daanse.rolap.common.catalog.CatalogContentKey;
 
 public record RolapCatalogKey(CatalogContentKey catalogContentKey, ConnectionKey connectionKey)
 {

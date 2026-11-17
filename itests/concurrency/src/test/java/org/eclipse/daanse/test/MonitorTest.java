@@ -32,7 +32,7 @@ import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.execution.Statement;
 import org.eclipse.daanse.olap.api.monitor.EventBus;
 import org.eclipse.daanse.olap.api.result.CellSet;
-import org.eclipse.daanse.olap.result.RectangularCellSetFormatter;
+import org.eclipse.daanse.olap.cellformatter.RectangularTextCellFormatter;
 import org.eclipse.daanse.olap.execution.StatementImpl;
 import org.eclipse.daanse.rolap.mapping.instance.emf.complex.foodmart.FoodmartTestInstance;
 import org.eclipse.daanse.rolap.testkit.junit.api.RolapContextTest;
@@ -72,7 +72,7 @@ class MonitorTest {
             context.getConnectionWithDefaultRole().createStatement();
         CellSet cellSet = statement.executeQuery(queryString);
         StringWriter stringWriter = new StringWriter();
-        new RectangularCellSetFormatter(true).format(
+        new RectangularTextCellFormatter(true).format(
             cellSet,
             new PrintWriter(stringWriter));
         ((StatementImpl)statement).close();

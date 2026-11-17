@@ -28,7 +28,7 @@
 package org.eclipse.daanse.rolap.element;
 
 import org.eclipse.daanse.olap.api.element.Measure;
-import org.eclipse.daanse.olap.result.ValueFormatter;
+import org.eclipse.daanse.olap.cellformatter.FormatStringCellFormatter;
 
 /**
  * Interface implemented by all measures (both stored and calculated).
@@ -43,5 +43,5 @@ public interface RolapMeasure extends Measure {
      *
      * @return formatter
      */
-    ValueFormatter getFormatter();
+    FormatStringCellFormatter getFormatter();
 }

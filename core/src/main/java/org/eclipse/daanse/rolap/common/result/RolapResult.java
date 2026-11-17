@@ -33,7 +33,7 @@ import org.eclipse.daanse.olap.evaluator.EvaluatorImpl;
 import org.eclipse.daanse.olap.result.CellInfo;
 import org.eclipse.daanse.olap.result.ResultEvaluatorRoot;
 import org.eclipse.daanse.olap.result.ResultImpl;
-import org.eclipse.daanse.olap.result.ValueFormatter;
+import org.eclipse.daanse.olap.cellformatter.FormatStringCellFormatter;
 import org.eclipse.daanse.rolap.aggregator.DistinctCountAggregator;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.rolap.common.agg.AggregationManager;
@@ -126,7 +126,7 @@ public class RolapResult extends ResultImpl {
     }
 
     @Override
-    protected ValueFormatter formatterFor( Member measure ) {
+    protected FormatStringCellFormatter formatterFor( Member measure ) {
         return measure instanceof RolapMeasure rolapMeasure ? rolapMeasure.getFormatter() : null;
     }
 
@@ -142,7 +142,7 @@ public class RolapResult extends ResultImpl {
     }
 
     @Override
-    protected Member compoundSlicerPlaceholder( Member member, Calc calc, ValueFormatter formatter, TupleList tuples,
+    protected Member compoundSlicerPlaceholder( Member member, Calc calc, FormatStringCellFormatter formatter, TupleList tuples,
             int solveOrder ) {
         CompoundSlicerRolapMember placeholder = new CompoundSlicerRolapMember(
                 (RolapMember) member.getHierarchy().getNullMember(), calc, formatter, tuples, solveOrder );

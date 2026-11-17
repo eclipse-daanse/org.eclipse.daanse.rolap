@@ -88,7 +88,7 @@ import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.exceptions.QueryCanceledException;
 import org.eclipse.daanse.olap.execution.ExecutionImpl;
 import org.eclipse.daanse.olap.query.component.IdImpl;
-import org.eclipse.daanse.olap.spi.StatisticsProvider;
+import org.eclipse.daanse.test.StatisticsProvider;
 import org.eclipse.daanse.rolap.api.RolapContext;
 import org.eclipse.daanse.rolap.common.RolapUtil;
 import org.eclipse.daanse.rolap.element.RolapCatalog;

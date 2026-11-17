@@ -48,7 +48,7 @@ import org.eclipse.daanse.olap.api.result.Cell;
 import org.eclipse.daanse.olap.api.result.CellSet;
 import org.eclipse.daanse.olap.api.result.Result;
 import org.eclipse.daanse.olap.api.result.Scenario;
-import org.eclipse.daanse.olap.result.TraditionalCellSetFormatter;
+import org.eclipse.daanse.olap.cellformatter.TraditionalTextCellFormatter;
 import org.eclipse.daanse.rolap.common.writeback.ScenarioImpl;
 import org.eclipse.daanse.rolap.element.RolapCatalog;
 import org.eclipse.daanse.rolap.mapping.instance.emf.complex.foodmart.CatalogSupplier;
@@ -591,7 +591,7 @@ class ScenarioTest {
 
     private static String toString(CellSet cellSet) {
         final StringWriter sw = new StringWriter();
-        new TraditionalCellSetFormatter().format(
+        new TraditionalTextCellFormatter().format(
             cellSet,
             new PrintWriter(sw));
         return sw.toString();

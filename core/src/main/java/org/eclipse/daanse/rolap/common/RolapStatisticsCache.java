@@ -44,7 +44,7 @@ import org.eclipse.daanse.rolap.sql.SqlStatisticsProviderNew;
 /**
  * Provides and caches statistics.
  *
- * Wrapper around a chain of org.eclipse.daanse.olap.spi.StatisticsProvider s,
+ * Wrapper around SqlStatisticsProviderNew (the SQL estimates of a table, query or column),
  * followed by a cache to store the results.
  */
 public class RolapStatisticsCache {

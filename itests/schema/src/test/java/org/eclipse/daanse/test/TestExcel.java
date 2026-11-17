@@ -23,7 +23,7 @@ import org.eclipse.daanse.olap.api.execution.Statement;
 import org.eclipse.daanse.olap.api.query.component.Query;
 import org.eclipse.daanse.olap.api.query.component.QueryComponent;
 import org.eclipse.daanse.olap.api.result.CellSet;
-import org.eclipse.daanse.olap.result.RectangularCellSetFormatter;
+import org.eclipse.daanse.olap.cellformatter.RectangularTextCellFormatter;
 import org.eclipse.daanse.rolap.mapping.instance.emf.complex.foodmart.FoodmartTestInstance;
 import org.eclipse.daanse.rolap.testkit.junit.api.RolapContextTest;
 import org.junit.jupiter.api.Test;
@@ -48,7 +48,7 @@ public class TestExcel {
 
             StringWriter stringWriter = new StringWriter();
             PrintWriter printWriter= new PrintWriter(stringWriter);
-            new RectangularCellSetFormatter(true).format(cellSet, printWriter);
+            new RectangularTextCellFormatter(true).format(cellSet, printWriter);
 
 
             System.out.println(stringWriter);

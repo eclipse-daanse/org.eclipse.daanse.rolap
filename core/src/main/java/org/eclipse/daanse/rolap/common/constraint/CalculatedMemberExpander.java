@@ -42,14 +42,14 @@ import org.eclipse.daanse.olap.api.evaluator.Evaluator;
 import org.eclipse.daanse.olap.api.query.component.Expression;
 import org.eclipse.daanse.olap.api.query.component.MemberExpression;
 import org.eclipse.daanse.olap.calc.base.type.tuplebase.TupleCollections;
-import org.eclipse.daanse.olap.calc.base.util.TupleConstraintStruct;
+import org.eclipse.daanse.rolap.common.constraint.TupleConstraintStruct;
 import org.eclipse.daanse.olap.function.def.aggregate.AggregateFunDef;
 import org.eclipse.daanse.olap.function.def.parentheses.ParenthesesFunDef;
 import org.eclipse.daanse.olap.query.component.ResolvedFunCallImpl;
 import org.eclipse.daanse.rolap.common.evaluator.RolapEvaluator;
 import org.eclipse.daanse.rolap.element.CompoundSlicerRolapMember;
 import org.eclipse.daanse.rolap.element.RolapMemberBase;
-import org.eclipse.daanse.olap.util.FilteredIterableList;
+import org.eclipse.daanse.rolap.common.util.FilteredIterableList;
 
 /**
  * Expands supported calculated members (Aggregate, "+", parentheses, member expressions) into the

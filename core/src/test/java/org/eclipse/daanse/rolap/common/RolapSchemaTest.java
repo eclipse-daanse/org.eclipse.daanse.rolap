@@ -61,7 +61,7 @@ import org.eclipse.daanse.olap.exceptions.RoleUnionGrantsException;
 import org.eclipse.daanse.olap.exceptions.UnknownRoleException;
 import org.eclipse.daanse.rolap.common.agg.AggregationManager;
 import org.eclipse.daanse.rolap.common.agg.SegmentCacheManager;
-import org.eclipse.daanse.olap.catalog.CatalogContentKey;
+import org.eclipse.daanse.rolap.common.catalog.CatalogContentKey;
 import org.eclipse.daanse.rolap.common.catalog.RolapCatalogKey;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.common.star.RolapStarRegistry;

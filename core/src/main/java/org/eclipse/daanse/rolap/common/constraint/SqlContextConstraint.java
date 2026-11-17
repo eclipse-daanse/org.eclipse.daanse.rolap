@@ -42,7 +42,7 @@ import org.eclipse.daanse.olap.api.evaluator.Evaluator;
 import org.eclipse.daanse.olap.api.query.component.Expression;
 import org.eclipse.daanse.olap.api.query.component.MemberExpression;
 import org.eclipse.daanse.olap.api.query.component.Query;
-import org.eclipse.daanse.olap.calc.base.util.TupleConstraintStruct;
+import org.eclipse.daanse.rolap.common.constraint.TupleConstraintStruct;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.query.component.ResolvedFunCallImpl;
 import org.eclipse.daanse.rolap.api.element.RolapMember;

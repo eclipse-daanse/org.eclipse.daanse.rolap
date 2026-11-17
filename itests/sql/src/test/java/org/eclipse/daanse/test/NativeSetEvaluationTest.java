@@ -44,7 +44,7 @@ import org.eclipse.daanse.olap.api.connection.ConnectionProps;
 import org.eclipse.daanse.olap.api.element.Hierarchy;
 import org.eclipse.daanse.olap.api.result.Result;
 import org.eclipse.daanse.olap.common.ConfigConstants;
-import org.eclipse.daanse.olap.exceptions.NativeEvaluationUnsupportedException;
+import org.eclipse.daanse.rolap.common.NativeEvaluationUnsupportedException;
 import  org.eclipse.daanse.olap.util.Bug;
 import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.mapping.instance.emf.complex.foodmart.CatalogSupplier;

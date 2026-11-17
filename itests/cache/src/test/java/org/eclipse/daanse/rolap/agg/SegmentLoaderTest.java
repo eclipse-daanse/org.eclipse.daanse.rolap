@@ -79,7 +79,7 @@ import org.eclipse.daanse.rolap.testkit.assertions.SqlAssert;
 import org.eclipse.daanse.rolap.testkit.assertions.SqlPattern;
 import org.eclipse.daanse.rolap.testkit.junit.api.RolapConfig;
 import org.eclipse.daanse.rolap.testkit.junit.api.RolapContextTest;
-import org.eclipse.daanse.olap.util.DelegatingInvocationHandler;
+import org.eclipse.daanse.rolap.common.util.DelegatingInvocationHandler;
 import org.eclipse.daanse.sql.model.type.BestFitColumnType;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

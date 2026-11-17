@@ -25,7 +25,7 @@ import org.eclipse.daanse.olap.api.execution.Execution;
 import org.eclipse.daanse.olap.api.execution.ExecutionContext;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
-import org.eclipse.daanse.olap.util.SlotFuture;
+import org.eclipse.daanse.rolap.common.util.SlotFuture;
 
 /**
  * Coordinates concurrent member-list loads per cache key so a reader never

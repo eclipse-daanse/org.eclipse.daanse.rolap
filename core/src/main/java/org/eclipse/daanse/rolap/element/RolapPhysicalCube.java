@@ -51,7 +51,7 @@ import org.eclipse.daanse.olap.api.element.Property;
 import org.eclipse.daanse.olap.api.formatter.CellFormatter;
 import org.eclipse.daanse.olap.common.StandardProperty;
 import org.eclipse.daanse.olap.common.Util;
-import org.eclipse.daanse.olap.exceptions.BadMeasureSourceException;
+import org.eclipse.daanse.rolap.common.BadMeasureSourceException;
 import org.eclipse.daanse.olap.format.FormatterCreateContext;
 import org.eclipse.daanse.olap.format.FormatterFactory;
 import org.eclipse.daanse.olap.key.BitKey;

@@ -49,10 +49,11 @@ import org.eclipse.daanse.sql.dialect.api.Dialect;
 import org.eclipse.daanse.sql.dialect.api.DialectFactory;
 import org.eclipse.daanse.dmv.parser.api.DmvParserProvider;
 import org.eclipse.daanse.mdx.parser.api.MdxParserProvider;
+import org.eclipse.daanse.olap.api.calc.compiler.ExpressionCompiler;
+import org.eclipse.daanse.olap.evaluator.DependencyTestingEvaluator;
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.agg.AggregationFactory;
 import org.eclipse.daanse.olap.api.aggregator.CustomAggregatorFactory;
-import org.eclipse.daanse.olap.api.calc.compiler.ExpressionCompiler;
 import org.eclipse.daanse.olap.api.calc.compiler.ExpressionCompilerFactory;
 import org.eclipse.daanse.olap.api.connection.ConnectionProps;
 import org.eclipse.daanse.olap.api.evaluator.Evaluator;
@@ -66,12 +67,10 @@ import org.eclipse.daanse.rolap.api.aggmatch.AggregationMatchRulesSupplier;
 import org.eclipse.daanse.rolap.common.AbstractRolapContext;
 import org.eclipse.daanse.rolap.common.agg.AggregationManager;
 import org.eclipse.daanse.rolap.common.aggregator.AggregationFactoryImpl;
-import org.eclipse.daanse.olap.catalog.ContentIdentity;
+import org.eclipse.daanse.rolap.common.catalog.ContentIdentity;
 import org.eclipse.daanse.rolap.common.catalog.RolapCatalogCache;
 import org.eclipse.daanse.rolap.common.connection.ExternalRolapConnection;
 import org.eclipse.daanse.rolap.common.connection.InternalRolapConnection;
-import org.eclipse.daanse.olap.evaluator.DependencyTestingEvaluator;
-import org.eclipse.daanse.olap.evaluator.InterceptableEvaluator;
 import org.eclipse.daanse.rolap.common.evaluator.RolapEvaluator;
 import org.eclipse.daanse.rolap.common.evaluator.RolapEvaluatorRoot;
 import org.eclipse.daanse.rolap.common.result.RolapResult;
@@ -562,9 +561,10 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
         return List.copyOf(this.customAggregators);
     };
 
+    /** The compiled calcs measure themselves; profiling wraps nothing here. */
     @Override
     public ExpressionCompiler createProfilingCompiler(ExpressionCompiler compiler) {
-        return new InterceptableEvaluator.InterceptableEvaluatorCompiler(compiler);
+        return compiler;
     }
 
     /**
@@ -575,5 +575,4 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
     public ExpressionCompiler createDependencyTestingCompiler(ExpressionCompiler compiler) {
         return new DependencyTestingEvaluator.DteCompiler(compiler);
     }
-
 }

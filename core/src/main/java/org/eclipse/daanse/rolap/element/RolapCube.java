@@ -254,11 +254,11 @@ public abstract class RolapCube extends CubeBase {
 
     /**
      * Holds the cube still while one caller's pending rows are in its fact; see
-     * {@link org.eclipse.daanse.olap.writeback.PendingFact} for why that
+     * {@link org.eclipse.daanse.rolap.common.writeback.PendingFact} for why that
      * has to be exclusive.
      */
-    private final org.eclipse.daanse.olap.writeback.PendingFact pendingFact =
-        new org.eclipse.daanse.olap.writeback.PendingFact();
+    private final org.eclipse.daanse.rolap.common.writeback.PendingFact pendingFact =
+        new org.eclipse.daanse.rolap.common.writeback.PendingFact();
 
     /**
      * Used for virtual cubes.

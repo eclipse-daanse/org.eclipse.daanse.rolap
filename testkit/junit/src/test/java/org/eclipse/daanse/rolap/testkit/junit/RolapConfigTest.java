@@ -31,13 +31,13 @@ import org.junit.jupiter.api.Test;
 class RolapConfigTest {
 
     @Test
-    @RolapConfig(key = ConfigConstants.ENABLE_TOTAL_COUNT, value = "true", type = Boolean.class)
+    @RolapConfig(key = ConfigConstants.ENABLE_GROUPING_SETS, value = "true", type = Boolean.class)
     void methodConfigMergesOverClassConfig(Context<?> context) {
         assertThat(context.getConfigValue(ConfigConstants.GENERATE_FORMATTED_SQL,
                 ConfigConstants.GENERATE_FORMATTED_SQL_DEFAULT_VALUE, Boolean.class))
                 .as("Class configuration applies").isTrue();
-        assertThat(context.getConfigValue(ConfigConstants.ENABLE_TOTAL_COUNT,
-                ConfigConstants.ENABLE_TOTAL_COUNT_DEFAULT_VALUE, Boolean.class))
+        assertThat(context.getConfigValue(ConfigConstants.ENABLE_GROUPING_SETS,
+                ConfigConstants.ENABLE_GROUPING_SETS_DEFAULT_VALUE, Boolean.class))
                 .as("Method configuration also applies").isTrue();
     }
 
@@ -46,8 +46,8 @@ class RolapConfigTest {
         assertThat(context.getConfigValue(ConfigConstants.GENERATE_FORMATTED_SQL,
                 ConfigConstants.GENERATE_FORMATTED_SQL_DEFAULT_VALUE, Boolean.class))
                 .as("Class configuration still applies").isTrue();
-        assertThat(context.getConfigValue(ConfigConstants.ENABLE_TOTAL_COUNT,
-                ConfigConstants.ENABLE_TOTAL_COUNT_DEFAULT_VALUE, Boolean.class))
+        assertThat(context.getConfigValue(ConfigConstants.ENABLE_GROUPING_SETS,
+                ConfigConstants.ENABLE_GROUPING_SETS_DEFAULT_VALUE, Boolean.class))
                 .as("The neighbor's method configuration has NOT been leaked (fresh context)").isFalse();
     }
 }

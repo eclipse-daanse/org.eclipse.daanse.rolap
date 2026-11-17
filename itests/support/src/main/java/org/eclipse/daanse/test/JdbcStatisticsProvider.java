@@ -36,7 +36,6 @@ import org.eclipse.daanse.olap.common.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.eclipse.daanse.olap.spi.StatisticsProvider;
 
 /**
  * Implementation of {@link mondrian.spi.StatisticsProvider} that uses JDBC

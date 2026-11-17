@@ -24,7 +24,7 @@ import org.eclipse.daanse.olap.util.type.TypeWrapperExp;
 import org.eclipse.daanse.rolap.api.element.RolapMember;
 import org.eclipse.daanse.olap.evaluator.CompoundSlicerMember;
 import org.eclipse.daanse.olap.evaluator.EvaluatorRoot;
-import org.eclipse.daanse.olap.result.ValueFormatter;
+import org.eclipse.daanse.olap.cellformatter.FormatStringCellFormatter;
 
 /**
  * Member which holds the AggregateCalc used when evaluating a compound slicer. This is used to better handle some
@@ -33,11 +33,11 @@ import org.eclipse.daanse.olap.result.ValueFormatter;
  */
 public class CompoundSlicerRolapMember extends DelegatingRolapMember implements RolapMeasure, CompoundSlicerMember {
   private final Calc calc;
-  private final ValueFormatter valueFormatter;
+  private final FormatStringCellFormatter valueFormatter;
   private final TupleList tupleList;
   private final int solveOrder;
 
-  public CompoundSlicerRolapMember( RolapMember placeholderMember, Calc calc, ValueFormatter formatter,
+  public CompoundSlicerRolapMember( RolapMember placeholderMember, Calc calc, FormatStringCellFormatter formatter,
       TupleList tupleList, int solveOrder ) {
     super( placeholderMember );
     this.calc = calc;
@@ -98,7 +98,7 @@ public class CompoundSlicerRolapMember extends DelegatingRolapMember implements 
   }
 
   @Override
-	public ValueFormatter getFormatter() {
+	public FormatStringCellFormatter getFormatter() {
     return valueFormatter;
   }
 }

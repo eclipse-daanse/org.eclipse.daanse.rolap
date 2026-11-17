@@ -29,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
 import org.eclipse.daanse.rolap.common.star.RolapStar;
-import org.eclipse.daanse.olap.recorder.MessageRecorder;
+import org.eclipse.daanse.rolap.common.aggmatcher.MessageRecorder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;

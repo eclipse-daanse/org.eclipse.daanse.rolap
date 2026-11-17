@@ -38,7 +38,7 @@ import org.eclipse.daanse.olap.api.query.component.Expression;
 import org.eclipse.daanse.olap.api.type.SetType;
 import org.eclipse.daanse.olap.api.type.Type;
 import org.eclipse.daanse.olap.common.Util;
-import org.eclipse.daanse.olap.exceptions.UnsupportedCalculatedMemberException;
+import org.eclipse.daanse.rolap.common.UnsupportedCalculatedMemberException;
 import org.eclipse.daanse.olap.key.BitKey;
 import org.eclipse.daanse.olap.spi.SegmentPredicate;
 import org.eclipse.daanse.olap.query.component.ResolvedFunCallImpl;
@@ -55,7 +55,7 @@ import org.eclipse.daanse.rolap.element.RolapCubeLevel;
 import org.eclipse.daanse.rolap.element.RolapCubeMember;
 import org.eclipse.daanse.rolap.element.RolapMeasure;
 import org.eclipse.daanse.rolap.common.constraint.CalculatedMemberExpander;
-import org.eclipse.daanse.olap.calc.base.util.TupleConstraintStruct;
+import org.eclipse.daanse.rolap.common.constraint.TupleConstraintStruct;
 import org.eclipse.daanse.rolap.element.RolapStoredMeasure;
 
 /**

@@ -50,7 +50,7 @@ import org.eclipse.daanse.olap.api.result.Axis;
 import org.eclipse.daanse.olap.api.result.Cell;
 import org.eclipse.daanse.olap.api.result.Result;
 import org.eclipse.daanse.olap.common.ConfigConstants;
-import org.eclipse.daanse.olap.exceptions.NativeEvaluationUnsupportedException;
+import org.eclipse.daanse.rolap.common.NativeEvaluationUnsupportedException;
 import org.eclipse.daanse.olap.query.component.IdImpl;
 import  org.eclipse.daanse.olap.util.Bug;
 import org.eclipse.daanse.rolap.api.element.RolapMember;

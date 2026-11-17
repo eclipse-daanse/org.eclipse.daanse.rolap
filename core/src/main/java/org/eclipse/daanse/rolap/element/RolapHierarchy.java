@@ -125,8 +125,8 @@ import org.eclipse.daanse.rolap.mapping.model.database.source.SourceFactory;
 import org.eclipse.daanse.rolap.mapping.model.provider.util.CwmHelper;
 import org.eclipse.daanse.cwm.model.cwm.foundation.businessinformation.util.Descriptions;
 import org.eclipse.daanse.olap.api.relational.RelationalContext;
-import org.eclipse.daanse.olap.result.CellFormatterValueFormatter;
-import org.eclipse.daanse.olap.result.ValueFormatter;
+import org.eclipse.daanse.olap.cellformatter.UserDefinedCellFormatter;
+import org.eclipse.daanse.olap.cellformatter.FormatStringCellFormatter;
 /**
  * RolapHierarchy implements {@link Hierarchy} for a ROLAP database.
  *
@@ -1505,7 +1505,7 @@ public class RolapHierarchy extends HierarchyBase {
         extends RolapCalculatedMember
         implements RolapMeasure
     {
-        private ValueFormatter cellFormatter;
+        private FormatStringCellFormatter cellFormatter;
 
         public RolapCalculatedMeasure(
             RolapMember parent, RolapLevel level, String name, Formula formula)
@@ -1541,14 +1541,14 @@ public class RolapHierarchy extends HierarchyBase {
         }
 
         @Override
-		public ValueFormatter getFormatter() {
+		public FormatStringCellFormatter getFormatter() {
             return cellFormatter;
         }
 
         private void setCellFormatter(CellFormatter cellFormatter) {
             if (cellFormatter != null) {
                 this.cellFormatter =
-                    new CellFormatterValueFormatter(cellFormatter);
+                    new UserDefinedCellFormatter(cellFormatter);
             }
         }
     }

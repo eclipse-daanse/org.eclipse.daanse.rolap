@@ -57,7 +57,7 @@ import org.eclipse.daanse.rolap.element.RolapColumn;
 import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.element.RolapLevel;
 import org.eclipse.daanse.rolap.element.RolapVirtualCube;
-import org.eclipse.daanse.olap.recorder.MessageRecorder;
+import org.eclipse.daanse.rolap.common.aggmatcher.MessageRecorder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

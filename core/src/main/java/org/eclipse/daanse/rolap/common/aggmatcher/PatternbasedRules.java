@@ -34,7 +34,7 @@ import org.eclipse.daanse.rolap.api.aggmatch.AggregationMatchRule;
 import org.eclipse.daanse.rolap.api.aggmatch.AggregationMatchRules;
 import org.eclipse.daanse.rolap.api.aggmatch.AggregationTableMatch;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
-import org.eclipse.daanse.olap.recorder.MessageRecorder;
+import org.eclipse.daanse.rolap.common.aggmatcher.MessageRecorder;
 
 /**
  * Container for aggregate recognition rules.

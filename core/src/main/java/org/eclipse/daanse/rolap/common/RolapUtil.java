@@ -65,7 +65,7 @@ import org.eclipse.daanse.olap.api.query.NameSegment;
 import org.eclipse.daanse.olap.api.query.Quoting;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.exceptions.MdxCantFindMemberException;
-import org.eclipse.daanse.olap.exceptions.NativeEvaluationUnsupportedException;
+import org.eclipse.daanse.rolap.common.NativeEvaluationUnsupportedException;
 import org.eclipse.daanse.olap.fun.FunUtil;
 import org.eclipse.daanse.olap.key.BitKey;
 import org.eclipse.daanse.rolap.api.element.RolapMember;

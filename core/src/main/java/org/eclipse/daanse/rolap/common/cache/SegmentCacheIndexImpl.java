@@ -65,7 +65,7 @@ import org.eclipse.daanse.olap.util.CartesianProductList;
 import org.eclipse.daanse.olap.util.Pair;
 import org.eclipse.daanse.rolap.common.RolapUtil;
 import org.eclipse.daanse.rolap.common.agg.CellRequest;
-import org.eclipse.daanse.olap.util.SlotFuture;
+import org.eclipse.daanse.rolap.common.util.SlotFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -94,7 +94,7 @@ import org.eclipse.daanse.rolap.testkit.assertions.CellRequestFixture;
 import org.eclipse.daanse.rolap.testkit.assertions.Mdx;
 import org.eclipse.daanse.rolap.testkit.junit.api.RolapConfig;
 import org.eclipse.daanse.rolap.testkit.junit.api.RolapContextTest;
-import org.eclipse.daanse.olap.util.DelegatingInvocationHandler;
+import org.eclipse.daanse.rolap.common.util.DelegatingInvocationHandler;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

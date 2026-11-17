@@ -72,7 +72,7 @@ import org.eclipse.daanse.olap.function.def.parentheses.ParenthesesFunDef;
 import org.eclipse.daanse.olap.query.component.MemberExpressionImpl;
 import org.eclipse.daanse.olap.query.component.ResolvedFunCallImpl;
 import org.eclipse.daanse.rolap.common.constraint.CalculatedMemberExpander;
-import org.eclipse.daanse.olap.calc.base.util.TupleConstraintStruct;
+import org.eclipse.daanse.rolap.common.constraint.TupleConstraintStruct;
 import org.eclipse.daanse.rolap.common.evaluator.RolapEvaluator;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;

@@ -33,7 +33,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.Expiry;
 import com.github.benmanes.caffeine.cache.RemovalListener;
 import com.github.benmanes.caffeine.cache.stats.CacheStats;
-import org.eclipse.daanse.olap.catalog.CatalogContentKey;
+import org.eclipse.daanse.rolap.common.catalog.CatalogContentKey;
 
 /**
  * Thread-safe pool of RolapCatalog instances on one Caffeine cache.

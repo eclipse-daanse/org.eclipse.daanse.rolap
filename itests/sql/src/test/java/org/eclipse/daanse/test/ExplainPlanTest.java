@@ -49,7 +49,7 @@ import org.eclipse.daanse.olap.api.execution.QueryTiming;
 import org.eclipse.daanse.olap.api.execution.Statement;
 import org.eclipse.daanse.olap.api.result.CellSet;
 import org.eclipse.daanse.olap.common.ConfigConstants;
-import org.eclipse.daanse.olap.result.RectangularCellSetFormatter;
+import org.eclipse.daanse.olap.cellformatter.RectangularTextCellFormatter;
 import org.eclipse.daanse.rolap.mapping.instance.emf.complex.foodmart.FoodmartTestInstance;
 import org.eclipse.daanse.rolap.testkit.junit.api.RolapConfig;
 import org.eclipse.daanse.rolap.testkit.junit.api.RolapContextTest;
@@ -184,7 +184,7 @@ mondrian.olap.fun.FilterFunDef$ImmutableIterCalc(type=SetType<MemberType<hierarc
 		});
 
 		final CellSet cellSet = statement.executeQuery(mdx);
-		new RectangularCellSetFormatter(true).format(cellSet, new PrintWriter(new StringWriter()));
+		new RectangularTextCellFormatter(true).format(cellSet, new PrintWriter(new StringWriter()));
 		cellSet.close();
 		assertEquals(8, strings.size());
 		String actual = strings.get(0).replaceAll("callMillis=[0-9]+", "callMillis=nnn").replaceAll("[0-9]+ms",

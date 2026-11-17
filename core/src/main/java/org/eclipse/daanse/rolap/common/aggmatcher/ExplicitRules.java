@@ -59,7 +59,7 @@ import org.eclipse.daanse.rolap.aggregator.countbased.SumFromAvgAggregator;
 import org.eclipse.daanse.rolap.common.star.RolapStar;
 import org.eclipse.daanse.rolap.element.RolapCube;
 import org.eclipse.daanse.rolap.element.RolapLevel;
-import org.eclipse.daanse.olap.recorder.MessageRecorder;
+import org.eclipse.daanse.rolap.common.aggmatcher.MessageRecorder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
