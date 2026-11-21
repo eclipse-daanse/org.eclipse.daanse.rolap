@@ -74,7 +74,6 @@
       It joins the reactor once that module does.
     -->
     <module>documentation</module>
-    <module>segmentcache</module>
     <module>testkit</module>
     <module>itests</module>
   </modules>
