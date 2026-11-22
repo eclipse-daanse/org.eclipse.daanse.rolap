@@ -61,6 +61,7 @@ public class SharedOrdinalCatalogSupplier implements CatalogMappingSupplier {
 
     private final Schema databaseSchema;
     private final Catalog catalog;
+    private final PhysicalCube cubeA;
 
     public SharedOrdinalCatalogSupplier() {
         this(null, null, false);
@@ -165,7 +166,7 @@ public class SharedOrdinalCatalogSupplier implements CatalogMappingSupplier {
         dimension.setName("SharedDim");
         dimension.getHierarchies().add(hierarchy);
 
-        PhysicalCube cubeA = cube(CUBE_A, factASource, factAValColumn, dimension, factAKeyColumn);
+        cubeA = cube(CUBE_A, factASource, factAValColumn, dimension, factAKeyColumn);
         PhysicalCube cubeB = cube(CUBE_B, factBSource, factBValColumn, dimension, factBKeyColumn);
         tagMembers(cubeA, cubeAMembersTag);
         tagMembers(cubeB, cubeBMembersTag);
@@ -199,6 +200,12 @@ public class SharedOrdinalCatalogSupplier implements CatalogMappingSupplier {
 
             catalog.getOwnedElement().addAll(List.of(soloLevel, soloHierarchy, soloDimension));
         }
+    }
+
+    /** Tags CubeA, such as {@code daanse:profile.mode=on}; before the first {@link #get()}. */
+    public SharedOrdinalCatalogSupplier tagCubeA(String name, String value) {
+        tag(cubeA, name, value);
+        return this;
     }
 
     private static void tagMembers(
