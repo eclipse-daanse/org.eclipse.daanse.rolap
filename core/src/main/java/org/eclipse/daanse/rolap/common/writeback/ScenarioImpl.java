@@ -38,7 +38,7 @@ import org.eclipse.daanse.olap.api.result.Result;
 import org.eclipse.daanse.olap.api.result.Scenario;
 import org.eclipse.daanse.olap.api.result.WritebackCell;
 import org.eclipse.daanse.olap.api.type.ScalarType;
-import org.eclipse.daanse.olap.calc.base.nested.AbstractProfilingNestedUnknownCalc;
+import org.eclipse.daanse.olap.calc.base.nested.AbstractNestedUnknownCalc;
 import org.eclipse.daanse.olap.common.Util;
 import org.eclipse.daanse.olap.key.BitKey;
 import org.eclipse.daanse.olap.query.component.ResolvedFunCallImpl;
@@ -720,7 +720,7 @@ public class ScenarioImpl implements Scenario {
      * and modifies the values of ancestors or descendants of such cells
      * according to the allocation policy.
  */
-    private static class ScenarioCalc extends AbstractProfilingNestedUnknownCalc {
+    private static class ScenarioCalc extends AbstractNestedUnknownCalc {
         private final ScenarioImpl scenario;
 
         /**

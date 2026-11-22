@@ -26,7 +26,7 @@ import org.eclipse.daanse.olap.api.connection.Connection;
 import org.eclipse.daanse.olap.api.query.component.Query;
 import org.eclipse.daanse.olap.api.result.Cell;
 import org.eclipse.daanse.olap.api.result.Result;
-import org.eclipse.daanse.olap.calc.base.profile.SimpleCalculationProfileWriter;
+import org.eclipse.daanse.olap.api.calc.profile.SimpleCalculationProfileWriter;
 import org.eclipse.daanse.olap.common.ConfigConstants;
 import org.eclipse.daanse.rolap.testkit.assertions.FunDependencies;
 
