@@ -55,12 +55,17 @@ import org.eclipse.daanse.rolap.mapping.instance.emf.complex.steelwheels.SteelWh
 import org.eclipse.daanse.rolap.testkit.junit.api.DbScope;
 import org.eclipse.daanse.rolap.testkit.junit.api.RolapConfig;
 import org.eclipse.daanse.rolap.testkit.junit.api.RolapContextTest;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import org.eclipse.daanse.rolap.SchemaModifiersEmf;
 
+// One test at a time: run concurrently, testMondrian2411_1, _2 and _3 now and then read a wrong cell value
+// (3 of 20 runs of this class on DuckDB). The cause is not known yet.
+@Execution(ExecutionMode.SAME_THREAD)
 @RolapContextTest(SteelWheelsTestInstance.class)
 class SteelWheelsSchemaTest {
 
