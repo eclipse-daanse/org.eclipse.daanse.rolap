@@ -84,7 +84,7 @@ import org.eclipse.daanse.olap.api.type.NumericType;
 import org.eclipse.daanse.olap.api.type.SetType;
 import org.eclipse.daanse.olap.api.type.Type;
 import org.eclipse.daanse.olap.calc.base.constant.ConstantCalcs;
-import org.eclipse.daanse.olap.calc.base.type.tuplebase.AbstractProfilingNestedTupleListCalc;
+import org.eclipse.daanse.olap.calc.base.type.tuplebase.AbstractNestedTupleListCalc;
 import org.eclipse.daanse.olap.calc.base.type.tuplebase.UnaryTupleList;
 import org.eclipse.daanse.olap.common.StandardProperty;
 import org.eclipse.daanse.olap.common.Util;
@@ -1109,7 +1109,7 @@ public class RolapHierarchy extends HierarchyBase {
                         null);
                 SetType setType = new SetType(memberType1);
                 TupleListCalc tupleListCalc =
-                    new AbstractProfilingNestedTupleListCalc(
+                    new AbstractNestedTupleListCalc(
                          setType, new Calc[0])
                     {
                         @Override

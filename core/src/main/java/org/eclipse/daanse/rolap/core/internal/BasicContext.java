@@ -561,12 +561,6 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
         return List.copyOf(this.customAggregators);
     };
 
-    /** The compiled calcs measure themselves; profiling wraps nothing here. */
-    @Override
-    public ExpressionCompiler createProfilingCompiler(ExpressionCompiler compiler) {
-        return compiler;
-    }
-
     /**
      * Creates a compiler whose programs put every claimed independence to the test: a calc that says it
      * does not depend on a hierarchy has to answer the same in every member of it.
