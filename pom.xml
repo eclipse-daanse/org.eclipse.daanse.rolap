@@ -44,6 +44,11 @@
     <emf.common.version>2.46.0</emf.common.version>
     <emf.ecore.version>2.43.0</emf.ecore.version>
     <emf.xmi.version>2.41.0</emf.xmi.version>
+    <!-- AssertJ for every module; the parent manages assertj-core with a fixed version, which the
+         dependencyManagement below replaces -->
+    <assertj.version>3.27.7</assertj.version>
+    <!-- AssertJ 3.27 imports net.bytebuddy from 1.18 on; byte-buddy-agent follows the same property -->
+    <bytebuddy.version>1.18.3</bytebuddy.version>
 
     <!-- JUnit pool size: availableProcessors() * factor. Override per build,
          e.g. -Ddaanse.test.parallel.factor=2 or -Ddaanse.test.parallel.enabled=false -->
@@ -77,6 +82,17 @@
     <module>testkit</module>
     <module>itests</module>
   </modules>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.assertj</groupId>
+        <artifactId>assertj-core</artifactId>
+        <version>${assertj.version}</version>
+        <scope>test</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <dependencies>
     <dependency>
