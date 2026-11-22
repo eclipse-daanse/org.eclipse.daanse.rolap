@@ -543,6 +543,49 @@ public interface ContextConfigOCD {
             required = false)
     int testExpDependencies();
 
+    /** @see org.eclipse.daanse.olap.api.ContextConfig#profileMode() */
+    @AttributeDefinition(
+            name = BasicContextOCD.L10N_PREFIX + ConfigConstants.PROFILE_MODE + BasicContextOCD.L10N_POSTFIX_NAME,
+            description = BasicContextOCD.L10N_PREFIX + ConfigConstants.PROFILE_MODE + BasicContextOCD.L10N_POSTFIX_DESCRIPTION,
+            defaultValue = ConfigConstants.PROFILE_MODE_DEFAULT_VALUE,
+            options = { @Option(value = "off"), @Option(value = "on"), @Option(value = "sample") },
+            required = false)
+    String profileMode();
+
+    /** @see org.eclipse.daanse.olap.api.ContextConfig#profileSampleEvery() */
+    @AttributeDefinition(
+            name = BasicContextOCD.L10N_PREFIX + ConfigConstants.PROFILE_SAMPLE_EVERY + BasicContextOCD.L10N_POSTFIX_NAME,
+            description = BasicContextOCD.L10N_PREFIX + ConfigConstants.PROFILE_SAMPLE_EVERY + BasicContextOCD.L10N_POSTFIX_DESCRIPTION,
+            defaultValue = "" + ConfigConstants.PROFILE_SAMPLE_EVERY_DEFAULT_VALUE,
+            required = false)
+    int profileSampleEvery();
+
+    /** @see org.eclipse.daanse.olap.api.ContextConfig#profileSink() */
+    @AttributeDefinition(
+            name = BasicContextOCD.L10N_PREFIX + ConfigConstants.PROFILE_SINK + BasicContextOCD.L10N_POSTFIX_NAME,
+            description = BasicContextOCD.L10N_PREFIX + ConfigConstants.PROFILE_SINK + BasicContextOCD.L10N_POSTFIX_DESCRIPTION,
+            defaultValue = ConfigConstants.PROFILE_SINK_DEFAULT_VALUE,
+            options = { @Option(value = "log"), @Option(value = "handler"), @Option(value = "counters") },
+            required = false)
+    String profileSink();
+
+    /** @see org.eclipse.daanse.olap.api.ContextConfig#profileDetail() */
+    @AttributeDefinition(
+            name = BasicContextOCD.L10N_PREFIX + ConfigConstants.PROFILE_DETAIL + BasicContextOCD.L10N_POSTFIX_NAME,
+            description = BasicContextOCD.L10N_PREFIX + ConfigConstants.PROFILE_DETAIL + BasicContextOCD.L10N_POSTFIX_DESCRIPTION,
+            defaultValue = ConfigConstants.PROFILE_DETAIL_DEFAULT_VALUE,
+            options = { @Option(value = "full"), @Option(value = "top") },
+            required = false)
+    String profileDetail();
+
+    /** @see org.eclipse.daanse.olap.api.ContextConfig#profileTopN() */
+    @AttributeDefinition(
+            name = BasicContextOCD.L10N_PREFIX + ConfigConstants.PROFILE_TOP_N + BasicContextOCD.L10N_POSTFIX_NAME,
+            description = BasicContextOCD.L10N_PREFIX + ConfigConstants.PROFILE_TOP_N + BasicContextOCD.L10N_POSTFIX_DESCRIPTION,
+            defaultValue = "" + ConfigConstants.PROFILE_TOP_N_DEFAULT_VALUE,
+            required = false)
+    int profileTopN();
+
     // ------------------------------------------------------------------
     // Naming, ordering and result shape
     //
