@@ -50,7 +50,6 @@ import org.eclipse.daanse.sql.dialect.api.DialectFactory;
 import org.eclipse.daanse.dmv.parser.api.DmvParserProvider;
 import org.eclipse.daanse.mdx.parser.api.MdxParserProvider;
 import org.eclipse.daanse.olap.api.calc.compiler.ExpressionCompiler;
-import org.eclipse.daanse.olap.evaluator.DependencyTestingEvaluator;
 import org.eclipse.daanse.olap.api.Context;
 import org.eclipse.daanse.olap.api.agg.AggregationFactory;
 import org.eclipse.daanse.olap.api.aggregator.CustomAggregatorFactory;
@@ -560,13 +559,4 @@ public class BasicContext extends AbstractRolapContext implements RolapContext {
     public List<CustomAggregatorFactory> getCustomAggregators() {
         return List.copyOf(this.customAggregators);
     };
-
-    /**
-     * Creates a compiler whose programs put every claimed independence to the test: a calc that says it
-     * does not depend on a hierarchy has to answer the same in every member of it.
-     */
-    @Override
-    public ExpressionCompiler createDependencyTestingCompiler(ExpressionCompiler compiler) {
-        return new DependencyTestingEvaluator.DteCompiler(compiler);
-    }
 }
