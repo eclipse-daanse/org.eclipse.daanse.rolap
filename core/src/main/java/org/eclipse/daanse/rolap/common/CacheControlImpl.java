@@ -1156,6 +1156,13 @@ public class CacheControlImpl implements CacheControl {
                 "A range of members is read as a predicate, not cell by cell");
         }
 
+        // the question forgetting asks of the shared shapes; a range answers it through its predicate as well
+        @Override
+        public boolean touches(List<? extends Member> coordinate) {
+            throw new UnsupportedOperationException(
+                "A range of members is read as a predicate, not cell by cell");
+        }
+
         @Override
         public void accept(CellRegionVisitor visitor) {
             visitor.visitOther(this);
